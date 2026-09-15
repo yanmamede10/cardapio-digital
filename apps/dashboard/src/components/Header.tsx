@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { initialsOf } from "../lib/format";
+import type { NotifItem } from "../lib/live";
 import { useDashboardState } from "../state/DashboardStateContext";
-
-export interface NotifItem {
-  icon: string;
-  color: string;
-  title: string;
-  sub: string;
-  time: string;
-}
 
 // Single-restaurant app: there is no login and no open/closed schedule check yet.
 const RESTAURANT_NAME = "Fogo & Nó";

@@ -20,7 +20,7 @@ function bucketOf(status: OrderStatus): Bucket {
   return (found?.key || "completed") as Bucket;
 }
 
-const nextStatusFor = (o: Order): OrderStatus => {
+export const nextStatusFor = (o: Order): OrderStatus => {
   if (o.status === "pending") return "preparing";
   if (o.status === "preparing") return "ready";
   return o.mode === "delivery" ? "delivered" : "served";
