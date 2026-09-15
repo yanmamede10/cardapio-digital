@@ -1,8 +1,8 @@
 node_modules/
 dist/
 *.tsbuildinfo
-.env
-.env.local
+.env*
+!.env.android
 
 apps/api/prisma/dev.db
 apps/api/prisma/dev.db-journal
