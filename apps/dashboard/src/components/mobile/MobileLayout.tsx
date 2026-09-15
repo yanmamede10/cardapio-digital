@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { App } from "@capacitor/app";
 import { type LiveData, buildNotifs, useLiveData } from "../../lib/live";
 import { initialsOf } from "../../lib/format";
 import { useDashboardState } from "../../state/DashboardStateContext";
@@ -84,6 +85,23 @@ export function MobileLayout() {
   const isRoot = ROOT_PATHS.includes(location.pathname);
   const activeTab = tabForPath(location.pathname);
   const showTabs = !header?.hideTabs;
+
+  // React Router's client-side history isn't reliably followed by Capacitor's
+  // default WebView back-button handling on Android, so drive it ourselves:
+  // pop one route on a drill-down screen, exit the app from a root tab.
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const isRootRef = useRef(isRoot);
+  isRootRef.current = isRoot;
+  useEffect(() => {
+    const listener = App.addListener("backButton", () => {
+      if (isRootRef.current) App.exitApp();
+      else navigateRef.current(-1);
+    });
+    return () => {
+      listener.then((h) => h.remove());
+    };
+  }, []);
 
   const ctx: MobileOutletContext = { ...live, calls: openCalls, notify, setHeader };
 

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MesaPronta Gestão</string>
+    <string name="title_activity_main">MesaPronta Gestão</string>
+    <string name="package_name">com.mesapronta.gestao</string>
+    <string name="custom_url_scheme">com.mesapronta.gestao</string>
+</resources>
