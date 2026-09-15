@@ -1,0 +1,14 @@
+{
+  "name": "cardapio-digital",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace apps/api",
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:dashboard": "npm run dev --workspace apps/dashboard",
+    "build": "npm run build --workspace packages/shared && npm run build --workspace apps/api && npm run build --workspace apps/web && npm run build --workspace apps/dashboard"
+  }
+}

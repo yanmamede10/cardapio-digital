@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light;
+  --bg: #FCF7D3;
+  --surface: #FFFDF1;
+  --surface2: #F2EEDD;
+  --surface3: #E9E4CF;
+  --line: #E0D9BF;
+  --line2: #CFC7A9;
+  --ink: #1B1915;
+  --ink2: #55524A;
+  --ink3: #87837A;
+  --brand: #732009;
+  --brandText: #732009;
+  --brandInk: #FCF7D3;
+  --brandSoft: #F0E3D2;
+  --sec: #CD8C52;
+  --neutral: #626266;
+  --ok: #3F6B4A;
+  --warn: #A5711C;
+  --alert: #9E2A10;
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: #020304;
+  --surface: #0D0F10;
+  --surface2: #151719;
+  --surface3: #1D2022;
+  --line: #26292B;
+  --line2: #33373A;
+  --ink: #F2EFE4;
+  --ink2: #A9A59B;
+  --ink3: #726F69;
+  --brand: #732009;
+  --brandText: #C9743F;
+  --brandInk: #FCF7D3;
+  --brandSoft: #1F1510;
+  --sec: #938172;
+  --neutral: #626266;
+  --ok: #6E9B78;
+  --warn: #C79B4A;
+  --alert: #C7583A;
+}

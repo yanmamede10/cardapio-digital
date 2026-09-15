@@ -1,0 +1,80 @@
+import type {
+  Address,
+  CouponResult,
+  CreateOrderRequest,
+  MenuCategory,
+  MenuItem,
+  Order,
+  PaymentMethod,
+  Restaurant,
+  TableResolveResponse
+} from "@cardapio/shared";
+import { getSessionId } from "./session";
+
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Session-Id": getSessionId(),
+        ...(init?.headers || {})
+      }
+    });
+  } catch {
+    throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
+  }
+  if (!res.ok) {
+    let message = `Erro ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.error) message = body.error;
+    } catch {
+      // ignore malformed error body
+    }
+    throw new ApiError(res.status, message);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export const api = {
+  listRestaurants: (params: { query?: string; cuisine?: string; sort?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.query) qs.set("query", params.query);
+    if (params.cuisine) qs.set("cuisine", params.cuisine);
+    if (params.sort) qs.set("sort", params.sort);
+    const suffix = qs.toString() ? `?${qs.toString()}` : "";
+    return request<Restaurant[]>(`/api/restaurants${suffix}`);
+  },
+  getRestaurant: (id: string) => request<Restaurant>(`/api/restaurants/${id}`),
+  getCategories: (id: string) => request<MenuCategory[]>(`/api/restaurants/${id}/categories`),
+  getItems: (id: string, categoryId?: string) => {
+    const suffix = categoryId ? `?categoryId=${encodeURIComponent(categoryId)}` : "";
+    return request<MenuItem[]>(`/api/restaurants/${id}/items${suffix}`);
+  },
+  getItem: (restaurantId: string, itemId: string) =>
+    request<MenuItem>(`/api/restaurants/${restaurantId}/items/${itemId}`),
+  resolveTable: (tableCode: string) => request<TableResolveResponse>(`/api/tables/${tableCode}`),
+  getAddresses: () => request<Address[]>("/api/addresses"),
+  getPaymentMethods: () => request<PaymentMethod[]>("/api/payment-methods"),
+  applyCoupon: (code: string) =>
+    request<CouponResult>("/api/coupons/apply", { method: "POST", body: JSON.stringify({ code }) }),
+  createOrder: (payload: CreateOrderRequest) =>
+    request<Order>("/api/orders", { method: "POST", body: JSON.stringify(payload) }),
+  getOrder: (id: string) => request<Order>(`/api/orders/${id}`),
+  listOrders: (mode?: string) => request<Order[]>(`/api/orders${mode ? `?mode=${mode}` : ""}`),
+  callWaiter: (orderId: string) => request<{ ok: true }>(`/api/orders/${orderId}/call-waiter`, { method: "POST" }),
+  repeatOrder: (orderId: string) => request<Order>(`/api/orders/${orderId}/repeat`, { method: "POST" })
+};

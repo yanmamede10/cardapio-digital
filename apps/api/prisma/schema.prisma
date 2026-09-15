@@ -1,0 +1,249 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Restaurant {
+  id            String   @id
+  name          String
+  initials      String
+  cuisine       String
+  cuisineTagsJson String
+  rating        Float
+  reviewCount   Int
+  etaMinMinutes Int
+  etaMaxMinutes Int
+  deliveryFee   Float
+  isOpen        Boolean
+  reopensAt     String?
+  promoLabel    String?
+  coverLabel    String
+  sortOrder     Int      @default(0)
+
+  // Management dashboard — profile / fiscal / finance config (1:1 with the
+  // restaurant, so kept as plain fields rather than satellite tables).
+  description       String   @default("")
+  logoUrl           String?
+  coverUrl          String?
+  cnpj              String   @default("")
+  legalName         String   @default("")
+  stateRegistration String   @default("")
+  taxRegime         String   @default("")
+  fiscalAddress     String   @default("")
+  deliveryFeeCap    Float    @default(0)
+  planPrice         Float    @default(0)
+  planDueDate       DateTime?
+  planModulesJson   String   @default("[]")
+
+  categories     MenuCategory[]
+  items          MenuItem[]
+  orders         Order[]
+  tables         RestaurantTable[]
+  waiterCalls    WaiterCall[]
+  coupons        Coupon[]
+  tickets        SupportTicket[]
+  reviews        Review[]
+  staff          StaffMember[]
+  operatingHours OperatingHour[]
+  billingCharges BillingCharge[]
+}
+
+model MenuCategory {
+  id           String @id
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  name         String
+  sortOrder    Int
+
+  items MenuItem[]
+}
+
+model MenuItem {
+  id               String @id
+  restaurantId     String
+  restaurant       Restaurant   @relation(fields: [restaurantId], references: [id])
+  categoryId       String
+  category         MenuCategory @relation(fields: [categoryId], references: [id])
+  name             String
+  shortDescription String
+  longDescription  String
+  price            Float
+  photoLabel       String
+  tag              String?
+  tagIcon          String?
+  soldOut          Boolean @default(false)
+  optionGroupsJson String
+  scheduleLabel    String  @default("Almoço 11:00 – 15:00 · Jantar 18:00 – 23:00")
+  sortOrder        Int     @default(0)
+}
+
+model Address {
+  id        String  @id
+  label     String
+  detail    String
+  icon      String
+  isDefault Boolean @default(false)
+}
+
+model PaymentMethod {
+  id    String @id
+  label String
+  note  String
+  icon  String
+}
+
+model Order {
+  id              String    @id @default(cuid())
+  code            String
+  mode            String
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantName  String
+  tableNumber     Int?
+  guestName       String?
+  guestSessionId  String
+  addressId       String?
+  paymentMethodId String?
+  couponCode      String?
+  subtotal        Float
+  deliveryFee     Float
+  discount        Float
+  total           Float
+  status          String
+  round           Int       @default(1)
+  waiterCalledAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+
+  lines OrderLine[]
+}
+
+model OrderLine {
+  id                  String @id @default(cuid())
+  orderId             String
+  order               Order  @relation(fields: [orderId], references: [id])
+  itemId              String
+  name                String
+  unitPrice           Float
+  quantity            Int
+  notes               String
+  selectedOptionsJson String
+}
+
+// ---------------------------------------------------------------------------
+// Restaurant management dashboard — tables, coupons, support, reports, etc.
+// ---------------------------------------------------------------------------
+
+model RestaurantTable {
+  id           String    @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  number       Int
+  seats        Int
+  openedAt     DateTime?
+
+  @@unique([restaurantId, number])
+}
+
+model WaiterCall {
+  id           String    @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  tableNumber  Int
+  reason       String
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+}
+
+model Coupon {
+  id               String   @id @default(cuid())
+  restaurantId     String
+  restaurant       Restaurant @relation(fields: [restaurantId], references: [id])
+  code             String
+  kind             String
+  value            Float
+  channel          String
+  validUntil       DateTime
+  usageLimit       Int
+  usedCount        Int      @default(0)
+  active           Boolean  @default(true)
+  comboItemIdsJson String?
+  comboPrice       Float?
+
+  @@unique([restaurantId, code])
+}
+
+model SupportTicket {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+  channel        String
+  customerName   String
+  refLabel       String
+  status         String   @default("new")
+  assignee       String?
+  unreadCount    Int      @default(0)
+  createdAt      DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+
+  messages SupportMessage[]
+}
+
+model SupportMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id])
+  from       String
+  authorName String?
+  text       String
+  createdAt  DateTime @default(now())
+}
+
+model Review {
+  id           String    @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  channel      String
+  customerName String
+  rating       Int
+  text         String
+  createdAt    DateTime  @default(now())
+  reply        String?
+  repliedAt    DateTime?
+}
+
+model StaffMember {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  name         String
+  email        String
+  role         String
+  invitedAt    DateTime @default(now())
+}
+
+model OperatingHour {
+  id           String  @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  weekday      Int
+  lunch        String
+  dinner       String
+  isOpen       Boolean
+
+  @@unique([restaurantId, weekday])
+}
+
+model BillingCharge {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  date         DateTime
+  description  String
+  value        Float
+  status       String
+}

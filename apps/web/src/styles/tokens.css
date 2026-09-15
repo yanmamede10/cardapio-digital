@@ -1,0 +1,67 @@
+:root {
+  color-scheme: light;
+  --bg: #fcf7d3;
+  --surf: #fffcea;
+  --surf2: #f4ecc4;
+  --ink: #24160f;
+  --ink2: #626266;
+  --pri: #732009;
+  --priInk: #fff7ec;
+  --acc: #732009;
+  --line: rgba(36, 22, 15, 0.14);
+  --good: #3f8f5b;
+
+  /* phone scale (base) */
+  --t-xs: 11px;
+  --t-s: 13px;
+  --t-b: 15px;
+  --t-m: 17px;
+  --t-l: 22px;
+  --t-xl: 27px;
+  --pad: 16px;
+  --banner: 172px;
+  --photo: 120px;
+  --cover: 122px;
+  --cols: 2;
+  --cols2: 1;
+  --fab: 38px;
+  --safe: 10px;
+  --i-s: 12px;
+  --i-m: 16px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #020304;
+  --surf: #101214;
+  --surf2: #1a1c1f;
+  --ink: #f4efe6;
+  --ink2: #9c9ca1;
+  --pri: #732009;
+  --priInk: #fcf7d3;
+  --acc: #938172;
+  --line: rgba(147, 129, 114, 0.24);
+}
+
+/* tablet scale — the table-mode flow runs on a fixed tablet as well as a
+   customer's own phone via QR, so this is viewport-driven, not a toggle. */
+@media (min-width: 900px) {
+  :root {
+    --t-xs: 12px;
+    --t-s: 15px;
+    --t-b: 17px;
+    --t-m: 20px;
+    --t-l: 26px;
+    --t-xl: 34px;
+    --pad: 28px;
+    --banner: 230px;
+    --photo: 170px;
+    --cover: 200px;
+    --cols: 3;
+    --cols2: 2;
+    --fab: 46px;
+    --safe: 14px;
+    --i-s: 14px;
+    --i-m: 19px;
+  }
+}

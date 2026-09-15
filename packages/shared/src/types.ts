@@ -1,0 +1,405 @@
+// Shared domain contract for the Cardápio Digital platform.
+// Consumed by every frontend (customer app, restaurant dashboard, super admin)
+// against the same API, so nothing here should be shaped for one client only.
+
+export type OrderMode = "table" | "delivery";
+
+export interface Restaurant {
+  id: string;
+  name: string;
+  initials: string;
+  cuisine: string;
+  cuisineTags: string[];
+  rating: number;
+  reviewCount: number;
+  etaMinMinutes: number;
+  etaMaxMinutes: number;
+  deliveryFee: number;
+  isOpen: boolean;
+  reopensAt: string | null;
+  promoLabel: string | null;
+  coverLabel: string;
+}
+
+export interface MenuCategory {
+  id: string;
+  restaurantId: string;
+  name: string;
+  sortOrder: number;
+}
+
+export interface MenuItemOption {
+  id: string;
+  label: string;
+  priceDelta: number;
+}
+
+export interface MenuItemOptionGroup {
+  id: string;
+  label: string;
+  type: "single" | "multi";
+  hint: string;
+  options: MenuItemOption[];
+}
+
+export interface MenuItem {
+  id: string;
+  restaurantId: string;
+  categoryId: string;
+  categoryName: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  price: number;
+  photoLabel: string;
+  tag: string | null;
+  tagIcon: string | null;
+  soldOut: boolean;
+  sortOrder: number;
+  scheduleLabel: string;
+  optionGroups: MenuItemOptionGroup[];
+}
+
+export interface UpsertMenuItemRequest {
+  categoryId: string;
+  name: string;
+  shortDescription: string;
+  longDescription?: string;
+  price: number;
+  scheduleLabel?: string;
+  extras?: { name: string; priceDelta: number }[];
+}
+
+export interface Address {
+  id: string;
+  label: string;
+  detail: string;
+  icon: string;
+  isDefault: boolean;
+}
+
+export interface PaymentMethod {
+  id: string;
+  label: string;
+  note: string;
+  icon: string;
+}
+
+export interface CartLineSelectedOption {
+  groupId: string;
+  groupLabel: string;
+  optionId: string;
+  label: string;
+  priceDelta: number;
+}
+
+export interface CartLineInput {
+  itemId: string;
+  quantity: number;
+  notes: string;
+  selectedOptions: CartLineSelectedOption[];
+}
+
+export interface CartLine extends CartLineInput {
+  id: string;
+  name: string;
+  unitPrice: number;
+}
+
+// Single fulfillment pipeline shared by both the kitchen/staff dashboard and
+// the customer-facing tracker — table and delivery orders both flow through
+// pending -> preparing -> ready, then branch:
+//   table:    ready -> served
+//   delivery: ready -> out_for_delivery -> delivered
+// `cancelled` is terminal from `pending` (staff rejected it before accepting).
+export type OrderStatus =
+  | "pending"
+  | "preparing"
+  | "ready"
+  | "out_for_delivery"
+  | "delivered"
+  | "served"
+  | "cancelled";
+
+export interface Order {
+  id: string;
+  code: string;
+  mode: OrderMode;
+  restaurantId: string;
+  restaurantName: string;
+  tableNumber: number | null;
+  guestName: string | null;
+  addressId: string | null;
+  paymentMethodId: string | null;
+  couponCode: string | null;
+  lines: CartLine[];
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
+  total: number;
+  status: OrderStatus;
+  round: number;
+  createdAt: string;
+  // Optional staff-facing display metadata. The management dashboard renders
+  // these on the kitchen kanban card; the customer app never reads them, so
+  // they stay optional and any client must degrade gracefully without them.
+  waiterName?: string | null;
+  partySize?: number | null;
+  addressLabel?: string | null;
+}
+
+export interface CreateOrderRequest {
+  mode: OrderMode;
+  restaurantId: string;
+  tableNumber?: number;
+  guestName?: string;
+  addressId?: string;
+  paymentMethodId?: string;
+  couponCode?: string;
+  lines: CartLineInput[];
+}
+
+export interface CouponResult {
+  valid: boolean;
+  discountPercent: number;
+  message: string;
+}
+
+export interface TableResolveResponse {
+  restaurantId: string;
+  tableNumber: number;
+}
+
+export interface RestaurantListQuery {
+  query?: string;
+  cuisine?: string;
+  sort?: "near" | "rating" | "time" | "fee";
+}
+
+export interface MenuItemListQuery {
+  categoryId?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Restaurant management dashboard — tables, coupons, support, reports, etc.
+// All of this is scoped to a restaurant via the `X-Restaurant-Id` header
+// (there is no staff login yet, mirroring the guest-session convention the
+// customer app uses via `X-Session-Id`).
+// ---------------------------------------------------------------------------
+
+export type TableStatus = "free" | "occupied" | "awaiting_payment";
+
+export interface RestaurantTable {
+  id: string;
+  restaurantId: string;
+  number: number;
+  seats: number;
+  status: TableStatus;
+  openedAt: string | null;
+}
+
+export interface TableComandaLine {
+  orderId: string;
+  itemId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export interface TableComanda {
+  table: RestaurantTable;
+  orderIds: string[];
+  lines: TableComandaLine[];
+  subtotal: number;
+  servicePct: number;
+  service: number;
+  total: number;
+}
+
+export interface WaiterCall {
+  id: string;
+  restaurantId: string;
+  tableNumber: number;
+  reason: string;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
+export type CouponKind = "percent" | "fixed" | "combo";
+export type CouponChannel = "table" | "delivery" | "both";
+
+export interface Coupon {
+  id: string;
+  restaurantId: string;
+  code: string;
+  kind: CouponKind;
+  value: number;
+  channel: CouponChannel;
+  validUntil: string;
+  usageLimit: number;
+  usedCount: number;
+  active: boolean;
+  comboItemIds: string[] | null;
+  comboPrice: number | null;
+}
+
+export interface CreateCouponRequest {
+  code: string;
+  kind: CouponKind;
+  value: number;
+  channel: CouponChannel;
+  validUntil: string;
+  usageLimit: number;
+  comboItemIds?: string[];
+  comboPrice?: number;
+}
+
+export type TicketStatus = "new" | "in_progress" | "resolved";
+export type TicketChannel = "table" | "delivery";
+
+export interface SupportMessage {
+  id: string;
+  from: "customer" | "staff";
+  authorName: string | null;
+  text: string;
+  createdAt: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  restaurantId: string;
+  channel: TicketChannel;
+  customerName: string;
+  refLabel: string;
+  status: TicketStatus;
+  assignee: string | null;
+  unreadCount: number;
+  messages: SupportMessage[];
+  createdAt: string;
+  lastActivityAt: string;
+}
+
+export interface Review {
+  id: string;
+  restaurantId: string;
+  channel: string;
+  customerName: string;
+  rating: number;
+  text: string;
+  createdAt: string;
+  reply: string | null;
+  repliedAt: string | null;
+}
+
+export type StaffRole = "owner" | "manager" | "waiter" | "kitchen";
+
+export interface StaffMember {
+  id: string;
+  restaurantId: string;
+  name: string;
+  email: string;
+  role: StaffRole;
+  invitedAt: string;
+}
+
+export interface OperatingHoursRow {
+  weekday: number; // 0=Monday .. 6=Sunday
+  lunch: string;
+  dinner: string;
+  isOpen: boolean;
+}
+
+export interface RestaurantProfile {
+  name: string;
+  cuisineCategory: string;
+  description: string;
+  logoUrl: string | null;
+  coverUrl: string | null;
+}
+
+export interface FiscalInfo {
+  cnpj: string;
+  legalName: string;
+  stateRegistration: string;
+  taxRegime: string;
+  fiscalAddress: string;
+}
+
+export interface BillingCharge {
+  id: string;
+  restaurantId: string;
+  date: string;
+  description: string;
+  value: number;
+  status: "paid" | "pending" | "failed";
+}
+
+export interface FinanceSummary {
+  deliveryFeeMonthToDate: number;
+  deliveryFeeCap: number;
+  planPrice: number;
+  planDueDate: string;
+  planModules: string[];
+  charges: BillingCharge[];
+}
+
+export type AnalyticsPeriod = "today" | "week" | "month" | "custom";
+
+export interface AnalyticsKpis {
+  revenue: number;
+  revenueDeltaPct: number;
+  avgTicket: number;
+  avgTicketDeltaPct: number;
+  orderCount: number;
+  orderCountDeltaPct: number;
+  tableOrders: number;
+  deliveryOrders: number;
+  cancellations: number;
+  cancellationsDeltaPct: number;
+  cancellationRatePct: number;
+}
+
+export interface AnalyticsRevenuePoint {
+  label: string;
+  tableRevenue: number;
+  deliveryRevenue: number;
+}
+
+export interface AnalyticsItemStat {
+  itemId: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+export interface AnalyticsHeatCell {
+  hourLabel: string;
+  orderCount: number;
+  intensity: number;
+}
+
+export interface AnalyticsHeatRow {
+  dayLabel: string;
+  cells: AnalyticsHeatCell[];
+}
+
+export interface AnalyticsSummary {
+  period: AnalyticsPeriod;
+  from: string;
+  to: string;
+  kpis: AnalyticsKpis;
+  revenueSeries: AnalyticsRevenuePoint[];
+  topSellers: AnalyticsItemStat[];
+  bottomSellers: AnalyticsItemStat[];
+  heatmap: AnalyticsHeatRow[];
+  reviewAverage: number;
+  reviewCount: number;
+}
+
+export interface ShiftStats {
+  closedOrders: number;
+  avgTicket: number;
+  avgPrepMinutes: number;
+  shiftRevenue: number;
+}

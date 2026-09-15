@@ -1,0 +1,160 @@
+import type {
+  AnalyticsPeriod,
+  AnalyticsSummary,
+  Coupon,
+  CreateCouponRequest,
+  FiscalInfo,
+  MenuCategory,
+  MenuItem,
+  Order,
+  OrderStatus,
+  OperatingHoursRow,
+  Restaurant,
+  RestaurantProfile,
+  RestaurantTable,
+  Review,
+  ShiftStats,
+  StaffMember,
+  StaffRole,
+  SupportTicket,
+  TableComanda,
+  TicketChannel,
+  TicketStatus,
+  UpsertMenuItemRequest,
+  WaiterCall,
+  FinanceSummary
+} from "@cardapio/shared";
+
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
+const RESTAURANT_ID = (import.meta.env.VITE_RESTAURANT_ID as string | undefined) || "fogo";
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Restaurant-Id": RESTAURANT_ID,
+        ...(init?.headers || {})
+      }
+    });
+  } catch {
+    throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
+  }
+  if (!res.ok) {
+    let message = `Erro ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.error) message = body.error;
+    } catch {
+      // ignore malformed error body
+    }
+    throw new ApiError(res.status, message);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+const qs = (params: Record<string, string | undefined>) => {
+  const s = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) s.set(k, v);
+  });
+  const str = s.toString();
+  return str ? `?${str}` : "";
+};
+
+export const restaurantId = RESTAURANT_ID;
+
+export const api = {
+  getRestaurant: () => request<Restaurant>(`/api/restaurants/${RESTAURANT_ID}`),
+
+  // Orders / kitchen ops
+  listOrders: () => request<Order[]>(`/api/restaurants/${RESTAURANT_ID}/orders`),
+  acceptOrder: (id: string) => request<Order>(`/api/orders/${id}/accept`, { method: "POST" }),
+  rejectOrder: (id: string) => request<Order>(`/api/orders/${id}/reject`, { method: "POST" }),
+  setOrderStage: (id: string, stage: OrderStatus) =>
+    request<Order>(`/api/orders/${id}/stage`, { method: "PATCH", body: JSON.stringify({ stage }) }),
+  getShiftStats: () => request<ShiftStats>(`/api/restaurants/${RESTAURANT_ID}/shift-stats`),
+
+  // Tables
+  listTables: () => request<RestaurantTable[]>(`/api/restaurants/${RESTAURANT_ID}/tables`),
+  createTable: (seats: number) =>
+    request<RestaurantTable>(`/api/restaurants/${RESTAURANT_ID}/tables`, { method: "POST", body: JSON.stringify({ seats }) }),
+  getComanda: (number: number) => request<TableComanda>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/comanda`),
+  closeTable: (number: number) => request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/close`, { method: "POST" }),
+  transferTable: (number: number, toNumber: number) =>
+    request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/transfer`, { method: "POST", body: JSON.stringify({ toNumber }) }),
+  getTableQr: (number: number) => request<{ tableCode: string }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/qr`),
+
+  // Waiter calls
+  listWaiterCalls: () => request<WaiterCall[]>(`/api/restaurants/${RESTAURANT_ID}/waiter-calls`),
+  resolveWaiterCall: (callId: string) =>
+    request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/waiter-calls/${callId}/resolve`, { method: "POST" }),
+
+  // Menu
+  listCategories: () => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories`),
+  listItems: () => request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items`),
+  createItem: (payload: UpsertMenuItemRequest) =>
+    request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items`, { method: "POST", body: JSON.stringify(payload) }),
+  updateItem: (itemId: string, payload: Partial<UpsertMenuItemRequest> & { soldOut?: boolean }) =>
+    request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  duplicateItem: (itemId: string) =>
+    request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/duplicate`, { method: "POST" }),
+  moveItem: (itemId: string, direction: "up" | "down") =>
+    request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
+  moveCategory: (categoryId: string, direction: "up" | "down") =>
+    request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
+
+  // Coupons
+  listCoupons: (query?: string) => request<Coupon[]>(`/api/restaurants/${RESTAURANT_ID}/coupons${qs({ query })}`),
+  createCoupon: (payload: CreateCouponRequest) =>
+    request<Coupon>(`/api/restaurants/${RESTAURANT_ID}/coupons`, { method: "POST", body: JSON.stringify(payload) }),
+  setCouponActive: (couponId: string, active: boolean) =>
+    request<Coupon>(`/api/restaurants/${RESTAURANT_ID}/coupons/${couponId}`, { method: "PATCH", body: JSON.stringify({ active }) }),
+  duplicateCoupon: (couponId: string) =>
+    request<Coupon>(`/api/restaurants/${RESTAURANT_ID}/coupons/${couponId}/duplicate`, { method: "POST" }),
+
+  // Support
+  listTickets: (params: { status?: TicketStatus | "all"; channel?: TicketChannel | "all" } = {}) =>
+    request<SupportTicket[]>(
+      `/api/restaurants/${RESTAURANT_ID}/tickets${qs({
+        status: params.status && params.status !== "all" ? params.status : undefined,
+        channel: params.channel && params.channel !== "all" ? params.channel : undefined
+      })}`
+    ),
+  updateTicket: (ticketId: string, payload: { assignee?: string; status?: TicketStatus }) =>
+    request<SupportTicket>(`/api/restaurants/${RESTAURANT_ID}/tickets/${ticketId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  sendTicketMessage: (ticketId: string, text: string) =>
+    request<SupportTicket>(`/api/restaurants/${RESTAURANT_ID}/tickets/${ticketId}/messages`, { method: "POST", body: JSON.stringify({ text }) }),
+  listReviews: () => request<Review[]>(`/api/restaurants/${RESTAURANT_ID}/reviews`),
+  replyReview: (reviewId: string, text: string) =>
+    request<Review>(`/api/restaurants/${RESTAURANT_ID}/reviews/${reviewId}/reply`, { method: "POST", body: JSON.stringify({ text }) }),
+
+  // Reports / finance
+  getAnalytics: (period: AnalyticsPeriod) => request<AnalyticsSummary>(`/api/restaurants/${RESTAURANT_ID}/analytics${qs({ period })}`),
+  getFinance: () => request<FinanceSummary>(`/api/restaurants/${RESTAURANT_ID}/finance`),
+
+  // Settings
+  getProfile: () => request<RestaurantProfile>(`/api/restaurants/${RESTAURANT_ID}/profile`),
+  updateProfile: (payload: Partial<RestaurantProfile>) =>
+    request<RestaurantProfile>(`/api/restaurants/${RESTAURANT_ID}/profile`, { method: "PATCH", body: JSON.stringify(payload) }),
+  getHours: () => request<OperatingHoursRow[]>(`/api/restaurants/${RESTAURANT_ID}/hours`),
+  updateHours: (rows: OperatingHoursRow[]) =>
+    request<OperatingHoursRow[]>(`/api/restaurants/${RESTAURANT_ID}/hours`, { method: "PATCH", body: JSON.stringify({ rows }) }),
+  getStaff: () => request<StaffMember[]>(`/api/restaurants/${RESTAURANT_ID}/staff`),
+  inviteStaff: (payload: { name: string; email: string; role: StaffRole }) =>
+    request<StaffMember>(`/api/restaurants/${RESTAURANT_ID}/staff`, { method: "POST", body: JSON.stringify(payload) }),
+  getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
+  updateFiscal: (payload: Partial<FiscalInfo>) =>
+    request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) })
+};
