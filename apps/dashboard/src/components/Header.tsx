@@ -19,10 +19,12 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
         zIndex: 6,
         display: "flex",
         alignItems: "center",
-        gap: 14,
-        padding: "12px 22px",
-        background: "var(--surface)",
-        borderBottom: "1px solid var(--line)"
+        gap: 18,
+        padding: "16px 26px",
+        background: "var(--glassBg)",
+        backdropFilter: "var(--blur)",
+        WebkitBackdropFilter: "var(--blur)",
+        borderBottom: "1px solid var(--glassBd)"
       }}
     >
       <div style={{ minWidth: 0 }}>
@@ -38,7 +40,7 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
         <div style={{ fontSize: 12, color: "var(--ink3)" }}>{tagline}</div>
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 9, padding: "7px 11px", minWidth: 0, width: 230 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", minWidth: 0, width: 230 }}>
         <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
         <input placeholder="Buscar pedido, mesa, item" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
       </div>
@@ -46,7 +48,7 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
         <button
           type="button"
           onClick={() => setNotifOpen((v) => !v)}
-          style={{ position: "relative", width: 38, height: 38, borderRadius: 9, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ position: "relative", width: 38, height: 38, borderRadius: 13, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
         >
           <i className="fa-solid fa-bell" style={{ fontSize: 20, lineHeight: 1 }} />
           {notifCount > 0 && (
@@ -81,12 +83,15 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
               right: 0,
               top: 46,
               width: 310,
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: 12,
-              boxShadow: "0 18px 40px rgba(0,0,0,.18)",
+              background: "var(--glassBg)",
+              backdropFilter: "var(--blur)",
+              WebkitBackdropFilter: "var(--blur)",
+              border: "1px solid var(--glassBd)",
+              borderRadius: 16,
+              boxShadow: "var(--shadow2)",
               overflow: "hidden",
-              zIndex: 9
+              zIndex: 9,
+              animation: "dcScaleIn .36s var(--ease-spring) both"
             }}
           >
             <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", fontWeight: 600, fontSize: 13 }}>Notificações</div>

@@ -6,16 +6,17 @@ export function EmptyState({ icon, title, sub, action }: { icon: string; title: 
       className="card"
       style={{
         border: "1px dashed var(--line2)",
-        borderRadius: 14,
+        borderRadius: 16,
         padding: "64px 24px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         gap: 14,
-        textAlign: "center"
+        textAlign: "center",
+        boxShadow: "none"
       }}
     >
-      <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
+      <div style={{ width: 56, height: 56, borderRadius: 16, background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
         <i className={`fa-solid ${icon}`} style={{ fontSize: 28, lineHeight: 1 }} />
       </div>
       <div>

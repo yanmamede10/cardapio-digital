@@ -100,7 +100,7 @@ export default function ReportsScreen() {
             const h = Math.max(2, (total / maxRevenue) * 140);
             return (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flex: "0 0 auto", minWidth: 26 }}>
-                <div style={{ width: 20, height: h, borderRadius: "4px 4px 0 0", overflow: "hidden", display: "flex", flexDirection: "column-reverse", background: "var(--surface2)" }} title={brl(total)}>
+                <div style={{ width: 20, height: h, borderRadius: "11px 11px 0 0", overflow: "hidden", display: "flex", flexDirection: "column-reverse", background: "var(--surface2)" }} title={brl(total)}>
                   <div style={{ height: `${total ? (p.tableRevenue / total) * 100 : 0}%`, background: "var(--brand)" }} />
                   <div style={{ height: `${total ? (p.deliveryRevenue / total) * 100 : 0}%`, background: "var(--sec)" }} />
                 </div>
@@ -175,7 +175,7 @@ export default function ReportsScreen() {
                   title={`${c.orderCount} pedidos`}
                   style={{
                     height: 26,
-                    borderRadius: 5,
+                    borderRadius: 9,
                     background: c.orderCount === 0 ? "var(--surface2)" : `color-mix(in srgb, var(--brand) ${20 + c.intensity * 70}%, var(--surface2))`,
                     display: "flex",
                     alignItems: "center",

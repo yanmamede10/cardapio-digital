@@ -209,8 +209,8 @@ export default function SupportScreen() {
                         <div
                           style={{
                             maxWidth: "72%",
-                            borderRadius: 12,
-                            padding: "9px 12px",
+                            borderRadius: 15,
+                            padding: "10px 14px",
                             fontSize: 13,
                             lineHeight: 1.4,
                             background: m.from === "staff" ? "var(--brand)" : "var(--surface2)",
@@ -258,7 +258,7 @@ export default function SupportScreen() {
               </div>
               <div style={{ fontSize: 13, color: "var(--ink2)", lineHeight: 1.5 }}>{r.text}</div>
               {r.reply ? (
-                <div style={{ marginLeft: 20, padding: "9px 12px", borderRadius: 10, background: "var(--surface2)", fontSize: 12.5, color: "var(--ink2)" }}>
+                <div style={{ marginLeft: 20, padding: "10px 14px", borderRadius: 13, background: "var(--surface2)", fontSize: 12.5, color: "var(--ink2)" }}>
                   <div className="field-label" style={{ marginBottom: 3 }}>
                     Resposta do restaurante
                   </div>

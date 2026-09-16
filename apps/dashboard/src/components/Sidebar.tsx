@@ -8,10 +8,12 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
   return (
     <aside
       style={{
-        width: 232,
-        flex: "0 0 232px",
-        background: "var(--surface)",
-        borderRight: "1px solid var(--line)",
+        width: 264,
+        flex: "0 0 264px",
+        background: "var(--glassBg)",
+        backdropFilter: "var(--blur)",
+        WebkitBackdropFilter: "var(--blur)",
+        borderRight: "1px solid var(--glassBd)",
         display: "flex",
         flexDirection: "column",
         position: "sticky",
@@ -19,12 +21,12 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
         height: "100vh"
       }}
     >
-      <div style={{ padding: "18px 18px 14px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line)" }}>
+      <div style={{ padding: "22px 22px 18px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line)" }}>
         <div
           style={{
             width: 34,
             height: 34,
-            borderRadius: 9,
+            borderRadius: 13,
             background: "var(--brand)",
             color: "var(--brandInk)",
             display: "flex",
@@ -45,7 +47,7 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
         </div>
       </div>
 
-      <nav style={{ padding: "12px 10px", display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
+      <nav style={{ padding: "16px 13px", display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink3)", padding: "6px 10px 8px" }}>
           Módulos
         </div>
@@ -57,15 +59,16 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
             style={({ isActive }) => ({
               display: "flex",
               alignItems: "center",
-              gap: 11,
+              gap: 12,
               width: "100%",
               textAlign: "left",
-              padding: "9px 11px",
+              padding: "12px 14px",
               border: 0,
-              borderRadius: 9,
+              borderRadius: 13,
               cursor: "pointer",
               fontWeight: 500,
               textDecoration: "none",
+              transition: "background .12s var(--ease-spring), color .12s var(--ease-spring)",
               background: isActive ? "var(--brandSoft)" : "transparent",
               color: isActive ? "var(--brandText)" : "var(--ink2)"
             })}
@@ -98,7 +101,7 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
           onClick={toggleTheme}
           title="Alternar tema"
           className="btn-ghost"
-          style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 20, padding: "5px 9px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >
           <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: 17, lineHeight: 1 }} />
         </button>

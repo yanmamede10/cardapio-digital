@@ -18,11 +18,13 @@ export function SlideOver({ title, subtitle, onClose, footer, children }: Props)
             display: "flex",
             alignItems: "flex-start",
             gap: 12,
-            padding: "16px 18px",
-            borderBottom: "1px solid var(--line)",
+            padding: "20px 24px",
+            borderBottom: "1px solid var(--glassBd)",
             position: "sticky",
             top: 0,
-            background: "var(--surface)",
+            background: "var(--glassBg)",
+            backdropFilter: "var(--blur)",
+            WebkitBackdropFilter: "var(--blur)",
             zIndex: 2
           }}
         >
@@ -34,18 +36,20 @@ export function SlideOver({ title, subtitle, onClose, footer, children }: Props)
             <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
           </button>
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "22px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
           {children}
         </div>
         <div
           style={{
             display: "flex",
             gap: 10,
-            padding: "13px 18px",
-            borderTop: "1px solid var(--line)",
+            padding: "16px 24px",
+            borderTop: "1px solid var(--glassBd)",
             position: "sticky",
             bottom: 0,
-            background: "var(--surface)"
+            background: "var(--glassBg)",
+            backdropFilter: "var(--blur)",
+            WebkitBackdropFilter: "var(--blur)"
           }}
         >
           {footer}

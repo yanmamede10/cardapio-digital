@@ -131,9 +131,10 @@ export default function TablesScreen() {
                 key={t.id}
                 type="button"
                 onClick={() => setSelected(t.number)}
+                className="tap"
                 style={{
                   textAlign: "left",
-                  borderRadius: 11,
+                  borderRadius: 15,
                   padding: 12,
                   cursor: "pointer",
                   font: "inherit",
@@ -212,20 +213,22 @@ export default function TablesScreen() {
             <button
               type="button"
               onClick={() => setSplitMode(splitMode === "pessoa" ? null : "pessoa")}
-              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 9, padding: 9, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: splitMode === "pessoa" ? "var(--brand)" : "var(--surface2)", color: splitMode === "pessoa" ? "var(--brandInk)" : "var(--ink2)" }}
+              className="tap"
+              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 12, padding: 9, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: splitMode === "pessoa" ? "var(--brand)" : "var(--surface2)", color: splitMode === "pessoa" ? "var(--brandInk)" : "var(--ink2)" }}
             >
               Por pessoa
             </button>
             <button
               type="button"
               onClick={() => setSplitMode(splitMode === "item" ? null : "item")}
-              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 9, padding: 9, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: splitMode === "item" ? "var(--brand)" : "var(--surface2)", color: splitMode === "item" ? "var(--brandInk)" : "var(--ink2)" }}
+              className="tap"
+              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 12, padding: 9, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: splitMode === "item" ? "var(--brand)" : "var(--surface2)", color: splitMode === "item" ? "var(--brandInk)" : "var(--ink2)" }}
             >
               Por item
             </button>
           </div>
           {splitMode && (
-            <div style={{ background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 10, padding: 11, display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 13, padding: 11, display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink2)", flex: 1 }}>{splitMode === "pessoa" ? "Dividir por pessoa" : "Dividir por item"}</div>
                 {splitMode === "pessoa" && (
@@ -234,7 +237,7 @@ export default function TablesScreen() {
                     min={1}
                     value={people}
                     onChange={(e) => setPeople(Math.max(1, Number(e.target.value) || 1))}
-                    style={{ width: 48, border: "1px solid var(--line)", borderRadius: 6, padding: "3px 6px", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: 12 }}
+                    style={{ width: 48, border: "1px solid var(--line)", borderRadius: 8, padding: "3px 6px", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: 12 }}
                   />
                 )}
               </div>

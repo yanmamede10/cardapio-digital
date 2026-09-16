@@ -15,7 +15,7 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div style={{ display: "inline-flex", gap: 3, padding: 3, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 20 }}>
+    <div style={{ display: "inline-flex", gap: 3, padding: 3, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14 }}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -23,6 +23,7 @@ export function Segmented<T extends string>({
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
+            className="tap"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -56,6 +57,7 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
     <button
       type="button"
       onClick={onClick}
+      className="tap"
       style={{
         cursor: "pointer",
         borderRadius: 20,
