@@ -11,14 +11,27 @@
   --line: rgba(36, 22, 15, 0.14);
   --good: #3f8f5b;
 
+  --glass: rgba(255, 252, 234, 0.74);
+  --glassStrong: rgba(255, 252, 234, 0.86);
+
+  --shadow-card: 0 10px 28px rgba(36, 22, 15, 0.06);
+  --shadow-cart: 0 18px 44px rgba(2, 3, 4, 0.16);
+  --shadow-toast: 0 20px 48px rgba(2, 3, 4, 0.2);
+  --shadow-fab: 0 14px 32px rgba(2, 3, 4, 0.09);
+  --shadow-waiter: 0 16px 38px rgba(2, 3, 4, 0.1);
+  --ring-now: 0 0 0 5px rgba(115, 32, 9, 0.12);
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ease-spring: cubic-bezier(0.34, 1.3, 0.5, 1);
+
   /* phone scale (base) */
   --t-xs: 11px;
   --t-s: 13px;
-  --t-b: 15px;
-  --t-m: 17px;
-  --t-l: 22px;
-  --t-xl: 27px;
-  --pad: 16px;
+  --t-b: 16px;
+  --t-m: 18px;
+  --t-l: 23px;
+  --t-xl: 28px;
+  --pad: 20px;
   --banner: 172px;
   --photo: 120px;
   --cover: 122px;
@@ -28,6 +41,10 @@
   --safe: 10px;
   --i-s: 12px;
   --i-m: 16px;
+
+  /* corner radius scale */
+  --r-standard: 22px;
+  --r-elevated: 24px;
 }
 
 :root[data-theme="dark"] {
@@ -41,6 +58,12 @@
   --priInk: #fcf7d3;
   --acc: #938172;
   --line: rgba(147, 129, 114, 0.24);
+
+  --glass: rgba(16, 18, 20, 0.72);
+  --glassStrong: rgba(10, 11, 13, 0.82);
+
+  --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.42);
+  --ring-now: 0 0 0 5px rgba(115, 32, 9, 0.3);
 }
 
 /* tablet scale — the table-mode flow runs on a fixed tablet as well as a
@@ -49,11 +72,11 @@
   :root {
     --t-xs: 12px;
     --t-s: 15px;
-    --t-b: 17px;
-    --t-m: 20px;
-    --t-l: 26px;
+    --t-b: 18px;
+    --t-m: 21px;
+    --t-l: 27px;
     --t-xl: 34px;
-    --pad: 28px;
+    --pad: 32px;
     --banner: 230px;
     --photo: 170px;
     --cover: 200px;

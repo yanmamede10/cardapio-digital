@@ -35,15 +35,17 @@ export function BottomBar() {
         <button
           type="button"
           onClick={callWaiter}
+          className="tap"
           style={{
             pointerEvents: "auto",
             flex: showCart ? "none" : 1,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
-            border: "1px solid var(--pri)", cursor: "pointer", borderRadius: 18, padding: "14px 16px",
-            background: tableSession.waiterCalled ? "var(--pri)" : "var(--surf)",
+            border: "1px solid var(--pri)", cursor: "pointer", borderRadius: "var(--r-elevated)", padding: "14px 16px",
+            background: tableSession.waiterCalled ? "var(--pri)" : "var(--glassStrong)",
+            backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)",
             color: tableSession.waiterCalled ? "var(--priInk)" : "var(--acc)",
-            font: "600 var(--t-b) Archivo, sans-serif", whiteSpace: "nowrap",
-            boxShadow: "0 10px 24px rgba(2,3,4,.14)"
+            font: "600 var(--t-b) var(--font)", whiteSpace: "nowrap",
+            boxShadow: "var(--shadow-waiter)"
           }}
         >
           <i className="fa-solid fa-bell-concierge" style={{ fontSize: "var(--i-m)" }} />
@@ -54,23 +56,24 @@ export function BottomBar() {
         <button
           type="button"
           onClick={() => navigate("/cart")}
+          className="tap"
           style={{
             pointerEvents: "auto", flex: 1, minWidth: 0, border: "none", cursor: "pointer",
-            borderRadius: 18, padding: "14px 16px", background: "var(--pri)", color: "var(--priInk)",
-            display: "flex", alignItems: "center", gap: 12, boxShadow: "0 12px 28px rgba(2,3,4,.22)",
-            animation: "dcRise .3s ease both"
+            borderRadius: "var(--r-elevated)", padding: "14px 16px", background: "var(--pri)", color: "var(--priInk)",
+            display: "flex", alignItems: "center", gap: 12, boxShadow: "var(--shadow-cart)",
+            animation: "dcRise .4s var(--ease-spring) both"
           }}
         >
           <span style={{ position: "relative", flex: "none", width: 28, height: 28, borderRadius: 999, background: "rgba(252,247,211,.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <i className="fa-solid fa-basket-shopping" style={{ fontSize: "var(--i-s)" }} />
-            <span style={{ position: "absolute", top: -5, right: -6, minWidth: 17, height: 17, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "var(--priInk)", color: "var(--pri)", font: "700 10px Archivo, sans-serif", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ position: "absolute", top: -5, right: -6, minWidth: 17, height: 17, padding: "0 4px", boxSizing: "border-box", borderRadius: 999, background: "var(--priInk)", color: "var(--pri)", font: "700 10px var(--font)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {count}
             </span>
           </span>
-          <span style={{ flex: 1, textAlign: "left", font: "600 var(--t-b) Archivo, sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ flex: 1, textAlign: "left", font: "600 var(--t-b) var(--font)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             Ver carrinho
           </span>
-          <span style={{ font: "700 var(--t-m) Archivo, sans-serif" }}>{formatMoney(subtotal)}</span>
+          <span style={{ font: "700 var(--t-m) var(--font)" }}>{formatMoney(subtotal)}</span>
         </button>
       )}
     </div>
@@ -89,12 +92,14 @@ export function SupportFab() {
       type="button"
       title="Suporte"
       onClick={() => showToast("Chat de suporte abrindo…", "fa-solid fa-headset")}
+      className="tap"
       style={{
         position: "absolute", right: "var(--pad)", bottom: count > 0 ? 86 : 22,
         width: 42, height: 42, borderRadius: 999, cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
-        border: "1px solid var(--line)", background: "var(--surf)", color: "var(--ink2)",
-        boxShadow: "0 6px 16px rgba(2,3,4,.12)", zIndex: 30
+        border: "1px solid var(--line)", background: "var(--glassStrong)", color: "var(--ink2)",
+        backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)",
+        boxShadow: "var(--shadow-fab)", zIndex: 30
       }}
     >
       <i className="fa-solid fa-headset" style={{ fontSize: "var(--i-m)" }} />

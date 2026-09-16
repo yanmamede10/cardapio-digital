@@ -54,7 +54,7 @@ export default function CheckoutScreen() {
     <div className="screen">
       <ScreenHeader title="Pagamento" onBack={() => navigate("/cart")} />
       <div className="scroll no-scrollbar" style={{ padding: "16px var(--pad) 0" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) Archivo, sans-serif", letterSpacing: "-.015em" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
           <i className="fa-solid fa-location-dot" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Endereço de entrega
         </div>
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -65,15 +65,15 @@ export default function CheckoutScreen() {
                 <div className={`mark mark--round${selected ? " mark--selected" : ""}`}>{selected && <i className="fa-solid fa-circle" />}</div>
                 <i className={a.icon} style={{ fontSize: "var(--i-m)", color: "var(--ink2)" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ font: "600 var(--t-b) Archivo, sans-serif" }}>{a.label}</div>
-                  <div style={{ marginTop: 2, font: "400 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>{a.detail}</div>
+                  <div style={{ font: "600 var(--t-b) var(--font)" }}>{a.label}</div>
+                  <div style={{ marginTop: 2, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>{a.detail}</div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) Archivo, sans-serif", letterSpacing: "-.015em" }}>
+        <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
           <i className="fa-solid fa-credit-card" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Forma de pagamento
         </div>
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -83,14 +83,14 @@ export default function CheckoutScreen() {
               <div key={p.id} onClick={() => setPaymentMethodId(p.id)} className={`option-row${selected ? " option-row--selected" : ""}`}>
                 <div className={`mark mark--round${selected ? " mark--selected" : ""}`}>{selected && <i className="fa-solid fa-circle" />}</div>
                 <i className={p.icon} style={{ fontSize: "var(--i-m)", color: "var(--ink2)" }} />
-                <div style={{ flex: 1, font: "500 var(--t-b) Archivo, sans-serif" }}>{p.label}</div>
-                <div style={{ font: "500 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>{p.note}</div>
+                <div style={{ flex: 1, font: "500 var(--t-b) var(--font)" }}>{p.label}</div>
+                <div style={{ font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>{p.note}</div>
               </div>
             );
           })}
         </div>
 
-        <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) Archivo, sans-serif", letterSpacing: "-.015em" }}>
+        <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
           <i className="fa-solid fa-ticket" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Cupom
         </div>
         <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
@@ -100,45 +100,45 @@ export default function CheckoutScreen() {
             onChange={(e) => setCouponInput(e.target.value)}
             placeholder="Insira o código"
           />
-          <button type="button" onClick={applyCoupon} style={{ border: "1px solid var(--pri)", background: "transparent", cursor: "pointer", borderRadius: 14, padding: "14px 18px", color: "var(--acc)", font: "600 var(--t-b) Archivo, sans-serif" }}>
+          <button type="button" onClick={applyCoupon} className="tap" style={{ border: "1px solid var(--pri)", background: "transparent", cursor: "pointer", borderRadius: "var(--r-standard)", padding: "14px 18px", color: "var(--acc)", font: "600 var(--t-b) var(--font)" }}>
             Aplicar
           </button>
         </div>
         {couponNote && (
-          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, font: "500 var(--t-s) Archivo, sans-serif", color: "var(--acc)" }}>
+          <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, font: "500 var(--t-s) var(--font)", color: "var(--acc)" }}>
             <i className={discountPercent > 0 ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation"} style={{ fontSize: "var(--i-s)" }} />{couponNote}
           </div>
         )}
 
-        <div style={{ marginTop: 22, padding: 14, borderRadius: 18, background: "var(--surf)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) Archivo, sans-serif", color: "var(--ink2)" }}>
+        <div style={{ marginTop: 22, padding: 18, borderRadius: "var(--r-standard)", background: "var(--surf)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
             <span>Subtotal</span><span style={{ color: "var(--ink)" }}>{formatMoney(subtotal)}</span>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) Archivo, sans-serif", color: "var(--ink2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
             <span>Taxa de entrega</span><span style={{ color: "var(--ink)" }}>{fee === 0 ? "Grátis" : formatMoney(fee)}</span>
           </div>
           {discount > 0 && (
-            <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) Archivo, sans-serif", color: "var(--ink2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
               <span>Cupom {couponInput.toUpperCase()}</span><span style={{ color: "var(--ink)" }}>− {formatMoney(discount)}</span>
             </div>
           )}
           <div style={{ height: 1, background: "var(--line)" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <span style={{ font: "600 var(--t-b) Archivo, sans-serif" }}>Total</span>
-            <span style={{ font: "700 var(--t-l) Archivo, sans-serif", letterSpacing: "-.02em" }}>{formatMoney(total)}</span>
+            <span style={{ font: "600 var(--t-b) var(--font)" }}>Total</span>
+            <span style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.02em" }}>{formatMoney(total)}</span>
           </div>
         </div>
-        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, font: "500 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>
+        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
           <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />Entrega estimada em 30–40 min após a confirmação.
         </div>
         {lines.length === 0 && (
-          <div style={{ marginTop: 14, padding: 14, borderRadius: 14, background: "var(--surf2)", font: "500 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>
+          <div style={{ marginTop: 14, padding: 18, borderRadius: "var(--r-standard)", background: "var(--surf2)", font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
             Seu carrinho está vazio — volte ao cardápio para adicionar itens antes de revisar o pedido.
           </div>
         )}
         <div style={{ height: 24 }} />
       </div>
-      <div style={{ flex: "none", padding: "14px var(--pad) calc(14px + var(--safe))", borderTop: "1px solid var(--line)", background: "var(--surf)" }}>
+      <div style={{ flex: "none", padding: "16px var(--pad) calc(16px + var(--safe))", borderTop: "1px solid var(--line)", background: "var(--glass)", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)" }}>
         <button className="btn-primary" disabled={lines.length === 0} onClick={() => navigate("/review")}>
           <i className="fa-solid fa-clipboard-check" style={{ fontSize: "var(--i-m)" }} />Revisar pedido
         </button>

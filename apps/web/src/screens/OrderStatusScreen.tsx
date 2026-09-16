@@ -68,27 +68,27 @@ export default function OrderStatusScreen() {
         <div style={{ animation: "dcPop .45s cubic-bezier(.2,.8,.3,1) both", width: 74, height: 74, borderRadius: 999, background: "var(--pri)", color: "var(--priInk)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <i className={isMesa ? "fa-solid fa-kitchen-set" : "fa-solid fa-check"} style={{ fontSize: 30 }} />
         </div>
-        <div style={{ marginTop: 18, font: "700 var(--t-xl) Archivo, sans-serif", letterSpacing: "-.025em", lineHeight: 1.15 }}>
+        <div style={{ marginTop: 18, font: "700 var(--t-xl) var(--font)", letterSpacing: "-.025em", lineHeight: 1.15 }}>
           {isMesa ? "Pedido recebido pela cozinha" : "Pedido confirmado!"}
         </div>
-        <div style={{ marginTop: 10, font: "400 var(--t-b) Archivo, sans-serif", color: "var(--ink2)", lineHeight: 1.5 }}>
+        <div style={{ marginTop: 10, font: "400 var(--t-b) var(--font)", color: "var(--ink2)", lineHeight: 1.5 }}>
           {isMesa
             ? `A cozinha já começou a preparar. O garçom traz à Mesa ${tableNumber ?? order.tableNumber ?? ""} assim que estiver pronto.`
             : "Acompanhe o preparo e a entrega por aqui — avisamos a cada etapa."}
         </div>
 
-        <div className="card" style={{ marginTop: 18, padding: 14, display: "flex", gap: 18 }}>
+        <div className="card" style={{ marginTop: 18, padding: 18, display: "flex", gap: 18 }}>
           <div>
             <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <i className="fa-solid fa-receipt" style={{ fontSize: "var(--i-s)" }} />pedido
             </div>
-            <div style={{ marginTop: 4, font: "600 var(--t-m) Archivo, sans-serif" }}>{order.code}</div>
+            <div style={{ marginTop: 4, font: "600 var(--t-m) var(--font)" }}>{order.code}</div>
           </div>
           <div>
             <div className="mono-label" style={{ display: "flex", alignItems: "center", gap: 7 }}>
               <i className={isMesa ? "fa-solid fa-qrcode" : "fa-solid fa-clock"} style={{ fontSize: "var(--i-s)" }} />{isMesa ? "mesa" : "previsão"}
             </div>
-            <div style={{ marginTop: 4, font: "600 var(--t-m) Archivo, sans-serif" }}>{isMesa ? String(tableNumber ?? order.tableNumber ?? "") : "30–40 min"}</div>
+            <div style={{ marginTop: 4, font: "600 var(--t-m) var(--font)" }}>{isMesa ? String(tableNumber ?? order.tableNumber ?? "") : "30–40 min"}</div>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export default function OrderStatusScreen() {
                         width: 26, height: 26, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center",
                         color: "var(--priInk)", background: active ? "var(--pri)" : "transparent",
                         border: `2px solid ${active ? "var(--pri)" : "var(--line)"}`,
-                        boxShadow: now ? "0 0 0 5px rgba(115,32,9,.12)" : "none"
+                        boxShadow: now ? "var(--ring-now)" : "none"
                       }}
                     >
                       {active && <i className={s.icon} style={{ fontSize: 11 }} />}
@@ -116,8 +116,8 @@ export default function OrderStatusScreen() {
                     )}
                   </div>
                   <div style={{ paddingBottom: 18 }}>
-                    <div style={{ font: `${active ? 600 : 500} var(--t-b) Archivo, sans-serif`, color: active ? "var(--ink)" : "var(--ink2)" }}>{s.label}</div>
-                    <div style={{ marginTop: 3, font: "400 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>{now ? `${s.note} · agora` : s.note}</div>
+                    <div style={{ font: `${active ? 600 : 500} var(--t-b) var(--font)`, color: active ? "var(--ink)" : "var(--ink2)" }}>{s.label}</div>
+                    <div style={{ marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>{now ? `${s.note} · agora` : s.note}</div>
                   </div>
                 </div>
               );
@@ -126,21 +126,21 @@ export default function OrderStatusScreen() {
         )}
 
         {isMesa && (
-          <div style={{ marginTop: 22, padding: 16, borderRadius: 18, background: "var(--surf2)", border: "1px solid var(--line)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-b) Archivo, sans-serif" }}>
+          <div style={{ marginTop: 22, padding: 18, borderRadius: "var(--r-standard)", background: "var(--surf2)", border: "1px solid var(--line)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-b) var(--font)" }}>
               <i className="fa-solid fa-receipt" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Comanda da Mesa {tableNumber ?? order.tableNumber}
             </div>
-            <div style={{ marginTop: 6, font: "400 var(--t-s) Archivo, sans-serif", color: "var(--ink2)", lineHeight: 1.5 }}>
+            <div style={{ marginTop: 6, font: "400 var(--t-s) var(--font)", color: "var(--ink2)", lineHeight: 1.5 }}>
               Novos pedidos continuam somando na mesma comanda. O pagamento é feito no caixa ou com o garçom.
             </div>
             <div style={{ marginTop: 12, display: "flex", gap: 18 }}>
               <div>
                 <div className="mono-label">rodadas</div>
-                <div style={{ marginTop: 3, font: "700 var(--t-m) Archivo, sans-serif" }}>{tableSession.rounds}</div>
+                <div style={{ marginTop: 3, font: "700 var(--t-m) var(--font)" }}>{tableSession.rounds}</div>
               </div>
               <div>
                 <div className="mono-label">total na mesa</div>
-                <div style={{ marginTop: 3, font: "700 var(--t-m) Archivo, sans-serif" }}>{formatMoney(tableSession.tableTotal)}</div>
+                <div style={{ marginTop: 3, font: "700 var(--t-m) var(--font)" }}>{formatMoney(tableSession.tableTotal)}</div>
               </div>
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function OrderStatusScreen() {
         <div style={{ height: 24 }} />
       </div>
 
-      <div style={{ flex: "none", padding: "14px var(--pad) calc(14px + var(--safe))", display: "flex", gap: 10, borderTop: "1px solid var(--line)", background: "var(--surf)" }}>
+      <div style={{ flex: "none", padding: "16px var(--pad) calc(16px + var(--safe))", display: "flex", gap: 10, borderTop: "1px solid var(--line)", background: "var(--glass)", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)" }}>
         {isMesa && (
           <button className="btn-outline" style={{ flex: "none" }} onClick={callWaiter}>
             <i className="fa-solid fa-bell-concierge" style={{ fontSize: "var(--i-m)" }} />Chamar garçom

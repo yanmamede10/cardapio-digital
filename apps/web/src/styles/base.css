@@ -1,6 +1,6 @@
 @keyframes dcToast {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes dcPop {
   0% { transform: scale(0.7); opacity: 0; }
@@ -13,8 +13,8 @@
   100% { opacity: 0.45; }
 }
 @keyframes dcRise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 * { box-sizing: border-box; }
@@ -27,7 +27,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: Archivo, system-ui, sans-serif;
+  font-family: var(--font);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -41,7 +41,7 @@ button {
 }
 
 .mono-label {
-  font: 500 var(--t-xs) "IBM Plex Mono", monospace;
+  font: 500 var(--t-xs) var(--font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink2);
@@ -59,7 +59,11 @@ button {
   padding: 10px 16px;
   background: var(--surf);
   color: var(--ink);
-  font: 500 var(--t-b) Archivo, sans-serif;
+  font: 500 var(--t-b) var(--font);
+  transition: background 0.22s var(--ease-spring), color 0.22s var(--ease-spring), border-color 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
+}
+.pill:active {
+  transform: scale(0.96);
 }
 .pill--active {
   border-color: var(--pri);
@@ -71,22 +75,31 @@ button {
 .card {
   background: var(--surf);
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--r-standard);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-spring);
+}
+.card:active {
+  transform: scale(0.98);
 }
 
 .btn-primary {
   border: none;
   cursor: pointer;
-  border-radius: 16px;
+  border-radius: var(--r-elevated);
   padding: 17px 18px;
   background: var(--pri);
   color: var(--priInk);
-  font: 600 var(--t-m) Archivo, sans-serif;
+  font: 600 var(--t-m) var(--font);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
+  transition: transform 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-spring), opacity 0.22s var(--ease-spring);
+}
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .btn-primary:disabled {
   opacity: 0.55;
@@ -97,29 +110,37 @@ button {
   border: 1px solid var(--pri);
   background: transparent;
   cursor: pointer;
-  border-radius: 14px;
+  border-radius: var(--r-standard);
   padding: 14px 18px;
   color: var(--acc);
-  font: 600 var(--t-b) Archivo, sans-serif;
+  font: 600 var(--t-b) var(--font);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
+  transition: transform 0.22s var(--ease-spring), background 0.22s var(--ease-spring);
+}
+.btn-outline:active {
+  transform: scale(0.97);
 }
 
 .btn-dashed {
   border: 1px dashed var(--line);
   background: transparent;
   cursor: pointer;
-  border-radius: 16px;
+  border-radius: var(--r-standard);
   padding: 14px;
   color: var(--acc);
-  font: 600 var(--t-b) Archivo, sans-serif;
+  font: 600 var(--t-b) var(--font);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
+  transition: transform 0.22s var(--ease-spring), background 0.22s var(--ease-spring);
+}
+.btn-dashed:active {
+  transform: scale(0.98);
 }
 
 .icon-btn {
@@ -132,32 +153,43 @@ button {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  background: var(--surf);
+  background: var(--glass);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   color: var(--ink);
+  transition: transform 0.2s var(--ease-spring), background 0.22s var(--ease-spring);
+}
+.icon-btn:active {
+  transform: scale(0.92);
 }
 .icon-btn--glass {
   border: none;
-  background: rgba(2, 3, 4, 0.55);
-  backdrop-filter: blur(6px);
+  background: rgba(2, 3, 4, 0.42);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
   color: #fcf7d3;
 }
 
 .field {
   width: 100%;
   box-sizing: border-box;
-  padding: 14px;
-  border-radius: 14px;
+  padding: 16px 18px;
+  border-radius: var(--r-standard);
   border: 1px solid var(--line);
   background: var(--surf);
   color: var(--ink);
-  font: 500 var(--t-b) Archivo, sans-serif;
+  font: 500 var(--t-b) var(--font);
   outline: none;
+  transition: border-color 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-spring);
+}
+.field:focus {
+  border-color: var(--pri);
 }
 textarea.field {
   resize: vertical;
   min-height: 84px;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 1.6;
 }
 
 .option-row {
@@ -165,10 +197,14 @@ textarea.field {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  padding: 13px 14px;
-  border-radius: 14px;
+  padding: 16px 18px;
+  border-radius: var(--r-standard);
   background: var(--surf);
   border: 1px solid var(--line);
+  transition: background 0.22s var(--ease-spring), border-color 0.22s var(--ease-spring), transform 0.22s var(--ease-spring);
+}
+.option-row:active {
+  transform: scale(0.99);
 }
 .option-row--selected {
   border-color: var(--pri);
@@ -190,6 +226,7 @@ textarea.field {
   justify-content: center;
   line-height: 1;
   font-size: 9px;
+  transition: background 0.22s var(--ease-spring), border-color 0.22s var(--ease-spring);
 }
 .mark--round { border-radius: 999px; }
 .mark--square { border-radius: 7px; }
@@ -236,17 +273,24 @@ textarea.field {
 }
 
 .toast {
-  animation: dcToast 0.22s ease both;
+  animation: dcToast 0.32s var(--ease-spring) both;
   max-width: 330px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  border-radius: 14px;
+  border-radius: var(--r-standard);
   background: var(--ink);
   color: var(--bg);
-  font: 600 var(--t-s) Archivo, sans-serif;
-  box-shadow: 0 10px 24px rgba(2, 3, 4, 0.28);
+  font: 600 var(--t-s) var(--font);
+  box-shadow: var(--shadow-toast);
+}
+
+.tap {
+  transition: transform 0.2s var(--ease-spring), background 0.22s var(--ease-spring), box-shadow 0.22s var(--ease-spring);
+}
+.tap:active {
+  transform: scale(0.94);
 }
 
 a { color: var(--acc); }

@@ -11,10 +11,10 @@ export function ScreenHeader({
   meta?: ReactNode;
 }) {
   return (
-    <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "14px var(--pad)", borderBottom: "1px solid var(--line)" }}>
+    <div style={{ flex: "none", display: "flex", alignItems: "center", gap: 12, padding: "16px var(--pad)", borderBottom: "1px solid var(--line)", background: "var(--glass)", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)" }}>
       <IconButton icon="fa-solid fa-arrow-left" onClick={onBack} title="Voltar" />
-      <div style={{ font: "700 var(--t-l) Archivo, sans-serif", letterSpacing: "-.025em" }}>{title}</div>
-      {meta && <div style={{ marginLeft: "auto", font: "500 var(--t-s) 'IBM Plex Mono', monospace", color: "var(--ink2)" }}>{meta}</div>}
+      <div style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.025em" }}>{title}</div>
+      {meta && <div style={{ marginLeft: "auto", font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>{meta}</div>}
     </div>
   );
 }

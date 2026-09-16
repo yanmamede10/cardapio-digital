@@ -55,31 +55,32 @@ export default function HistoryScreen() {
         {orders?.length === 0 && (
           <div style={{ padding: "40px 8px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 14 }}>
             <i className="fa-solid fa-receipt" style={{ fontSize: 38, color: "var(--ink2)", opacity: 0.5 }} />
-            <div style={{ font: "700 var(--t-m) Archivo, sans-serif" }}>Nenhum pedido ainda</div>
-            <div style={{ maxWidth: 260, font: "400 var(--t-s) Archivo, sans-serif", color: "var(--ink2)", lineHeight: 1.5 }}>
+            <div style={{ font: "700 var(--t-m) var(--font)" }}>Nenhum pedido ainda</div>
+            <div style={{ maxWidth: 260, font: "400 var(--t-s) var(--font)", color: "var(--ink2)", lineHeight: 1.5 }}>
               Seus pedidos de delivery aparecem aqui depois da primeira compra.
             </div>
           </div>
         )}
         {orders?.map((h) => (
-          <div key={h.id} className="card" style={{ padding: 14 }}>
+          <div key={h.id} className="card" style={{ padding: 18 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
-              <div style={{ font: "600 var(--t-b) Archivo, sans-serif", textTransform: "capitalize" }}>{formatDate(h.createdAt)}</div>
-              <div style={{ font: "500 var(--t-xs) 'IBM Plex Mono', monospace", color: "var(--ink2)" }}>{h.code}</div>
+              <div style={{ font: "600 var(--t-b) var(--font)", textTransform: "capitalize" }}>{formatDate(h.createdAt)}</div>
+              <div style={{ font: "500 var(--t-xs) var(--font)", color: "var(--ink2)" }}>{h.code}</div>
             </div>
-            <div style={{ marginTop: 6, font: "400 var(--t-s) Archivo, sans-serif", color: "var(--ink2)", lineHeight: 1.45 }}>
+            <div style={{ marginTop: 6, font: "400 var(--t-s) var(--font)", color: "var(--ink2)", lineHeight: 1.6 }}>
               {h.lines.map((l) => `${l.quantity}× ${l.name}`).join(" · ")}
             </div>
             <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <div style={{ font: "700 var(--t-b) Archivo, sans-serif" }}>{formatMoney(h.total)}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 10px", borderRadius: 999, background: "var(--surf2)", font: "600 var(--t-xs) Archivo, sans-serif", color: "var(--ink2)" }}>
+              <div style={{ font: "700 var(--t-b) var(--font)" }}>{formatMoney(h.total)}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 10px", borderRadius: 999, background: "var(--surf2)", font: "600 var(--t-xs) var(--font)", color: "var(--ink2)" }}>
                 <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--i-s)", color: h.status === "delivered" ? "var(--good)" : "var(--ink2)" }} />
                 {STATUS_LABEL[h.status]}
               </div>
               <button
                 type="button"
                 onClick={() => repeat(h)}
-                style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid var(--pri)", background: "transparent", cursor: "pointer", borderRadius: 999, padding: "8px 14px", color: "var(--acc)", font: "600 var(--t-s) Archivo, sans-serif" }}
+                className="tap"
+                style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid var(--pri)", background: "transparent", cursor: "pointer", borderRadius: 999, padding: "8px 14px", color: "var(--acc)", font: "600 var(--t-s) var(--font)" }}
               >
                 <i className="fa-solid fa-rotate-right" style={{ fontSize: "var(--i-s)" }} />Pedir de novo
               </button>

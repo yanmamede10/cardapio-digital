@@ -67,18 +67,18 @@ export default function ItemDetailScreen() {
     <div className="screen">
       <div className="scroll no-scrollbar">
         <div className="photo-placeholder" style={{ position: "relative", height: "calc(var(--banner) + 40px)" }}>
-          <span style={{ font: "500 11px 'IBM Plex Mono', monospace", letterSpacing: ".08em", color: "var(--ink2)" }}>{item.photoLabel}</span>
+          <span style={{ font: "500 11px var(--font)", letterSpacing: ".08em", color: "var(--ink2)" }}>{item.photoLabel}</span>
           <IconButton icon="fa-solid fa-arrow-left" onClick={goBack} title="Voltar" glass style={{ position: "absolute", top: 12, left: 12 }} />
         </div>
         <div style={{ padding: "18px var(--pad) 0" }}>
-          <div style={{ font: "700 var(--t-l) Archivo, sans-serif", letterSpacing: "-.025em" }}>{item.name}</div>
-          <div style={{ marginTop: 8, font: "400 var(--t-b) Archivo, sans-serif", color: "var(--ink2)", lineHeight: 1.5 }}>{item.longDescription}</div>
-          <div style={{ marginTop: 12, font: "700 var(--t-m) Archivo, sans-serif", color: "var(--acc)" }}>{formatMoney(item.price)}</div>
+          <div style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.025em" }}>{item.name}</div>
+          <div style={{ marginTop: 8, font: "400 var(--t-b) var(--font)", color: "var(--ink2)", lineHeight: 1.6 }}>{item.longDescription}</div>
+          <div style={{ marginTop: 12, font: "700 var(--t-m) var(--font)", color: "var(--acc)" }}>{formatMoney(item.price)}</div>
 
           {item.optionGroups.map((g) => (
             <div key={g.id} style={{ marginTop: 22 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <div style={{ font: "600 var(--t-m) Archivo, sans-serif", letterSpacing: "-.015em" }}>{g.label}</div>
+                <div style={{ font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>{g.label}</div>
                 <div className="mono-label">{g.hint}</div>
               </div>
               <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -93,8 +93,8 @@ export default function ItemDetailScreen() {
                       <div className={`mark ${g.type === "single" ? "mark--round" : "mark--square"}${selected ? " mark--selected" : ""}`}>
                         {selected && <i className={g.type === "single" ? "fa-solid fa-circle" : "fa-solid fa-check"} />}
                       </div>
-                      <div style={{ flex: 1, font: "500 var(--t-b) Archivo, sans-serif" }}>{o.label}</div>
-                      <div style={{ font: "600 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>
+                      <div style={{ flex: 1, font: "500 var(--t-b) var(--font)" }}>{o.label}</div>
+                      <div style={{ font: "600 var(--t-s) var(--font)", color: "var(--ink2)" }}>
                         {o.priceDelta > 0 ? `+ ${formatMoney(o.priceDelta)}` : ""}
                       </div>
                     </div>
@@ -105,7 +105,7 @@ export default function ItemDetailScreen() {
           ))}
 
           <div style={{ marginTop: 22 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, font: "600 var(--t-m) Archivo, sans-serif", letterSpacing: "-.015em" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
               <i className="fa-solid fa-pen" style={{ fontSize: "var(--i-s)", color: "var(--ink2)" }} />Observações
             </div>
             <textarea
@@ -123,27 +123,29 @@ export default function ItemDetailScreen() {
                 type="button"
                 title="Menos"
                 onClick={() => setDraft((d) => (d ? { ...d, qty: Math.max(1, d.qty - 1) } : d))}
+                className="tap"
                 style={{ width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--surf2)", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <i className="fa-solid fa-minus" style={{ fontSize: "var(--i-m)" }} />
               </button>
-              <div style={{ minWidth: 30, textAlign: "center", font: "700 var(--t-m) Archivo, sans-serif" }}>{draft.qty}</div>
+              <div style={{ minWidth: 30, textAlign: "center", font: "700 var(--t-m) var(--font)" }}>{draft.qty}</div>
               <button
                 type="button"
                 title="Mais"
                 onClick={() => setDraft((d) => (d ? { ...d, qty: d.qty + 1 } : d))}
+                className="tap"
                 style={{ width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--surf2)", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <i className="fa-solid fa-plus" style={{ fontSize: "var(--i-m)" }} />
               </button>
             </div>
-            <div style={{ font: "500 var(--t-s) Archivo, sans-serif", color: "var(--ink2)" }}>Unidade {formatMoney(unit)}</div>
+            <div style={{ font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>Unidade {formatMoney(unit)}</div>
           </div>
           <div style={{ height: 20 }} />
         </div>
         <div style={{ height: 104 }} />
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px var(--pad) calc(12px + var(--safe))", background: "linear-gradient(to top,var(--bg) 55%,rgba(0,0,0,0))" }}>
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px var(--pad) calc(12px + var(--safe))", background: "linear-gradient(to top,var(--bg) 55%,rgba(0,0,0,0))", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)" }}>
         <button className="btn-primary" onClick={addToCart} style={{ justifyContent: "space-between" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
             <i className="fa-solid fa-basket-shopping" style={{ fontSize: "var(--i-m)" }} />Adicionar ao carrinho

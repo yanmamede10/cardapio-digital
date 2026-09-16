@@ -33,7 +33,7 @@ export default function TableEntryScreen() {
       {error ? (
         <>
           <i className="fa-solid fa-qrcode" style={{ fontSize: 38, color: "var(--ink2)", opacity: 0.6 }} />
-          <div style={{ font: "700 var(--t-m) Archivo, sans-serif" }}>{error}</div>
+          <div style={{ font: "700 var(--t-m) var(--font)" }}>{error}</div>
         </>
       ) : (
         <>
