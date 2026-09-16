@@ -20,6 +20,11 @@ export function fmtMinutes(m: number): string {
   return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}min` : `${m} min`;
 }
 
+/** Elapsed-minutes color: green under 30, amber under 60, red past an hour (SLA breach). */
+export function slaFg(min: number): string {
+  return min >= 60 ? "var(--alert)" : min >= 30 ? "var(--warn)" : "var(--ok)";
+}
+
 export function fmtDateTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "short" }) + ", " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });

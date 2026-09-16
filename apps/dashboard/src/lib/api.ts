@@ -73,8 +73,6 @@ const qs = (params: Record<string, string | undefined>) => {
   return str ? `?${str}` : "";
 };
 
-export const restaurantId = RESTAURANT_ID;
-
 export const api = {
   getRestaurant: () => request<Restaurant>(`/api/restaurants/${RESTAURANT_ID}`),
 

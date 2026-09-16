@@ -4,7 +4,6 @@ import { api } from "../../lib/api";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
 const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "Gerente", waiter: "Garçom", kitchen: "Cozinha" };
-const fieldInput = { minHeight: 46, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 11, padding: "0 12px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none" };
 
 export default function MobileTeamScreen() {
   const { notify } = useMobileScreen({ title: "Equipe", subtitle: "Usuários e permissões" });
@@ -62,9 +61,9 @@ export default function MobileTeamScreen() {
 
       {inviteOpen && (
         <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 10 }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" style={fieldInput} />
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" style={fieldInput} />
-          <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)} style={fieldInput}>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" className="field-mobile" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" className="field-mobile" />
+          <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)} className="field-mobile">
             {(Object.keys(ROLE_LABEL) as StaffRole[]).map((r) => (
               <option key={r} value={r}>
                 {ROLE_LABEL[r]}

@@ -74,14 +74,3 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
     </button>
   );
 }
-
-export function SectionTitle({ icon, title, right }: { icon?: string; title: string; right?: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 12 }}>
-      {icon && <i className={`fa-solid ${icon}`} style={{ fontSize: 17, color: "var(--brandText)" }} />}
-      <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>
-      <div style={{ flex: 1 }} />
-      {right}
-    </div>
-  );
-}

@@ -11,9 +11,6 @@ const CHANNELS: { key: CouponChannel; label: string }[] = [
   { key: "both", label: "Ambos" }
 ];
 
-const fieldLabel = { fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase" as const, color: "var(--ink3)" };
-const fieldInput = { minHeight: 46, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 11, padding: "0 12px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none" };
-
 export default function MobileCouponFormScreen() {
   const navigate = useNavigate();
   const { notify } = useMobileScreen({ title: "Novo cupom", subtitle: "Desconto ou combo", hideTabs: true });
@@ -61,12 +58,12 @@ export default function MobileCouponFormScreen() {
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Código do cupom</span>
-          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="VERAO20" className="mono" style={{ ...fieldInput, letterSpacing: ".06em", fontSize: 14 }} />
+          <span className="field-label">Código do cupom</span>
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="VERAO20" className="field-mobile mono" style={{ letterSpacing: ".06em", fontSize: 14 }} />
         </label>
 
         <div>
-          <div style={{ ...fieldLabel, marginBottom: 6 }}>Tipo de desconto</div>
+          <div className="field-label" style={{ marginBottom: 6 }}>Tipo de desconto</div>
           <div style={{ display: "flex", gap: 7 }}>
             {[
               { key: "percent" as const, label: "Percentual", icon: "fa-percent" },
@@ -90,17 +87,17 @@ export default function MobileCouponFormScreen() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <span style={fieldLabel}>Valor</span>
-            <input value={value} onChange={(e) => setValue(e.target.value)} placeholder={kind === "percent" ? "20" : "15,00"} className="mono" style={fieldInput} />
+            <span className="field-label">Valor</span>
+            <input value={value} onChange={(e) => setValue(e.target.value)} placeholder={kind === "percent" ? "20" : "15,00"} className="field-mobile mono" />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <span style={fieldLabel}>Validade</span>
-            <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="mono" style={fieldInput} />
+            <span className="field-label">Validade</span>
+            <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="field-mobile mono" />
           </label>
         </div>
 
         <div>
-          <div style={{ ...fieldLabel, marginBottom: 6 }}>Canal de aplicação</div>
+          <div className="field-label" style={{ marginBottom: 6 }}>Canal de aplicação</div>
           <div style={{ display: "flex", gap: 7 }}>
             {CHANNELS.map((c) => {
               const active = channel === c.key;
@@ -114,8 +111,8 @@ export default function MobileCouponFormScreen() {
         </div>
 
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Limite de uso</span>
-          <input value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} placeholder="200" style={fieldInput} />
+          <span className="field-label">Limite de uso</span>
+          <input value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} placeholder="200" className="field-mobile" />
         </label>
       </section>
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SupportTicket, TicketChannel, TicketStatus } from "@cardapio/shared";
 import { api } from "../../lib/api";
-import { minutesSince } from "../../lib/format";
+import { fmtMinutes, minutesSince, slaFg } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
@@ -18,13 +18,6 @@ type Filter = (typeof FILTERS)[number];
 
 const STATUS_BY_FILTER: Partial<Record<Filter, TicketStatus>> = { Novo: "new", "Em andamento": "in_progress", Resolvido: "resolved" };
 const CHANNEL_BY_FILTER: Partial<Record<Filter, TicketChannel>> = { Mesa: "table", Delivery: "delivery" };
-
-function slaFg(min: number): string {
-  return min >= 60 ? "var(--alert)" : min >= 30 ? "var(--warn)" : "var(--ok)";
-}
-function fmtMin(m: number): string {
-  return m >= 60 ? `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}` : `${m} min`;
-}
 
 export default function MobileSupportScreen() {
   const navigate = useNavigate();
@@ -89,7 +82,7 @@ export default function MobileSupportScreen() {
                   <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.customerName}</span>
                   <i className={`fa-solid ${t.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 12, color: "var(--ink3)" }} />
                   <span className="mono" style={{ fontSize: 11.5, fontWeight: 600, color: slaFg(since) }}>
-                    {fmtMin(since)}
+                    {fmtMinutes(since)}
                   </span>
                 </div>
                 <div style={{ fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{last?.text ?? ""}</div>

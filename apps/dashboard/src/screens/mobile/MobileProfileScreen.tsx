@@ -3,9 +3,6 @@ import type { RestaurantProfile } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
-const fieldLabel = { fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase" as const, color: "var(--ink3)" };
-const fieldInput = { minHeight: 46, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 11, padding: "0 12px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none" };
-
 export default function MobileProfileScreen() {
   const { notify } = useMobileScreen({ title: "Perfil do restaurante", subtitle: "Identidade pública" });
   const [profile, setProfile] = useState<RestaurantProfile | null>(null);
@@ -47,16 +44,16 @@ export default function MobileProfileScreen() {
           </div>
         </div>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Nome público</span>
-          <input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} style={fieldInput} />
+          <span className="field-label">Nome público</span>
+          <input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Categoria de culinária</span>
-          <input value={profile.cuisineCategory} onChange={(e) => setProfile({ ...profile, cuisineCategory: e.target.value })} style={fieldInput} />
+          <span className="field-label">Categoria de culinária</span>
+          <input value={profile.cuisineCategory} onChange={(e) => setProfile({ ...profile, cuisineCategory: e.target.value })} className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Descrição</span>
-          <textarea rows={3} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} style={{ border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 11, padding: "11px 12px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none", resize: "vertical" }} />
+          <span className="field-label">Descrição</span>
+          <textarea rows={3} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} className="field-mobile" />
         </label>
       </section>
       <button type="button" onClick={save} style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>

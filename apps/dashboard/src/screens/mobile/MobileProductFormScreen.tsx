@@ -78,9 +78,6 @@ export default function MobileProductFormScreen() {
     );
   }
 
-  const fieldLabel = { fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase" as const, color: "var(--ink3)" };
-  const fieldInput = { minHeight: 46, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 11, padding: "0 12px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none" };
-
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
@@ -94,20 +91,20 @@ export default function MobileProductFormScreen() {
           </button>
         </div>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Nome do produto</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Moqueca de camarão" style={fieldInput} />
+          <span className="field-label">Nome do produto</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Moqueca de camarão" className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Preço</span>
-          <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="R$ 128,00" className="mono" style={fieldInput} />
+          <span className="field-label">Preço</span>
+          <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="R$ 128,00" className="field-mobile mono" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Descrição</span>
-          <textarea rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Camarões frescos, leite de coco, dendê e pirão" style={{ border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 11, padding: "11px 12px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none", resize: "vertical" }} />
+          <span className="field-label">Descrição</span>
+          <textarea rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Camarões frescos, leite de coco, dendê e pirão" className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span style={fieldLabel}>Categoria</span>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} style={fieldInput}>
+          <span className="field-label">Categoria</span>
+          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="field-mobile">
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

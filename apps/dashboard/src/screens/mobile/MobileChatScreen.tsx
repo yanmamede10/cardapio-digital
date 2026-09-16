@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { SupportTicket, TicketStatus } from "@cardapio/shared";
 import { api } from "../../lib/api";
-import { fmtMinutes, minutesSince } from "../../lib/format";
+import { fmtMinutes, minutesSince, slaFg } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
 const STATUS_MAP: Record<TicketStatus, { label: string; bg: string; fg: string }> = {
@@ -17,10 +17,6 @@ const QUICK_REPLIES = [
   "Podemos oferecer um cupom de 15% no próximo pedido?",
   "Seu item foi reenviado, chega em instantes."
 ];
-
-function slaFg(min: number): string {
-  return min >= 60 ? "var(--alert)" : min >= 30 ? "var(--warn)" : "var(--ok)";
-}
 
 export default function MobileChatScreen() {
   const { id } = useParams<{ id: string }>();
