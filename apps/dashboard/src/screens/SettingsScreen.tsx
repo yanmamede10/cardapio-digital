@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffMember, StaffRole } from "@cardapio/shared";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { Segmented } from "../components/Segmented";
@@ -15,6 +15,7 @@ export default function SettingsScreen() {
   const { notify } = useDashboardState();
   const [tab, setTab] = useState<Tab>("profile");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<RestaurantProfile | null>(null);
   const [hours, setHours] = useState<OperatingHoursRow[]>([]);
@@ -23,13 +24,18 @@ export default function SettingsScreen() {
   const [invite, setInvite] = useState({ name: "", email: "", role: "waiter" as StaffRole });
 
   useEffect(() => {
-    Promise.all([api.getProfile(), api.getHours(), api.getStaff(), api.getFiscal()]).then(([p, h, s, f]) => {
-      setProfile(p);
-      setHours(h);
-      setStaff(s);
-      setFiscal(f);
-      setLoading(false);
-    });
+    Promise.all([api.getProfile(), api.getHours(), api.getStaff(), api.getFiscal()])
+      .then(([p, h, s, f]) => {
+        setProfile(p);
+        setHours(h);
+        setStaff(s);
+        setFiscal(f);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar Configurações." : "Não foi possível carregar Configurações.");
+        setLoading(false);
+      });
   }, []);
 
   const saveProfile = async () => {
@@ -73,6 +79,10 @@ export default function SettingsScreen() {
       notify("Não foi possível enviar o convite");
     }
   };
+
+  if (error) {
+    return <p style={{ color: "var(--ink2)" }}>{error}</p>;
+  }
 
   if (loading || !profile || !fiscal) {
     return (

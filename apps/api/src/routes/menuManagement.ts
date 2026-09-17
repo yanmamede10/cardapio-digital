@@ -2,9 +2,14 @@ import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import type { UpsertMenuItemRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
+import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem } from "../lib/serialize.js";
 
 export const menuManagementRouter = Router();
+// Applied per-route (not via router.use) — several routers share the
+// "/api/restaurants" mount point, and a path-based router.use() here would
+// also run for sibling routers' routes.
+const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
 
 function optionGroupsJsonFor(extras: UpsertMenuItemRequest["extras"]): string {
   if (!extras || extras.length === 0) return "[]";
@@ -28,7 +33,7 @@ async function itemsFor(restaurantId: string) {
   return items.map((it) => serializeMenuItem(it, it.category.name));
 }
 
-menuManagementRouter.post("/:id/items", async (req, res) => {
+menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
   const body = req.body as UpsertMenuItemRequest;
   const category = await prisma.menuCategory.findUnique({ where: { id: body.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(400).json({ error: "unknown category" });
@@ -54,7 +59,7 @@ menuManagementRouter.post("/:id/items", async (req, res) => {
   res.status(201).json(serializeMenuItem(item, item.category.name));
 });
 
-menuManagementRouter.patch("/:id/items/:itemId", async (req, res) => {
+menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<UpsertMenuItemRequest> & { soldOut?: boolean };
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
@@ -76,7 +81,7 @@ menuManagementRouter.patch("/:id/items/:itemId", async (req, res) => {
   res.json(serializeMenuItem(item, item.category.name));
 });
 
-menuManagementRouter.post("/:id/items/:itemId/duplicate", async (req, res) => {
+menuManagementRouter.post("/:id/items/:itemId/duplicate", ...staffGuard, async (req, res) => {
   const original = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!original || original.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
   const last = await prisma.menuItem.findFirst({ where: { restaurantId: req.params.id }, orderBy: { sortOrder: "desc" } });
@@ -101,7 +106,7 @@ menuManagementRouter.post("/:id/items/:itemId/duplicate", async (req, res) => {
   res.status(201).json(serializeMenuItem(copy, copy.category.name));
 });
 
-menuManagementRouter.post("/:id/items/:itemId/move", async (req, res) => {
+menuManagementRouter.post("/:id/items/:itemId/move", ...staffGuard, async (req, res) => {
   const { direction } = req.body as { direction?: "up" | "down" };
   const item = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!item || item.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
@@ -119,7 +124,7 @@ menuManagementRouter.post("/:id/items/:itemId/move", async (req, res) => {
   res.json(await itemsFor(req.params.id));
 });
 
-menuManagementRouter.post("/:id/categories/:categoryId/move", async (req, res) => {
+menuManagementRouter.post("/:id/categories/:categoryId/move", ...staffGuard, async (req, res) => {
   const { direction } = req.body as { direction?: "up" | "down" };
   const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });

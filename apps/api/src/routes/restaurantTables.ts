@@ -1,15 +1,20 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
+import { requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { buildComanda, openOrdersForTable, statusForTable } from "../lib/tables.js";
 import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 
 export const restaurantTablesRouter = Router();
+// Applied per-route (not via router.use) because several routers share the
+// "/api/restaurants" mount point — a path-based router.use() here would also
+// run for sibling routers' routes (e.g. reports' /:id/shift-stats).
+const staffGuard = [requireStaff, requireOwnRestaurant];
 
 async function findTable(restaurantId: string, number: number) {
   return prisma.restaurantTable.findUnique({ where: { restaurantId_number: { restaurantId, number } } });
 }
 
-restaurantTablesRouter.get("/:id/tables", async (req, res) => {
+restaurantTablesRouter.get("/:id/tables", ...staffGuard, async (req, res) => {
   const tables = await prisma.restaurantTable.findMany({ where: { restaurantId: req.params.id }, orderBy: { number: "asc" } });
   const withStatus = await Promise.all(
     tables.map(async (t) => serializeTable(t, statusForTable(t, await openOrdersForTable(req.params.id, t))))
@@ -17,7 +22,7 @@ restaurantTablesRouter.get("/:id/tables", async (req, res) => {
   res.json(withStatus);
 });
 
-restaurantTablesRouter.post("/:id/tables", async (req, res) => {
+restaurantTablesRouter.post("/:id/tables", ...staffGuard, async (req, res) => {
   const { seats } = req.body as { seats?: number };
   const last = await prisma.restaurantTable.findFirst({ where: { restaurantId: req.params.id }, orderBy: { number: "desc" } });
   const table = await prisma.restaurantTable.create({
@@ -26,14 +31,14 @@ restaurantTablesRouter.post("/:id/tables", async (req, res) => {
   res.status(201).json(serializeTable(table, "free"));
 });
 
-restaurantTablesRouter.get("/:id/tables/:number/comanda", async (req, res) => {
+restaurantTablesRouter.get("/:id/tables/:number/comanda", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
   const orders = await openOrdersForTable(req.params.id, table);
   res.json(buildComanda(table, orders));
 });
 
-restaurantTablesRouter.post("/:id/tables/:number/close", async (req, res) => {
+restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
   const orders = await openOrdersForTable(req.params.id, table);
@@ -42,7 +47,7 @@ restaurantTablesRouter.post("/:id/tables/:number/close", async (req, res) => {
   res.json({ ok: true });
 });
 
-restaurantTablesRouter.post("/:id/tables/:number/transfer", async (req, res) => {
+restaurantTablesRouter.post("/:id/tables/:number/transfer", ...staffGuard, async (req, res) => {
   const { toNumber } = req.body as { toNumber?: number };
   const fromNumber = parseInt(req.params.number, 10);
   if (!toNumber || toNumber === fromNumber) return res.status(400).json({ error: "invalid destination table" });
@@ -58,14 +63,14 @@ restaurantTablesRouter.post("/:id/tables/:number/transfer", async (req, res) => 
   res.json({ ok: true });
 });
 
-restaurantTablesRouter.get("/:id/tables/:number/qr", async (req, res) => {
+restaurantTablesRouter.get("/:id/tables/:number/qr", ...staffGuard, async (req, res) => {
   const number = parseInt(req.params.number, 10);
   const table = await findTable(req.params.id, number);
   if (!table) return res.status(404).json({ error: "table not found" });
   res.json({ tableCode: String(number) });
 });
 
-restaurantTablesRouter.get("/:id/waiter-calls", async (req, res) => {
+restaurantTablesRouter.get("/:id/waiter-calls", ...staffGuard, async (req, res) => {
   const calls = await prisma.waiterCall.findMany({
     where: { restaurantId: req.params.id, resolvedAt: null },
     orderBy: { createdAt: "asc" }
@@ -73,7 +78,7 @@ restaurantTablesRouter.get("/:id/waiter-calls", async (req, res) => {
   res.json(calls.map(serializeWaiterCall));
 });
 
-restaurantTablesRouter.post("/:id/waiter-calls/:callId/resolve", async (req, res) => {
+restaurantTablesRouter.post("/:id/waiter-calls/:callId/resolve", ...staffGuard, async (req, res) => {
   const call = await prisma.waiterCall.findUnique({ where: { id: req.params.callId } });
   if (!call || call.restaurantId !== req.params.id) return res.status(404).json({ error: "call not found" });
   await prisma.waiterCall.update({ where: { id: call.id }, data: { resolvedAt: new Date() } });

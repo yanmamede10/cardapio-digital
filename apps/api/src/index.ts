@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { addressesRouter } from "./routes/addresses.js";
+import { authRouter } from "./routes/auth.js";
 import { couponsRouter } from "./routes/coupons.js";
 import { dashboardCouponsRouter } from "./routes/dashboardCoupons.js";
 import { menuManagementRouter } from "./routes/menuManagement.js";
@@ -21,6 +22,7 @@ app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+app.use("/api/auth", authRouter);
 app.use("/api/restaurants", restaurantsRouter);
 app.use("/api/restaurants", restaurantTablesRouter);
 app.use("/api/restaurants", menuManagementRouter);

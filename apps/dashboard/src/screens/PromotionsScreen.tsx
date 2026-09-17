@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Coupon, CouponChannel, CouponKind, MenuItem } from "@cardapio/shared";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { brl, fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
@@ -33,13 +33,21 @@ export default function PromotionsScreen() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [drawer, setDrawer] = useState<Draft | null>(null);
 
-  const reload = () => api.listCoupons().then((c) => {
-    setCoupons(c);
-    setLoading(false);
-  });
+  const reload = () =>
+    api
+      .listCoupons()
+      .then((c) => {
+        setCoupons(c);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar Promoções e Cupons." : "Não foi possível carregar Promoções e Cupons.");
+        setLoading(false);
+      });
 
   useEffect(() => {
     reload();
@@ -108,6 +116,10 @@ export default function PromotionsScreen() {
       notify("Não foi possível criar o cupom");
     }
   };
+
+  if (error) {
+    return <p style={{ color: "var(--ink2)" }}>{error}</p>;
+  }
 
   if (loading) {
     return (

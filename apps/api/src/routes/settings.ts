@@ -1,21 +1,28 @@
 import { Router } from "express";
 import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffRole } from "@cardapio/shared";
 import { prisma } from "../db.js";
+import { hashPassword, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
 
 export const settingsRouter = Router();
+// Applied per-route (not via router.use) — several routers share the
+// "/api/restaurants" mount point, and a path-based router.use() here would
+// also run for sibling routers' routes.
+const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
+const MAX_NAME_LENGTH = 120;
+const MAX_EMAIL_LENGTH = 254;
 
 async function requireRestaurant(id: string) {
   return prisma.restaurant.findUnique({ where: { id } });
 }
 
-settingsRouter.get("/:id/profile", async (req, res) => {
+settingsRouter.get("/:id/profile", ...staffGuard, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json(serializeProfile(r));
 });
 
-settingsRouter.patch("/:id/profile", async (req, res) => {
+settingsRouter.patch("/:id/profile", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<RestaurantProfile>;
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });
@@ -32,12 +39,12 @@ settingsRouter.patch("/:id/profile", async (req, res) => {
   res.json(serializeProfile(r));
 });
 
-settingsRouter.get("/:id/hours", async (req, res) => {
+settingsRouter.get("/:id/hours", ...staffGuard, async (req, res) => {
   const rows = await prisma.operatingHour.findMany({ where: { restaurantId: req.params.id } });
   res.json(serializeHours(rows));
 });
 
-settingsRouter.patch("/:id/hours", async (req, res) => {
+settingsRouter.patch("/:id/hours", ...staffGuard, async (req, res) => {
   const { rows } = req.body as { rows?: OperatingHoursRow[] };
   if (!Array.isArray(rows)) return res.status(400).json({ error: "rows is required" });
   await prisma.$transaction(
@@ -53,25 +60,35 @@ settingsRouter.patch("/:id/hours", async (req, res) => {
   res.json(serializeHours(updated));
 });
 
-settingsRouter.get("/:id/staff", async (req, res) => {
+settingsRouter.get("/:id/staff", ...staffGuard, async (req, res) => {
   const staff = await prisma.staffMember.findMany({ where: { restaurantId: req.params.id }, orderBy: { invitedAt: "asc" } });
   res.json(staff.map(serializeStaff));
 });
 
-settingsRouter.post("/:id/staff", async (req, res) => {
-  const { name, email, role } = req.body as { name?: string; email?: string; role?: StaffRole };
+settingsRouter.post("/:id/staff", ...staffGuard, async (req, res) => {
+  const { name, email, role, password } = req.body as { name?: string; email?: string; role?: StaffRole; password?: string };
   if (!name || !email || !role) return res.status(400).json({ error: "name, email and role are required" });
-  const staff = await prisma.staffMember.create({ data: { restaurantId: req.params.id, name, email, role } });
+  if (name.length > MAX_NAME_LENGTH) return res.status(400).json({ error: `name must be at most ${MAX_NAME_LENGTH} characters` });
+  if (email.length > MAX_EMAIL_LENGTH) return res.status(400).json({ error: `email must be at most ${MAX_EMAIL_LENGTH} characters` });
+  const staff = await prisma.staffMember.create({
+    data: {
+      restaurantId: req.params.id,
+      name,
+      email: email.trim().toLowerCase(),
+      role,
+      passwordHash: password ? hashPassword(password) : ""
+    }
+  });
   res.status(201).json(serializeStaff(staff));
 });
 
-settingsRouter.get("/:id/fiscal", async (req, res) => {
+settingsRouter.get("/:id/fiscal", ...staffGuard, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json(serializeFiscal(r));
 });
 
-settingsRouter.patch("/:id/fiscal", async (req, res) => {
+settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<FiscalInfo>;
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });

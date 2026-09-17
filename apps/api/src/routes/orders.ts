@@ -1,12 +1,15 @@
 import { Router, type Request } from "express";
 import type { CreateOrderRequest, OrderStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
+import { requireStaff } from "../lib/auth.js";
 import { generateOrderCode } from "../lib/codes.js";
 import { evaluateCoupon } from "../lib/coupons.js";
 import { priceLine, round2 } from "../lib/pricing.js";
 import { serializeOrder } from "../lib/serialize.js";
 
 const VALID_STAGES: OrderStatus[] = ["preparing", "ready", "out_for_delivery", "delivered", "served", "cancelled"];
+const MAX_NOTES_LENGTH = 300;
+const MAX_GUEST_NAME_LENGTH = 120;
 
 export const ordersRouter = Router();
 
@@ -19,6 +22,12 @@ ordersRouter.post("/", async (req, res) => {
   const body = req.body as CreateOrderRequest;
   if (!body || !body.restaurantId || !Array.isArray(body.lines) || body.lines.length === 0) {
     return res.status(400).json({ error: "restaurantId and at least one line are required" });
+  }
+  if (body.guestName && body.guestName.length > MAX_GUEST_NAME_LENGTH) {
+    return res.status(400).json({ error: `guestName must be at most ${MAX_GUEST_NAME_LENGTH} characters` });
+  }
+  if (body.lines.some((line) => (line.notes?.length ?? 0) > MAX_NOTES_LENGTH)) {
+    return res.status(400).json({ error: `notes must be at most ${MAX_NOTES_LENGTH} characters` });
   }
   const restaurant = await prisma.restaurant.findUnique({ where: { id: body.restaurantId } });
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
@@ -216,27 +225,30 @@ ordersRouter.post("/:id/repeat", async (req, res) => {
   res.status(201).json(serializeOrder(order));
 });
 
-ordersRouter.post("/:id/accept", async (req, res) => {
+ordersRouter.post("/:id/accept", requireStaff, async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
+  if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
   if (order.status !== "pending") return res.status(409).json({ error: "order is not pending" });
   const updated = await prisma.order.update({ where: { id: order.id }, data: { status: "preparing" }, include: { lines: true } });
   res.json(serializeOrder(updated));
 });
 
-ordersRouter.post("/:id/reject", async (req, res) => {
+ordersRouter.post("/:id/reject", requireStaff, async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
+  if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
   if (order.status !== "pending") return res.status(409).json({ error: "order is not pending" });
   await prisma.order.update({ where: { id: order.id }, data: { status: "cancelled" } });
   res.json({ ok: true });
 });
 
-ordersRouter.patch("/:id/stage", async (req, res) => {
+ordersRouter.patch("/:id/stage", requireStaff, async (req, res) => {
   const { stage } = req.body as { stage?: OrderStatus };
   if (!stage || !VALID_STAGES.includes(stage)) return res.status(400).json({ error: "invalid stage" });
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
+  if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
   const updated = await prisma.order.update({ where: { id: order.id }, data: { status: stage }, include: { lines: true } });
   res.json(serializeOrder(updated));
 });

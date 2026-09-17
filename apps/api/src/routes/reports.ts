@@ -1,22 +1,27 @@
 import { Router } from "express";
 import type { AnalyticsPeriod } from "@cardapio/shared";
 import { prisma } from "../db.js";
+import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { buildAnalytics, buildShiftStats } from "../lib/analytics.js";
 import { serializeCharge } from "../lib/serialize.js";
 import { round2 } from "../lib/pricing.js";
 
 export const reportsRouter = Router();
+// Applied per-route (not via router.use) — several routers share the
+// "/api/restaurants" mount point, and a path-based router.use() here would
+// also run for sibling routers' routes.
 
-reportsRouter.get("/:id/analytics", async (req, res) => {
+reportsRouter.get("/:id/analytics", requireStaff, requireOwnRestaurant, requireRole("owner", "manager"), async (req, res) => {
   const { period } = req.query as { period?: AnalyticsPeriod };
   res.json(await buildAnalytics(req.params.id, period || "today"));
 });
 
-reportsRouter.get("/:id/shift-stats", async (req, res) => {
+// Shift stats power the operational Central de Pedidos view, so any staff role can read them.
+reportsRouter.get("/:id/shift-stats", requireStaff, requireOwnRestaurant, async (req, res) => {
   res.json(await buildShiftStats(req.params.id));
 });
 
-reportsRouter.get("/:id/finance", async (req, res) => {
+reportsRouter.get("/:id/finance", requireStaff, requireOwnRestaurant, requireRole("owner", "manager"), async (req, res) => {
   const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
 

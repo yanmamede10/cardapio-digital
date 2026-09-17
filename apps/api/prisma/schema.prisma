@@ -221,7 +221,8 @@ model StaffMember {
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   name         String
-  email        String
+  email        String   @unique
+  passwordHash String   @default("")
   role         String
   invitedAt    DateTime @default(now())
 }

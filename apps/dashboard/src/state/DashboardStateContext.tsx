@@ -1,6 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { getSession } from "../lib/api";
 
 const THEME_KEY = "mesapronta.theme";
+const ROLE_LABELS: Record<string, string> = { owner: "Dono", manager: "Gestor", waiter: "Garçom", kitchen: "Cozinha" };
 
 export interface ToastState {
   message: string;
@@ -48,11 +50,12 @@ export function DashboardStateProvider({ children }: { children: React.ReactNode
     timer.current = setTimeout(() => setToast(null), 2200);
   }, []);
 
+  const session = getSession();
   const value: DashboardStateValue = {
     theme,
     toggleTheme,
-    staffName: (import.meta.env.VITE_STAFF_NAME as string | undefined) || "Marina Duarte",
-    staffRole: (import.meta.env.VITE_STAFF_ROLE as string | undefined) || "Dono",
+    staffName: session?.name ?? "",
+    staffRole: session ? ROLE_LABELS[session.role] ?? session.role : "",
     toast,
     notify
   };

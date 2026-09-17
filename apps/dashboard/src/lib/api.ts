@@ -26,7 +26,41 @@ import type {
 } from "@cardapio/shared";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
-const RESTAURANT_ID = (import.meta.env.VITE_RESTAURANT_ID as string | undefined) || "fogo";
+const SESSION_STORAGE_KEY = "cardapio.dashboard.session";
+
+export interface StaffSession {
+  token: string;
+  restaurantId: string;
+  role: StaffRole;
+  staffId: string;
+  name: string;
+}
+
+function loadSession(): StaffSession | null {
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as StaffSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+let session: StaffSession | null = loadSession();
+// Restaurant id used to build request URLs — comes from the logged-in staff's
+// own token once available; the API always re-derives the authoritative id
+// from the token itself, this is only for building the right path.
+let RESTAURANT_ID = session?.restaurantId ?? "";
+
+function setSession(next: StaffSession | null) {
+  session = next;
+  RESTAURANT_ID = next?.restaurantId ?? "";
+  try {
+    if (next) localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next));
+    else localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch {
+    // localStorage unavailable — session still works for this page load via the module variable
+  }
+}
 
 export class ApiError extends Error {
   status: number;
@@ -43,13 +77,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init,
       headers: {
         "Content-Type": "application/json",
-        "X-Restaurant-Id": RESTAURANT_ID,
+        ...(session ? { Authorization: `Bearer ${session.token}` } : {}),
         ...(init?.headers || {})
       }
     });
   } catch {
     throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
   }
+  if (res.status === 401) setSession(null);
   if (!res.ok) {
     let message = `Erro ${res.status}`;
     try {
@@ -62,6 +97,30 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+export function getSession(): StaffSession | null {
+  return session;
+}
+
+export async function login(email: string, password: string): Promise<StaffSession> {
+  const result = await request<{ token: string; staff: { id: string; name: string; role: StaffRole; restaurantId: string } }>(
+    "/api/auth/login",
+    { method: "POST", body: JSON.stringify({ email, password }) }
+  );
+  const next: StaffSession = {
+    token: result.token,
+    restaurantId: result.staff.restaurantId,
+    role: result.staff.role,
+    staffId: result.staff.id,
+    name: result.staff.name
+  };
+  setSession(next);
+  return next;
+}
+
+export function logout() {
+  setSession(null);
 }
 
 const qs = (params: Record<string, string | undefined>) => {

@@ -2,8 +2,11 @@
 // (the `places` and `menu` arrays inside Component), so the real app launches with
 // the exact copy/pricing the design was approved with instead of placeholder text.
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "../src/lib/auth.js";
 
 const prisma = new PrismaClient();
+// Dev-only default password for seeded staff logins — never used outside local seeding.
+const DEV_STAFF_PASSWORD_HASH = hashPassword("senha123");
 
 type RawOption = { label: string; price: number };
 type RawGroup = { id: string; label: string; type: "radio" | "check"; hint: string; options: RawOption[] };
@@ -518,10 +521,10 @@ async function main() {
 
   await prisma.staffMember.createMany({
     data: [
-      { restaurantId: "fogo", name: "Marina Duarte", email: "marina@fogoeno.com.br", role: "owner", invitedAt: minutesAgo(60 * 24 * 200) },
-      { restaurantId: "fogo", name: "Bruno Castro", email: "bruno@fogoeno.com.br", role: "manager", invitedAt: minutesAgo(60 * 24 * 90) },
-      { restaurantId: "fogo", name: "Paula Nunes", email: "paula@fogoeno.com.br", role: "waiter", invitedAt: minutesAgo(60 * 24 * 40) },
-      { restaurantId: "fogo", name: "Igor Matos", email: "igor@fogoeno.com.br", role: "kitchen", invitedAt: minutesAgo(60 * 24 * 15) }
+      { restaurantId: "fogo", name: "Marina Duarte", email: "marina@fogoeno.com.br", role: "owner", passwordHash: DEV_STAFF_PASSWORD_HASH, invitedAt: minutesAgo(60 * 24 * 200) },
+      { restaurantId: "fogo", name: "Bruno Castro", email: "bruno@fogoeno.com.br", role: "manager", passwordHash: DEV_STAFF_PASSWORD_HASH, invitedAt: minutesAgo(60 * 24 * 90) },
+      { restaurantId: "fogo", name: "Paula Nunes", email: "paula@fogoeno.com.br", role: "waiter", passwordHash: DEV_STAFF_PASSWORD_HASH, invitedAt: minutesAgo(60 * 24 * 40) },
+      { restaurantId: "fogo", name: "Igor Matos", email: "igor@fogoeno.com.br", role: "kitchen", passwordHash: DEV_STAFF_PASSWORD_HASH, invitedAt: minutesAgo(60 * 24 * 15) }
     ]
   });
 

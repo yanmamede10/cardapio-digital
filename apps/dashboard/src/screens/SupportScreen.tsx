@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Review, SupportTicket, TicketChannel, TicketStatus } from "@cardapio/shared";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { fmtDateTime, stars } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
@@ -15,6 +15,7 @@ export default function SupportScreen() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TicketStatus | "all">("all");
   const [channelFilter, setChannelFilter] = useState<TicketChannel | "all">("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -24,12 +25,17 @@ export default function SupportScreen() {
   const reloadTickets = () => api.listTickets({ status: statusFilter, channel: channelFilter }).then(setTickets);
 
   useEffect(() => {
-    Promise.all([api.listTickets(), api.listReviews()]).then(([t, r]) => {
-      setTickets(t);
-      setReviews(r);
-      setLoading(false);
-      if (t.length) setSelectedId(t[0].id);
-    });
+    Promise.all([api.listTickets(), api.listReviews()])
+      .then(([t, r]) => {
+        setTickets(t);
+        setReviews(r);
+        setLoading(false);
+        if (t.length) setSelectedId(t[0].id);
+      })
+      .catch((err) => {
+        setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar Atendimento." : "Não foi possível carregar Atendimento.");
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -86,6 +92,10 @@ export default function SupportScreen() {
     if (reviews.length === 0) return { avg: 0, count: 0 };
     return { avg: Math.round((reviews.reduce((t, r) => t + r.rating, 0) / reviews.length) * 10) / 10, count: reviews.length };
   }, [reviews]);
+
+  if (error) {
+    return <p style={{ color: "var(--ink2)" }}>{error}</p>;
+  }
 
   if (loading) {
     return (

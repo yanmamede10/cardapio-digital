@@ -1,11 +1,16 @@
 import { Router } from "express";
 import type { CreateCouponRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
+import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeCoupon } from "../lib/serialize.js";
 
 export const dashboardCouponsRouter = Router();
+// Applied per-route (not via router.use) — several routers share the
+// "/api/restaurants" mount point, and a path-based router.use() here would
+// also run for sibling routers' routes.
+const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
 
-dashboardCouponsRouter.get("/:id/coupons", async (req, res) => {
+dashboardCouponsRouter.get("/:id/coupons", ...staffGuard, async (req, res) => {
   const { query } = req.query as { query?: string };
   const q = (query ?? "").trim().toLowerCase();
   const coupons = await prisma.coupon.findMany({ where: { restaurantId: req.params.id }, orderBy: { validUntil: "desc" } });
@@ -13,7 +18,7 @@ dashboardCouponsRouter.get("/:id/coupons", async (req, res) => {
   res.json(filtered.map(serializeCoupon));
 });
 
-dashboardCouponsRouter.post("/:id/coupons", async (req, res) => {
+dashboardCouponsRouter.post("/:id/coupons", ...staffGuard, async (req, res) => {
   const body = req.body as CreateCouponRequest;
   if (!body.code || !body.kind || !body.channel || !body.validUntil) {
     return res.status(400).json({ error: "code, kind, channel and validUntil are required" });
@@ -34,7 +39,7 @@ dashboardCouponsRouter.post("/:id/coupons", async (req, res) => {
   res.status(201).json(serializeCoupon(coupon));
 });
 
-dashboardCouponsRouter.patch("/:id/coupons/:couponId", async (req, res) => {
+dashboardCouponsRouter.patch("/:id/coupons/:couponId", ...staffGuard, async (req, res) => {
   const { active } = req.body as { active?: boolean };
   const existing = await prisma.coupon.findUnique({ where: { id: req.params.couponId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "coupon not found" });
@@ -42,7 +47,7 @@ dashboardCouponsRouter.patch("/:id/coupons/:couponId", async (req, res) => {
   res.json(serializeCoupon(coupon));
 });
 
-dashboardCouponsRouter.post("/:id/coupons/:couponId/duplicate", async (req, res) => {
+dashboardCouponsRouter.post("/:id/coupons/:couponId/duplicate", ...staffGuard, async (req, res) => {
   const original = await prisma.coupon.findUnique({ where: { id: req.params.couponId } });
   if (!original || original.restaurantId !== req.params.id) return res.status(404).json({ error: "coupon not found" });
   let code = `${original.code}-COPIA`;

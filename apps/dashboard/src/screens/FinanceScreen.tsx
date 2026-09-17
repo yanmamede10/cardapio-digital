@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FinanceSummary } from "@cardapio/shared";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { brl, fmtDate } from "../lib/format";
 
 const CHARGE_STATUS: Record<string, { label: string; color: string }> = {
@@ -11,10 +11,18 @@ const CHARGE_STATUS: Record<string, { label: string; color: string }> = {
 
 export default function FinanceScreen() {
   const [data, setData] = useState<FinanceSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getFinance().then(setData);
+    api.getFinance().catch((err) => {
+      setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar o Financeiro." : "Não foi possível carregar o Financeiro.");
+      return null;
+    }).then((d) => { if (d) setData(d); });
   }, []);
+
+  if (error) {
+    return <p style={{ color: "var(--ink2)" }}>{error}</p>;
+  }
 
   if (!data) {
     return (

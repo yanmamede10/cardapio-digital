@@ -1,0 +1,72 @@
+import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import type { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import type { StaffRole } from "@cardapio/shared";
+
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? "" : "dev-only-insecure-secret");
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+const TOKEN_TTL = "12h";
+
+export interface StaffTokenPayload {
+  staffId: string;
+  restaurantId: string;
+  role: StaffRole;
+}
+
+export function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+export function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
+  const candidate = scryptSync(password, salt, 64);
+  const expected = Buffer.from(hash, "hex");
+  return candidate.length === expected.length && timingSafeEqual(candidate, expected);
+}
+
+export function signStaffToken(payload: StaffTokenPayload): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
+}
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      staff?: StaffTokenPayload;
+    }
+  }
+}
+
+export function requireStaff(req: Request, res: Response, next: NextFunction) {
+  const header = req.header("Authorization");
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+  if (!token) return res.status(401).json({ error: "authentication required" });
+  try {
+    req.staff = jwt.verify(token, JWT_SECRET) as StaffTokenPayload;
+    next();
+  } catch {
+    return res.status(401).json({ error: "invalid or expired token" });
+  }
+}
+
+/** Rejects if the :id route param doesn't match the authenticated staff's own restaurant. */
+export function requireOwnRestaurant(req: Request, res: Response, next: NextFunction) {
+  if (req.staff?.restaurantId !== req.params.id) {
+    return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  }
+  next();
+}
+
+export function requireRole(...roles: StaffRole[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.staff || !roles.includes(req.staff.role)) {
+      return res.status(403).json({ error: "forbidden: role not allowed" });
+    }
+    next();
+  };
+}

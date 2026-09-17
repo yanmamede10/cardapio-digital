@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import type { AnalyticsPeriod, AnalyticsSummary } from "@cardapio/shared";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { brl } from "../lib/format";
 import { Segmented } from "../components/Segmented";
 
@@ -40,11 +40,20 @@ function StatTile({ icon, label, value, deltaPct }: { icon: string; label: strin
 export default function ReportsScreen() {
   const [period, setPeriod] = useState<AnalyticsPeriod>("today");
   const [data, setData] = useState<AnalyticsSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setData(null);
-    api.getAnalytics(period).then(setData);
+    setError(null);
+    api.getAnalytics(period).catch((err) => {
+      setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar Relatórios." : "Não foi possível carregar Relatórios.");
+      return null;
+    }).then((d) => { if (d) setData(d); });
   }, [period]);
+
+  if (error) {
+    return <p style={{ color: "var(--ink2)" }}>{error}</p>;
+  }
 
   if (!data) {
     return (
