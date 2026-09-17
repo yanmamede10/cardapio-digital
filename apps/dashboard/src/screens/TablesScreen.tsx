@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
 import { api } from "../lib/api";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
+import { PixPaymentModal } from "../components/pix/PixPaymentModal";
 
 const STATUS_MAP: Record<TableStatus, { label: string; bg: string; fg: string; bd: string }> = {
   free: { label: "Livre", bg: "var(--surface2)", fg: "var(--ink3)", bd: "var(--line)" },
@@ -18,10 +19,14 @@ export default function TablesScreen() {
   const [splitMode, setSplitMode] = useState<"pessoa" | "item" | null>(null);
   const [people, setPeople] = useState(2);
   const [transferTo, setTransferTo] = useState<number | "">("");
+  const [pixTarget, setPixTarget] = useState<{ number: number; title: string; amount: number; itemsLabel: string } | null>(null);
+
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
 
   const loadTables = () => api.listTables().then((t) => {
     setTables(t);
-    if (selected == null && t.length) setSelected(t[0].number);
+    if (selectedRef.current == null && t.length) setSelected(t[0].number);
   });
 
   useEffect(() => {
@@ -38,18 +43,6 @@ export default function TablesScreen() {
   }, [selected]);
 
   const selT = tables.find((t) => t.number === selected) || null;
-
-  const closeBill = async () => {
-    if (selected == null) return;
-    try {
-      await api.closeTable(selected);
-      notify(`Conta da Mesa ${String(selected).padStart(2, "0")} fechada`);
-      loadTables();
-      api.getComanda(selected).then(setComanda).catch(() => setComanda(null));
-    } catch {
-      notify("Não foi possível fechar a conta");
-    }
-  };
 
   const doTransfer = async () => {
     if (selected == null || transferTo === "") return;
@@ -206,7 +199,20 @@ export default function TablesScreen() {
           </div>
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
-          <button type="button" className="btn btn-primary" onClick={closeBill} disabled={!selT || selT.status === "free"}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!selT || selT.status === "free"}
+            onClick={() =>
+              selT &&
+              setPixTarget({
+                number: selT.number,
+                title: `Mesa ${String(selT.number).padStart(2, "0")}`,
+                amount: total,
+                itemsLabel: `${(comanda?.lines || []).length} itens · serviço ${comanda ? comanda.servicePct : 10}% incluso`
+              })
+            }
+          >
             Fechar conta
           </button>
           <div style={{ display: "flex", gap: 8 }}>
@@ -273,6 +279,28 @@ export default function TablesScreen() {
           )}
         </div>
       </aside>
+
+      <PixPaymentModal
+        open={pixTarget != null}
+        title={pixTarget?.title || ""}
+        amount={pixTarget?.amount || 0}
+        itemsLabel={pixTarget?.itemsLabel}
+        onClose={() => setPixTarget(null)}
+        onConfirmed={async () => {
+          if (!pixTarget) return;
+          const number = pixTarget.number;
+          setPixTarget(null);
+          try {
+            await api.closeTable(number);
+            notify(`Conta da Mesa ${String(number).padStart(2, "0")} fechada`);
+            loadTables();
+            if (selected === number) api.getComanda(number).then(setComanda).catch(() => setComanda(null));
+          } catch {
+            notify("Não foi possível fechar a conta");
+          }
+        }}
+        onNotify={notify}
+      />
     </div>
   );
 }

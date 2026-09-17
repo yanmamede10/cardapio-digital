@@ -191,6 +191,31 @@ textarea.field-mobile {
   transition: left .15s ease;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 34;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(10, 8, 6, .42);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+}
+.modal-panel {
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--glassBd);
+  border-radius: 26px;
+  box-shadow: var(--shadow2);
+  overflow: hidden;
+  animation: dcScaleIn .36s var(--ease-spring) both;
+}
+
 .toast-bubble {
   position: fixed;
   bottom: 22px;

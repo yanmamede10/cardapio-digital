@@ -5,8 +5,10 @@ import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
+import AppearanceTab from "./SettingsAppearanceTab";
+import PaymentSubaccountTab from "./SettingsFinanceTab";
 
-type Tab = "profile" | "hours" | "staff" | "fiscal";
+type Tab = "profile" | "appearance" | "hours" | "staff" | "finance" | "fiscal";
 
 const WEEKDAY_LABEL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "Gerente", waiter: "Garçom", kitchen: "Cozinha" };
@@ -100,8 +102,10 @@ export default function SettingsScreen() {
         onChange={setTab}
         options={[
           { value: "profile", label: "Perfil" },
+          { value: "appearance", label: "Aparência" },
           { value: "hours", label: "Horários" },
           { value: "staff", label: "Equipe" },
+          { value: "finance", label: "Financeiro" },
           { value: "fiscal", label: "Fiscal" }
         ]}
       />
@@ -122,6 +126,10 @@ export default function SettingsScreen() {
           </button>
         </section>
       )}
+
+      {tab === "appearance" && <AppearanceTab restaurantName={profile.name} />}
+
+      {tab === "finance" && <PaymentSubaccountTab />}
 
       {tab === "hours" && (
         <section className="card" style={{ padding: 18, maxWidth: 620, display: "flex", flexDirection: "column", gap: 12 }}>
