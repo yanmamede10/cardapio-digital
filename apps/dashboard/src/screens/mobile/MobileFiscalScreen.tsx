@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { FiscalInfo } from "@cardapio/shared";
+import type { FiscalInfo, TaxRegime } from "@cardapio/shared";
+import { TAX_REGIME_LABEL } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
@@ -50,7 +51,13 @@ export default function MobileFiscalScreen() {
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Regime tributário</span>
-          <input value={fiscal.taxRegime} onChange={(e) => setFiscal({ ...fiscal, taxRegime: e.target.value })} className="field-mobile" />
+          <select value={fiscal.taxRegime} onChange={(e) => setFiscal({ ...fiscal, taxRegime: e.target.value as TaxRegime })} className="field-mobile">
+            {(Object.keys(TAX_REGIME_LABEL) as TaxRegime[]).map((r) => (
+              <option key={r} value={r}>
+                {TAX_REGIME_LABEL[r]}
+              </option>
+            ))}
+          </select>
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Endereço fiscal</span>

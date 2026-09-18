@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffMember, StaffRole } from "@cardapio/shared";
+import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffMember, StaffRole, TaxRegime } from "@cardapio/shared";
+import { TAX_REGIME_LABEL } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
@@ -226,7 +227,13 @@ export default function SettingsScreen() {
             </Field>
           </div>
           <Field label="Regime tributário">
-            <input className="field" value={fiscal.taxRegime} onChange={(e) => setFiscal({ ...fiscal, taxRegime: e.target.value })} />
+            <select className="field" value={fiscal.taxRegime} onChange={(e) => setFiscal({ ...fiscal, taxRegime: e.target.value as TaxRegime })}>
+              {(Object.keys(TAX_REGIME_LABEL) as TaxRegime[]).map((r) => (
+                <option key={r} value={r}>
+                  {TAX_REGIME_LABEL[r]}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Endereço fiscal">
             <input className="field" value={fiscal.fiscalAddress} onChange={(e) => setFiscal({ ...fiscal, fiscalAddress: e.target.value })} />

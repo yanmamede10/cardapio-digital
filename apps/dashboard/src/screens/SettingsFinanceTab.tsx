@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import type { TaxRegime } from "@cardapio/shared";
+import { TAX_REGIME_LABEL } from "@cardapio/shared";
 import { useNavigate } from "react-router-dom";
 import { Field } from "../components/SlideOver";
 import { Segmented } from "../components/Segmented";
@@ -37,6 +39,7 @@ export default function PaymentSubaccountTab() {
   const [status, setStatus] = useState<SubStatus>("form");
   const [cnpj, setCnpj] = useState("");
   const [legalName, setLegalName] = useState("");
+  const [taxRegime, setTaxRegime] = useState<TaxRegime>("simples_nacional");
   const [doc, setDoc] = useState<DocState>(emptyDoc);
   const docInput = useRef<HTMLInputElement>(null);
 
@@ -99,6 +102,15 @@ export default function PaymentSubaccountTab() {
             </Field>
             <Field label="Razão social">
               <input className="field" placeholder="Nome da empresa" value={legalName} onChange={(e) => setLegalName(e.target.value)} />
+            </Field>
+            <Field label="Regime tributário">
+              <select className="field" value={taxRegime} onChange={(e) => setTaxRegime(e.target.value as TaxRegime)}>
+                {(Object.keys(TAX_REGIME_LABEL) as TaxRegime[]).map((r) => (
+                  <option key={r} value={r}>
+                    {TAX_REGIME_LABEL[r]}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
 
@@ -204,6 +216,7 @@ export default function PaymentSubaccountTab() {
             {[
               ["CNPJ", cnpj || "—"],
               ["Razão social", legalName || "—"],
+              ["Regime tributário", TAX_REGIME_LABEL[taxRegime]],
               ["Titular", legalName || "—"],
               ["Liquidação", "D+1 automático"],
               ["Taxa por transação", "2,9% + R$ 0,39"]

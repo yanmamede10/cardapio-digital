@@ -337,11 +337,22 @@ export interface AppearanceState {
 /** What GET /:id/appearance (public, no auth) returns to the menu apps. */
 export type PublicAppearance = AppearanceSettings & { publishedAt: string | null };
 
+/** The 5 official Brazilian tax regimes. */
+export type TaxRegime = "mei" | "simples_nacional" | "lucro_presumido" | "lucro_real" | "lucro_arbitrado";
+
+export const TAX_REGIME_LABEL: Record<TaxRegime, string> = {
+  mei: "MEI",
+  simples_nacional: "Simples Nacional",
+  lucro_presumido: "Lucro Presumido",
+  lucro_real: "Lucro Real",
+  lucro_arbitrado: "Lucro Arbitrado"
+};
+
 export interface FiscalInfo {
   cnpj: string;
   legalName: string;
   stateRegistration: string;
-  taxRegime: string;
+  taxRegime: TaxRegime;
   fiscalAddress: string;
 }
 

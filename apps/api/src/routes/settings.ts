@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffRole } from "@cardapio/shared";
+import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffRole, TaxRegime } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
@@ -14,6 +14,7 @@ const MAX_EMAIL_LENGTH = 254;
 const MAX_RESTAURANT_NAME_LENGTH = 80;
 const MAX_CUISINE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 500;
+const TAX_REGIMES: TaxRegime[] = ["mei", "simples_nacional", "lucro_presumido", "lucro_real", "lucro_arbitrado"];
 
 async function requireRestaurant(id: string) {
   return prisma.restaurant.findUnique({ where: { id } });
@@ -102,6 +103,9 @@ settingsRouter.get("/:id/fiscal", ...staffGuard, async (req, res) => {
 
 settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<FiscalInfo>;
+  if (body.taxRegime !== undefined && !TAX_REGIMES.includes(body.taxRegime)) {
+    return res.status(400).json({ error: `taxRegime must be one of ${TAX_REGIMES.join(", ")}` });
+  }
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });
   const r = await prisma.restaurant.update({

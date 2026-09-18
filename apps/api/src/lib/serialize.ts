@@ -258,7 +258,7 @@ export function serializeFiscal(r: Restaurant): FiscalInfo {
     cnpj: r.cnpj,
     legalName: r.legalName,
     stateRegistration: r.stateRegistration,
-    taxRegime: r.taxRegime,
+    taxRegime: r.taxRegime as FiscalInfo["taxRegime"],
     fiscalAddress: r.fiscalAddress
   };
 }

@@ -319,7 +319,7 @@ async function main() {
       cnpj: "12.345.678/0001-90",
       legalName: "Fogo & Nó Gastronomia Ltda.",
       stateRegistration: "149.284.762.118",
-      taxRegime: "Simples Nacional",
+      taxRegime: "simples_nacional",
       fiscalAddress: "Rua Aurora, 214 — Vila Madalena, São Paulo/SP",
       deliveryFeeCap: 400,
       planPrice: 189.9,
