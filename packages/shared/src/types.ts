@@ -196,6 +196,16 @@ export interface RestaurantTable {
   seats: number;
   status: TableStatus;
   openedAt: string | null;
+  /** Position on the salon grid (Mapa do Salão). Null until dragged into a cell. */
+  gridRow: number | null;
+  gridCol: number | null;
+}
+
+/** GET/PATCH response for the salon grid — always returned together so the
+ *  dashboard can sync both after a resize or a table move in one round trip. */
+export interface SalonGrid {
+  gridSize: number;
+  tables: RestaurantTable[];
 }
 
 export interface TableComandaLine {

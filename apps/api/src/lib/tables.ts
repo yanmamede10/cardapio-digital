@@ -45,7 +45,16 @@ export function buildComanda(table: RestaurantTable, orders: (Order & { lines: O
   const subtotal = round2(lines.reduce((t, l) => t + l.subtotal, 0));
   const service = round2(subtotal * (SERVICE_PCT / 100));
   return {
-    table: { id: table.id, restaurantId: table.restaurantId, number: table.number, seats: table.seats, status: statusForTable(table, orders), openedAt: table.openedAt ? table.openedAt.toISOString() : null },
+    table: {
+      id: table.id,
+      restaurantId: table.restaurantId,
+      number: table.number,
+      seats: table.seats,
+      status: statusForTable(table, orders),
+      openedAt: table.openedAt ? table.openedAt.toISOString() : null,
+      gridRow: table.gridRow ?? null,
+      gridCol: table.gridCol ?? null
+    },
     orderIds: orders.map((o) => o.id),
     lines,
     subtotal,

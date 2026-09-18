@@ -53,6 +53,9 @@ model Restaurant {
   draftLogoUrl        String?
   draftCoverPhotosJson String   @default("[]")
 
+  // Mapa do salão — square grid the dashboard positions tables on (SALAO-01).
+  gridSize Int @default(10)
+
   categories     MenuCategory[]
   items          MenuItem[]
   orders         Order[]
@@ -159,6 +162,8 @@ model RestaurantTable {
   number       Int
   seats        Int
   openedAt     DateTime?
+  gridRow      Int?
+  gridCol      Int?
 
   @@unique([restaurantId, number])
 }

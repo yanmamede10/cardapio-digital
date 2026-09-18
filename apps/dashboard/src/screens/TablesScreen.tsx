@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
-import { api } from "../lib/api";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent
+} from "@dnd-kit/core";
+import { ApiError, api } from "../lib/api";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { PixPaymentModal } from "../components/pix/PixPaymentModal";
@@ -11,23 +23,104 @@ const STATUS_MAP: Record<TableStatus, { label: string; bg: string; fg: string; b
   awaiting_payment: { label: "Aguardando pagamento", bg: "color-mix(in srgb, var(--warn) 16%, transparent)", fg: "var(--warn)", bd: "var(--warn)" }
 };
 
+const GRID_SIZE_OPTIONS = Array.from({ length: 9 }, (_, i) => i + 6); // 6..14
+const cellId = (row: number, col: number) => `cell-${row}-${col}`;
+
 export default function TablesScreen() {
   const { notify } = useDashboardState();
   const [tables, setTables] = useState<RestaurantTable[]>([]);
+  const [gridSize, setGridSize] = useState(10);
   const [selected, setSelected] = useState<number | null>(null);
   const [comanda, setComanda] = useState<TableComanda | null>(null);
   const [splitMode, setSplitMode] = useState<"pessoa" | "item" | null>(null);
   const [people, setPeople] = useState(2);
   const [transferTo, setTransferTo] = useState<number | "">("");
   const [pixTarget, setPixTarget] = useState<{ number: number; title: string; amount: number; itemsLabel: string } | null>(null);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [menu, setMenu] = useState<{ table: RestaurantTable; x: number; y: number } | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
 
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
 
-  const loadTables = () => api.listTables().then((t) => {
-    setTables(t);
-    if (selectedRef.current == null && t.length) setSelected(t[0].number);
+  const loadTables = () => api.getSalonGrid().then((grid) => {
+    setGridSize(grid.gridSize);
+    setTables(grid.tables);
+    if (selectedRef.current == null && grid.tables.length) setSelected(grid.tables[0].number);
   });
+
+  const changeGridSize = async (size: number) => {
+    try {
+      const grid = await api.setGridSize(size);
+      setGridSize(grid.gridSize);
+      setTables(grid.tables);
+      notify(`Grade do salão alterada para ${size}×${size}`);
+    } catch {
+      notify("Não foi possível alterar o tamanho da grade");
+    }
+  };
+
+  const setTablePosition = async (number: number, gridRow: number | null, gridCol: number | null) => {
+    try {
+      const grid = await api.setTablePosition(number, gridRow, gridCol);
+      setGridSize(grid.gridSize);
+      setTables(grid.tables);
+    } catch (err) {
+      notify(err instanceof ApiError && err.status === 409 ? err.message : "Não foi possível mover a mesa");
+    }
+  };
+
+  const renameTable = (table: RestaurantTable) => {
+    setMenu(null);
+    const raw = window.prompt(`Novo número para a Mesa ${String(table.number).padStart(2, "0")}`, String(table.number));
+    if (raw == null) return;
+    const next = parseInt(raw, 10);
+    if (!Number.isInteger(next) || next <= 0) {
+      notify("Número inválido");
+      return;
+    }
+    if (next === table.number) return;
+    api
+      .renameTable(table.number, next)
+      .then((grid) => {
+        setGridSize(grid.gridSize);
+        setTables(grid.tables);
+        if (selected === table.number) setSelected(next);
+        notify(`Mesa renomeada para ${String(next).padStart(2, "0")}`);
+      })
+      .catch((err) => notify(err instanceof ApiError ? err.message : "Não foi possível renomear a mesa"));
+  };
+
+  const deleteTable = (table: RestaurantTable) => {
+    setMenu(null);
+    if (!window.confirm(`Excluir a Mesa ${String(table.number).padStart(2, "0")}? Essa ação não pode ser desfeita.`)) return;
+    api
+      .deleteTable(table.number)
+      .then((grid) => {
+        setGridSize(grid.gridSize);
+        setTables(grid.tables);
+        if (selected === table.number) setSelected(grid.tables[0]?.number ?? null);
+        notify(`Mesa ${String(table.number).padStart(2, "0")} excluída`);
+      })
+      .catch((err) => notify(err instanceof ApiError ? err.message : "Não foi possível excluir a mesa"));
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveDragId(null);
+    if (!over) return;
+    const overId = String(over.id);
+    if (!overId.startsWith("cell-")) return;
+    const [, rowStr, colStr] = overId.split("-");
+    const row = Number(rowStr), col = Number(colStr);
+    const table = tables.find((t) => t.id === String(active.id));
+    if (!table || (table.gridRow === row && table.gridCol === col)) return;
+    setTablePosition(table.number, row, col);
+  };
 
   useEffect(() => {
     loadTables();
@@ -85,6 +178,9 @@ export default function TablesScreen() {
 
   const legend: TableStatus[] = ["free", "occupied", "awaiting_payment"];
   const freeTables = tables.filter((t) => t.status === "free" && t.number !== selected);
+  const positioned = tables.filter((t) => t.gridRow != null && t.gridCol != null);
+  const unpositioned = tables.filter((t) => t.gridRow == null || t.gridCol == null);
+  const activeTable = activeDragId ? tables.find((t) => t.id === activeDragId) || null : null;
 
   const subtotal = comanda?.subtotal ?? 0;
   const service = comanda?.service ?? 0;
@@ -101,6 +197,13 @@ export default function TablesScreen() {
       <section className="card" style={{ flex: 1, minWidth: 320, padding: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>Mapa do salão</div>
+          <select value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: 12.5 }}>
+            {GRID_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n}×{n}
+              </option>
+            ))}
+          </select>
           <div style={{ flex: 1 }} />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {legend.map((k) => (
@@ -115,42 +218,44 @@ export default function TablesScreen() {
             Nova mesa
           </button>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 12 }}>
-          {tables.map((t) => {
-            const st = STATUS_MAP[t.status];
-            const isSel = selected === t.number;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setSelected(t.number)}
-                className="tap"
-                style={{
-                  textAlign: "left",
-                  borderRadius: 15,
-                  padding: 12,
-                  cursor: "pointer",
-                  font: "inherit",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 7,
-                  background: st.bg,
-                  border: `1.5px solid ${isSel ? "var(--brand)" : st.bd}`,
-                  boxShadow: isSel ? "0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent)" : "none"
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
-                  <span className="mono" style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-.03em", color: st.fg }}>
-                    {String(t.number).padStart(2, "0")}
-                  </span>
-                  <span style={{ fontSize: 11, color: "var(--ink3)" }}>{t.seats} lug.</span>
-                </div>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: st.fg }}>{st.label}</div>
-                <div className="mono" style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>—</div>
-              </button>
-            );
-          })}
-        </div>
+
+        <DndContext sensors={sensors} onDragStart={({ active }) => setActiveDragId(String(active.id))} onDragEnd={handleDragEnd} onDragCancel={() => setActiveDragId(null)}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${gridSize}, 1fr)`, gap: 6 }}>
+            {Array.from({ length: gridSize * gridSize }, (_, i) => {
+              const row = Math.floor(i / gridSize);
+              const col = i % gridSize;
+              const t = positioned.find((x) => x.gridRow === row && x.gridCol === col) || null;
+              return (
+                <GridCell
+                  key={cellId(row, col)}
+                  row={row}
+                  col={col}
+                  table={t}
+                  selected={t?.number === selected}
+                  onSelect={setSelected}
+                  onContextMenu={(tbl, x, y) => setMenu({ table: tbl, x, y })}
+                />
+              );
+            })}
+          </div>
+
+          {unpositioned.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <div className="field-label" style={{ marginBottom: 8 }}>
+                Mesas sem posição · arraste pra grade
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {unpositioned.map((t) => (
+                  <div key={t.id} style={{ width: 56, height: 56 }}>
+                    <TableChip table={t} selected={t.number === selected} onSelect={setSelected} onContextMenu={(tbl, x, y) => setMenu({ table: tbl, x, y })} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <DragOverlay>{activeTable && <TableChip table={activeTable} selected={false} onSelect={() => {}} overlay />}</DragOverlay>
+        </DndContext>
       </section>
 
       <aside className="card" style={{ width: 330, flex: "0 0 330px", overflow: "hidden" }}>
@@ -301,6 +406,141 @@ export default function TablesScreen() {
         }}
         onNotify={notify}
       />
+
+      {menu && (
+        <>
+          <div
+            onClick={() => setMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setMenu(null);
+            }}
+            style={{ position: "fixed", inset: 0, zIndex: 40 }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: menu.y,
+              left: menu.x,
+              zIndex: 41,
+              minWidth: 180,
+              background: "var(--surface)",
+              border: "1px solid var(--line)",
+              borderRadius: 12,
+              boxShadow: "var(--shadow2)",
+              overflow: "hidden"
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => renameTable(menu.table)}
+              className="tap"
+              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, background: "transparent", cursor: "pointer", font: "inherit", fontSize: 12.5, color: "var(--ink)", textAlign: "left" }}
+            >
+              <i className="fa-solid fa-pen" style={{ fontSize: 14, width: 14 }} />
+              Editar número
+            </button>
+            <button
+              type="button"
+              onClick={() => deleteTable(menu.table)}
+              className="tap"
+              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, borderTop: "1px solid var(--line)", background: "transparent", cursor: "pointer", font: "inherit", fontSize: 12.5, color: "var(--alert)", textAlign: "left" }}
+            >
+              <i className="fa-solid fa-trash" style={{ fontSize: 14, width: 14 }} />
+              Excluir mesa
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Draggable — used both inside a grid cell and in the unpositioned side list. */
+function TableChip({
+  table,
+  selected,
+  onSelect,
+  onContextMenu,
+  overlay
+}: {
+  table: RestaurantTable;
+  selected: boolean;
+  onSelect: (n: number) => void;
+  onContextMenu?: (table: RestaurantTable, x: number, y: number) => void;
+  overlay?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: table.id });
+  const st = STATUS_MAP[table.status];
+  return (
+    <button
+      ref={overlay ? undefined : setNodeRef}
+      type="button"
+      {...(overlay ? {} : { ...listeners, ...attributes })}
+      onClick={() => onSelect(table.number)}
+      onContextMenu={
+        onContextMenu
+          ? (e) => {
+              e.preventDefault();
+              onContextMenu(table, e.clientX, e.clientY);
+            }
+          : undefined
+      }
+      className="tap"
+      title={`Mesa ${String(table.number).padStart(2, "0")} · ${st.label} · ${table.seats} lug.`}
+      style={{
+        width: "100%",
+        height: "100%",
+        minWidth: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 10,
+        cursor: overlay ? "grabbing" : "grab",
+        background: st.bg,
+        border: `1.5px solid ${selected ? "var(--brand)" : st.bd}`,
+        boxShadow: selected ? "0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent)" : overlay ? "var(--shadow2)" : "none",
+        opacity: isDragging ? 0.35 : 1,
+        color: st.fg,
+        fontFamily: "var(--mono)",
+        fontWeight: 600,
+        fontSize: 13
+      }}
+    >
+      {String(table.number).padStart(2, "0")}
+    </button>
+  );
+}
+
+/** Droppable grid cell — empty (dashed placeholder) or occupied by one draggable TableChip. */
+function GridCell({
+  row,
+  col,
+  table,
+  selected,
+  onSelect,
+  onContextMenu
+}: {
+  row: number;
+  col: number;
+  table: RestaurantTable | null;
+  selected: boolean;
+  onSelect: (n: number) => void;
+  onContextMenu: (table: RestaurantTable, x: number, y: number) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id: cellId(row, col) });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        aspectRatio: "1",
+        borderRadius: 10,
+        border: `1px dashed ${isOver ? "var(--brand)" : "var(--line2)"}`,
+        background: isOver ? "var(--brandSoft)" : "transparent",
+        transition: "border-color .12s var(--ease-spring), background .12s var(--ease-spring)"
+      }}
+    >
+      {table && <TableChip table={table} selected={selected} onSelect={onSelect} onContextMenu={onContextMenu} />}
     </div>
   );
 }

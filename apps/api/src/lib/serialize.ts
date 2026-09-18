@@ -125,7 +125,9 @@ export function serializeTable(t: RestaurantTable, status: TableStatus): ApiRest
     number: t.number,
     seats: t.seats,
     status,
-    openedAt: t.openedAt ? t.openedAt.toISOString() : null
+    openedAt: t.openedAt ? t.openedAt.toISOString() : null,
+    gridRow: t.gridRow ?? null,
+    gridCol: t.gridCol ?? null
   };
 }
 

@@ -15,6 +15,7 @@ import type {
   RestaurantProfile,
   RestaurantTable,
   Review,
+  SalonGrid,
   ShiftStats,
   StaffMember,
   StaffRole,
@@ -149,6 +150,14 @@ export const api = {
   listTables: () => request<RestaurantTable[]>(`/api/restaurants/${RESTAURANT_ID}/tables`),
   createTable: (seats: number) =>
     request<RestaurantTable>(`/api/restaurants/${RESTAURANT_ID}/tables`, { method: "POST", body: JSON.stringify({ seats }) }),
+  getSalonGrid: () => request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/salon-grid`),
+  setGridSize: (gridSize: number) =>
+    request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/salon-grid`, { method: "PATCH", body: JSON.stringify({ gridSize }) }),
+  setTablePosition: (number: number, gridRow: number | null, gridCol: number | null) =>
+    request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/position`, { method: "PATCH", body: JSON.stringify({ gridRow, gridCol }) }),
+  renameTable: (number: number, nextNumber: number) =>
+    request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}`, { method: "PATCH", body: JSON.stringify({ number: nextNumber }) }),
+  deleteTable: (number: number) => request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}`, { method: "DELETE" }),
   getComanda: (number: number) => request<TableComanda>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/comanda`),
   closeTable: (number: number) => request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/close`, { method: "POST" }),
   transferTable: (number: number, toNumber: number) =>
