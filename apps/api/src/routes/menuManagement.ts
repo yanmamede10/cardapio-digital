@@ -10,6 +10,20 @@ export const menuManagementRouter = Router();
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
+const MAX_NAME_LENGTH = 80;
+const MAX_SHORT_DESCRIPTION_LENGTH = 200;
+const MAX_LONG_DESCRIPTION_LENGTH = 500;
+
+function textFieldError(body: { name?: string; shortDescription?: string; longDescription?: string }): string | null {
+  if (body.name !== undefined && body.name.length > MAX_NAME_LENGTH) return `name must be at most ${MAX_NAME_LENGTH} characters`;
+  if (body.shortDescription !== undefined && body.shortDescription.length > MAX_SHORT_DESCRIPTION_LENGTH) {
+    return `shortDescription must be at most ${MAX_SHORT_DESCRIPTION_LENGTH} characters`;
+  }
+  if (body.longDescription !== undefined && body.longDescription.length > MAX_LONG_DESCRIPTION_LENGTH) {
+    return `longDescription must be at most ${MAX_LONG_DESCRIPTION_LENGTH} characters`;
+  }
+  return null;
+}
 
 function optionGroupsJsonFor(extras: UpsertMenuItemRequest["extras"]): string {
   if (!extras || extras.length === 0) return "[]";
@@ -35,6 +49,8 @@ async function itemsFor(restaurantId: string) {
 
 menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
   const body = req.body as UpsertMenuItemRequest;
+  const fieldError = textFieldError(body);
+  if (fieldError) return res.status(400).json({ error: fieldError });
   const category = await prisma.menuCategory.findUnique({ where: { id: body.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(400).json({ error: "unknown category" });
 
@@ -61,6 +77,8 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
 
 menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<UpsertMenuItemRequest> & { soldOut?: boolean };
+  const fieldError = textFieldError(body);
+  if (fieldError) return res.status(400).json({ error: fieldError });
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
 

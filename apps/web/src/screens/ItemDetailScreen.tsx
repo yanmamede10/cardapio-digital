@@ -113,6 +113,7 @@ export default function ItemDetailScreen() {
               value={draft.notes}
               onChange={(e) => setDraft((d) => (d ? { ...d, notes: e.target.value } : d))}
               placeholder="Ex: tirar cebola, ponto da carne bem passado, sem pimenta…"
+              maxLength={300}
               style={{ marginTop: 10 }}
             />
           </div>

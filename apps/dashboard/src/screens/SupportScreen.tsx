@@ -240,6 +240,7 @@ export default function SupportScreen() {
                       onChange={(e) => setDraft(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && send()}
                       placeholder="Responder ao cliente"
+                      maxLength={2000}
                     />
                     <button type="button" className="btn btn-primary" onClick={send}>
                       <i className="fa-solid fa-paper-plane" style={{ fontSize: 15 }} />
@@ -282,6 +283,7 @@ export default function SupportScreen() {
                     value={reviewDrafts[r.id] || ""}
                     onChange={(e) => setReviewDrafts((prev) => ({ ...prev, [r.id]: e.target.value }))}
                     placeholder="Responder publicamente"
+                    maxLength={2000}
                   />
                   <button type="button" className="btn btn-outline" onClick={() => reply(r)}>
                     Responder

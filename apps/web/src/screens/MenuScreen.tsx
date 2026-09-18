@@ -133,6 +133,7 @@ export default function MenuScreen() {
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
             placeholder="para o garçom te chamar"
+            maxLength={120}
             style={{ marginTop: 3, width: "100%", border: "none", background: "transparent", outline: "none", color: "var(--ink)", font: "600 var(--t-b) var(--font)" }}
           />
         </div>

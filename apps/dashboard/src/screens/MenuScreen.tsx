@@ -310,11 +310,11 @@ export default function MenuScreen() {
               </div>
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span className="field-label">Nome</span>
-                <input className="field" value={drawer.name} onChange={(e) => setDrawer({ ...drawer, name: e.target.value })} placeholder="Ex.: Picanha na chapa" />
+                <input className="field" value={drawer.name} onChange={(e) => setDrawer({ ...drawer, name: e.target.value })} placeholder="Ex.: Picanha na chapa" maxLength={80} />
               </label>
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span className="field-label">Descrição</span>
-                <textarea className="field" rows={3} value={drawer.desc} onChange={(e) => setDrawer({ ...drawer, desc: e.target.value })} placeholder="O que vem no prato, porção, acompanhamentos" />
+                <textarea className="field" rows={3} value={drawer.desc} onChange={(e) => setDrawer({ ...drawer, desc: e.target.value })} placeholder="O que vem no prato, porção, acompanhamentos" maxLength={200} />
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>

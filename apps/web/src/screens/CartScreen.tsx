@@ -89,6 +89,7 @@ export default function CartScreen() {
                       value={r.notes}
                       onChange={(e) => setNotes(r.key, e.target.value)}
                       placeholder="Ex: sem cebola"
+                      maxLength={300}
                       style={{ flex: 1, boxSizing: "border-box", minHeight: 56, resize: "vertical", padding: "14px 16px", borderRadius: "var(--r-standard)", border: "1px solid var(--line)", background: "var(--bg)", color: "var(--ink)", font: "400 var(--t-s) var(--font)", lineHeight: 1.6, outline: "none" }}
                     />
                     <button

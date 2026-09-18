@@ -11,6 +11,9 @@ export const settingsRouter = Router();
 const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
+const MAX_RESTAURANT_NAME_LENGTH = 80;
+const MAX_CUISINE_LENGTH = 60;
+const MAX_DESCRIPTION_LENGTH = 500;
 
 async function requireRestaurant(id: string) {
   return prisma.restaurant.findUnique({ where: { id } });
@@ -24,6 +27,15 @@ settingsRouter.get("/:id/profile", ...staffGuard, async (req, res) => {
 
 settingsRouter.patch("/:id/profile", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<RestaurantProfile>;
+  if (body.name !== undefined && body.name.length > MAX_RESTAURANT_NAME_LENGTH) {
+    return res.status(400).json({ error: `name must be at most ${MAX_RESTAURANT_NAME_LENGTH} characters` });
+  }
+  if (body.cuisineCategory !== undefined && body.cuisineCategory.length > MAX_CUISINE_LENGTH) {
+    return res.status(400).json({ error: `cuisineCategory must be at most ${MAX_CUISINE_LENGTH} characters` });
+  }
+  if (body.description !== undefined && body.description.length > MAX_DESCRIPTION_LENGTH) {
+    return res.status(400).json({ error: `description must be at most ${MAX_DESCRIPTION_LENGTH} characters` });
+  }
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });
   const r = await prisma.restaurant.update({

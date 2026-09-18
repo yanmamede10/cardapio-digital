@@ -134,6 +134,7 @@ export default function MobileChatScreen() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="Responder ao cliente…"
+          maxLength={2000}
           style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 22, padding: "0 15px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none" }}
         />
         <button type="button" onClick={send} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brand)", color: "var(--brandInk)", border: 0, cursor: "pointer" }}>

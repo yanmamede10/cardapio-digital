@@ -113,13 +113,13 @@ export default function SettingsScreen() {
       {tab === "profile" && (
         <section className="card" style={{ padding: 18, maxWidth: 520, display: "flex", flexDirection: "column", gap: 14 }}>
           <Field label="Nome do restaurante">
-            <input className="field" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+            <input className="field" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} maxLength={80} />
           </Field>
           <Field label="Categoria da cozinha">
-            <input className="field" value={profile.cuisineCategory} onChange={(e) => setProfile({ ...profile, cuisineCategory: e.target.value })} />
+            <input className="field" value={profile.cuisineCategory} onChange={(e) => setProfile({ ...profile, cuisineCategory: e.target.value })} maxLength={60} />
           </Field>
           <Field label="Descrição">
-            <textarea className="field" rows={4} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} />
+            <textarea className="field" rows={4} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} maxLength={500} />
           </Field>
           <button type="button" className="btn btn-primary" style={{ alignSelf: "flex-start" }} onClick={saveProfile}>
             Salvar perfil

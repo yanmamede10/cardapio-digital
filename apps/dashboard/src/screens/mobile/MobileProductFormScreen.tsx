@@ -92,7 +92,7 @@ export default function MobileProductFormScreen() {
         </div>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Nome do produto</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Moqueca de camarão" className="field-mobile" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Moqueca de camarão" maxLength={80} className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Preço</span>
@@ -100,7 +100,7 @@ export default function MobileProductFormScreen() {
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Descrição</span>
-          <textarea rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Camarões frescos, leite de coco, dendê e pirão" className="field-mobile" />
+          <textarea rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Camarões frescos, leite de coco, dendê e pirão" maxLength={200} className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Categoria</span>

@@ -45,15 +45,15 @@ export default function MobileProfileScreen() {
         </div>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Nome público</span>
-          <input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} className="field-mobile" />
+          <input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} maxLength={80} className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Categoria de culinária</span>
-          <input value={profile.cuisineCategory} onChange={(e) => setProfile({ ...profile, cuisineCategory: e.target.value })} className="field-mobile" />
+          <input value={profile.cuisineCategory} onChange={(e) => setProfile({ ...profile, cuisineCategory: e.target.value })} maxLength={60} className="field-mobile" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Descrição</span>
-          <textarea rows={3} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} className="field-mobile" />
+          <textarea rows={3} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} maxLength={500} className="field-mobile" />
         </label>
       </section>
       <button type="button" onClick={save} style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
