@@ -54,7 +54,7 @@ model Restaurant {
   draftCoverPhotosJson String   @default("[]")
 
   // Mapa do salão — square grid the dashboard positions tables on (SALAO-01).
-  gridSize Int @default(10)
+  gridSize Int @default(9)
 
   categories     MenuCategory[]
   items          MenuItem[]

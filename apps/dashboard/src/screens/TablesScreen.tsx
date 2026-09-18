@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
 import {
   DndContext,
@@ -23,13 +23,19 @@ const STATUS_MAP: Record<TableStatus, { label: string; bg: string; fg: string; b
   awaiting_payment: { label: "Aguardando pagamento", bg: "color-mix(in srgb, var(--warn) 16%, transparent)", fg: "var(--warn)", bd: "var(--warn)" }
 };
 
-const GRID_SIZE_OPTIONS = Array.from({ length: 9 }, (_, i) => i + 6); // 6..14
+const GRID_SIZE_OPTIONS = [7, 9, 11, 13, 15]; // odd only — keeps a center row/column, so layouts can be symmetric
 const cellId = (row: number, col: number) => `cell-${row}-${col}`;
+const posKey = (t: RestaurantTable) => `${t.gridRow}:${t.gridCol}`;
+
+/** Where each chip was on screen right before a drop. The chips that change cell (dragged + swapped) are
+ *  remounted in their new cell and slide from this spot; every chip consumes its entry on its next commit. */
+const lastSeen = new Map<string, { pos: string; left: number; top: number }>();
 
 export default function TablesScreen() {
   const { notify } = useDashboardState();
   const [tables, setTables] = useState<RestaurantTable[]>([]);
-  const [gridSize, setGridSize] = useState(10);
+  const [gridSize, setGridSize] = useState(9);
+  const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [comanda, setComanda] = useState<TableComanda | null>(null);
   const [splitMode, setSplitMode] = useState<"pessoa" | "item" | null>(null);
@@ -70,8 +76,9 @@ export default function TablesScreen() {
       const grid = await api.setTablePosition(number, gridRow, gridCol);
       setGridSize(grid.gridSize);
       setTables(grid.tables);
-    } catch (err) {
-      notify(err instanceof ApiError && err.status === 409 ? err.message : "Não foi possível mover a mesa");
+    } catch {
+      notify("Não foi possível mover a mesa");
+      loadTables(); // roll back the optimistic move
     }
   };
 
@@ -119,6 +126,22 @@ export default function TablesScreen() {
     const row = Number(rowStr), col = Number(colStr);
     const table = tables.find((t) => t.id === String(active.id));
     if (!table || (table.gridRow === row && table.gridCol === col)) return;
+
+    document.querySelectorAll<HTMLElement>("[data-table-id]").forEach((el) => {
+      const { left, top } = el.getBoundingClientRect();
+      lastSeen.set(el.dataset.tableId!, { pos: el.dataset.pos!, left, top });
+    });
+    const drop = active.rect.current.translated; // where the dragged chip was released, not its origin cell
+    if (drop) lastSeen.set(table.id, { pos: posKey(table), left: drop.left, top: drop.top });
+
+    // Optimistic swap/move; the server (atomic swap) response then replaces it.
+    setTables((ts) =>
+      ts.map((t) =>
+        t.id === table.id ? { ...t, gridRow: row, gridCol: col }
+        : t.gridRow === row && t.gridCol === col ? { ...t, gridRow: table.gridRow, gridCol: table.gridCol }
+        : t
+      )
+    );
     setTablePosition(table.number, row, col);
   };
 
@@ -197,13 +220,21 @@ export default function TablesScreen() {
       <section className="card" style={{ flex: 1, minWidth: 320, padding: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>Mapa do salão</div>
-          <select value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: 12.5 }}>
-            {GRID_SIZE_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                {n}×{n}
-              </option>
-            ))}
-          </select>
+          {editing && (
+            <>
+              <select value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: 12.5 }}>
+                {GRID_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>
+                    {n}×{n}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className="btn btn-ghost" onClick={newTable}>
+                <i className="fa-solid fa-plus" style={{ fontSize: 16, lineHeight: 1 }} />
+                Nova mesa
+              </button>
+            </>
+          )}
           <div style={{ flex: 1 }} />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {legend.map((k) => (
@@ -213,9 +244,16 @@ export default function TablesScreen() {
               </div>
             ))}
           </div>
-          <button type="button" className="btn btn-ghost" onClick={newTable}>
-            <i className="fa-solid fa-plus" style={{ fontSize: 16, lineHeight: 1 }} />
-            Nova mesa
+          <button
+            type="button"
+            className={editing ? "btn btn-primary" : "btn btn-outline"}
+            onClick={() => {
+              setMenu(null);
+              setEditing((v) => !v);
+            }}
+          >
+            <i className={`fa-solid ${editing ? "fa-check" : "fa-pen-to-square"}`} style={{ fontSize: 16, lineHeight: 1 }} />
+            {editing ? "Concluir edição" : "Editar ambiente"}
           </button>
         </div>
 
@@ -231,15 +269,16 @@ export default function TablesScreen() {
                   row={row}
                   col={col}
                   table={t}
+                  editing={editing}
                   selected={t?.number === selected}
                   onSelect={setSelected}
-                  onContextMenu={(tbl, x, y) => setMenu({ table: tbl, x, y })}
+                  onContextMenu={editing ? (tbl, x, y) => setMenu({ table: tbl, x, y }) : undefined}
                 />
               );
             })}
           </div>
 
-          {unpositioned.length > 0 && (
+          {editing && unpositioned.length > 0 && (
             <div style={{ marginTop: 16 }}>
               <div className="field-label" style={{ marginBottom: 8 }}>
                 Mesas sem posição · arraste pra grade
@@ -254,7 +293,7 @@ export default function TablesScreen() {
             </div>
           )}
 
-          <DragOverlay>{activeTable && <TableChip table={activeTable} selected={false} onSelect={() => {}} overlay />}</DragOverlay>
+          <DragOverlay dropAnimation={null}>{activeTable && <TableChip table={activeTable} selected={false} onSelect={() => {}} overlay />}</DragOverlay>
         </DndContext>
       </section>
 
@@ -456,27 +495,47 @@ export default function TablesScreen() {
   );
 }
 
-/** Draggable — used both inside a grid cell and in the unpositioned side list. */
+/** Draggable — used both inside a grid cell and in the unpositioned side list. `locked` = view mode, no drag. */
 function TableChip({
   table,
   selected,
   onSelect,
   onContextMenu,
-  overlay
+  overlay,
+  locked
 }: {
   table: RestaurantTable;
   selected: boolean;
   onSelect: (n: number) => void;
   onContextMenu?: (table: RestaurantTable, x: number, y: number) => void;
   overlay?: boolean;
+  locked?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: table.id });
+  const { attributes, listeners, setNodeRef, isDragging, node } = useDraggable({ id: table.id });
   const st = STATUS_MAP[table.status];
+
+  // FLIP: a chip that just landed in another cell starts offset at its previous screen spot, then transitions to rest.
+  useLayoutEffect(() => {
+    if (overlay) return;
+    const el = node.current;
+    const prev = lastSeen.get(table.id);
+    lastSeen.delete(table.id);
+    if (!el || !prev || prev.pos === posKey(table) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const { left, top } = el.getBoundingClientRect();
+    el.style.transition = "none";
+    el.style.transform = `translate(${prev.left - left}px, ${prev.top - top}px)`;
+    el.getBoundingClientRect(); // flush so the offset applies before the transition starts
+    el.style.transition = "transform .28s var(--ease-spring)";
+    el.style.transform = "";
+  });
+
   return (
     <button
       ref={overlay ? undefined : setNodeRef}
+      data-table-id={overlay ? undefined : table.id}
+      data-pos={posKey(table)}
       type="button"
-      {...(overlay ? {} : { ...listeners, ...attributes })}
+      {...(overlay || locked ? {} : { ...listeners, ...attributes })}
       onClick={() => onSelect(table.number)}
       onContextMenu={
         onContextMenu
@@ -496,7 +555,7 @@ function TableChip({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: 10,
-        cursor: overlay ? "grabbing" : "grab",
+        cursor: overlay ? "grabbing" : locked ? "pointer" : "grab",
         background: st.bg,
         border: `1.5px solid ${selected ? "var(--brand)" : st.bd}`,
         boxShadow: selected ? "0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent)" : overlay ? "var(--shadow2)" : "none",
@@ -517,6 +576,7 @@ function GridCell({
   row,
   col,
   table,
+  editing,
   selected,
   onSelect,
   onContextMenu
@@ -524,23 +584,24 @@ function GridCell({
   row: number;
   col: number;
   table: RestaurantTable | null;
+  editing: boolean;
   selected: boolean;
   onSelect: (n: number) => void;
-  onContextMenu: (table: RestaurantTable, x: number, y: number) => void;
+  onContextMenu?: (table: RestaurantTable, x: number, y: number) => void;
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: cellId(row, col) });
+  const { setNodeRef, isOver } = useDroppable({ id: cellId(row, col), disabled: !editing });
   return (
     <div
       ref={setNodeRef}
       style={{
         aspectRatio: "1",
         borderRadius: 10,
-        border: `1px dashed ${isOver ? "var(--brand)" : "var(--line2)"}`,
+        border: editing ? `1px dashed ${isOver ? "var(--brand)" : "var(--line2)"}` : "1px solid transparent",
         background: isOver ? "var(--brandSoft)" : "transparent",
         transition: "border-color .12s var(--ease-spring), background .12s var(--ease-spring)"
       }}
     >
-      {table && <TableChip table={table} selected={selected} onSelect={onSelect} onContextMenu={onContextMenu} />}
+      {table && <TableChip key={table.id} table={table} locked={!editing} selected={selected} onSelect={onSelect} onContextMenu={onContextMenu} />}
     </div>
   );
 }

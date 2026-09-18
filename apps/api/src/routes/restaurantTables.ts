@@ -10,8 +10,8 @@ export const restaurantTablesRouter = Router();
 // "/api/restaurants" mount point — a path-based router.use() here would also
 // run for sibling routers' routes (e.g. reports' /:id/shift-stats).
 const staffGuard = [requireStaff, requireOwnRestaurant];
-const MIN_GRID_SIZE = 6;
-const MAX_GRID_SIZE = 14;
+const MIN_GRID_SIZE = 7;
+const MAX_GRID_SIZE = 15; // odd sizes only (validated in the PATCH below)
 
 async function findTable(restaurantId: string, number: number) {
   return prisma.restaurantTable.findUnique({ where: { restaurantId_number: { restaurantId, number } } });
@@ -51,8 +51,8 @@ restaurantTablesRouter.get("/:id/salon-grid", ...staffGuard, async (req, res) =>
 
 restaurantTablesRouter.patch("/:id/salon-grid", ...staffGuard, async (req, res) => {
   const { gridSize } = req.body as { gridSize?: number };
-  if (!Number.isInteger(gridSize) || gridSize! < MIN_GRID_SIZE || gridSize! > MAX_GRID_SIZE) {
-    return res.status(400).json({ error: `gridSize must be an integer between ${MIN_GRID_SIZE} and ${MAX_GRID_SIZE}` });
+  if (!Number.isInteger(gridSize) || gridSize! % 2 === 0 || gridSize! < MIN_GRID_SIZE || gridSize! > MAX_GRID_SIZE) {
+    return res.status(400).json({ error: `gridSize must be an odd integer between ${MIN_GRID_SIZE} and ${MAX_GRID_SIZE}` });
   }
   await prisma.restaurant.update({ where: { id: req.params.id }, data: { gridSize } });
   // Shrinking the grid strands any table whose position no longer fits — unposition it
@@ -80,13 +80,17 @@ restaurantTablesRouter.patch("/:id/tables/:number/position", ...staffGuard, asyn
     ) {
       return res.status(400).json({ error: `gridRow and gridCol must be integers between 0 and ${gridSize - 1}` });
     }
-    const occupied = await prisma.restaurantTable.findFirst({
-      where: { restaurantId: req.params.id, gridRow, gridCol, number: { not: number } }
-    });
-    if (occupied) return res.status(409).json({ error: `Mesa ${occupied.number} já está nessa célula` });
   }
 
-  await prisma.restaurantTable.update({ where: { id: table.id }, data: { gridRow: clearing ? null : gridRow, gridCol: clearing ? null : gridCol } });
+  // Target cell taken → swap: the occupant takes the dragged table's old cell (or goes back to
+  // the unpositioned list when the dragged table had none). Atomic so a crash can't leave both on one cell.
+  const occupant = clearing
+    ? null
+    : await prisma.restaurantTable.findFirst({ where: { restaurantId: req.params.id, gridRow, gridCol, number: { not: number } } });
+  await prisma.$transaction([
+    ...(occupant ? [prisma.restaurantTable.update({ where: { id: occupant.id }, data: { gridRow: table.gridRow, gridCol: table.gridCol } })] : []),
+    prisma.restaurantTable.update({ where: { id: table.id }, data: { gridRow: clearing ? null : gridRow, gridCol: clearing ? null : gridCol } })
+  ]);
   res.json(await buildSalonGrid(req.params.id));
 });
 
