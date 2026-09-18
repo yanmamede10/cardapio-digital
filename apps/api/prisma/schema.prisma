@@ -39,6 +39,20 @@ model Restaurant {
   planDueDate       DateTime?
   planModulesJson   String   @default("[]")
 
+  // Aparência — customer-facing menu page skin. "draft*" is what the dashboard
+  // edits; the plain fields below are what's actually published and served by
+  // the public appearance endpoint. No versioning, just draft vs. live.
+  template            String    @default("classico")
+  brandColor          String    @default("#732009")
+  appearanceLogoUrl   String?
+  coverPhotosJson     String    @default("[]")
+  appearancePublishedAt DateTime?
+
+  draftTemplate       String    @default("classico")
+  draftBrandColor     String    @default("#732009")
+  draftLogoUrl        String?
+  draftCoverPhotosJson String   @default("[]")
+
   categories     MenuCategory[]
   items          MenuItem[]
   orders         Order[]

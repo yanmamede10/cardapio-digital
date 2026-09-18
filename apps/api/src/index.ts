@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { addressesRouter } from "./routes/addresses.js";
+import { appearanceRouter } from "./routes/appearance.js";
 import { authRouter } from "./routes/auth.js";
 import { couponsRouter } from "./routes/coupons.js";
 import { dashboardCouponsRouter } from "./routes/dashboardCoupons.js";
@@ -30,6 +31,7 @@ app.use("/api/restaurants", dashboardCouponsRouter);
 app.use("/api/restaurants", supportRouter);
 app.use("/api/restaurants", reportsRouter);
 app.use("/api/restaurants", settingsRouter);
+app.use("/api/restaurants", appearanceRouter);
 app.use("/api/tables", tablesRouter);
 app.use("/api/addresses", addressesRouter);
 app.use("/api/payment-methods", paymentMethodsRouter);

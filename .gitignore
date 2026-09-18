@@ -3,6 +3,7 @@ dist/
 *.tsbuildinfo
 .env*
 !.env.android
+!.env.example
 
 apps/api/prisma/dev.db
 apps/api/prisma/dev.db-journal

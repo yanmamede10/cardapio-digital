@@ -1,13 +1,16 @@
 import type {
   Address as ApiAddress,
+  AppearanceState,
   CartLine,
   Coupon as ApiCoupon,
   FiscalInfo,
   MenuItem as ApiMenuItem,
   MenuItemOptionGroup,
+  MenuTemplateId,
   Order as ApiOrder,
   OperatingHoursRow,
   PaymentMethod as ApiPaymentMethod,
+  PublicAppearance,
   Restaurant as ApiRestaurant,
   RestaurantProfile,
   RestaurantTable as ApiRestaurantTable,
@@ -219,6 +222,34 @@ export function serializeProfile(r: Restaurant): RestaurantProfile {
     description: r.description,
     logoUrl: r.logoUrl ?? null,
     coverUrl: r.coverUrl ?? null
+  };
+}
+
+export function serializeAppearanceState(r: Restaurant): AppearanceState {
+  return {
+    draft: {
+      template: r.draftTemplate as MenuTemplateId,
+      brandColor: r.draftBrandColor,
+      logoUrl: r.draftLogoUrl ?? null,
+      coverPhotos: JSON.parse(r.draftCoverPhotosJson)
+    },
+    live: {
+      template: r.template as MenuTemplateId,
+      brandColor: r.brandColor,
+      logoUrl: r.appearanceLogoUrl ?? null,
+      coverPhotos: JSON.parse(r.coverPhotosJson),
+      publishedAt: r.appearancePublishedAt ? r.appearancePublishedAt.toISOString() : null
+    }
+  };
+}
+
+export function serializePublicAppearance(r: Restaurant): PublicAppearance {
+  return {
+    template: r.template as MenuTemplateId,
+    brandColor: r.brandColor,
+    logoUrl: r.appearanceLogoUrl ?? null,
+    coverPhotos: JSON.parse(r.coverPhotosJson),
+    publishedAt: r.appearancePublishedAt ? r.appearancePublishedAt.toISOString() : null
   };
 }
 

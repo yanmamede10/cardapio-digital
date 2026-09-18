@@ -7,9 +7,16 @@
   --ink2: #626266;
   --pri: #732009;
   --priInk: #fff7ec;
-  --acc: #732009;
+  --acc: var(--pri);
   --line: rgba(36, 22, 15, 0.14);
   --good: #3f8f5b;
+
+  /* Vibrante template: light mode fills the whole page with the brand color;
+     dark mode instead shows the brand as a solid header panel over a near-black page. */
+  --vibBg: var(--pri);
+  --vibHead: transparent;
+  --vibHeadR: 0px;
+  --vibHeadPad: 0px;
 
   --glass: rgba(255, 252, 234, 0.74);
   --glassStrong: rgba(255, 252, 234, 0.86);
@@ -64,6 +71,11 @@
 
   --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.42);
   --ring-now: 0 0 0 5px rgba(115, 32, 9, 0.3);
+
+  --vibBg: var(--bg);
+  --vibHead: var(--pri);
+  --vibHeadR: 30px;
+  --vibHeadPad: 16px;
 }
 
 /* tablet scale — the table-mode flow runs on a fixed tablet as well as a

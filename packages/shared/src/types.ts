@@ -318,6 +318,25 @@ export interface RestaurantProfile {
   coverUrl: string | null;
 }
 
+export type MenuTemplateId = "classico" | "moderno" | "minimalista" | "vibrante" | "editorial" | "galeria";
+
+/** The customer-facing menu page skin: template + brand color + logo/cover photos. */
+export interface AppearanceSettings {
+  template: MenuTemplateId;
+  brandColor: string;
+  logoUrl: string | null;
+  coverPhotos: string[];
+}
+
+/** What the dashboard's Aparência tab edits (draft) vs. what it can publish (live). */
+export interface AppearanceState {
+  draft: AppearanceSettings;
+  live: AppearanceSettings & { publishedAt: string | null };
+}
+
+/** What GET /:id/appearance (public, no auth) returns to the menu apps. */
+export type PublicAppearance = AppearanceSettings & { publishedAt: string | null };
+
 export interface FiscalInfo {
   cnpj: string;
   legalName: string;

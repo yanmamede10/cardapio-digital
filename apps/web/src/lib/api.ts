@@ -6,6 +6,7 @@ import type {
   MenuItem,
   Order,
   PaymentMethod,
+  PublicAppearance,
   Restaurant,
   TableResolveResponse
 } from "@cardapio/shared";
@@ -59,6 +60,7 @@ export const api = {
     return request<Restaurant[]>(`/api/restaurants${suffix}`);
   },
   getRestaurant: (id: string) => request<Restaurant>(`/api/restaurants/${id}`),
+  getAppearance: (id: string) => request<PublicAppearance>(`/api/restaurants/${id}/appearance`),
   getCategories: (id: string) => request<MenuCategory[]>(`/api/restaurants/${id}/categories`),
   getItems: (id: string, categoryId?: string) => {
     const suffix = categoryId ? `?categoryId=${encodeURIComponent(categoryId)}` : "";

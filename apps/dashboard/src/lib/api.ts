@@ -1,11 +1,13 @@
 import type {
   AnalyticsPeriod,
   AnalyticsSummary,
+  AppearanceState,
   Coupon,
   CreateCouponRequest,
   FiscalInfo,
   MenuCategory,
   MenuItem,
+  MenuTemplateId,
   Order,
   OrderStatus,
   OperatingHoursRow,
@@ -213,5 +215,37 @@ export const api = {
     request<StaffMember>(`/api/restaurants/${RESTAURANT_ID}/staff`, { method: "POST", body: JSON.stringify(payload) }),
   getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
   updateFiscal: (payload: Partial<FiscalInfo>) =>
-    request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) })
+    request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) }),
+
+  // Appearance
+  getAppearanceDraft: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`),
+  updateAppearanceDraft: (payload: Partial<{ template: MenuTemplateId; brandColor: string; logoUrl: string | null; coverPhotos: string[] }>) =>
+    request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`, { method: "PATCH", body: JSON.stringify(payload) }),
+  publishAppearance: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/publish`, { method: "POST" }),
+  uploadAppearanceFile: async (kind: "logo" | "cover", file: File): Promise<{ url: string } & AppearanceState> => {
+    const form = new FormData();
+    form.append("kind", kind);
+    form.append("file", file);
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}/api/restaurants/${RESTAURANT_ID}/appearance/upload`, {
+        method: "POST",
+        headers: session ? { Authorization: `Bearer ${session.token}` } : undefined,
+        body: form
+      });
+    } catch {
+      throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
+    }
+    if (!res.ok) {
+      let message = `Erro ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.error) message = body.error;
+      } catch {
+        // ignore malformed error body
+      }
+      throw new ApiError(res.status, message);
+    }
+    return res.json();
+  }
 };
