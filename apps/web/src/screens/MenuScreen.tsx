@@ -50,6 +50,14 @@ export default function MenuScreen() {
       .catch(() => showToast("Não foi possível carregar o cardápio", "fa-solid fa-triangle-exclamation"));
     // Appearance is a soft-fail enhancement — the menu itself must not break if this one fails.
     api.getAppearance(restaurantId).then(setAppearance).catch(() => {});
+
+    // Poll for availability (soldOut toggled from the dashboard) — same recurring-fetch idiom
+    // used elsewhere (order status every 3s, table map every 10s); 12s is plenty here since
+    // this only needs to reflect availability, not drive an instant UI change.
+    const id = setInterval(() => {
+      api.getItems(restaurantId).then(setItems).catch(() => {});
+    }, 12000);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
 
