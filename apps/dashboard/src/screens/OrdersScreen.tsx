@@ -390,10 +390,10 @@ function KanbanCardBody({
           {brl(o.total)}
         </div>
         <div style={{ flex: 1 }} />
-        <button type="button" title="Chat do pedido" className="icon-btn" onClick={() => notify(`Chat de ${ref} aberto`)}>
+        <button type="button" title="Chat do pedido" aria-label={`Abrir chat do pedido ${ref}`} className="icon-btn" onClick={() => notify(`Chat de ${ref} aberto`)}>
           <i className="fa-solid fa-comment" style={{ fontSize: 17, lineHeight: 1 }} />
         </button>
-        <button type="button" title="Imprimir comanda" className="icon-btn" onClick={() => notify(`Comanda de ${ref} enviada à impressora`)}>
+        <button type="button" title="Imprimir comanda" aria-label={`Imprimir comanda do pedido ${ref}`} className="icon-btn" onClick={() => notify(`Comanda de ${ref} enviada à impressora`)}>
           <i className="fa-solid fa-print" style={{ fontSize: 17, lineHeight: 1 }} />
         </button>
       </div>

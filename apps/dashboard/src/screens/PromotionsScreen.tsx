@@ -193,13 +193,13 @@ export default function PromotionsScreen() {
                 <div className="mono" style={{ fontSize: 12.5 }}>
                   {c.usedCount}/{c.usageLimit}
                 </div>
-                <button type="button" onClick={() => toggleActive(c)} style={{ display: "flex", alignItems: "center", gap: 7, background: "transparent", border: 0, cursor: "pointer", font: "inherit", padding: 0 }}>
+                <button type="button" onClick={() => toggleActive(c)} aria-label={c.active ? `Desativar cupom ${c.code}` : `Ativar cupom ${c.code}`} style={{ display: "flex", alignItems: "center", gap: 7, background: "transparent", border: 0, cursor: "pointer", font: "inherit", padding: 0 }}>
                   <span className="toggle-track" style={{ background: c.active ? "var(--ok)" : "var(--line2)" }}>
                     <span className="toggle-knob" style={{ left: c.active ? 16 : 2 }} />
                   </span>
                 </button>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <button type="button" title="Duplicar" className="icon-btn" onClick={() => duplicate(c)}>
+                  <button type="button" title="Duplicar" aria-label={`Duplicar cupom ${c.code}`} className="icon-btn" onClick={() => duplicate(c)}>
                     <i className="fa-solid fa-copy" style={{ fontSize: 16, lineHeight: 1 }} />
                   </button>
                 </div>

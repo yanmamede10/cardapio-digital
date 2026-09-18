@@ -283,7 +283,7 @@ export default function MenuScreen() {
                 <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>{drawer.id ? "Editar produto" : "Novo produto"}</div>
                 <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Publicado no cardápio digital ao salvar</div>
               </div>
-              <button type="button" className="icon-btn" style={{ width: 32, height: 32 }} onClick={() => setDrawer(null)}>
+              <button type="button" title="Fechar" aria-label="Fechar" className="icon-btn" onClick={() => setDrawer(null)}>
                 <i className="fa-solid fa-xmark" style={{ fontSize: 18, lineHeight: 1 }} />
               </button>
             </div>
@@ -346,7 +346,7 @@ export default function MenuScreen() {
                   </button>
                 </div>
                 {drawer.extras.map((x, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 104px 32px", gap: 8, alignItems: "center" }}>
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 104px 44px", gap: 8, alignItems: "center" }}>
                     <input
                       className="field"
                       style={{ padding: "8px 10px" }}
@@ -359,7 +359,7 @@ export default function MenuScreen() {
                       value={x.price}
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, price: e.target.value } : y)) })}
                     />
-                    <button type="button" className="icon-btn" style={{ width: 32, height: 32 }} onClick={() => setDrawer({ ...drawer, extras: drawer.extras.filter((_, j) => j !== i) })}>
+                    <button type="button" title="Remover adicional" aria-label="Remover adicional" className="icon-btn" onClick={() => setDrawer({ ...drawer, extras: drawer.extras.filter((_, j) => j !== i) })}>
                       <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
                     </button>
                   </div>
@@ -495,10 +495,10 @@ function ItemRow({ item: m, onToggleAvailable, onDuplicate, onEdit }: { item: Me
         <span style={{ fontSize: 12, fontWeight: 600, color: m.soldOut ? "var(--ink3)" : "var(--ok)" }}>{m.soldOut ? "Esgotado" : "Disponível"}</span>
       </button>
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-        <button type="button" title="Duplicar" className="icon-btn" onClick={onDuplicate}>
+        <button type="button" title="Duplicar" aria-label="Duplicar produto" className="icon-btn" onClick={onDuplicate}>
           <i className="fa-solid fa-copy" style={{ fontSize: 16, lineHeight: 1 }} />
         </button>
-        <button type="button" title="Editar" className="icon-btn" onClick={onEdit}>
+        <button type="button" title="Editar" aria-label="Editar produto" className="icon-btn" onClick={onEdit}>
           <i className="fa-solid fa-pen" style={{ fontSize: 16, lineHeight: 1 }} />
         </button>
       </div>

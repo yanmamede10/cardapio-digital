@@ -268,11 +268,11 @@ export default function MenuScreen() {
                 </div>
               )}
               {isDelivery && (
-                <button type="button" onClick={() => navigate("/")} title="Voltar" style={{ border: "1px solid rgba(252,247,211,.46)", background: "rgba(252,247,211,.16)", color: "#FCF7D3", cursor: "pointer", borderRadius: 999, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <button type="button" onClick={() => navigate("/")} title="Voltar" aria-label="Voltar" style={{ border: "1px solid rgba(252,247,211,.46)", background: "rgba(252,247,211,.16)", color: "#FCF7D3", cursor: "pointer", borderRadius: 999, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <i className="fa-solid fa-arrow-left" style={{ fontSize: "var(--i-m)" }} />
                 </button>
               )}
-              <button type="button" onClick={toggleTheme} title="Alternar tema" style={{ marginLeft: "auto", border: "1px solid rgba(252,247,211,.46)", background: "rgba(252,247,211,.16)", color: "#FCF7D3", cursor: "pointer", borderRadius: 999, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button type="button" onClick={toggleTheme} title="Alternar tema" aria-label="Alternar tema" style={{ marginLeft: "auto", border: "1px solid rgba(252,247,211,.46)", background: "rgba(252,247,211,.16)", color: "#FCF7D3", cursor: "pointer", borderRadius: 999, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <i className={theme === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon"} style={{ fontSize: "var(--i-m)" }} />
               </button>
             </div>

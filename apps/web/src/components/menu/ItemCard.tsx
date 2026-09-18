@@ -40,6 +40,7 @@ function SolidQuickAdd({ item, onQuickAdd, size = "var(--fab)" }: { item: MenuIt
     <button
       type="button"
       title="Adicionar"
+      aria-label={`Adicionar ${item.name} ao pedido`}
       onClick={onQuickAdd}
       className="tap"
       style={{ flex: "none", width: size, height: size, borderRadius: 999, border: "none", cursor: "pointer", background: "var(--pri)", color: "var(--priInk)", display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -55,6 +56,7 @@ function GhostQuickAdd({ item, onQuickAdd }: { item: MenuItem; onQuickAdd: () =>
     <button
       type="button"
       title="Adicionar"
+      aria-label={`Adicionar ${item.name} ao pedido`}
       onClick={onQuickAdd}
       className="tap"
       style={{ flex: "none", width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "1px solid var(--line)", cursor: "pointer", background: "var(--surf)", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -158,7 +160,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
               <div style={{ marginTop: 5, font: "600 var(--t-s) var(--font)", color: "#F0E4C4" }}>{formatMoney(item.price)}</div>
             </div>
             {!item.soldOut && (
-              <button type="button" title="Adicionar" onClick={onQuickAdd} className="tap" style={{ flex: "none", width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--priInk)", color: "var(--pri)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button type="button" title="Adicionar" aria-label={`Adicionar ${item.name} ao pedido`} onClick={onQuickAdd} className="tap" style={{ flex: "none", width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--priInk)", color: "var(--pri)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <i className="fa-solid fa-plus" style={{ fontSize: "var(--i-m)" }} />
               </button>
             )}

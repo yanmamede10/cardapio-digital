@@ -17,6 +17,7 @@ export function IconButton({
     <button
       type="button"
       title={title}
+      aria-label={title}
       onClick={onClick}
       className={`icon-btn${glass ? " icon-btn--glass" : ""}`}
       style={style}

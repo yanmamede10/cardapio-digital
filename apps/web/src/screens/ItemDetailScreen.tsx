@@ -123,6 +123,7 @@ export default function ItemDetailScreen() {
               <button
                 type="button"
                 title="Menos"
+                aria-label="Diminuir quantidade"
                 onClick={() => setDraft((d) => (d ? { ...d, qty: Math.max(1, d.qty - 1) } : d))}
                 className="tap"
                 style={{ width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--surf2)", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -133,6 +134,7 @@ export default function ItemDetailScreen() {
               <button
                 type="button"
                 title="Mais"
+                aria-label="Aumentar quantidade"
                 onClick={() => setDraft((d) => (d ? { ...d, qty: d.qty + 1 } : d))}
                 className="tap"
                 style={{ width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--surf2)", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}

@@ -100,8 +100,9 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
           type="button"
           onClick={toggleTheme}
           title="Alternar tema"
+          aria-label="Alternar tema"
           className="btn-ghost"
-          style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minWidth: 44, minHeight: 44, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >
           <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: 17, lineHeight: 1 }} />
         </button>

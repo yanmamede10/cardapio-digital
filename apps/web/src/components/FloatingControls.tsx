@@ -91,11 +91,12 @@ export function SupportFab() {
     <button
       type="button"
       title="Suporte"
+      aria-label="Suporte"
       onClick={() => showToast("Chat de suporte abrindo…", "fa-solid fa-headset")}
       className="tap"
       style={{
         position: "absolute", right: "var(--pad)", bottom: count > 0 ? 86 : 22,
-        width: 42, height: 42, borderRadius: 999, cursor: "pointer",
+        width: 44, height: 44, borderRadius: 999, cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
         border: "1px solid var(--line)", background: "var(--glassStrong)", color: "var(--ink2)",
         backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)",

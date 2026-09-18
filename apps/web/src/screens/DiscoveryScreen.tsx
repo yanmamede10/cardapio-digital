@@ -115,7 +115,7 @@ export default function DiscoveryScreen() {
                 style={{ flex: 1, minWidth: 0, border: "none", background: "transparent", outline: "none", color: "var(--ink)", font: "500 var(--t-b) var(--font)" }}
               />
               {query.length > 0 && (
-                <button type="button" title="Limpar" onClick={() => setQuery("")} style={{ border: "none", background: "transparent", padding: 0, cursor: "pointer", color: "var(--ink2)" }}>
+                <button type="button" title="Limpar" aria-label="Limpar busca" onClick={() => setQuery("")} className="tap" style={{ width: 44, height: 44, margin: "-11px -11px -11px 0", border: "none", background: "transparent", cursor: "pointer", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <i className="fa-solid fa-circle-xmark" style={{ fontSize: "var(--i-m)" }} />
                 </button>
               )}

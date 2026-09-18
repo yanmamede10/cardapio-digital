@@ -48,7 +48,9 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
         <button
           type="button"
           onClick={() => setNotifOpen((v) => !v)}
-          style={{ position: "relative", width: 38, height: 38, borderRadius: 13, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          title="Notificações"
+          aria-label={notifCount > 0 ? `Notificações — ${notifCount} novas` : "Notificações"}
+          style={{ position: "relative", width: 44, height: 44, borderRadius: 13, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
         >
           <i className="fa-solid fa-bell" style={{ fontSize: 20, lineHeight: 1 }} />
           {notifCount > 0 && (

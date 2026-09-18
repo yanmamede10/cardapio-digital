@@ -2,7 +2,7 @@ export function QtyStepper({
   qty,
   onInc,
   onDec,
-  size = 38
+  size = 52
 }: {
   qty: number;
   onInc: () => void;
@@ -14,6 +14,7 @@ export function QtyStepper({
       <button
         type="button"
         title="Menos"
+        aria-label="Diminuir quantidade"
         onClick={onDec}
         className="tap"
         style={{ width: size - 8, height: size - 8, borderRadius: 999, border: "none", cursor: "pointer", background: "transparent", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}
@@ -24,6 +25,7 @@ export function QtyStepper({
       <button
         type="button"
         title="Mais"
+        aria-label="Aumentar quantidade"
         onClick={onInc}
         className="tap"
         style={{ width: size - 8, height: size - 8, borderRadius: 999, border: "none", cursor: "pointer", background: "transparent", color: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center" }}

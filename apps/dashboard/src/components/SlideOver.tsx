@@ -32,7 +32,7 @@ export function SlideOver({ title, subtitle, onClose, footer, children }: Props)
             <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>
             <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{subtitle}</div>
           </div>
-          <button type="button" className="icon-btn" onClick={onClose} title="Fechar">
+          <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar">
             <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
           </button>
         </div>
