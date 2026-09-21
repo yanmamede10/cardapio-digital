@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import type { MenuCategory, MenuItem } from "@cardapio/shared";
 import {
   DndContext,
@@ -33,9 +33,10 @@ interface Draft {
   lunch: string;
   dinner: string;
   extras: DraftExtra[];
+  imageUrl: string | null;
 }
 
-const EMPTY_DRAFT: Draft = { id: null, name: "", desc: "", price: "", categoryId: "", lunch: "11:00 – 15:00", dinner: "18:00 – 23:00", extras: [] };
+const EMPTY_DRAFT: Draft = { id: null, name: "", desc: "", price: "", categoryId: "", lunch: "11:00 – 15:00", dinner: "18:00 – 23:00", extras: [], imageUrl: null };
 
 /** Sortable ids for category rows are prefixed so they never collide with item ids in the shared DndContext. */
 const catSortId = (id: string) => `cat-${id}`;
@@ -57,6 +58,7 @@ export default function MenuScreen() {
   const [activeCat, setActiveCat] = useState("Todas");
   const [drawer, setDrawer] = useState<Draft | null>(null);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -93,7 +95,8 @@ export default function MenuScreen() {
       categoryId: m.categoryId,
       lunch: "11:00 – 15:00",
       dinner: "18:00 – 23:00",
-      extras: m.optionGroups[0]?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || []
+      extras: m.optionGroups[0]?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || [],
+      imageUrl: m.imageUrl
     });
 
   const save = async () => {
@@ -118,6 +121,21 @@ export default function MenuScreen() {
     }
   };
 
+  const uploadImage = async (file: File) => {
+    if (!drawer?.id) {
+      notify("Salve o produto antes de adicionar uma foto");
+      return;
+    }
+    try {
+      const updated = await api.uploadItemImage(drawer.id, file);
+      setDrawer((d) => (d ? { ...d, imageUrl: updated.imageUrl } : d));
+      setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      notify("Foto do produto atualizada");
+    } catch {
+      notify("Não foi possível enviar a foto");
+    }
+  };
+
   const toggleAvailable = async (m: MenuItem) => {
     try {
       const updated = await api.updateItem(m.id, { soldOut: !m.soldOut });
@@ -135,6 +153,19 @@ export default function MenuScreen() {
       reload();
     } catch {
       notify("Não foi possível duplicar o produto");
+    }
+  };
+
+  const deleteItem = async () => {
+    if (!drawer?.id) return;
+    if (!window.confirm(`Excluir "${drawer.name}"? Essa ação não pode ser desfeita.`)) return;
+    try {
+      await api.deleteItem(drawer.id);
+      setDrawer(null);
+      notify(`"${drawer.name}" excluído`);
+      reload();
+    } catch {
+      notify("Não foi possível excluir o produto");
     }
   };
 
@@ -289,11 +320,21 @@ export default function MenuScreen() {
             </div>
             <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
               <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files[0];
+                  if (file) uploadImage(file);
+                }}
                 style={{
                   height: 132,
                   borderRadius: 15,
                   border: "1px dashed var(--line2)",
-                  background: "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 6px,var(--surface3) 6px,var(--surface3) 12px)",
+                  backgroundColor: "var(--surface2)",
+                  backgroundImage: drawer.imageUrl ? `url(${drawer.imageUrl})` : "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 6px,var(--surface3) 6px,var(--surface3) 12px)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -303,10 +344,25 @@ export default function MenuScreen() {
                   cursor: "pointer"
                 }}
               >
-                <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />
-                <span className="mono" style={{ fontSize: 10.5, letterSpacing: ".06em" }}>
-                  ARRASTE A FOTO DO PRATO · 1200×900
-                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) uploadImage(file);
+                  }}
+                />
+                {!drawer.imageUrl && (
+                  <>
+                    <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />
+                    <span className="mono" style={{ fontSize: 10.5, letterSpacing: ".06em", textAlign: "center", padding: "0 12px" }}>
+                      {drawer.id ? "ARRASTE A FOTO DO PRATO · 1200×900" : "SALVE O PRODUTO PARA ADICIONAR UMA FOTO"}
+                    </span>
+                  </>
+                )}
               </div>
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span className="field-label">Nome</span>
@@ -380,6 +436,11 @@ export default function MenuScreen() {
               </div>
             </div>
             <div style={{ marginTop: "auto", display: "flex", gap: 10, padding: "16px 24px", borderTop: "1px solid var(--glassBd)", position: "sticky", bottom: 0, background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)" }}>
+              {drawer.id && (
+                <button type="button" title="Excluir produto" aria-label="Excluir produto" className="icon-btn" style={{ color: "var(--alert)" }} onClick={deleteItem}>
+                  <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
+                </button>
+              )}
               <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
                 Salvar produto
               </button>
@@ -466,16 +527,21 @@ function ItemRow({ item: m, onToggleAvailable, onDuplicate, onEdit }: { item: Me
           height: 44,
           borderRadius: 12,
           border: "1px solid var(--line)",
-          background: "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 5px,var(--surface3) 5px,var(--surface3) 10px)",
+          backgroundColor: "var(--surface2)",
+          backgroundImage: m.imageUrl ? `url(${m.imageUrl})` : "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 5px,var(--surface3) 5px,var(--surface3) 10px)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           display: "flex",
           alignItems: "flex-end",
           justifyContent: "center",
           paddingBottom: 3
         }}
       >
-        <span className="mono" style={{ fontSize: 8, color: "var(--ink3)", letterSpacing: ".04em" }}>
-          FOTO
-        </span>
+        {!m.imageUrl && (
+          <span className="mono" style={{ fontSize: 8, color: "var(--ink3)", letterSpacing: ".04em" }}>
+            FOTO
+          </span>
+        )}
       </div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: "-.01em" }}>{m.name}</div>

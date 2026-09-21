@@ -1,6 +1,8 @@
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime: pooled (PgBouncer) connection string. Migrations: direct/session-mode.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -90,6 +92,7 @@ model MenuItem {
   longDescription  String
   price            Float
   photoLabel       String
+  imageUrl         String?
   tag              String?
   tagIcon          String?
   soldOut          Boolean @default(false)

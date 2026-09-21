@@ -69,6 +69,7 @@ export function serializeMenuItem(item: MenuItem, categoryName: string): ApiMenu
     longDescription: item.longDescription,
     price: item.price,
     photoLabel: item.photoLabel,
+    imageUrl: item.imageUrl,
     tag: item.tag,
     tagIcon: item.tagIcon,
     soldOut: item.soldOut,

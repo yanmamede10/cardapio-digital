@@ -47,6 +47,13 @@ dashboardCouponsRouter.patch("/:id/coupons/:couponId", ...staffGuard, async (req
   res.json(serializeCoupon(coupon));
 });
 
+dashboardCouponsRouter.delete("/:id/coupons/:couponId", ...staffGuard, async (req, res) => {
+  const existing = await prisma.coupon.findUnique({ where: { id: req.params.couponId } });
+  if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "coupon not found" });
+  await prisma.coupon.delete({ where: { id: req.params.couponId } });
+  res.status(204).end();
+});
+
 dashboardCouponsRouter.post("/:id/coupons/:couponId/duplicate", ...staffGuard, async (req, res) => {
   const original = await prisma.coupon.findUnique({ where: { id: req.params.couponId } });
   if (!original || original.restaurantId !== req.params.id) return res.status(404).json({ error: "coupon not found" });

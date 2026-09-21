@@ -2,6 +2,7 @@ import type { MenuItem } from "@cardapio/shared";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IconButton } from "../components/IconButton";
+import { photoStyle } from "../components/menu/ItemCard";
 import { Toast } from "../components/Toast";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
@@ -66,8 +67,8 @@ export default function ItemDetailScreen() {
   return (
     <div className="screen">
       <div className="scroll no-scrollbar">
-        <div className="photo-placeholder" style={{ position: "relative", height: "calc(var(--banner) + 40px)" }}>
-          <span style={{ font: "500 11px var(--font)", letterSpacing: ".08em", color: "var(--ink2)" }}>{item.photoLabel}</span>
+        <div className="photo-placeholder" style={{ position: "relative", height: "calc(var(--banner) + 40px)", ...photoStyle(item) }}>
+          {!item.imageUrl && <span style={{ font: "500 11px var(--font)", letterSpacing: ".08em", color: "var(--ink2)" }}>{item.photoLabel}</span>}
           <IconButton icon="fa-solid fa-arrow-left" onClick={goBack} title="Voltar" glass style={{ position: "absolute", top: 12, left: 12 }} />
         </div>
         <div style={{ padding: "18px var(--pad) 0" }}>

@@ -1,7 +1,13 @@
+import type { CSSProperties } from "react";
 import type { MenuItem } from "@cardapio/shared";
 import { formatMoney } from "../../lib/format";
 
 type Variant = "grid" | "wide" | "tile" | "row" | "gallery";
+
+/** Real photo overrides the repeating-pattern placeholder background set by the .photo-placeholder class. */
+export function photoStyle(item: MenuItem): CSSProperties {
+  return item.imageUrl ? { backgroundImage: `url(${item.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : {};
+}
 
 interface Props {
   item: MenuItem;
@@ -74,8 +80,8 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
     return (
       <div className="card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", opacity: dim, flex: width ? "none" : undefined, width }}>
         <div onClick={onOpen} style={{ cursor: "pointer" }}>
-          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)" }}>
-            <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)", padding: "0 8px", textAlign: "center" }}>{item.photoLabel}</span>
+          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)", ...photoStyle(item) }}>
+            {!item.imageUrl && <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)", padding: "0 8px", textAlign: "center" }}>{item.photoLabel}</span>}
             <TagBadge item={item} />
             {item.soldOut && soldOutBadge}
           </div>
@@ -99,7 +105,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
   if (variant === "wide") {
     return (
       <div className="card" style={{ overflow: "hidden", display: "flex", alignItems: "stretch", cursor: "pointer", opacity: dim }}>
-        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", flex: "none", width: "calc(var(--photo) * .95)" }}>
+        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", flex: "none", width: "calc(var(--photo) * .95)", ...photoStyle(item) }}>
           {item.soldOut && (
             <div style={{ position: "absolute", inset: 0, background: "rgba(2,3,4,.42)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <i className="fa-solid fa-ban" style={{ fontSize: "var(--i-m)", color: "#FCF7D3" }} />
@@ -126,8 +132,8 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
     return (
       <div style={{ background: "var(--surf)", border: "1px solid var(--line)", borderRadius: "var(--r-standard)", overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", opacity: dim, boxShadow: "0 18px 40px rgba(2,3,4,.26)" }}>
         <div onClick={onOpen}>
-          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)" }}>
-            <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)", padding: "0 8px", textAlign: "center" }}>{item.photoLabel}</span>
+          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)", ...photoStyle(item) }}>
+            {!item.imageUrl && <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)", padding: "0 8px", textAlign: "center" }}>{item.photoLabel}</span>}
             <TagBadge item={item} />
             {item.soldOut && soldOutBadge}
           </div>
@@ -146,7 +152,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
   if (variant === "gallery") {
     return (
       <div style={{ position: "relative", breakInside: "avoid", marginBottom: 12, borderRadius: 20, overflow: "hidden", cursor: "pointer", opacity: dim, background: "var(--surf2)", boxShadow: "var(--shadow-card)" }}>
-        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", height: photoHeight }}>
+        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", height: photoHeight, ...photoStyle(item) }}>
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(2,3,4,.80),rgba(2,3,4,.16) 52%,rgba(2,3,4,0))" }} />
           <TagBadge item={item} />
           {item.soldOut && (

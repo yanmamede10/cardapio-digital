@@ -52,6 +52,7 @@ export interface MenuItem {
   longDescription: string;
   price: number;
   photoLabel: string;
+  imageUrl: string | null;
   tag: string | null;
   tagIcon: string | null;
   soldOut: boolean;

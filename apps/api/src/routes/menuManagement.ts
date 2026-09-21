@@ -1,15 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
+import multer from "multer";
 import type { UpsertMenuItemRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem } from "../lib/serialize.js";
+import { uploadPublicFile } from "../lib/storage.js";
 
 export const menuManagementRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_NAME_LENGTH = 80;
 const MAX_SHORT_DESCRIPTION_LENGTH = 200;
 const MAX_LONG_DESCRIPTION_LENGTH = 500;
@@ -99,6 +104,34 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
   res.json(serializeMenuItem(item, item.category.name));
 });
 
+menuManagementRouter.post("/:id/items/:itemId/image", ...staffGuard, upload.single("file"), async (req, res) => {
+  const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
+  if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
+  if (!req.file) return res.status(400).json({ error: "file is required" });
+
+  const extension = IMAGE_TYPES[req.file.mimetype];
+  if (!extension) return res.status(400).json({ error: `unsupported file type: ${req.file.mimetype}` });
+  if (req.file.size > MAX_IMAGE_BYTES) return res.status(400).json({ error: `file too large — limit is ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB` });
+
+  let url: string;
+  try {
+    url = await uploadPublicFile({ buffer: req.file.buffer, contentType: req.file.mimetype, folder: `restaurants/${req.params.id}/products`, extension });
+  } catch (err) {
+    console.error(err);
+    return res.status(503).json({ error: "storage is not configured" });
+  }
+
+  const item = await prisma.menuItem.update({ where: { id: req.params.itemId }, data: { imageUrl: url }, include: { category: true } });
+  res.status(201).json(serializeMenuItem(item, item.category.name));
+});
+
+menuManagementRouter.delete("/:id/items/:itemId", ...staffGuard, async (req, res) => {
+  const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
+  if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
+  await prisma.menuItem.delete({ where: { id: req.params.itemId } });
+  res.status(204).end();
+});
+
 menuManagementRouter.post("/:id/items/:itemId/duplicate", ...staffGuard, async (req, res) => {
   const original = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!original || original.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
@@ -113,6 +146,7 @@ menuManagementRouter.post("/:id/items/:itemId/duplicate", ...staffGuard, async (
       longDescription: original.longDescription,
       price: original.price,
       photoLabel: original.photoLabel,
+      imageUrl: original.imageUrl,
       tag: original.tag,
       tagIcon: original.tagIcon,
       soldOut: true,

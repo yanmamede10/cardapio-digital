@@ -89,6 +89,17 @@ export default function PromotionsScreen() {
     }
   };
 
+  const remove = async (c: Coupon) => {
+    if (!window.confirm(`Excluir o cupom ${c.code}? Essa ação não pode ser desfeita.`)) return;
+    try {
+      await api.deleteCoupon(c.id);
+      notify(`Cupom ${c.code} excluído`);
+      reload();
+    } catch {
+      notify("Não foi possível excluir o cupom");
+    }
+  };
+
   const toggleComboItem = (itemId: string) => {
     if (!drawer) return;
     setDrawer({
@@ -168,7 +179,7 @@ export default function PromotionsScreen() {
         />
       ) : (
         <section className="card" style={{ overflowX: "auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 130px 130px 90px 90px 60px", gap: 12, padding: "10px 14px", background: "var(--surface2)", borderBottom: "1px solid var(--line)", minWidth: 760 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 130px 130px 90px 90px 92px", gap: 12, padding: "10px 14px", background: "var(--surface2)", borderBottom: "1px solid var(--line)", minWidth: 800 }}>
             {["Código", "Benefício", "Canal", "Validade", "Uso", "Status", ""].map((h) => (
               <div key={h} className="field-label">
                 {h}
@@ -178,7 +189,7 @@ export default function PromotionsScreen() {
           {coupons.map((c) => {
             const expired = new Date(c.validUntil).getTime() < Date.now();
             return (
-              <div key={c.id} style={{ display: "grid", gridTemplateColumns: "120px 1fr 130px 130px 90px 90px 60px", gap: 12, alignItems: "center", padding: "11px 14px", borderBottom: "1px solid var(--line)", minWidth: 760 }}>
+              <div key={c.id} style={{ display: "grid", gridTemplateColumns: "120px 1fr 130px 130px 90px 90px 92px", gap: 12, alignItems: "center", padding: "11px 14px", borderBottom: "1px solid var(--line)", minWidth: 800 }}>
                 <div className="mono" style={{ fontWeight: 600, fontSize: 13 }}>
                   {c.code}
                 </div>
@@ -198,9 +209,12 @@ export default function PromotionsScreen() {
                     <span className="toggle-knob" style={{ left: c.active ? 16 : 2 }} />
                   </span>
                 </button>
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                   <button type="button" title="Duplicar" aria-label={`Duplicar cupom ${c.code}`} className="icon-btn" onClick={() => duplicate(c)}>
                     <i className="fa-solid fa-copy" style={{ fontSize: 16, lineHeight: 1 }} />
+                  </button>
+                  <button type="button" title="Excluir" aria-label={`Excluir cupom ${c.code}`} className="icon-btn" style={{ color: "var(--alert)" }} onClick={() => remove(c)}>
+                    <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
                   </button>
                 </div>
               </div>

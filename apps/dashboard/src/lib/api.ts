@@ -178,6 +178,32 @@ export const api = {
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "PATCH", body: JSON.stringify(payload) }),
   duplicateItem: (itemId: string) =>
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/duplicate`, { method: "POST" }),
+  deleteItem: (itemId: string) => request<void>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "DELETE" }),
+  uploadItemImage: async (itemId: string, file: File): Promise<MenuItem> => {
+    const form = new FormData();
+    form.append("file", file);
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}/api/restaurants/${RESTAURANT_ID}/items/${itemId}/image`, {
+        method: "POST",
+        headers: session ? { Authorization: `Bearer ${session.token}` } : undefined,
+        body: form
+      });
+    } catch {
+      throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
+    }
+    if (!res.ok) {
+      let message = `Erro ${res.status}`;
+      try {
+        const body = await res.json();
+        if (body?.error) message = body.error;
+      } catch {
+        // ignore malformed error body
+      }
+      throw new ApiError(res.status, message);
+    }
+    return res.json();
+  },
   moveItem: (itemId: string, direction: "up" | "down") =>
     request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
   moveCategory: (categoryId: string, direction: "up" | "down") =>
@@ -191,6 +217,7 @@ export const api = {
     request<Coupon>(`/api/restaurants/${RESTAURANT_ID}/coupons/${couponId}`, { method: "PATCH", body: JSON.stringify({ active }) }),
   duplicateCoupon: (couponId: string) =>
     request<Coupon>(`/api/restaurants/${RESTAURANT_ID}/coupons/${couponId}/duplicate`, { method: "POST" }),
+  deleteCoupon: (couponId: string) => request<void>(`/api/restaurants/${RESTAURANT_ID}/coupons/${couponId}`, { method: "DELETE" }),
 
   // Support
   listTickets: (params: { status?: TicketStatus | "all"; channel?: TicketChannel | "all" } = {}) =>
