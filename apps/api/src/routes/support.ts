@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { LEVEL } from "@cardapio/shared";
+import { SUPPORT_ROLES } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
+import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeReview, serializeTicket } from "../lib/serialize.js";
 
 export const supportRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES)];
 const MAX_MESSAGE_LENGTH = 2000;
 
 supportRouter.get("/:id/tickets", ...staffGuard, async (req, res) => {

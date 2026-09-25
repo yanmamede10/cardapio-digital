@@ -406,6 +406,8 @@ export type StaffRole = "owner" | "manager" | "waiter" | "kitchen";
 export const LEVEL = { FUNCIONARIO: 1, ADMINISTRADOR: 2, DONO: 3 } as const;
 export const ROLE_LEVEL: Record<StaffRole, number> = { owner: LEVEL.DONO, manager: LEVEL.ADMINISTRADOR, waiter: LEVEL.FUNCIONARIO, kitchen: LEVEL.FUNCIONARIO };
 export const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "Administrador", waiter: "Funcionário · Garçom", kitchen: "Funcionário · Cozinha" };
+/** Atendimento splits the Funcionário level: the waiter talks to customers, the kitchen doesn't. */
+export const SUPPORT_ROLES: StaffRole[] = ["owner", "manager", "waiter"];
 /** Any role string outside StaffRole counts as Funcionário. */
 export const roleLevel = (role: string | undefined) => ROLE_LEVEL[role as StaffRole] ?? LEVEL.FUNCIONARIO;
 

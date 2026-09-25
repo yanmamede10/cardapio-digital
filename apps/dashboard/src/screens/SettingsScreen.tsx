@@ -13,7 +13,7 @@ type Tab = "profile" | "appearance" | "hours" | "staff" | "finance" | "fiscal";
 
 const WEEKDAY_LABEL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 const EMPTY_MEMBER = { id: null as string | null, name: "", email: "", role: "waiter" as StaffRole, password: "" };
-export const LEVELS_HINT = "Funcionário: Operação (pedidos, mesas, cardápio) · Administrador: também Produtos, Relatórios e Financeiro · Dono: tudo, inclusive Configurações e DRE.";
+export const LEVELS_HINT = "Funcionário: Operação (pedidos, mesas, cardápio; garçom também Atendimento) · Administrador: também Produtos, Relatórios e Financeiro · Dono: tudo, inclusive Configurações e DRE.";
 
 export default function SettingsScreen() {
   const { notify } = useDashboardState();

@@ -78,3 +78,9 @@ export function requireMinRole(min: number) {
   return (req: Request, res: Response, next: NextFunction) =>
     req.staff && roleLevel(req.staff.role) >= min ? next() : res.status(403).json({ error: "forbidden: role not allowed" });
 }
+
+/** Exact-role allowlist, for the rare screen that splits a level (see SUPPORT_ROLES). Also runs after requireStaff. */
+export function requireRole(...roles: StaffRole[]) {
+  return (req: Request, res: Response, next: NextFunction) =>
+    req.staff && roles.includes(req.staff.role) ? next() : res.status(403).json({ error: "forbidden: role not allowed" });
+}

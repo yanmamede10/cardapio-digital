@@ -1,4 +1,4 @@
-import { LEVEL, roleLevel } from "@cardapio/shared";
+import { LEVEL, SUPPORT_ROLES, roleLevel, type StaffRole } from "@cardapio/shared";
 import { getSession } from "./api";
 
 export interface ModuleDef {
@@ -9,17 +9,19 @@ export interface ModuleDef {
   tagline: string;
   /** Minimum role level that sees it — mirrors the API guard of the data the screen loads. */
   level: number;
+  /** Exact roles instead of a level, when a screen splits one (same list as the API guard). */
+  roles?: StaffRole[];
 }
 
 const { FUNCIONARIO, ADMINISTRADOR, DONO } = LEVEL;
 
-// Atendimento and Promoções sit in Operação but their API is Administrador+, so a Funcionário doesn't see them.
+// Promoções sits in Operação but its API is Administrador+. Atendimento goes by role: waiter yes, kitchen no.
 export const MODULES: ModuleDef[] = [
   { key: "pedidos", path: "/", label: "Central de Pedidos", icon: "fa-bell-concierge", tagline: "Central de pedidos · tempo real", level: FUNCIONARIO },
   { key: "cardapio", path: "/cardapio", label: "Cardápio", icon: "fa-utensils", tagline: "Pratos, categorias e disponibilidade", level: FUNCIONARIO },
   { key: "mesas", path: "/mesas", label: "Mesas", icon: "fa-chair", tagline: "Mapa do salão e comandas abertas", level: FUNCIONARIO },
   { key: "promocoes", path: "/promocoes", label: "Promoções e Cupons", icon: "fa-tag", tagline: "Cupons, combos e desempenho", level: ADMINISTRADOR },
-  { key: "atendimento", path: "/atendimento", label: "Atendimento", icon: "fa-comments", tagline: "Tickets, conversas e avaliações", level: ADMINISTRADOR },
+  { key: "atendimento", path: "/atendimento", label: "Atendimento", icon: "fa-comments", tagline: "Tickets, conversas e avaliações", level: FUNCIONARIO, roles: SUPPORT_ROLES },
   { key: "produtos", path: "/produtos", label: "Produtos", icon: "fa-boxes-stacked", tagline: "Catálogo, estoque e movimentações", level: ADMINISTRADOR },
   { key: "relatorios", path: "/relatorios", label: "Relatórios", icon: "fa-chart-line", tagline: "Desempenho do restaurante", level: ADMINISTRADOR },
   { key: "visao", path: "/visao-geral", label: "Visão Geral", icon: "fa-scale-balanced", tagline: "Financeiro · Visão geral", level: ADMINISTRADOR },
@@ -32,7 +34,7 @@ export const MODULES: ModuleDef[] = [
 
 /** Logged-in staff's level. Nav only — the API re-checks the role on every guarded request. */
 export const myLevel = () => roleLevel(getSession()?.role);
-export const canSee = (m: ModuleDef) => myLevel() >= m.level;
+export const canSee = (m: ModuleDef) => (m.roles ? m.roles.includes(getSession()?.role as StaffRole) : myLevel() >= m.level);
 
 /** Menu sections, shared by the desktop sidebar and the mobile "Mais" screen.
  *  A section with a single module is shown as a plain link under the section's name. */

@@ -20,6 +20,14 @@ describe("hierarquia Funcionário < Administrador < Dono", () => {
     assert.deepEqual([await status(owner, "tables"), await status(owner, "finance-entries"), await status(owner, "staff")], [200, 200, 200]);
   });
 
+  test("Atendimento vai por papel: garçom entra, cozinha não; Promoções segue Administrador+", async () => {
+    const kitchen = await login("igor@fogoeno.com.br");
+    const status = async (token: string, path: string) => (await call("GET", `${P}/${path}`, { token })).status;
+    assert.deepEqual([await status(waiter, "tickets"), await status(waiter, "reviews"), await status(waiter, "coupons")], [200, 200, 403]);
+    assert.deepEqual([await status(kitchen, "tickets"), await status(kitchen, "reviews")], [403, 403]);
+    assert.deepEqual([await status(manager, "tickets"), await status(owner, "tickets")], [200, 200]);
+  });
+
   test("Administrador não cadastra ninguém (nem a si como Dono)", async () => {
     const res = await call("POST", `${P}/staff`, { token: manager, body: { name: "X", email: `x-${uid()}@t.com`, role: "owner", password: "123456" } });
     assert.equal(res.status, 403);

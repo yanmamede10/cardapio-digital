@@ -11,14 +11,20 @@ plain("login pela tela leva ao painel", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Operação" })).toBeVisible();
 });
 
-plain("menu mostra só o que o papel alcança: Funcionário só Operação, Administrador sem Configurações", async ({ page, request }) => {
+plain("menu mostra só o que o papel alcança: Funcionário só Operação (garçom com Atendimento), Administrador sem Configurações", async ({ page, request }) => {
   const nav = page.locator("aside nav");
+  const hidden = ["Promoções", "Produtos", "Financeiro", "Relatórios", "Configurações"];
   await loginAs(page, request, "paula@fogoeno.com.br"); // garçom = Funcionário
   await page.goto("/");
-  await expect(nav).toContainText("Central de Pedidos");
-  for (const hidden of ["Atendimento", "Produtos", "Financeiro", "Relatórios", "Configurações"]) await expect(nav).not.toContainText(hidden);
+  for (const shown of ["Central de Pedidos", "Atendimento"]) await expect(nav).toContainText(shown);
+  for (const h of hidden) await expect(nav).not.toContainText(h);
 
-  await loginAs(page, request, "bruno@fogoeno.com.br"); // manager = Administrador (last init script wins)
+  await loginAs(page, request, "igor@fogoeno.com.br"); // cozinha = Funcionário, sem Atendimento (last init script wins)
+  await page.goto("/");
+  await expect(nav).toContainText("Central de Pedidos");
+  for (const h of ["Atendimento", ...hidden]) await expect(nav).not.toContainText(h);
+
+  await loginAs(page, request, "bruno@fogoeno.com.br"); // manager = Administrador
   await page.goto("/");
   for (const shown of ["Atendimento", "Produtos", "Financeiro", "Relatórios"]) await expect(nav).toContainText(shown);
   await expect(nav).not.toContainText("Configurações");
