@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { MenuCategory } from "@cardapio/shared";
+import type { MenuCategory, MenuItem } from "@cardapio/shared";
 import { api } from "../../lib/api";
+import { brl } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
 interface Extra {
@@ -15,61 +16,62 @@ const SCHEDULES: { key: "Dia todo" | "Almoço" | "Jantar"; label: string; hint: 
   { key: "Jantar", label: "Jantar", hint: "Visível das 18h às 23h30", text: "Jantar · 18:00 – 23:30" }
 ];
 
+/** "Organizar prato": the Cardápio only arranges a catalog product (foto, categoria, descrição, adicionais, horário).
+ *  Name and price belong to the Catálogo — shown read-only here with a shortcut there. */
 export default function MobileProductFormScreen() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const editing = !!id;
-  const { notify } = useMobileScreen({ title: editing ? "Editar produto" : "Novo produto", subtitle: "Cadastro no cardápio", hideTabs: true });
+  const { notify } = useMobileScreen({ title: "Organizar prato", subtitle: "Cardápio", hideTabs: true });
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [name, setName] = useState("");
+  const [item, setItem] = useState<MenuItem | null>(null);
   const [desc, setDesc] = useState("");
-  const [price, setPrice] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [extras, setExtras] = useState<Extra[]>([]);
   const [schedule, setSchedule] = useState<"Dia todo" | "Almoço" | "Jantar">("Dia todo");
 
   useEffect(() => {
-    Promise.all([api.listCategories(), editing ? api.listItems() : Promise.resolve([])]).then(([cats, items]) => {
+    Promise.all([api.listCategories(), api.listItems()]).then(([cats, items]) => {
+      const found = items.find((i) => i.id === id);
+      if (!found) return navigate("/cardapio", { replace: true });
       setCategories(cats);
-      const found = editing ? items.find((i) => i.id === id) : null;
-      if (found) {
-        setName(found.name);
-        setDesc(found.shortDescription);
-        setPrice(found.price.toFixed(2).replace(".", ","));
-        setCategoryId(found.categoryId);
-        setExtras(found.optionGroups[0]?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || []);
-      } else {
-        setCategoryId(cats[0]?.id || "");
-      }
-      setLoaded(true);
+      setItem(found);
+      setDesc(found.shortDescription);
+      setCategoryId(found.categoryId);
+      setExtras(found.optionGroups[0]?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || []);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const save = async () => {
-    const parsedPrice = Number(price.replace(/\./g, "").replace(",", ".")) || 0;
-    const scheduleLabel = SCHEDULES.find((s) => s.key === schedule)!.text;
-    const payload = {
-      categoryId,
-      name: name || "Novo item",
-      shortDescription: desc,
-      price: parsedPrice,
-      scheduleLabel,
-      extras: extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0 }))
-    };
+  const uploadPhoto = async (file: File) => {
+    if (!item) return;
     try {
-      if (editing && id) await api.updateItem(id, payload);
-      else await api.createItem(payload);
-      notify(editing ? "Produto atualizado" : "Produto salvo no cardápio");
-      navigate(-1);
+      setItem(await api.uploadItemImage(item.id, file));
+      notify("Foto do prato atualizada");
     } catch {
-      notify("Não foi possível salvar o produto");
+      notify("Não foi possível enviar a foto");
     }
   };
 
-  if (!loaded) {
+  const save = async () => {
+    if (!item) return;
+    const payload = {
+      categoryId,
+      shortDescription: desc,
+      scheduleLabel: SCHEDULES.find((s) => s.key === schedule)!.text,
+      extras: extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0 }))
+    };
+    try {
+      await api.updateItem(item.id, payload);
+      notify("Prato atualizado");
+      navigate(-1);
+    } catch {
+      notify("Não foi possível salvar o prato");
+    }
+  };
+
+  if (!item) {
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
         <div className="skeleton" style={{ height: 130 }} />
@@ -81,23 +83,61 @@ export default function MobileProductFormScreen() {
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
-        <div style={{ height: 130, borderRadius: 12, background: "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 7px,var(--surface3) 7px,var(--surface3) 14px)", border: "1px dashed var(--line2)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 7, color: "var(--ink3)" }}>
-          <i className="fa-solid fa-image" style={{ fontSize: 22 }} />
-          <div className="mono" style={{ fontSize: 11 }}>
-            foto do prato · 1200×900
-          </div>
-          <button type="button" style={{ minHeight: 38, background: "var(--surface)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 14px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500 }}>
-            Enviar foto
+        <div
+          style={{
+            height: 130,
+            borderRadius: 12,
+            backgroundColor: "var(--surface2)",
+            backgroundImage: item.imageUrl ? `url(${item.imageUrl})` : "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 7px,var(--surface3) 7px,var(--surface3) 14px)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            border: "1px dashed var(--line2)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: item.imageUrl ? "flex-end" : "center",
+            gap: 7,
+            padding: 10,
+            color: "var(--ink3)"
+          }}
+        >
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) uploadPhoto(file);
+            }}
+          />
+          {!item.imageUrl && (
+            <>
+              <i className="fa-solid fa-image" style={{ fontSize: 22 }} />
+              <div className="mono" style={{ fontSize: 11 }}>
+                foto do prato · 1200×900
+              </div>
+            </>
+          )}
+          <button type="button" onClick={() => fileInput.current?.click()} style={{ minHeight: 38, background: "var(--surface)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 14px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500 }}>
+            {item.imageUrl ? "Trocar foto" : "Enviar foto"}
           </button>
         </div>
-        <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span className="field-label">Nome do produto</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Moqueca de camarão" maxLength={80} className="field-mobile" />
-        </label>
-        <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <span className="field-label">Preço</span>
-          <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="R$ 128,00" className="field-mobile mono" />
-        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 12px", borderRadius: 12, background: "var(--surface2)", border: "1px solid var(--line)" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
+            <div className="mono" style={{ fontSize: 12.5, fontWeight: 600 }}>
+              {brl(item.price)}
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Nome, preço, composição e tributação são editados no Catálogo.</div>
+          </div>
+          {item.productId && (
+            <button type="button" onClick={() => navigate("/produtos", { state: { edit: item.productId } })} style={{ minHeight: 40, background: "transparent", border: "1px solid var(--line2)", color: "var(--brandText)", borderRadius: 10, padding: "0 13px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600 }}>
+              Abrir
+            </button>
+          )}
+        </div>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Descrição</span>
           <textarea rows={3} value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Camarões frescos, leite de coco, dendê e pirão" maxLength={200} className="field-mobile" />
@@ -171,7 +211,7 @@ export default function MobileProductFormScreen() {
           Cancelar
         </button>
         <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
-          Salvar produto
+          Salvar prato
         </button>
       </div>
     </div>

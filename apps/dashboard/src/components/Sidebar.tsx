@@ -1,9 +1,44 @@
-import { NavLink } from "react-router-dom";
-import { MODULES } from "../lib/modules";
+import { useState, type CSSProperties } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { NAV_GROUPS, moduleByKey, moduleForPath } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
+
+const rowStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 11,
+  width: "100%",
+  textAlign: "left",
+  padding: "11px 13px",
+  border: 0,
+  borderRadius: 12,
+  cursor: "pointer",
+  fontSize: 13.5,
+  fontWeight: 600,
+  letterSpacing: "-.008em",
+  textDecoration: "none",
+  color: "var(--ink2)",
+  transition: "background .12s var(--ease-spring), color .12s var(--ease-spring)"
+};
+const childStyle: CSSProperties = { ...rowStyle, gap: 9, padding: "9px 12px", borderRadius: 10, fontSize: 13, fontWeight: 500, letterSpacing: 0 };
+const activeStyle: CSSProperties = { background: "var(--brandSoft)", color: "var(--brandText)" };
+const iconStyle: CSSProperties = { fontSize: 18, lineHeight: 1, width: 21, textAlign: "center" };
+const labelStyle: CSSProperties = { flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+
+function Badge({ n }: { n?: number }) {
+  if (!n) return null;
+  return (
+    <span className="mono" style={{ fontSize: 11, fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 999, padding: "1px 8px" }}>
+      {n}
+    </span>
+  );
+}
 
 export function Sidebar({ badges }: { badges: Record<string, number> }) {
   const { theme, toggleTheme } = useDashboardState();
+  const current = moduleForPath(useLocation().pathname);
+  // Sections the user opened/closed by hand; untouched ones follow the default in the render below.
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   return (
     <aside
@@ -47,51 +82,57 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
         </div>
       </div>
 
-      <nav style={{ padding: "16px 13px", display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
-        <div className="mono" style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink3)", padding: "6px 10px 8px" }}>
-          Módulos
-        </div>
-        {MODULES.map((m) => (
-          <NavLink
-            key={m.key}
-            to={m.path}
-            end={m.path === "/"}
-            style={({ isActive }) => ({
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              width: "100%",
-              textAlign: "left",
-              padding: "12px 14px",
-              border: 0,
-              borderRadius: 13,
-              cursor: "pointer",
-              fontWeight: 500,
-              textDecoration: "none",
-              transition: "background .12s var(--ease-spring), color .12s var(--ease-spring)",
-              background: isActive ? "var(--brandSoft)" : "transparent",
-              color: isActive ? "var(--brandText)" : "var(--ink2)"
-            })}
-          >
-            <i className={`fa-solid ${m.icon}`} style={{ fontSize: 20, lineHeight: 1 }} />
-            <span style={{ flex: 1, minWidth: 0 }}>{m.label}</span>
-            {!!badges[m.key] && (
-              <span
-                className="mono"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  background: "var(--brand)",
-                  color: "var(--brandInk)",
-                  borderRadius: 20,
-                  padding: "1px 7px"
-                }}
+      <nav style={{ padding: "14px 12px 18px", display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
+        {NAV_GROUPS.map((g) => {
+          const mods = g.keys.map(moduleByKey);
+          if (mods.length === 1) {
+            return (
+              <NavLink key={g.label} className="nav-row" to={mods[0].path} end={mods[0].path === "/"} style={({ isActive }) => ({ ...rowStyle, ...(isActive ? activeStyle : {}) })}>
+                <i className={`fa-solid ${g.icon}`} style={iconStyle} />
+                <span style={labelStyle}>{g.label}</span>
+                <Badge n={badges[mods[0].key]} />
+              </NavLink>
+            );
+          }
+          const active = mods.find((m) => m.key === current.key);
+          // Open by default for Operação (the day-to-day screens) and for whichever section holds the current page.
+          const isOpen = open[g.label] ?? (g.label === "Operação" || !!active);
+          const badgeSum = mods.reduce((t, m) => t + (badges[m.key] || 0), 0);
+          return (
+            <div key={g.label} style={{ display: "flex", flexDirection: "column", gap: 2, paddingBottom: 3 }}>
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => setOpen((prev) => ({ ...prev, [g.label]: !isOpen }))}
+                className="nav-row"
+                style={{ ...rowStyle, color: active ? "var(--ink)" : "var(--ink2)" }}
               >
-                {badges[m.key]}
-              </span>
-            )}
-          </NavLink>
-        ))}
+                <i className={`fa-solid ${g.icon}`} style={iconStyle} />
+                <span style={{ whiteSpace: "nowrap" }}>{g.label}</span>
+                {/* Doubles as the spacer; when collapsed it names the current page and gives way before the section name does. */}
+                <span style={{ ...labelStyle, textAlign: "right", fontSize: 11, fontWeight: 500, color: "var(--brandText)" }}>{!isOpen && active ? active.label : ""}</span>
+                {!isOpen && <Badge n={badgeSum} />}
+                <i className={`fa-solid ${isOpen ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, lineHeight: 1, color: "var(--ink3)", width: 11, textAlign: "center" }} />
+              </button>
+              {isOpen && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 1, margin: "1px 0 7px 21px", paddingLeft: 13, borderLeft: "1px solid var(--line)" }}>
+                  {mods.map((m) => (
+                    <NavLink
+                      key={m.key}
+                      className="nav-row"
+                      to={m.path}
+                      end={m.path === "/"}
+                      style={({ isActive }) => ({ ...childStyle, ...(isActive ? activeStyle : {}) })}
+                    >
+                      <span style={labelStyle}>{m.label}</span>
+                      <Badge n={badges[m.key]} />
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       <div style={{ padding: "12px 14px", borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>

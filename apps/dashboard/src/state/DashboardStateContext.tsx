@@ -61,7 +61,8 @@ export function DashboardStateProvider({ children }: { children: React.ReactNode
   };
 
   return (
-    <div className={theme === "dark" ? "dark" : undefined} style={{ minHeight: "100vh" }}>
+    // id: portal target for overlays that must escape a screen's stacking context but keep the theme tokens.
+    <div id="theme-root" className={theme === "dark" ? "dark" : undefined} style={{ minHeight: "100vh", color: "var(--ink)" }}>
       <Ctx.Provider value={value}>{children}</Ctx.Provider>
     </div>
   );

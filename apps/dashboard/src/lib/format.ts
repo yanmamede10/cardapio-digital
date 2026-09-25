@@ -38,3 +38,27 @@ export function stars(rating: number): string {
   const full = Math.max(0, Math.min(5, Math.round(rating)));
   return "★".repeat(full) + "☆".repeat(5 - full);
 }
+
+/** Local calendar date as "YYYY-MM-DD" (not UTC — toISOString would shift late-evening dates). */
+export function localIso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export const todayIso = () => localIso(new Date());
+
+export function addDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return localIso(new Date(y, m - 1, d + days));
+}
+
+const MONTHS_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+/** "2026-09-23" → "23 set" */
+export function shortDate(iso: string): string {
+  return `${Number(iso.slice(8, 10))} ${MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}`;
+}
+
+/** "2026-09-23" → "23/09" */
+export function dayMonth(iso: string): string {
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+}

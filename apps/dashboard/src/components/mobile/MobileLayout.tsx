@@ -247,6 +247,7 @@ export function MobileLayout() {
             type="button"
             onClick={header.fab.onClick}
             title={header.fab.label}
+            aria-label={header.fab.label}
             style={{
               position: "fixed",
               right: 16,

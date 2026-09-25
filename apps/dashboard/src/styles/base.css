@@ -239,3 +239,23 @@ textarea.field-mobile {
 
 .tap { transition: transform .12s var(--ease-spring), background .12s var(--ease-spring), color .12s var(--ease-spring), border-color .12s var(--ease-spring); }
 .tap:active { transform: scale(.97); }
+
+/* Sidebar rows: hover only paints rows without an inline (active) background. */
+.nav-row { background: transparent; }
+.nav-row:hover { background: var(--surface2); }
+
+/* Mobile shell: the desktop modals it reuses (lançamento, quitar, adicionar prato) open as bottom sheets,
+   and the full-width slide-over (cadastro de produto) clears the status bar. */
+@media (max-width: 767px) {
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-panel { border-radius: 22px 22px 0 0; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .drawer-panel { padding-top: env(safe-area-inset-top, 0px); }
+}
+
+/* Ficha técnica rows (cadastro de produto): one line on desktop; on a phone the item search takes its own line. */
+.comp-line { display: grid; grid-template-columns: minmax(0,1fr) 72px 34px 78px 32px; gap: 8px; align-items: center; }
+@media (max-width: 767px) {
+  .comp-line { grid-template-columns: minmax(0,1fr) 34px 78px 32px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .comp-line > :first-child { grid-column: 1 / -1; }
+  .comp-head { display: none; }
+}

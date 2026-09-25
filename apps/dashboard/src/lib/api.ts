@@ -4,6 +4,8 @@ import type {
   AppearanceState,
   Coupon,
   CreateCouponRequest,
+  CreateFinanceEntryRequest,
+  FinanceEntry,
   FiscalInfo,
   MenuCategory,
   MenuItem,
@@ -12,6 +14,7 @@ import type {
   OrderStatus,
   OperatingHoursRow,
   PaymentMode,
+  Product,
   Restaurant,
   RestaurantProfile,
   RestaurantTable,
@@ -20,12 +23,15 @@ import type {
   ShiftStats,
   StaffMember,
   StaffRole,
+  StockMovement,
   SupportTicket,
   TableComanda,
   TicketChannel,
   TicketStatus,
   UpsertMenuItemRequest,
+  UpsertProductRequest,
   WaiterCall,
+  XmlImportRequest,
   FinanceSummary
 } from "@cardapio/shared";
 
@@ -209,6 +215,24 @@ export const api = {
     request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
   moveCategory: (categoryId: string, direction: "up" | "down") =>
     request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
+
+  // Catálogo / estoque
+  listProducts: () => request<Product[]>(`/api/restaurants/${RESTAURANT_ID}/products`),
+  createProduct: (payload: UpsertProductRequest) =>
+    request<Product>(`/api/restaurants/${RESTAURANT_ID}/products`, { method: "POST", body: JSON.stringify(payload) }),
+  updateProduct: (productId: string, payload: UpsertProductRequest) =>
+    request<Product>(`/api/restaurants/${RESTAURANT_ID}/products/${productId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  listStockMovements: () => request<StockMovement[]>(`/api/restaurants/${RESTAURANT_ID}/stock-movements`),
+  importXml: (payload: XmlImportRequest) =>
+    request<{ imported: number }>(`/api/restaurants/${RESTAURANT_ID}/stock-movements/xml`, { method: "POST", body: JSON.stringify(payload) }),
+
+  // Contas a pagar / receber, Emissão Fiscal
+  listFinanceEntries: () => request<FinanceEntry[]>(`/api/restaurants/${RESTAURANT_ID}/finance-entries`),
+  createFinanceEntry: (payload: CreateFinanceEntryRequest) =>
+    request<FinanceEntry>(`/api/restaurants/${RESTAURANT_ID}/finance-entries`, { method: "POST", body: JSON.stringify(payload) }),
+  payFinanceEntry: (entryId: string, paidOn: string, paymentMethod: string) =>
+    request<FinanceEntry>(`/api/restaurants/${RESTAURANT_ID}/finance-entries/${entryId}/pay`, { method: "POST", body: JSON.stringify({ paidOn, paymentMethod }) }),
+  listClosedOrders: () => request<Order[]>(`/api/restaurants/${RESTAURANT_ID}/closed-orders`),
 
   // Coupons
   listCoupons: (query?: string) => request<Coupon[]>(`/api/restaurants/${RESTAURANT_ID}/coupons${qs({ query })}`),

@@ -8,6 +8,10 @@ import SupportScreen from "./screens/SupportScreen";
 import ReportsScreen from "./screens/ReportsScreen";
 import FinanceScreen from "./screens/FinanceScreen";
 import SettingsScreen from "./screens/SettingsScreen";
+import ProductsScreen from "./screens/ProductsScreen";
+import AccountsScreen from "./screens/AccountsScreen";
+import FiscalScreen from "./screens/FiscalScreen";
+import FinanceOverviewScreen from "./screens/FinanceOverviewScreen";
 
 export default function DesktopApp() {
   return (
@@ -21,6 +25,11 @@ export default function DesktopApp() {
         <Route path="/atendimento" element={<SupportScreen />} />
         <Route path="/relatorios" element={<ReportsScreen />} />
         <Route path="/financeiro" element={<FinanceScreen />} />
+        <Route path="/produtos" element={<ProductsScreen />} />
+        <Route path="/visao-geral" element={<FinanceOverviewScreen />} />
+        <Route path="/contas-a-pagar" element={<AccountsScreen key="payable" kind="payable" />} />
+        <Route path="/contas-a-receber" element={<AccountsScreen key="receivable" kind="receivable" />} />
+        <Route path="/emissao-fiscal" element={<FiscalScreen />} />
         <Route path="/config" element={<SettingsScreen />} />
         <Route path="/configuracoes" element={<Navigate to="/config" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

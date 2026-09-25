@@ -4,8 +4,8 @@ import type { SupportTicket, TicketChannel, TicketStatus } from "@cardapio/share
 import { api } from "../../lib/api";
 import { fmtMinutes, minutesSince, slaFg } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
-import { MobileChip } from "../../components/mobile/MobileChip";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
+import { FilterPopover, type FilterValues } from "../../components/FilterPopover";
 
 const STATUS_MAP: Record<TicketStatus, { label: string; bg: string; fg: string }> = {
   new: { label: "Novo", bg: "color-mix(in srgb, var(--sec) 22%, transparent)", fg: "var(--brandText)" },
@@ -13,20 +13,21 @@ const STATUS_MAP: Record<TicketStatus, { label: string; bg: string; fg: string }
   resolved: { label: "Resolvido", bg: "color-mix(in srgb, var(--ok) 16%, transparent)", fg: "var(--ok)" }
 };
 
-const FILTERS = ["Todos", "Novo", "Em andamento", "Resolvido", "Mesa", "Delivery"] as const;
-type Filter = (typeof FILTERS)[number];
-
-const STATUS_BY_FILTER: Partial<Record<Filter, TicketStatus>> = { Novo: "new", "Em andamento": "in_progress", Resolvido: "resolved" };
-const CHANNEL_BY_FILTER: Partial<Record<Filter, TicketChannel>> = { Mesa: "table", Delivery: "delivery" };
+const STATUS_BY_LABEL: Record<string, TicketStatus> = { Novo: "new", "Em andamento": "in_progress", Resolvido: "resolved" };
+const CHANNEL_BY_LABEL: Record<string, TicketChannel> = { Mesa: "table", Delivery: "delivery" };
+const FILTER_GROUPS = [
+  { id: "status", label: "Status", options: Object.keys(STATUS_BY_LABEL) },
+  { id: "canal", label: "Canal", options: Object.keys(CHANNEL_BY_LABEL) }
+];
 
 export default function MobileSupportScreen() {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [filter, setFilter] = useState<Filter>("Todos");
+  const [filter, setFilter] = useState<FilterValues>({});
   useMobileScreen({ title: "Atendimento", subtitle: "Tickets e conversas" });
 
-  const reload = () => api.listTickets({ status: STATUS_BY_FILTER[filter] ?? "all", channel: CHANNEL_BY_FILTER[filter] ?? "all" }).then((t) => (setTickets(t), setLoaded(true)));
+  const reload = () => api.listTickets({ status: STATUS_BY_LABEL[filter.status ?? ""] ?? "all", channel: CHANNEL_BY_LABEL[filter.canal ?? ""] ?? "all" }).then((t) => (setTickets(t), setLoaded(true)));
 
   useEffect(() => {
     reload();
@@ -48,12 +49,11 @@ export default function MobileSupportScreen() {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 7 }}>
-        <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
-          {FILTERS.map((f) => (
-            <MobileChip key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f}
-            </MobileChip>
-          ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <div className="mono" style={{ flex: 1, fontSize: 12, color: "var(--ink3)" }}>
+            {tickets.length === 1 ? "1 conversa" : `${tickets.length} conversas`}
+          </div>
+          <FilterPopover sheet groups={FILTER_GROUPS} value={filter} onChange={setFilter} resultCount={tickets.length} />
         </div>
         {late > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, color: "var(--alert)" }}>

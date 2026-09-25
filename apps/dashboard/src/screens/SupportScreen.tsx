@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Review, SupportTicket, TicketChannel, TicketStatus } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
-import { fmtDateTime, stars } from "../lib/format";
+import { fmtDateTime, minutesSince, stars } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
-import { Chip, Segmented } from "../components/Segmented";
+import { Segmented } from "../components/Segmented";
+import { FilterPopover } from "../components/FilterPopover";
 
 const STATUS_LABEL: Record<TicketStatus, string> = { new: "Novo", in_progress: "Em andamento", resolved: "Resolvido" };
+const CHANNEL_LABEL: Record<TicketChannel, string> = { table: "Mesa", delivery: "Delivery" };
+const keyOf = <K extends string>(labels: Record<K, string>, label?: string) => (Object.keys(labels) as K[]).find((k) => labels[k] === label);
 const STATUS_COLOR: Record<TicketStatus, string> = { new: "var(--brandText)", in_progress: "var(--warn)", resolved: "var(--ok)" };
 
 export default function SupportScreen() {
@@ -88,6 +91,9 @@ export default function SupportScreen() {
     }
   };
 
+  // Same rule as the mobile Atendimento banner.
+  const late = tickets.filter((t) => t.status !== "resolved" && minutesSince(t.lastActivityAt) >= 60).length;
+
   const reviewStats = useMemo(() => {
     if (reviews.length === 0) return { avg: 0, count: 0 };
     return { avg: Math.round((reviews.reduce((t, r) => t + r.rating, 0) / reviews.length) * 10) / 10, count: reviews.length };
@@ -124,6 +130,13 @@ export default function SupportScreen() {
             <span style={{ color: "var(--ink3)" }}>· {reviewStats.count} avaliações</span>
           </div>
         )}
+        <div style={{ flex: 1 }} />
+        {tab === "tickets" && late > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 14%, transparent)", border: "1px solid var(--alert)", borderRadius: 999, padding: "7px 16px" }}>
+            <i className="fa-solid fa-stopwatch" style={{ fontSize: 15 }} />
+            {late === 1 ? "1 ticket sem resposta há mais de 1 hora" : `${late} tickets sem resposta há mais de 1 hora`}
+          </div>
+        )}
       </div>
 
       {tab === "tickets" ? (
@@ -131,22 +144,28 @@ export default function SupportScreen() {
           <EmptyState icon="fa-comments" title="Nenhuma conversa ainda" sub="Mensagens de clientes sobre pedidos na mesa ou no delivery aparecem aqui." />
         ) : (
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-            <div style={{ width: 320, flex: "0 0 320px", display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {(["all", "new", "in_progress", "resolved"] as const).map((s) => (
-                  <Chip key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
-                    {s === "all" ? "Todos" : STATUS_LABEL[s]}
-                  </Chip>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {(["all", "table", "delivery"] as const).map((c) => (
-                  <Chip key={c} active={channelFilter === c} onClick={() => setChannelFilter(c)}>
-                    {c === "all" ? "Todos canais" : c === "table" ? "Mesa" : "Delivery"}
-                  </Chip>
-                ))}
-              </div>
-              <section className="card" style={{ overflow: "hidden" }}>
+            <div style={{ width: 330, flex: "0 0 330px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <section className="card">
+                <div style={{ padding: "12px 14px 12px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>Conversas</div>
+                  <div className="mono" style={{ fontSize: 11, color: "var(--ink3)", flex: 1 }}>
+                    {tickets.length}
+                  </div>
+                  <FilterPopover
+                    align="left"
+                    groups={[
+                      { id: "status", label: "Status", options: Object.values(STATUS_LABEL) },
+                      { id: "canal", label: "Canal", options: Object.values(CHANNEL_LABEL) }
+                    ]}
+                    value={{ status: statusFilter === "all" ? undefined : STATUS_LABEL[statusFilter], canal: channelFilter === "all" ? undefined : CHANNEL_LABEL[channelFilter] }}
+                    onChange={(v) => {
+                      setStatusFilter(keyOf(STATUS_LABEL, v.status) ?? "all");
+                      setChannelFilter(keyOf(CHANNEL_LABEL, v.canal) ?? "all");
+                    }}
+                    resultCount={tickets.length}
+                  />
+                </div>
+                <div style={{ overflow: "hidden", borderRadius: "0 0 16px 16px" }}>
                 {tickets.map((t) => {
                   const active = t.id === selectedId;
                   return (
@@ -184,6 +203,8 @@ export default function SupportScreen() {
                     </button>
                   );
                 })}
+                {tickets.length === 0 && <div style={{ padding: "28px 16px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>Nenhum resultado com esses filtros.</div>}
+                </div>
               </section>
             </div>
 

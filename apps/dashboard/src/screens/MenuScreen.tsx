@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import type { MenuCategory, MenuItem } from "@cardapio/shared";
 import {
   DndContext,
@@ -18,25 +19,26 @@ import { api } from "../lib/api";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
+import { LinkDishModal } from "../components/LinkDishModal";
 
 interface DraftExtra {
   name: string;
   price: string;
 }
 
+/** "Organizar prato": name/price come from the catalog product and are read-only here. */
 interface Draft {
-  id: string | null;
+  id: string;
+  productId: string | null;
   name: string;
+  price: number;
   desc: string;
-  price: string;
   categoryId: string;
   lunch: string;
   dinner: string;
   extras: DraftExtra[];
   imageUrl: string | null;
 }
-
-const EMPTY_DRAFT: Draft = { id: null, name: "", desc: "", price: "", categoryId: "", lunch: "11:00 – 15:00", dinner: "18:00 – 23:00", extras: [], imageUrl: null };
 
 /** Sortable ids for category rows are prefixed so they never collide with item ids in the shared DndContext. */
 const catSortId = (id: string) => `cat-${id}`;
@@ -51,12 +53,14 @@ const scopedCollisionDetection: CollisionDetection = (args) => {
 
 export default function MenuScreen() {
   const { notify } = useDashboardState();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("Todas");
   const [drawer, setDrawer] = useState<Draft | null>(null);
+  const [linking, setLinking] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,13 +89,15 @@ export default function MenuScreen() {
     .filter((c) => filtered.some((m) => m.categoryId === c.id))
     .map((c) => ({ cat: c, items: filtered.filter((m) => m.categoryId === c.id) }));
 
-  const openNew = () => setDrawer({ ...EMPTY_DRAFT, categoryId: categories[0]?.id || "" });
+  const openLink = () => setLinking(true);
+
   const openEdit = (m: MenuItem) =>
     setDrawer({
       id: m.id,
+      productId: m.productId ?? null,
       name: m.name,
+      price: m.price,
       desc: m.shortDescription,
-      price: m.price.toFixed(2).replace(".", ","),
       categoryId: m.categoryId,
       lunch: "11:00 – 15:00",
       dinner: "18:00 – 23:00",
@@ -101,36 +107,29 @@ export default function MenuScreen() {
 
   const save = async () => {
     if (!drawer) return;
-    const price = Number(drawer.price.replace(/\./g, "").replace(",", ".")) || 0;
     const payload = {
       categoryId: drawer.categoryId,
-      name: drawer.name || "Novo item",
       shortDescription: drawer.desc,
-      price,
       scheduleLabel: `Almoço ${drawer.lunch} · Jantar ${drawer.dinner}`,
       extras: drawer.extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0 }))
     };
     try {
-      if (drawer.id) await api.updateItem(drawer.id, payload);
-      else await api.createItem(payload);
+      await api.updateItem(drawer.id, payload);
       setDrawer(null);
-      notify("Produto salvo e publicado no cardápio");
+      notify("Prato salvo e publicado no cardápio");
       reload();
     } catch {
-      notify("Não foi possível salvar o produto");
+      notify("Não foi possível salvar o prato");
     }
   };
 
   const uploadImage = async (file: File) => {
-    if (!drawer?.id) {
-      notify("Salve o produto antes de adicionar uma foto");
-      return;
-    }
+    if (!drawer) return;
     try {
       const updated = await api.uploadItemImage(drawer.id, file);
       setDrawer((d) => (d ? { ...d, imageUrl: updated.imageUrl } : d));
       setItems((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
-      notify("Foto do produto atualizada");
+      notify("Foto do prato atualizada");
     } catch {
       notify("Não foi possível enviar a foto");
     }
@@ -146,26 +145,15 @@ export default function MenuScreen() {
     }
   };
 
-  const duplicate = async (m: MenuItem) => {
+  /** Takes the dish off the menu; the catalog product stays. Photo, description and adicionais go with it, hence the confirm. */
+  const unlink = async (m: MenuItem) => {
+    if (!window.confirm(`Remover "${m.name}" do cardápio? O cadastro continua no Catálogo, mas foto, descrição e adicionais do prato serão perdidos.`)) return;
     try {
-      await api.duplicateItem(m.id);
-      notify(`"${m.name}" duplicado como rascunho`);
+      await api.deleteItem(m.id);
+      notify(`"${m.name}" removido do cardápio`);
       reload();
     } catch {
-      notify("Não foi possível duplicar o produto");
-    }
-  };
-
-  const deleteItem = async () => {
-    if (!drawer?.id) return;
-    if (!window.confirm(`Excluir "${drawer.name}"? Essa ação não pode ser desfeita.`)) return;
-    try {
-      await api.deleteItem(drawer.id);
-      setDrawer(null);
-      notify(`"${drawer.name}" excluído`);
-      reload();
-    } catch {
-      notify("Não foi possível excluir o produto");
+      notify("Não foi possível remover o prato");
     }
   };
 
@@ -226,7 +214,7 @@ export default function MenuScreen() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", width: 250 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {catPills.map((c) => {
@@ -246,11 +234,11 @@ export default function MenuScreen() {
         </div>
         <div style={{ flex: 1 }} />
         <div className="mono" style={{ fontSize: 12, color: "var(--ink3)" }}>
-          {filtered.length} de {items.length} produtos
+          {filtered.length} de {items.length} pratos
         </div>
-        <button type="button" className="btn btn-primary" onClick={openNew}>
+        <button type="button" className="btn btn-primary" onClick={openLink}>
           <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
-          Novo produto
+          Adicionar prato
         </button>
       </div>
 
@@ -258,11 +246,11 @@ export default function MenuScreen() {
         <EmptyState
           icon="fa-utensils"
           title="Seu cardápio ainda está vazio"
-          sub="Cadastre o primeiro produto para que ele apareça no cardápio digital e possa ser pedido nas mesas e no delivery."
+          sub="Vincule o primeiro prato do Catálogo para que ele apareça no cardápio digital e possa ser pedido nas mesas e no delivery."
           action={
-            <button type="button" className="btn btn-primary" onClick={openNew}>
+            <button type="button" className="btn btn-primary" onClick={openLink}>
               <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
-              Criar primeiro produto
+              Adicionar primeiro prato
             </button>
           }
         />
@@ -283,7 +271,7 @@ export default function MenuScreen() {
                 <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length}>
                   <SortableContext items={g.items.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {g.items.map((m) => (
-                      <ItemRow key={m.id} item={m} onToggleAvailable={() => toggleAvailable(m)} onDuplicate={() => duplicate(m)} onEdit={() => openEdit(m)} />
+                      <ItemRow key={m.id} item={m} onToggleAvailable={() => toggleAvailable(m)} onUnlink={() => unlink(m)} onEdit={() => openEdit(m)} />
                     ))}
                   </SortableContext>
                 </CategorySection>
@@ -311,8 +299,10 @@ export default function MenuScreen() {
           <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 24px", borderBottom: "1px solid var(--glassBd)", position: "sticky", top: 0, background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)" }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>{drawer.id ? "Editar produto" : "Novo produto"}</div>
-                <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Publicado no cardápio digital ao salvar</div>
+                <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>Organizar prato</div>
+                <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>
+                  {drawer.name} · {brl(drawer.price)}
+                </div>
               </div>
               <button type="button" title="Fechar" aria-label="Fechar" className="icon-btn" onClick={() => setDrawer(null)}>
                 <i className="fa-solid fa-xmark" style={{ fontSize: 18, lineHeight: 1 }} />
@@ -359,35 +349,38 @@ export default function MenuScreen() {
                   <>
                     <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />
                     <span className="mono" style={{ fontSize: 10.5, letterSpacing: ".06em", textAlign: "center", padding: "0 12px" }}>
-                      {drawer.id ? "ARRASTE A FOTO DO PRATO · 1200×900" : "SALVE O PRODUTO PARA ADICIONAR UMA FOTO"}
+                      ARRASTE A FOTO DO PRATO · 1200×900
                     </span>
                   </>
                 )}
               </div>
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span className="field-label">Nome</span>
-                <input className="field" value={drawer.name} onChange={(e) => setDrawer({ ...drawer, name: e.target.value })} placeholder="Ex.: Picanha na chapa" maxLength={80} />
+                <span className="field-label">Categoria no cardápio</span>
+                <select className="field" value={drawer.categoryId} onChange={(e) => setDrawer({ ...drawer, categoryId: e.target.value })}>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: 12.5, color: "var(--ink2)" }}>
+                <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: "var(--ink3)" }} />
+                <span style={{ flex: 1 }}>Nome, preço, composição e tributação são editados no cadastro do Catálogo.</span>
+                {drawer.productId && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/produtos", { state: { edit: drawer.productId } })}
+                    style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--brandText)", whiteSpace: "nowrap" }}
+                  >
+                    Abrir
+                  </button>
+                )}
+              </div>
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span className="field-label">Descrição</span>
                 <textarea className="field" rows={3} value={drawer.desc} onChange={(e) => setDrawer({ ...drawer, desc: e.target.value })} placeholder="O que vem no prato, porção, acompanhamentos" maxLength={200} />
               </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <span className="field-label">Preço</span>
-                  <input className="field mono" value={drawer.price} onChange={(e) => setDrawer({ ...drawer, price: e.target.value })} placeholder="R$ 0,00" />
-                </label>
-                <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <span className="field-label">Categoria</span>
-                  <select className="field" value={drawer.categoryId} onChange={(e) => setDrawer({ ...drawer, categoryId: e.target.value })}>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span className="field-label">Variações e adicionais</span>
@@ -436,13 +429,8 @@ export default function MenuScreen() {
               </div>
             </div>
             <div style={{ marginTop: "auto", display: "flex", gap: 10, padding: "16px 24px", borderTop: "1px solid var(--glassBd)", position: "sticky", bottom: 0, background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)" }}>
-              {drawer.id && (
-                <button type="button" title="Excluir produto" aria-label="Excluir produto" className="icon-btn" style={{ color: "var(--alert)" }} onClick={deleteItem}>
-                  <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
-                </button>
-              )}
               <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
-                Salvar produto
+                Salvar prato
               </button>
               <button type="button" className="btn btn-outline" onClick={() => setDrawer(null)}>
                 Cancelar
@@ -451,6 +439,8 @@ export default function MenuScreen() {
           </div>
         </div>
       )}
+
+      {linking && <LinkDishModal categories={categories} items={items} onClose={() => setLinking(false)} onLinked={reload} />}
     </div>
   );
 }
@@ -504,7 +494,7 @@ function CategorySection({ cat, count, children }: { cat: MenuCategory; count: n
   );
 }
 
-function ItemRow({ item: m, onToggleAvailable, onDuplicate, onEdit }: { item: MenuItem; onToggleAvailable: () => void; onDuplicate: () => void; onEdit: () => void }) {
+function ItemRow({ item: m, onToggleAvailable, onUnlink, onEdit }: { item: MenuItem; onToggleAvailable: () => void; onUnlink: () => void; onEdit: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.id });
   const style: CSSProperties = {
     display: "grid",
@@ -561,10 +551,10 @@ function ItemRow({ item: m, onToggleAvailable, onDuplicate, onEdit }: { item: Me
         <span style={{ fontSize: 12, fontWeight: 600, color: m.soldOut ? "var(--ink3)" : "var(--ok)" }}>{m.soldOut ? "Esgotado" : "Disponível"}</span>
       </button>
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-        <button type="button" title="Duplicar" aria-label="Duplicar produto" className="icon-btn" onClick={onDuplicate}>
-          <i className="fa-solid fa-copy" style={{ fontSize: 16, lineHeight: 1 }} />
+        <button type="button" title="Remover do cardápio" aria-label={`Remover ${m.name} do cardápio`} className="icon-btn" onClick={onUnlink}>
+          <i className="fa-solid fa-link-slash" style={{ fontSize: 15, lineHeight: 1 }} />
         </button>
-        <button type="button" title="Editar" aria-label="Editar produto" className="icon-btn" onClick={onEdit}>
+        <button type="button" title="Organizar prato" aria-label={`Organizar ${m.name}`} className="icon-btn" onClick={onEdit}>
           <i className="fa-solid fa-pen" style={{ fontSize: 16, lineHeight: 1 }} />
         </button>
       </div>

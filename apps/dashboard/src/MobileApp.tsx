@@ -17,6 +17,10 @@ import MobileProfileScreen from "./screens/mobile/MobileProfileScreen";
 import MobileHoursScreen from "./screens/mobile/MobileHoursScreen";
 import MobileTeamScreen from "./screens/mobile/MobileTeamScreen";
 import MobileFiscalScreen from "./screens/mobile/MobileFiscalScreen";
+import MobileProductsScreen from "./screens/mobile/MobileProductsScreen";
+import MobileOverviewScreen from "./screens/mobile/MobileOverviewScreen";
+import MobileAccountsScreen from "./screens/mobile/MobileAccountsScreen";
+import MobileFiscalEmissionScreen from "./screens/mobile/MobileFiscalEmissionScreen";
 
 export default function MobileApp() {
   return (
@@ -26,7 +30,6 @@ export default function MobileApp() {
         <Route path="/mesas" element={<MobileTablesScreen />} />
         <Route path="/mesas/:number" element={<MobileTableDetailScreen />} />
         <Route path="/cardapio" element={<MobileMenuScreen />} />
-        <Route path="/cardapio/novo" element={<MobileProductFormScreen />} />
         <Route path="/cardapio/:id/editar" element={<MobileProductFormScreen />} />
         <Route path="/mais" element={<MobileMoreScreen />} />
         <Route path="/atendimento" element={<MobileSupportScreen />} />
@@ -35,6 +38,11 @@ export default function MobileApp() {
         <Route path="/promocoes/novo" element={<MobileCouponFormScreen />} />
         <Route path="/relatorios" element={<MobileReportsScreen />} />
         <Route path="/financeiro" element={<MobileFinanceScreen />} />
+        <Route path="/produtos" element={<MobileProductsScreen />} />
+        <Route path="/visao-geral" element={<MobileOverviewScreen />} />
+        <Route path="/contas-a-pagar" element={<MobileAccountsScreen key="payable" kind="payable" />} />
+        <Route path="/contas-a-receber" element={<MobileAccountsScreen key="receivable" kind="receivable" />} />
+        <Route path="/emissao-fiscal" element={<MobileFiscalEmissionScreen />} />
         <Route path="/config" element={<MobileSettingsScreen />} />
         <Route path="/config/perfil" element={<MobileProfileScreen />} />
         <Route path="/config/horarios" element={<MobileHoursScreen />} />

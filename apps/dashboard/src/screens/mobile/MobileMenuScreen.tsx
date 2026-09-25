@@ -7,6 +7,7 @@ import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
 import { MobileToggle } from "../../components/mobile/MobileToggle";
 import { ActionSheet } from "../../components/mobile/ActionSheet";
+import { LinkDishModal } from "../../components/LinkDishModal";
 
 export default function MobileMenuScreen() {
   const navigate = useNavigate();
@@ -17,11 +18,12 @@ export default function MobileMenuScreen() {
   const [reorderOn, setReorderOn] = useState(false);
   const [openCats, setOpenCats] = useState<string[]>([]);
   const [menuFor, setMenuFor] = useState<MenuItem | null>(null);
+  const [linking, setLinking] = useState(false);
 
   const { notify } = useMobileScreen({
     title: "Cardápio",
-    subtitle: `${items.length} ${items.length === 1 ? "item" : "itens"} em ${categories.length} ${categories.length === 1 ? "categoria" : "categorias"}`,
-    fab: items.length > 0 ? { label: "Novo produto", onClick: () => navigate("/cardapio/novo") } : undefined
+    subtitle: `${items.length} ${items.length === 1 ? "prato" : "pratos"} em ${categories.length} ${categories.length === 1 ? "categoria" : "categorias"}`,
+    fab: items.length > 0 ? { label: "Adicionar prato", onClick: () => setLinking(true) } : undefined
   });
 
   const reload = () =>
@@ -65,14 +67,16 @@ export default function MobileMenuScreen() {
     }
   };
 
-  const duplicate = async (m: MenuItem) => {
+  /** Takes the dish off the menu; the catalog product stays. Photo, description and adicionais go with it, hence the confirm. */
+  const unlink = async (m: MenuItem) => {
     setMenuFor(null);
+    if (!window.confirm(`Remover "${m.name}" do cardápio? O cadastro continua no Catálogo, mas foto, descrição e adicionais do prato serão perdidos.`)) return;
     try {
-      await api.duplicateItem(m.id);
-      notify(`"${m.name}" duplicado como rascunho`);
+      await api.deleteItem(m.id);
+      notify(`"${m.name}" removido do cardápio`);
       reload();
     } catch {
-      notify("Não foi possível duplicar o produto");
+      notify("Não foi possível remover o prato");
     }
   };
 
@@ -91,7 +95,7 @@ export default function MobileMenuScreen() {
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 9 }}>
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar produto" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13.5, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13.5, color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <button
           type="button"
@@ -164,17 +168,17 @@ export default function MobileMenuScreen() {
           })}
 
         {!reorderOn && groups.length === 0 && items.length > 0 && (
-          <MobileEmptyState icon="fa-magnifying-glass" title="Nenhum produto encontrado" sub="Ajuste a busca para encontrar o item desejado." />
+          <MobileEmptyState icon="fa-magnifying-glass" title="Nenhum prato encontrado" sub="Ajuste a busca para encontrar o prato desejado." />
         )}
         {!reorderOn && items.length === 0 && (
           <MobileEmptyState
             icon="fa-utensils"
             title="Seu cardápio está vazio"
-            sub="Cadastre o primeiro produto para começar a receber pedidos pelo QR code das mesas."
+            sub="Vincule o primeiro prato do Catálogo para começar a receber pedidos pelo QR code das mesas."
             action={
-              <button type="button" onClick={() => navigate("/cardapio/novo")} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              <button type="button" onClick={() => setLinking(true)} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
                 <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
-                Criar primeiro produto
+                Adicionar primeiro prato
               </button>
             }
           />
@@ -188,12 +192,13 @@ export default function MobileMenuScreen() {
         actions={
           menuFor
             ? [
-                { label: "Editar produto", icon: "fa-pen", onClick: () => navigate(`/cardapio/${menuFor.id}/editar`) },
-                { label: "Duplicar produto", icon: "fa-copy", onClick: () => duplicate(menuFor) }
+                { label: "Organizar prato", icon: "fa-pen", onClick: () => navigate(`/cardapio/${menuFor.id}/editar`) },
+                { label: "Remover do cardápio", icon: "fa-link-slash", danger: true, onClick: () => unlink(menuFor) }
               ]
             : []
         }
       />
+      {linking && <LinkDishModal categories={categories} items={items} onClose={() => setLinking(false)} onLinked={reload} />}
     </div>
   );
 }
