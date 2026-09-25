@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { ROLE_LABEL } from "@cardapio/shared";
 import { getSession } from "../lib/api";
 
 const THEME_KEY = "mesapronta.theme";
-const ROLE_LABELS: Record<string, string> = { owner: "Dono", manager: "Gestor", waiter: "Garçom", kitchen: "Cozinha" };
 
 export interface ToastState {
   message: string;
@@ -55,7 +55,7 @@ export function DashboardStateProvider({ children }: { children: React.ReactNode
     theme,
     toggleTheme,
     staffName: session?.name ?? "",
-    staffRole: session ? ROLE_LABELS[session.role] ?? session.role : "",
+    staffRole: session ? ROLE_LABEL[session.role] ?? session.role : "",
     toast,
     notify
   };

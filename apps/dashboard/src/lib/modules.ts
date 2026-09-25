@@ -1,26 +1,38 @@
+import { LEVEL, roleLevel } from "@cardapio/shared";
+import { getSession } from "./api";
+
 export interface ModuleDef {
   key: string;
   path: string;
   label: string;
   icon: string;
   tagline: string;
+  /** Minimum role level that sees it — mirrors the API guard of the data the screen loads. */
+  level: number;
 }
 
+const { FUNCIONARIO, ADMINISTRADOR, DONO } = LEVEL;
+
+// Atendimento and Promoções sit in Operação but their API is Administrador+, so a Funcionário doesn't see them.
 export const MODULES: ModuleDef[] = [
-  { key: "pedidos", path: "/", label: "Central de Pedidos", icon: "fa-bell-concierge", tagline: "Central de pedidos · tempo real" },
-  { key: "cardapio", path: "/cardapio", label: "Cardápio", icon: "fa-utensils", tagline: "Pratos, categorias e disponibilidade" },
-  { key: "mesas", path: "/mesas", label: "Mesas", icon: "fa-chair", tagline: "Mapa do salão e comandas abertas" },
-  { key: "promocoes", path: "/promocoes", label: "Promoções e Cupons", icon: "fa-tag", tagline: "Cupons, combos e desempenho" },
-  { key: "atendimento", path: "/atendimento", label: "Atendimento", icon: "fa-comments", tagline: "Tickets, conversas e avaliações" },
-  { key: "produtos", path: "/produtos", label: "Produtos", icon: "fa-boxes-stacked", tagline: "Catálogo, estoque e movimentações" },
-  { key: "relatorios", path: "/relatorios", label: "Relatórios", icon: "fa-chart-line", tagline: "Desempenho do restaurante" },
-  { key: "visao", path: "/visao-geral", label: "Visão Geral", icon: "fa-scale-balanced", tagline: "Financeiro · Visão geral" },
-  { key: "pagar", path: "/contas-a-pagar", label: "Contas a Pagar", icon: "fa-file-invoice-dollar", tagline: "Financeiro · Contas a pagar" },
-  { key: "receber", path: "/contas-a-receber", label: "Contas a Receber", icon: "fa-hand-holding-dollar", tagline: "Financeiro · Contas a receber" },
-  { key: "fiscal", path: "/emissao-fiscal", label: "Emissão Fiscal", icon: "fa-receipt", tagline: "Financeiro · Emissão fiscal" },
-  { key: "financeiro", path: "/financeiro", label: "Minha Fatura", icon: "fa-wallet", tagline: "Taxas, mensalidade e extrato" },
-  { key: "config", path: "/config", label: "Configurações", icon: "fa-gear", tagline: "Perfil, horários, equipe e fiscal" }
+  { key: "pedidos", path: "/", label: "Central de Pedidos", icon: "fa-bell-concierge", tagline: "Central de pedidos · tempo real", level: FUNCIONARIO },
+  { key: "cardapio", path: "/cardapio", label: "Cardápio", icon: "fa-utensils", tagline: "Pratos, categorias e disponibilidade", level: FUNCIONARIO },
+  { key: "mesas", path: "/mesas", label: "Mesas", icon: "fa-chair", tagline: "Mapa do salão e comandas abertas", level: FUNCIONARIO },
+  { key: "promocoes", path: "/promocoes", label: "Promoções e Cupons", icon: "fa-tag", tagline: "Cupons, combos e desempenho", level: ADMINISTRADOR },
+  { key: "atendimento", path: "/atendimento", label: "Atendimento", icon: "fa-comments", tagline: "Tickets, conversas e avaliações", level: ADMINISTRADOR },
+  { key: "produtos", path: "/produtos", label: "Produtos", icon: "fa-boxes-stacked", tagline: "Catálogo, estoque e movimentações", level: ADMINISTRADOR },
+  { key: "relatorios", path: "/relatorios", label: "Relatórios", icon: "fa-chart-line", tagline: "Desempenho do restaurante", level: ADMINISTRADOR },
+  { key: "visao", path: "/visao-geral", label: "Visão Geral", icon: "fa-scale-balanced", tagline: "Financeiro · Visão geral", level: ADMINISTRADOR },
+  { key: "pagar", path: "/contas-a-pagar", label: "Contas a Pagar", icon: "fa-file-invoice-dollar", tagline: "Financeiro · Contas a pagar", level: ADMINISTRADOR },
+  { key: "receber", path: "/contas-a-receber", label: "Contas a Receber", icon: "fa-hand-holding-dollar", tagline: "Financeiro · Contas a receber", level: ADMINISTRADOR },
+  { key: "fiscal", path: "/emissao-fiscal", label: "Emissão Fiscal", icon: "fa-receipt", tagline: "Financeiro · Emissão fiscal", level: ADMINISTRADOR },
+  { key: "financeiro", path: "/financeiro", label: "Minha Fatura", icon: "fa-wallet", tagline: "Taxas, mensalidade e extrato", level: ADMINISTRADOR },
+  { key: "config", path: "/config", label: "Configurações", icon: "fa-gear", tagline: "Perfil, horários, equipe e fiscal", level: DONO }
 ];
+
+/** Logged-in staff's level. Nav only — the API re-checks the role on every guarded request. */
+export const myLevel = () => roleLevel(getSession()?.role);
+export const canSee = (m: ModuleDef) => myLevel() >= m.level;
 
 /** Menu sections, shared by the desktop sidebar and the mobile "Mais" screen.
  *  A section with a single module is shown as a plain link under the section's name. */

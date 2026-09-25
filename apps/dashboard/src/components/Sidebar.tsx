@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { NAV_GROUPS, moduleByKey, moduleForPath } from "../lib/modules";
+import { NAV_GROUPS, canSee, moduleByKey, moduleForPath } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
 
 const rowStyle: CSSProperties = {
@@ -84,7 +84,8 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
 
       <nav style={{ padding: "14px 12px 18px", display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
         {NAV_GROUPS.map((g) => {
-          const mods = g.keys.map(moduleByKey);
+          const mods = g.keys.map(moduleByKey).filter(canSee);
+          if (!mods.length) return null;
           if (mods.length === 1) {
             return (
               <NavLink key={g.label} className="nav-row" to={mods[0].path} end={mods[0].path === "/"} style={({ isActive }) => ({ ...rowStyle, ...(isActive ? activeStyle : {}) })}>

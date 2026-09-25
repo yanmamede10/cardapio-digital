@@ -1,7 +1,7 @@
 import { Router } from "express";
-import type { AnalyticsPeriod } from "@cardapio/shared";
+import { LEVEL, type AnalyticsPeriod } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { buildAnalytics, buildShiftStats } from "../lib/analytics.js";
 import { serializeCharge } from "../lib/serialize.js";
 import { round2 } from "../lib/pricing.js";
@@ -11,7 +11,7 @@ export const reportsRouter = Router();
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
 
-reportsRouter.get("/:id/analytics", requireStaff, requireOwnRestaurant, requireRole("owner", "manager"), async (req, res) => {
+reportsRouter.get("/:id/analytics", requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), async (req, res) => {
   const { period } = req.query as { period?: AnalyticsPeriod };
   res.json(await buildAnalytics(req.params.id, period || "today"));
 });
@@ -21,7 +21,7 @@ reportsRouter.get("/:id/shift-stats", requireStaff, requireOwnRestaurant, async 
   res.json(await buildShiftStats(req.params.id));
 });
 
-reportsRouter.get("/:id/finance", requireStaff, requireOwnRestaurant, requireRole("owner", "manager"), async (req, res) => {
+reportsRouter.get("/:id/finance", requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), async (req, res) => {
   const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
 

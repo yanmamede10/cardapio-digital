@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, burgerKit, dayLabel, expect, isoDay, test, uid } from "./fixtures";
+import { R, burgerKit, dayLabel, expect, isoDay, loginAs, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -9,6 +9,37 @@ plain("login pela tela leva ao painel", async ({ page }) => {
   await page.locator("input[type=password]").fill("senha123");
   await page.getByRole("button", { name: /entrar/i }).click();
   await expect(page.getByRole("button", { name: "Operação" })).toBeVisible();
+});
+
+plain("menu mostra só o que o papel alcança: Funcionário só Operação, Administrador sem Configurações", async ({ page, request }) => {
+  const nav = page.locator("aside nav");
+  await loginAs(page, request, "paula@fogoeno.com.br"); // garçom = Funcionário
+  await page.goto("/");
+  await expect(nav).toContainText("Central de Pedidos");
+  for (const hidden of ["Atendimento", "Produtos", "Financeiro", "Relatórios", "Configurações"]) await expect(nav).not.toContainText(hidden);
+
+  await loginAs(page, request, "bruno@fogoeno.com.br"); // manager = Administrador (last init script wins)
+  await page.goto("/");
+  for (const shown of ["Atendimento", "Produtos", "Financeiro", "Relatórios"]) await expect(nav).toContainText(shown);
+  await expect(nav).not.toContainText("Configurações");
+});
+
+test("Equipe & Permissões: adicionar e editar o papel", async ({ page }) => {
+  const email = `e2e-${uid()}@t.com`;
+  await page.goto("/config");
+  await page.getByRole("button", { name: "Equipe & Permissões" }).click();
+  await page.getByLabel("Nome").fill("Carla Caixa");
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Papel").selectOption({ label: "Funcionário · Garçom" });
+  await page.getByLabel("Senha inicial").fill("segredo1");
+  await page.getByRole("button", { name: "Adicionar" }).click();
+  await expect(toast(page)).toContainText("Carla Caixa adicionado à equipe");
+
+  const row = page.locator("main div", { hasText: email }).filter({ has: page.getByRole("button", { name: "Editar" }) }).last();
+  await row.getByRole("button", { name: "Editar" }).click();
+  await page.getByLabel("Papel").selectOption({ label: "Administrador" });
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(row).toContainText("Administrador");
 });
 
 test("menu lateral agrupado: grupos abrem e fecham, fechado mostra a tela atual e a soma dos badges", async ({ page }) => {

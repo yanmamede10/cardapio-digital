@@ -1,16 +1,17 @@
 import { Router } from "express";
-import type { FiscalInfo, OperatingHoursRow, PaymentMode, RestaurantProfile, StaffRole, TaxRegime } from "@cardapio/shared";
+import { LEVEL, ROLE_LEVEL, type FiscalInfo, type OperatingHoursRow, type PaymentMode, type RestaurantProfile, type StaffRole, type TaxRegime } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { hashPassword, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { hashPassword, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
 
 export const settingsRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
+const MIN_PASSWORD_LENGTH = 6;
 const MAX_RESTAURANT_NAME_LENGTH = 80;
 const MAX_CUISINE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 500;
@@ -74,26 +75,61 @@ settingsRouter.patch("/:id/hours", ...staffGuard, async (req, res) => {
   res.json(serializeHours(updated));
 });
 
-settingsRouter.get("/:id/staff", ...staffGuard, async (req, res) => {
+// Equipe & Permissões is Dono-only: an Administrador who could write here could promote themselves to Dono.
+const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO)];
+type StaffBody = { name?: string; email?: string; role?: StaffRole; password?: string };
+
+/** Error message for a bad staff payload, or null. `partial` (edit) allows omitted fields. */
+function staffError(b: StaffBody, partial: boolean): string | null {
+  if (!partial && (!b.name?.trim() || !b.email?.trim() || !b.role)) return "name, email and role are required";
+  if (b.name !== undefined && (!b.name.trim() || b.name.length > MAX_NAME_LENGTH)) return `name must be 1-${MAX_NAME_LENGTH} characters`;
+  if (b.email !== undefined && (!b.email.includes("@") || b.email.length > MAX_EMAIL_LENGTH)) return `email must be valid and at most ${MAX_EMAIL_LENGTH} characters`;
+  if (b.role !== undefined && !Object.hasOwn(ROLE_LEVEL, b.role)) return `role must be one of ${Object.keys(ROLE_LEVEL).join(", ")}`;
+  if (b.password !== undefined && b.password.length < MIN_PASSWORD_LENGTH) return `password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  return null;
+}
+
+settingsRouter.get("/:id/staff", ...ownerGuard, async (req, res) => {
   const staff = await prisma.staffMember.findMany({ where: { restaurantId: req.params.id }, orderBy: { invitedAt: "asc" } });
   res.json(staff.map(serializeStaff));
 });
 
-settingsRouter.post("/:id/staff", ...staffGuard, async (req, res) => {
-  const { name, email, role, password } = req.body as { name?: string; email?: string; role?: StaffRole; password?: string };
-  if (!name || !email || !role) return res.status(400).json({ error: "name, email and role are required" });
-  if (name.length > MAX_NAME_LENGTH) return res.status(400).json({ error: `name must be at most ${MAX_NAME_LENGTH} characters` });
-  if (email.length > MAX_EMAIL_LENGTH) return res.status(400).json({ error: `email must be at most ${MAX_EMAIL_LENGTH} characters` });
+settingsRouter.post("/:id/staff", ...ownerGuard, async (req, res) => {
+  const body = req.body as StaffBody;
+  const error = staffError(body, false);
+  if (error) return res.status(400).json({ error });
+  const email = body.email!.trim().toLowerCase();
+  if (await prisma.staffMember.findUnique({ where: { email } })) return res.status(409).json({ error: "email already in use" });
   const staff = await prisma.staffMember.create({
-    data: {
-      restaurantId: req.params.id,
-      name,
-      email: email.trim().toLowerCase(),
-      role,
-      passwordHash: password ? hashPassword(password) : ""
-    }
+    data: { restaurantId: req.params.id, name: body.name!.trim(), email, role: body.role!, passwordHash: body.password ? hashPassword(body.password) : "" }
   });
   res.status(201).json(serializeStaff(staff));
+});
+
+settingsRouter.patch("/:id/staff/:staffId", ...ownerGuard, async (req, res) => {
+  const body = req.body as StaffBody;
+  const error = staffError(body, true);
+  if (error) return res.status(400).json({ error });
+  const existing = await prisma.staffMember.findFirst({ where: { id: req.params.staffId, restaurantId: req.params.id } });
+  if (!existing) return res.status(404).json({ error: "staff member not found" });
+  // A Dono demoting themselves could leave the restaurant with nobody able to manage the team.
+  if (existing.id === req.staff!.staffId && body.role !== undefined && body.role !== existing.role) {
+    return res.status(400).json({ error: "you cannot change your own role" });
+  }
+  const email = body.email?.trim().toLowerCase();
+  if (email && email !== existing.email && (await prisma.staffMember.findUnique({ where: { email } }))) {
+    return res.status(409).json({ error: "email already in use" });
+  }
+  const staff = await prisma.staffMember.update({
+    where: { id: existing.id },
+    data: {
+      ...(body.name !== undefined ? { name: body.name.trim() } : {}),
+      ...(email ? { email } : {}),
+      ...(body.role !== undefined ? { role: body.role } : {}),
+      ...(body.password ? { passwordHash: hashPassword(body.password) } : {})
+    }
+  });
+  res.json(serializeStaff(staff));
 });
 
 settingsRouter.get("/:id/fiscal", ...staffGuard, async (req, res) => {

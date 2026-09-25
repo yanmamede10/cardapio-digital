@@ -272,8 +272,10 @@ export const api = {
   updateHours: (rows: OperatingHoursRow[]) =>
     request<OperatingHoursRow[]>(`/api/restaurants/${RESTAURANT_ID}/hours`, { method: "PATCH", body: JSON.stringify({ rows }) }),
   getStaff: () => request<StaffMember[]>(`/api/restaurants/${RESTAURANT_ID}/staff`),
-  inviteStaff: (payload: { name: string; email: string; role: StaffRole }) =>
+  inviteStaff: (payload: { name: string; email: string; role: StaffRole; password: string }) =>
     request<StaffMember>(`/api/restaurants/${RESTAURANT_ID}/staff`, { method: "POST", body: JSON.stringify(payload) }),
+  updateStaff: (staffId: string, payload: { name?: string; email?: string; role?: StaffRole; password?: string }) =>
+    request<StaffMember>(`/api/restaurants/${RESTAURANT_ID}/staff/${staffId}`, { method: "PATCH", body: JSON.stringify(payload) }),
   getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
   updateFiscal: (payload: Partial<FiscalInfo>) =>
     request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) }),

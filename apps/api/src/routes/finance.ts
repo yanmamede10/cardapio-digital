@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { PAYMENT_METHODS, type CreateFinanceEntryRequest } from "@cardapio/shared";
+import { LEVEL, PAYMENT_METHODS, type CreateFinanceEntryRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { round2 } from "../lib/pricing.js";
 import { serializeFinanceEntry, serializeOrder } from "../lib/serialize.js";
 import { serviceFee } from "../lib/tables.js";
 
 export const financeRouter = Router();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
 const MAX_TEXT_LENGTH = 120;
 
 const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));

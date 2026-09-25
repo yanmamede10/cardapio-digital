@@ -1,7 +1,8 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import type { StaffRole } from "@cardapio/shared";
+import { roleLevel, type StaffRole } from "@cardapio/shared";
+import { prisma } from "../db.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? "" : "dev-only-insecure-secret");
 if (!JWT_SECRET) {
@@ -62,11 +63,14 @@ export function requireOwnRestaurant(req: Request, res: Response, next: NextFunc
   next();
 }
 
-export function requireRole(...roles: StaffRole[]) {
+/** Ordinal check (Funcionário 1 < Administrador 2 < Dono 3), run after requireStaff. The role is read from the
+ *  database, not the token, so a change made in Equipe & Permissões applies on the next request. */
+export function requireMinRole(min: number) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.staff || !roles.includes(req.staff.role)) {
-      return res.status(403).json({ error: "forbidden: role not allowed" });
-    }
-    next();
+    if (!req.staff) return res.status(401).json({ error: "authentication required" });
+    prisma.staffMember
+      .findUnique({ where: { id: req.staff.staffId }, select: { role: true } })
+      .then((s) => (s && roleLevel(s.role) >= min ? next() : res.status(403).json({ error: "forbidden: role not allowed" })))
+      .catch(next);
   };
 }

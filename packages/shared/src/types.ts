@@ -402,6 +402,13 @@ export interface Review {
 
 export type StaffRole = "owner" | "manager" | "waiter" | "kitchen";
 
+/** Fixed 3-level hierarchy (no per-person exceptions — see docs/adr/0005). waiter/kitchen are job labels, both Funcionário. */
+export const LEVEL = { FUNCIONARIO: 1, ADMINISTRADOR: 2, DONO: 3 } as const;
+export const ROLE_LEVEL: Record<StaffRole, number> = { owner: LEVEL.DONO, manager: LEVEL.ADMINISTRADOR, waiter: LEVEL.FUNCIONARIO, kitchen: LEVEL.FUNCIONARIO };
+export const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "Administrador", waiter: "Funcionário · Garçom", kitchen: "Funcionário · Cozinha" };
+/** Any role string outside StaffRole counts as Funcionário. */
+export const roleLevel = (role: string | undefined) => ROLE_LEVEL[role as StaffRole] ?? LEVEL.FUNCIONARIO;
+
 export interface StaffMember {
   id: string;
   restaurantId: string;

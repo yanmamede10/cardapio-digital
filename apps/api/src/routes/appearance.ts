@@ -1,13 +1,13 @@
 import { Router } from "express";
 import multer from "multer";
-import type { MenuTemplateId } from "@cardapio/shared";
+import { LEVEL, type MenuTemplateId } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeAppearanceState, serializePublicAppearance } from "../lib/serialize.js";
 import { uploadPublicFile } from "../lib/storage.js";
 
 export const appearanceRouter = Router();
-const staffGuard = [requireStaff, requireOwnRestaurant, requireRole("owner", "manager")];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
 const TEMPLATES: MenuTemplateId[] = ["classico", "moderno", "minimalista", "vibrante", "editorial", "galeria"];

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffMember, StaffRole, TaxRegime } from "@cardapio/shared";
-import { TAX_REGIME_LABEL } from "@cardapio/shared";
-import { ApiError, api } from "../lib/api";
+import { ROLE_LABEL, TAX_REGIME_LABEL } from "@cardapio/shared";
+import { ApiError, api, getSession } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { Segmented } from "../components/Segmented";
@@ -12,7 +12,8 @@ import PaymentSubaccountTab from "./SettingsFinanceTab";
 type Tab = "profile" | "appearance" | "hours" | "staff" | "finance" | "fiscal";
 
 const WEEKDAY_LABEL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
-const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "Gerente", waiter: "Garçom", kitchen: "Cozinha" };
+const EMPTY_MEMBER = { id: null as string | null, name: "", email: "", role: "waiter" as StaffRole, password: "" };
+export const LEVELS_HINT = "Funcionário: Operação (pedidos, mesas, cardápio) · Administrador: também Produtos, Relatórios e Financeiro · Dono: tudo, inclusive Configurações e DRE.";
 
 export default function SettingsScreen() {
   const { notify } = useDashboardState();
@@ -24,7 +25,7 @@ export default function SettingsScreen() {
   const [hours, setHours] = useState<OperatingHoursRow[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [fiscal, setFiscal] = useState<FiscalInfo | null>(null);
-  const [invite, setInvite] = useState({ name: "", email: "", role: "waiter" as StaffRole });
+  const [member, setMember] = useState(EMPTY_MEMBER);
 
   useEffect(() => {
     Promise.all([api.getProfile(), api.getHours(), api.getStaff(), api.getFiscal()])
@@ -71,15 +72,17 @@ export default function SettingsScreen() {
     }
   };
 
-  const sendInvite = async () => {
-    if (!invite.name.trim() || !invite.email.trim()) return;
+  // One form for both: id null = adding (password required), id set = editing (password optional, resets it).
+  const saveMember = async () => {
+    const { id, name, email, role, password } = member;
+    if (!name.trim() || !email.trim() || (!id && password.length < 6)) return notify(id ? "Preencha nome e e-mail" : "Preencha nome, e-mail e uma senha de 6+ caracteres");
     try {
-      const created = await api.inviteStaff(invite);
-      setStaff((prev) => [...prev, created]);
-      setInvite({ name: "", email: "", role: "waiter" });
-      notify(`Convite enviado para ${created.name}`);
-    } catch {
-      notify("Não foi possível enviar o convite");
+      const saved = id ? await api.updateStaff(id, { name, email, role, ...(password ? { password } : {}) }) : await api.inviteStaff({ name, email, role, password });
+      setStaff((prev) => (id ? prev.map((s) => (s.id === id ? saved : s)) : [...prev, saved]));
+      setMember(EMPTY_MEMBER);
+      notify(id ? `${saved.name} atualizado` : `${saved.name} adicionado à equipe`);
+    } catch (err) {
+      notify(err instanceof ApiError && err.status === 409 ? "Esse e-mail já está em uso" : err instanceof ApiError && err.status === 400 ? err.message : "Não foi possível salvar");
     }
   };
 
@@ -105,7 +108,7 @@ export default function SettingsScreen() {
           { value: "profile", label: "Perfil" },
           { value: "appearance", label: "Aparência" },
           { value: "hours", label: "Horários" },
-          { value: "staff", label: "Equipe" },
+          { value: "staff", label: "Equipe & Permissões" },
           { value: "finance", label: "Financeiro" },
           { value: "fiscal", label: "Fiscal" }
         ]}
@@ -171,43 +174,63 @@ export default function SettingsScreen() {
       )}
 
       {tab === "staff" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 620 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 720 }}>
+          <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink3)" }}>{LEVELS_HINT}</p>
           <section className="card" style={{ overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 110px 110px", gap: 12, padding: "9px 16px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" }}>
-              {["Nome", "E-mail", "Função", "Convidado em"].map((h) => (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px 90px 70px", gap: 12, padding: "9px 16px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" }}>
+              {["Nome", "E-mail", "Papel", "Desde", ""].map((h) => (
                 <div key={h} className="field-label">
                   {h}
                 </div>
               ))}
             </div>
             {staff.map((s) => (
-              <div key={s.id} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 110px 110px", gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
+              <div key={s.id} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px 90px 70px", gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{s.name}</div>
-                <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>{s.email}</div>
+                <div style={{ fontSize: 12.5, color: "var(--ink2)", overflow: "hidden", textOverflow: "ellipsis" }}>{s.email}</div>
                 <span className="pill" style={{ alignSelf: "start", background: "var(--surface2)", color: "var(--brandText)" }}>
-                  {ROLE_LABEL[s.role]}
+                  {ROLE_LABEL[s.role] ?? s.role}
                 </span>
                 <div className="mono" style={{ fontSize: 11.5, color: "var(--ink3)" }}>
                   {fmtDate(s.invitedAt)}
                 </div>
+                <button type="button" className="btn btn-ghost" style={{ padding: "6px 13px", fontSize: 12.5, color: "var(--brandText)" }} onClick={() => setMember({ id: s.id, name: s.name, email: s.email, role: s.role, password: "" })}>
+                  Editar
+                </button>
               </div>
             ))}
           </section>
           <section className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <div className="field-label">Convidar novo membro</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 130px auto", gap: 10 }}>
-              <input className="field" placeholder="Nome" value={invite.name} onChange={(e) => setInvite({ ...invite, name: e.target.value })} />
-              <input className="field" placeholder="E-mail" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />
-              <select className="field" value={invite.role} onChange={(e) => setInvite({ ...invite, role: e.target.value as StaffRole })}>
-                {(Object.keys(ROLE_LABEL) as StaffRole[]).map((r) => (
-                  <option key={r} value={r}>
-                    {ROLE_LABEL[r]}
-                  </option>
-                ))}
-              </select>
-              <button type="button" className="btn btn-primary" onClick={sendInvite}>
-                Convidar
+            <div className="field-label">{member.id ? `Editar ${staff.find((s) => s.id === member.id)?.name ?? "membro"}` : "Adicionar membro"}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <Field label="Nome">
+                <input className="field" value={member.name} maxLength={120} onChange={(e) => setMember({ ...member, name: e.target.value })} />
+              </Field>
+              <Field label="E-mail">
+                <input className="field" type="email" value={member.email} maxLength={254} onChange={(e) => setMember({ ...member, email: e.target.value })} />
+              </Field>
+              <Field label="Papel">
+                <select className="field" value={member.role} disabled={member.id === getSession()?.staffId} onChange={(e) => setMember({ ...member, role: e.target.value as StaffRole })}>
+                  {(Object.keys(ROLE_LABEL) as StaffRole[]).map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_LABEL[r]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label={member.id ? "Nova senha (opcional)" : "Senha inicial"}>
+                <input className="field" type="password" autoComplete="new-password" value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} placeholder="Mínimo 6 caracteres" />
+              </Field>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button type="button" className="btn btn-primary" onClick={saveMember}>
+                {member.id ? "Salvar alterações" : "Adicionar"}
               </button>
+              {member.id && (
+                <button type="button" className="btn btn-outline" onClick={() => setMember(EMPTY_MEMBER)}>
+                  Cancelar
+                </button>
+              )}
             </div>
           </section>
         </div>

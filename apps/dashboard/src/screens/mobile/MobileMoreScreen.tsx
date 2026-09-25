@@ -4,7 +4,7 @@ import { api } from "../../lib/api";
 import { initialsOf } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { useDashboardState } from "../../state/DashboardStateContext";
-import { NAV_GROUPS } from "../../lib/modules";
+import { NAV_GROUPS, canSee, moduleByKey } from "../../lib/modules";
 
 /** Screens the mobile app has behind "Mais" (Pedidos, Mesas and Cardápio live in the tab bar). */
 const MOBILE_ITEMS: Record<string, { label: string; sub: string; icon: string; path: string }> = {
@@ -34,7 +34,7 @@ export default function MobileMoreScreen() {
 
   // Same sections as the desktop sidebar, minus what the tab bar already covers and screens the mobile app doesn't have.
   // Like the sidebar, a section left with one screen is a plain row named after the section; those rows share one card.
-  const groups = NAV_GROUPS.map((g) => ({ label: g.label, items: g.keys.filter((k) => k in MOBILE_ITEMS).map((k) => ({ key: k, ...MOBILE_ITEMS[k] })) }));
+  const groups = NAV_GROUPS.map((g) => ({ label: g.label, items: g.keys.filter((k) => k in MOBILE_ITEMS && canSee(moduleByKey(k))).map((k) => ({ key: k, ...MOBILE_ITEMS[k] })) }));
   const sections = groups.filter((g) => g.items.length > 1);
   const loose = groups.filter((g) => g.items.length === 1).map((g) => ({ ...g.items[0], label: g.label }));
   const cards = [...sections, ...(loose.length ? [{ label: "", items: loose }] : [])];

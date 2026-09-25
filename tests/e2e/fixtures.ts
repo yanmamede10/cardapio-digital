@@ -58,3 +58,10 @@ export async function burgerKit(api: Api) {
 /** "dd/mm/yyyy" — the calendar's day-button aria-label. */
 export const dayLabel = (d: Date) => d.toLocaleDateString("pt-BR");
 export const isoDay = (d: Date) => d.toLocaleDateString("sv-SE");
+
+/** For plain (non-fixture) tests: puts a real login for a seeded staff member into the dashboard session. */
+export async function loginAs(page: import("@playwright/test").Page, request: APIRequestContext, email: string) {
+  const { token, staff } = await (await request.post(`${API}/api/auth/login`, { data: { email, password: "senha123" } })).json();
+  const session = JSON.stringify({ token, restaurantId: staff.restaurantId, role: staff.role, staffId: staff.id, name: staff.name });
+  await page.addInitScript((s) => localStorage.setItem("cardapio.dashboard.session", s), session);
+}
