@@ -165,3 +165,35 @@ test("filtro de vencimento personalizado seleciona o intervalo no calendário", 
   await expect(page.getByText(`Dentro ${s}`)).toBeVisible();
   await expect(page.getByText(`Fora ${s}`)).toBeHidden();
 });
+
+test("Visão Geral · DRE: entrou/saiu/sobrou e demonstrativo contábil; Administrador não vê a aba", async ({ page, api, request }) => {
+  const month = "2031-03"; // isolated from every other test's entries
+  const entries = [
+    ["receivable", "Vendas salão", 10000],
+    ["receivable", "Vendas delivery", 2000],
+    ["payable", "Impostos (DAS)", 720],
+    ["payable", "Insumos e bebidas", 3600],
+    ["payable", "Folha e encargos", 4000],
+    ["payable", "Aluguel", 1500]
+  ] as const;
+  for (const [kind, category, amount] of entries) {
+    await api("POST", `/api/restaurants/${R}/finance-entries`, { kind, description: `${category} ${uid()}`, amount, dueDate: `${month}-10`, status: "pending", category });
+  }
+
+  await page.goto("/visao-geral");
+  await page.getByRole("button", { name: "DRE" }).click();
+  await page.getByLabel("Mês").fill(month);
+  const main = page.locator("main");
+  for (const v of ["R$ 12.000,00", "R$ 9.820,00", "R$ 2.180,00"]) await expect(main).toContainText(v); // entrou, saiu, sobrou
+
+  await page.getByRole("button", { name: "Ver demonstrativo contábil" }).click();
+  const line = (label: string) => page.getByRole("row", { name: new RegExp(label) });
+  await expect(line("Receita líquida")).toContainText("R$ 11.280,00");
+  await expect(line("Lucro bruto")).toContainText("R$ 7.680,00");
+  await expect(line("Resultado líquido")).toContainText("R$ 2.180,00");
+
+  await loginAs(page, request, "bruno@fogoeno.com.br");
+  await page.goto("/visao-geral");
+  await expect(page.getByText("Saldo do período")).toBeVisible();
+  await expect(page.getByRole("button", { name: "DRE" })).toHaveCount(0);
+});

@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import type { FinanceEntry } from "@cardapio/shared";
+import { LEVEL, type FinanceEntry } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { addDays, brl, dayMonth, shortDate, todayIso } from "../lib/format";
+import { myLevel } from "../lib/modules";
+import { Segmented } from "../components/Segmented";
 import { entryStatus } from "./AccountsScreen";
+import FinanceDreTab from "./FinanceDreTab";
 
-/** Visão Geral · Resumo — everything derived from Contas a Pagar/Receber. */
+/** Visão Geral · Resumo (+ DRE for the Dono) — everything derived from Contas a Pagar/Receber, loaded once here. */
 export default function FinanceOverviewScreen() {
   const [entries, setEntries] = useState<FinanceEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"resumo" | "dre">("resumo");
 
   useEffect(() => {
     api
@@ -22,6 +26,25 @@ export default function FinanceOverviewScreen() {
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="skeleton" style={{ height: 120 }} />
         <div className="skeleton" style={{ height: 260 }} />
+      </div>
+    );
+  }
+
+  const tabs = myLevel() >= LEVEL.DONO && (
+    <Segmented
+      value={tab}
+      onChange={setTab}
+      options={[
+        { value: "resumo", label: "Resumo" },
+        { value: "dre", label: "DRE" }
+      ]}
+    />
+  );
+  if (tab === "dre") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1080 }}>
+        {tabs}
+        <FinanceDreTab entries={entries} />
       </div>
     );
   }
@@ -69,6 +92,7 @@ export default function FinanceOverviewScreen() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1080 }}>
+      {tabs}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 14 }}>
         {kpis.map((k) => (
           <section
