@@ -59,9 +59,106 @@ export interface MenuItem {
   sortOrder: number;
   scheduleLabel: string;
   optionGroups: MenuItemOptionGroup[];
+  productId?: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Catálogo / estoque
+// ---------------------------------------------------------------------------
+
+export type ProductType = "produto" | "insumo";
+
+export const PRODUCT_UNITS = ["un", "kg", "g", "L", "ml", "porção"] as const;
+
+export interface ProductComponentLine {
+  componentId: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  /** Component's current (average) cost per unit. */
+  unitCost: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  type: ProductType;
+  unit: string;
+  price: number;
+  /** Composed products: sum of components × quantity × current cost. */
+  cost: number;
+  stock: number;
+  ncm: string;
+  cst: string;
+  taxRate: number;
+  composed: boolean;
+  components: ProductComponentLine[];
+}
+
+export interface UpsertProductRequest {
+  name: string;
+  type: ProductType;
+  unit: string;
+  price: number;
+  cost: number;
+  ncm: string;
+  cst: string;
+  taxRate: number;
+  composed: boolean;
+  components: { componentId: string; quantity: number }[];
+}
+
+export interface StockMovement {
+  id: string;
+  productName: string;
+  unit: string;
+  kind: "in" | "out";
+  quantity: number;
+  source: string;
+  createdAt: string;
+}
+
+/** NF-e items parsed client-side from the supplier XML. */
+export interface XmlImportRequest {
+  fileName: string;
+  items: { name: string; ncm: string; unit: string; quantity: number; unitCost: number }[];
+}
+
+// ---------------------------------------------------------------------------
+// Contas a pagar / receber
+// ---------------------------------------------------------------------------
+
+export type FinanceEntryKind = "payable" | "receivable";
+
+export interface FinanceEntry {
+  id: string;
+  kind: FinanceEntryKind;
+  description: string;
+  amount: number;
+  /** "YYYY-MM-DD" */
+  dueDate: string;
+  status: "pending" | "paid";
+  category: string;
+  costCenter: string;
+  paidOn: string | null;
+  paymentMethod: string | null;
+}
+
+export interface CreateFinanceEntryRequest {
+  kind: FinanceEntryKind;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: "pending" | "paid";
+  category?: string;
+  costCenter?: string;
+}
+
+export const PAYMENT_METHODS = ["Dinheiro", "PIX", "Cartão", "Transferência"] as const;
+
 export interface UpsertMenuItemRequest {
+  /** Catalog product to link. When omitted on create, the API makes a Produto from name/price (mobile form). */
+  productId?: string;
   categoryId: string;
   name: string;
   shortDescription: string;

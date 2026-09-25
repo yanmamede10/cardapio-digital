@@ -165,7 +165,11 @@ async function main() {
   await prisma.restaurantTable.deleteMany();
   await prisma.orderLine.deleteMany();
   await prisma.order.deleteMany();
+  await prisma.financeEntry.deleteMany();
+  await prisma.stockMovement.deleteMany();
   await prisma.menuItem.deleteMany();
+  await prisma.productComponent.deleteMany();
+  await prisma.product.deleteMany();
   await prisma.menuCategory.deleteMany();
   await prisma.address.deleteMany();
   await prisma.paymentMethod.deleteMany();
@@ -203,11 +207,15 @@ async function main() {
     }
 
     for (const [ii, item] of menu.entries()) {
+      const product = await prisma.product.create({
+        data: { id: `p-${p.id}-${item.id}`, restaurantId: p.id, name: item.name, type: "produto", unit: "un", price: item.price }
+      });
       await prisma.menuItem.create({
         data: {
           id: `${p.id}-${item.id}`,
           restaurantId: p.id,
           categoryId: categoryIds[item.cat],
+          productId: product.id,
           name: item.name,
           shortDescription: item.desc,
           longDescription: item.long,

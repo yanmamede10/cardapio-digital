@@ -6,6 +6,7 @@ import { generateOrderCode } from "../lib/codes.js";
 import { evaluateCoupon } from "../lib/coupons.js";
 import { priceLine, round2 } from "../lib/pricing.js";
 import { serializeOrder } from "../lib/serialize.js";
+import { takeStockForOrders } from "../lib/stock.js";
 
 const VALID_STAGES: OrderStatus[] = ["preparing", "ready", "out_for_delivery", "delivered", "served", "cancelled"];
 const MAX_NOTES_LENGTH = 300;
@@ -254,6 +255,13 @@ ordersRouter.patch("/:id/stage", requireStaff, async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  // A delivery closes when delivered (table orders take stock on comanda close instead). The
+  // conditional updateMany claims that transition once, so a double click can't take stock twice.
+  const delivering =
+    order.mode === "delivery" &&
+    stage === "delivered" &&
+    (await prisma.order.updateMany({ where: { id: order.id, status: { not: "delivered" } }, data: { status: "delivered" } })).count > 0;
   const updated = await prisma.order.update({ where: { id: order.id }, data: { status: stage }, include: { lines: true } });
+  if (delivering) await takeStockForOrders(order.restaurantId, [updated], `Pedido delivery ${order.code}`);
   res.json(serializeOrder(updated));
 });

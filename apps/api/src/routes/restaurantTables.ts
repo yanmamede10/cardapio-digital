@@ -4,6 +4,7 @@ import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { buildComanda, openOrdersForTable, statusForTable } from "../lib/tables.js";
 import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
+import { takeStockForOrders } from "../lib/stock.js";
 
 export const restaurantTablesRouter = Router();
 // Applied per-route (not via router.use) because several routers share the
@@ -131,7 +132,9 @@ restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (r
   if (!table) return res.status(404).json({ error: "table not found" });
   const orders = await openOrdersForTable(req.params.id, table);
   await prisma.order.updateMany({ where: { id: { in: orders.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
-  await prisma.restaurantTable.update({ where: { id: table.id }, data: { openedAt: null } });
+  // updateMany on openedAt≠null so only one of two concurrent closes "wins" and takes stock.
+  const closed = await prisma.restaurantTable.updateMany({ where: { id: table.id, openedAt: { not: null } }, data: { openedAt: null } });
+  if (closed.count && orders.length) await takeStockForOrders(req.params.id, orders, `Fechamento de comanda ${orders[0].code}`);
   res.json({ ok: true });
 });
 

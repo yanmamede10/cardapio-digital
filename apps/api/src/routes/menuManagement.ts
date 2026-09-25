@@ -59,17 +59,31 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
   const category = await prisma.menuCategory.findUnique({ where: { id: body.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(400).json({ error: "unknown category" });
 
+  // Desktop Cardápio links an existing catalog Produto. The mobile form still sends name/price
+  // without a productId — it gets a Produto made for it so every dish stays catalog-backed.
+  let product;
+  if (body.productId) {
+    product = await prisma.product.findUnique({ where: { id: body.productId } });
+    if (!product || product.restaurantId !== req.params.id || product.type !== "produto") return res.status(400).json({ error: "unknown product" });
+    if (await prisma.menuItem.findFirst({ where: { productId: product.id } })) return res.status(409).json({ error: "este prato já está no cardápio" });
+  } else {
+    if (typeof body.name !== "string" || !body.name.trim() || typeof body.price !== "number") return res.status(400).json({ error: "productId or name and price are required" });
+    product = await prisma.product.create({ data: { restaurantId: req.params.id, name: body.name, type: "produto", unit: "un", price: body.price } });
+  }
+  const shortDescription = body.shortDescription ?? "";
+
   const last = await prisma.menuItem.findFirst({ where: { restaurantId: req.params.id }, orderBy: { sortOrder: "desc" } });
   const item = await prisma.menuItem.create({
     data: {
       id: `${req.params.id}-${randomUUID()}`,
       restaurantId: req.params.id,
       categoryId: body.categoryId,
-      name: body.name,
-      shortDescription: body.shortDescription,
-      longDescription: body.longDescription || body.shortDescription,
-      price: body.price,
-      photoLabel: `foto · ${body.name.toLowerCase()}`,
+      productId: product.id,
+      name: product.name,
+      shortDescription,
+      longDescription: body.longDescription || shortDescription,
+      price: product.price,
+      photoLabel: `foto · ${product.name.toLowerCase()}`,
       soldOut: false,
       optionGroupsJson: optionGroupsJsonFor(body.extras),
       ...(body.scheduleLabel ? { scheduleLabel: body.scheduleLabel } : {}),
@@ -86,6 +100,16 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
   if (fieldError) return res.status(400).json({ error: fieldError });
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
+
+  // Name/price belong to the catalog product (desktop edits them there). The mobile form still
+  // sends them here — write them through to the product and every dish linked to it.
+  if (existing.productId && (body.name !== undefined || body.price !== undefined)) {
+    const product = await prisma.product.update({
+      where: { id: existing.productId },
+      data: { ...(body.name !== undefined ? { name: body.name } : {}), ...(body.price !== undefined ? { price: body.price } : {}) }
+    });
+    await prisma.menuItem.updateMany({ where: { productId: product.id }, data: { name: product.name, price: product.price } });
+  }
 
   const item = await prisma.menuItem.update({
     where: { id: req.params.itemId },
@@ -141,6 +165,7 @@ menuManagementRouter.post("/:id/items/:itemId/duplicate", ...staffGuard, async (
       id: `${req.params.id}-${randomUUID()}`,
       restaurantId: original.restaurantId,
       categoryId: original.categoryId,
+      productId: original.productId,
       name: `${original.name} (cópia)`,
       shortDescription: original.shortDescription,
       longDescription: original.longDescription,

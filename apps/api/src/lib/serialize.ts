@@ -3,6 +3,7 @@ import type {
   AppearanceState,
   CartLine,
   Coupon as ApiCoupon,
+  FinanceEntry as ApiFinanceEntry,
   FiscalInfo,
   MenuItem as ApiMenuItem,
   MenuItemOptionGroup,
@@ -10,12 +11,15 @@ import type {
   Order as ApiOrder,
   OperatingHoursRow,
   PaymentMethod as ApiPaymentMethod,
+  Product as ApiProduct,
+  ProductType,
   PublicAppearance,
   Restaurant as ApiRestaurant,
   RestaurantProfile,
   RestaurantTable as ApiRestaurantTable,
   Review as ApiReview,
   StaffMember as ApiStaffMember,
+  StockMovement as ApiStockMovement,
   SupportMessage as ApiSupportMessage,
   SupportTicket as ApiSupportTicket,
   TableStatus,
@@ -25,19 +29,24 @@ import type {
   Address,
   BillingCharge,
   Coupon,
+  FinanceEntry,
   MenuItem,
   OperatingHour,
   Order,
   OrderLine,
   PaymentMethod,
+  Product,
+  ProductComponent,
   Restaurant,
   RestaurantTable,
   Review,
   StaffMember,
+  StockMovement,
   SupportMessage,
   SupportTicket,
   WaiterCall
 } from "@prisma/client";
+import { round2 } from "./pricing.js";
 
 export function serializeRestaurant(r: Restaurant): ApiRestaurant {
   return {
@@ -75,7 +84,8 @@ export function serializeMenuItem(item: MenuItem, categoryName: string): ApiMenu
     soldOut: item.soldOut,
     sortOrder: item.sortOrder,
     scheduleLabel: item.scheduleLabel,
-    optionGroups: JSON.parse(item.optionGroupsJson) as MenuItemOptionGroup[]
+    optionGroups: JSON.parse(item.optionGroupsJson) as MenuItemOptionGroup[],
+    productId: item.productId
   };
 }
 
@@ -274,5 +284,56 @@ export function serializeCharge(c: BillingCharge): { id: string; restaurantId: s
     description: c.description,
     value: c.value,
     status: c.status as "paid" | "pending" | "failed"
+  };
+}
+
+export function serializeProduct(p: Product & { components: (ProductComponent & { component: Product })[] }): ApiProduct {
+  const components = p.components.map((c) => ({
+    componentId: c.componentId,
+    name: c.component.name,
+    unit: c.component.unit,
+    quantity: c.quantity,
+    unitCost: c.component.cost
+  }));
+  return {
+    id: p.id,
+    name: p.name,
+    type: p.type as ProductType,
+    unit: p.unit,
+    price: p.price,
+    cost: p.composed ? round2(components.reduce((t, c) => t + c.quantity * c.unitCost, 0)) : p.cost,
+    stock: p.stock,
+    ncm: p.ncm,
+    cst: p.cst,
+    taxRate: p.taxRate,
+    composed: p.composed,
+    components
+  };
+}
+
+export function serializeMovement(m: StockMovement & { product: Product }): ApiStockMovement {
+  return {
+    id: m.id,
+    productName: m.product.name,
+    unit: m.product.unit,
+    kind: m.kind as ApiStockMovement["kind"],
+    quantity: m.quantity,
+    source: m.source,
+    createdAt: m.createdAt.toISOString()
+  };
+}
+
+export function serializeFinanceEntry(e: FinanceEntry): ApiFinanceEntry {
+  return {
+    id: e.id,
+    kind: e.kind as ApiFinanceEntry["kind"],
+    description: e.description,
+    amount: e.amount,
+    dueDate: e.dueDate,
+    status: e.status as ApiFinanceEntry["status"],
+    category: e.category,
+    costCenter: e.costCenter,
+    paidOn: e.paidOn,
+    paymentMethod: e.paymentMethod
   };
 }

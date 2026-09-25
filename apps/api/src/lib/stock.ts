@@ -1,0 +1,44 @@
+import { prisma } from "../db.js";
+
+type ProductRecipe = { id: string; composed: boolean; components: { componentId: string; quantity: number }[] };
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * Stock to take out per product for the sold lines: a composed product consumes its ficha técnica,
+ * anything else consumes itself. One level only — the products route never lets a composed
+ * product be a component, so there's nothing to recurse into.
+ */
+export function stockOut(lines: { productId: string | null; quantity: number }[], products: Map<string, ProductRecipe>): Map<string, number> {
+  const out = new Map<string, number>();
+  const add = (id: string, qty: number) => out.set(id, round3((out.get(id) ?? 0) + qty));
+  for (const line of lines) {
+    const product = line.productId ? products.get(line.productId) : undefined;
+    if (!product) continue; // legacy menu item with no catalog product — nothing to track
+    if (product.composed) product.components.forEach((c) => add(c.componentId, c.quantity * line.quantity));
+    else add(product.id, line.quantity);
+  }
+  return out;
+}
+
+/** Decrements stock for everything sold in `orders` and logs one "out" movement per product. Stock may go negative. */
+export async function takeStockForOrders(restaurantId: string, orders: { lines: { itemId: string; quantity: number }[] }[], source: string) {
+  const lines = orders.flatMap((o) => o.lines);
+  if (lines.length === 0) return;
+  const items = await prisma.menuItem.findMany({ where: { id: { in: [...new Set(lines.map((l) => l.itemId))] } }, select: { id: true, productId: true } });
+  const productOf = new Map(items.map((i) => [i.id, i.productId]));
+  const products = await prisma.product.findMany({
+    where: { restaurantId, id: { in: items.flatMap((i) => (i.productId ? [i.productId] : [])) } },
+    include: { components: true }
+  });
+  const out = stockOut(
+    lines.map((l) => ({ productId: productOf.get(l.itemId) ?? null, quantity: l.quantity })),
+    new Map(products.map((p) => [p.id, p]))
+  );
+  await prisma.$transaction(
+    [...out].flatMap(([productId, quantity]) => [
+      prisma.product.update({ where: { id: productId }, data: { stock: { decrement: quantity } } }),
+      prisma.stockMovement.create({ data: { restaurantId, productId, kind: "out", quantity, source } })
+    ])
+  );
+}
