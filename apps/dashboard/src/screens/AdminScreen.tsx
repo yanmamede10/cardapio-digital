@@ -10,7 +10,7 @@ import { Toast } from "../components/Toast";
 const KEY_STORAGE = "mesapronta.adminKey";
 const STATUS_LABEL: Record<RestaurantStatus, string> = { ativo: "Ativo", pendente: "Pendente", inativo: "Inativo" };
 const STATUS_FG: Record<RestaurantStatus, string> = { ativo: "var(--ok)", pendente: "var(--warn)", inativo: "var(--ink3)" };
-const EMPTY_FORM = { name: "", cnpj: "", contact: "" };
+const EMPTY_FORM = { name: "", cnpj: "", contact: "", ownerName: "", ownerEmail: "" };
 
 function loadKey(): string {
   try {
@@ -30,6 +30,8 @@ export default function AdminScreen() {
   const [filter, setFilter] = useState<"todos" | RestaurantStatus>("todos");
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
+  // Shown once after a sign-up: the API never returns the temporary password again.
+  const [ownerAccess, setOwnerAccess] = useState<{ restaurant: string; email: string; password: string } | null>(null);
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
   const call = async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -72,13 +74,21 @@ export default function AdminScreen() {
   const create = async () => {
     if (!form) return;
     try {
-      const created = await call<AdminRestaurant>("/restaurants", { method: "POST", body: JSON.stringify(form) });
+      const { ownerPassword, ...created } = await call<AdminRestaurant & { ownerPassword: string }>("/restaurants", { method: "POST", body: JSON.stringify(form) });
       setList((prev) => [created, ...(prev ?? [])]);
+      setOwnerAccess({ restaurant: created.name, email: form.ownerEmail.trim().toLowerCase(), password: ownerPassword });
       setForm(null);
       notify(`${created.name} cadastrado como pendente`);
     } catch (e) {
       const msg = (e as Error).message;
-      notify(msg.includes("cnpj already") ? "Esse CNPJ já está cadastrado" : msg.includes("cnpj") ? "CNPJ precisa ter 14 dígitos" : "Não foi possível cadastrar");
+      notify(
+        msg.includes("cnpj already") ? "Esse CNPJ já está cadastrado"
+        : msg.includes("cnpj") ? "CNPJ precisa ter 14 dígitos"
+        : msg.includes("owner email already") ? "Esse e-mail já é usado por outra pessoa"
+        : msg.includes("ownerEmail") ? "E-mail do dono inválido"
+        : msg.includes("ownerName") ? "Informe o nome do dono"
+        : "Não foi possível cadastrar"
+      );
     }
   };
 
@@ -179,9 +189,28 @@ export default function AdminScreen() {
             <Field label="Contato">
               <input className="field" placeholder="Nome, telefone ou e-mail" value={form.contact} maxLength={200} onChange={(e) => setForm({ ...form, contact: e.target.value })} />
             </Field>
+            <Field label="Nome do dono">
+              <input className="field" value={form.ownerName} maxLength={120} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} />
+            </Field>
+            <Field label="E-mail do dono">
+              <input className="field" type="email" placeholder="Vira o login do Dono" value={form.ownerEmail} maxLength={254} onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })} />
+            </Field>
           </div>
           <button type="button" className="btn btn-primary" style={{ alignSelf: "flex-start" }} onClick={create}>
             Cadastrar
+          </button>
+        </section>
+      )}
+
+      {ownerAccess && (
+        <section className="card" role="status" style={{ padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", borderColor: "var(--ok)" }}>
+          <div style={{ flex: 1, minWidth: 240, fontSize: 13, lineHeight: 1.5 }}>
+            Acesso do Dono de <b>{ownerAccess.restaurant}</b> (entra depois de ativar): <span className="mono">{ownerAccess.email}</span> · senha provisória{" "}
+            <span className="mono" style={{ fontWeight: 600 }}>{ownerAccess.password}</span>
+            <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. O Dono troca em Configurações › Equipe & Permissões.</div>
+          </div>
+          <button type="button" className="btn btn-outline" onClick={() => setOwnerAccess(null)}>
+            Anotei
           </button>
         </section>
       )}

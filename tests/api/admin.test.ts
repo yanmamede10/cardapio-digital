@@ -3,7 +3,9 @@ import { describe, test } from "node:test";
 import { R, call, uid } from "./helpers.ts";
 
 const token = process.env.SUPER_ADMIN_KEY ?? "test-admin-key"; // set by tests/run.mjs
-const cnpj = () => String(Date.now()).slice(-12).padStart(12, "0") + "91"; // 14 digits, unique per call
+let seq = 0;
+const cnpj = () => String(Date.now() * 100 + (seq++ % 100)).slice(-12) + "91"; // 14 digits, unique per call
+const owner = () => ({ ownerName: "Dona Ana", ownerEmail: `dono-${uid()}@t.com` });
 
 describe("super admin", () => {
   test("sem chave, chave errada ou token de staff → 401", async () => {
@@ -13,16 +15,16 @@ describe("super admin", () => {
 
   test("cadastra como pendente, formata o CNPJ, recusa CNPJ repetido ou inválido e ativa", async () => {
     const digits = cnpj();
-    const created = await call("POST", "/api/admin/restaurants", { token, body: { name: `Cantina São João ${uid()}`, cnpj: digits, contact: "Ana · (11) 99999-0000" } });
+    const created = await call("POST", "/api/admin/restaurants", { token, body: { name: `Cantina São João ${uid()}`, cnpj: digits, contact: "Ana · (11) 99999-0000", ...owner() } });
     assert.equal(created.status, 201);
     assert.equal(created.body.status, "pendente");
     assert.match(created.body.id, /^cantina-sao-joao-/);
     assert.equal(created.body.cnpj.replace(/\D/g, ""), digits);
     assert.match(created.body.cnpj, /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/);
 
-    assert.equal((await call("POST", "/api/admin/restaurants", { token, body: { name: "Outro", cnpj: digits } })).status, 409);
-    assert.equal((await call("POST", "/api/admin/restaurants", { token, body: { name: "Outro", cnpj: "123" } })).status, 400);
-    assert.equal((await call("POST", "/api/admin/restaurants", { token, body: { name: " ", cnpj: cnpj() } })).status, 400);
+    assert.equal((await call("POST", "/api/admin/restaurants", { token, body: { name: "Outro", cnpj: digits, ...owner() } })).status, 409);
+    assert.equal((await call("POST", "/api/admin/restaurants", { token, body: { name: "Outro", cnpj: "123", ...owner() } })).status, 400);
+    assert.equal((await call("POST", "/api/admin/restaurants", { token, body: { name: " ", cnpj: cnpj(), ...owner() } })).status, 400);
 
     const listed = async () => (await call("GET", "/api/restaurants")).body.some((r: { id: string }) => r.id === created.body.id);
     assert.equal(await listed(), false, "pendente não aparece no delivery");
@@ -30,6 +32,24 @@ describe("super admin", () => {
     assert.equal((await call("PATCH", `/api/admin/restaurants/${created.body.id}/status`, { token, body: { status: "ativo" } })).body.status, "ativo");
     assert.equal(await listed(), true);
     assert.ok((await call("GET", "/api/admin/restaurants", { token })).body.some((r: { id: string; status: string }) => r.id === created.body.id && r.status === "ativo"));
+  });
+
+  test("cadastro cria o Dono: e-mail validado e único, loga com a senha provisória só depois de ativar", async () => {
+    const o = owner();
+    const post = (body: object) => call("POST", "/api/admin/restaurants", { token, body: { name: `Bar ${uid()}`, cnpj: cnpj(), ...o, ...body } });
+    assert.equal((await post({ ownerEmail: "sem-arroba" })).status, 400);
+    assert.equal((await post({ ownerName: " " })).status, 400);
+    assert.equal((await post({ ownerEmail: "marina@fogoeno.com.br" })).status, 409, "e-mail de staff já existente");
+
+    const created = await post({ ownerEmail: o.ownerEmail.toUpperCase() });
+    assert.equal(created.status, 201);
+    assert.ok(created.body.ownerPassword.length >= 12);
+    const login = () => call("POST", "/api/auth/login", { body: { email: o.ownerEmail, password: created.body.ownerPassword } });
+    assert.equal((await login()).status, 403, "pendente não loga");
+    await call("PATCH", `/api/admin/restaurants/${created.body.id}/status`, { token, body: { status: "ativo" } });
+    const ok = await login();
+    assert.deepEqual([ok.status, ok.body.staff.role, ok.body.staff.restaurantId], [200, "owner", created.body.id]);
+    assert.ok(!(await call("GET", "/api/admin/restaurants", { token })).body.some((r: object) => "ownerPassword" in r), "senha não volta na listagem");
   });
 
   test("desativar revoga na hora: o token emitido antes já falha no request seguinte, e não loga de novo", async () => {
