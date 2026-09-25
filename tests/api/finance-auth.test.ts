@@ -39,16 +39,18 @@ describe("contas a pagar / receber", () => {
 });
 
 describe("emissão fiscal", () => {
-  test("lista a comanda só depois de fechada", async () => {
+  test("lista a comanda só depois de fechada, pelo valor cobrado (com serviço)", async () => {
     const items = (await call("GET", `${P}/items`, { token: owner })).body;
     const table = 100 + Math.floor(Math.random() * 800);
     const order = (await call("POST", "/api/orders", { session: `f-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[0].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
     await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
-    const ids = async () => (await call("GET", `${P}/closed-orders`, { token: owner })).body.map((o: { id: string }) => o.id);
+    const comanda = (await call("GET", `${P}/tables/${table}/comanda`, { token: owner })).body;
+    const row = async () => (await call("GET", `${P}/closed-orders`, { token: owner })).body.find((o: { id: string }) => o.id === order.id);
 
-    assert.ok(!(await ids()).includes(order.id), "servido mas com a mesa aberta ainda não é elegível");
+    assert.equal(await row(), undefined, "servido mas com a mesa aberta ainda não é elegível");
     await call("POST", `${P}/tables/${table}/close`, { token: owner });
-    assert.ok((await ids()).includes(order.id));
+    assert.ok(comanda.service > 0);
+    assert.equal((await row())?.total, comanda.total, "nota = pedido + serviço, o mesmo valor cobrado na comanda");
   });
 });
 

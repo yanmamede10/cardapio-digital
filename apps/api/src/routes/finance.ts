@@ -2,7 +2,9 @@ import { Router } from "express";
 import { PAYMENT_METHODS, type CreateFinanceEntryRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { round2 } from "../lib/pricing.js";
 import { serializeFinanceEntry, serializeOrder } from "../lib/serialize.js";
+import { serviceFee } from "../lib/tables.js";
 
 export const financeRouter = Router();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
@@ -57,7 +59,8 @@ financeRouter.post("/:id/finance-entries/:entryId/pay", ...staffGuard, async (re
 });
 
 /** Emissão Fiscal queue: finished orders — delivered deliveries and table orders whose comanda is
- *  already closed (a served order at a still-open table isn't billable yet). */
+ *  already closed (a served order at a still-open table isn't billable yet). `total` is what was
+ *  charged: table orders include their share of the comanda's service. */
 financeRouter.get("/:id/closed-orders", ...staffGuard, async (req, res) => {
   // ponytail: newest 500, add paging when a restaurant outgrows it
   const [orders, openTables] = await Promise.all([
@@ -71,5 +74,5 @@ financeRouter.get("/:id/closed-orders", ...staffGuard, async (req, res) => {
   ]);
   const stillOpen = (o: (typeof orders)[number]) =>
     o.mode === "table" && openTables.some((t) => t.number === o.tableNumber && o.createdAt >= t.openedAt!);
-  res.json(orders.filter((o) => !stillOpen(o)).map(serializeOrder));
+  res.json(orders.filter((o) => !stillOpen(o)).map((o) => ({ ...serializeOrder(o), total: round2(o.total + serviceFee(o)) })));
 });

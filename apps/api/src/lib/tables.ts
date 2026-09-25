@@ -5,6 +5,10 @@ import { round2 } from "./pricing.js";
 
 const SERVICE_PCT = 10;
 
+/** Service charged on one order (table only). Per order, so the comanda's service is exactly the sum
+ *  of what the Emissão Fiscal queue adds to each of its orders. */
+export const serviceFee = (o: Pick<Order, "mode" | "subtotal">) => (o.mode === "table" ? round2(o.subtotal * (SERVICE_PCT / 100)) : 0);
+
 /**
  * A table's comanda is every non-cancelled order for that number placed since
  * it was last opened — `openedAt` is cleared on close, so a fresh seating
@@ -43,7 +47,7 @@ export function buildComanda(table: RestaurantTable, orders: (Order & { lines: O
     }))
   );
   const subtotal = round2(lines.reduce((t, l) => t + l.subtotal, 0));
-  const service = round2(subtotal * (SERVICE_PCT / 100));
+  const service = round2(orders.reduce((t, o) => t + serviceFee(o), 0));
   return {
     table: {
       id: table.id,
