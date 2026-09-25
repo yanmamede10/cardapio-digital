@@ -32,14 +32,19 @@ describe("super admin", () => {
     assert.ok((await call("GET", "/api/admin/restaurants", { token })).body.some((r: { id: string; status: string }) => r.id === created.body.id && r.status === "ativo"));
   });
 
-  test("restaurante desativado não loga", async () => {
-    const login = () => call("POST", "/api/auth/login", { body: { email: "paula@fogoeno.com.br", password: "senha123" } });
+  test("desativar revoga na hora: o token emitido antes já falha no request seguinte, e não loga de novo", async () => {
+    const login = () => call("POST", "/api/auth/login", { body: { email: "marina@fogoeno.com.br", password: "senha123" } });
+    const old = (await login()).body.token as string;
+    // tables = rota de Operação (só requireStaff); finance-entries = rota com requireMinRole
+    const statuses = async () => [(await call("GET", `/api/restaurants/${R}/tables`, { token: old })).status, (await call("GET", `/api/restaurants/${R}/finance-entries`, { token: old })).status];
+    assert.deepEqual(await statuses(), [200, 200]);
     try {
       await call("PATCH", `/api/admin/restaurants/${R}/status`, { token, body: { status: "inativo" } });
+      assert.deepEqual(await statuses(), [401, 401], "mesmo token, request seguinte");
       assert.equal((await login()).status, 403);
     } finally {
       await call("PATCH", `/api/admin/restaurants/${R}/status`, { token, body: { status: "ativo" } });
     }
-    assert.equal((await login()).status, 200);
+    assert.deepEqual(await statuses(), [200, 200], "status é lido ao vivo — reativar devolve o acesso");
   });
 });

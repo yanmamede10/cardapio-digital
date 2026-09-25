@@ -14,7 +14,6 @@ authRouter.post("/login", async (req, res) => {
   if (!staff || !staff.passwordHash || !verifyPassword(password, staff.passwordHash)) {
     return res.status(401).json({ error: "invalid credentials" });
   }
-  // ponytail: only checked at login — a token issued before a deactivation keeps working until it expires (12h).
   if (staff.restaurant.status !== "ativo") return res.status(403).json({ error: "restaurant is not active" });
 
   const token = signStaffToken({ staffId: staff.id, restaurantId: staff.restaurantId, role: staff.role as StaffRole });

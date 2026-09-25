@@ -43,16 +43,26 @@ declare global {
   }
 }
 
+/** Verifies the token, then reads the staff member's current role and restaurant status — one query per request,
+ *  so a role change (Equipe & Permissões) or a deactivation (super admin) applies to the very next request. */
 export function requireStaff(req: Request, res: Response, next: NextFunction) {
   const header = req.header("Authorization");
   const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
   if (!token) return res.status(401).json({ error: "authentication required" });
+  let payload: StaffTokenPayload;
   try {
-    req.staff = jwt.verify(token, JWT_SECRET) as StaffTokenPayload;
-    next();
+    payload = jwt.verify(token, JWT_SECRET) as StaffTokenPayload;
   } catch {
     return res.status(401).json({ error: "invalid or expired token" });
   }
+  prisma.staffMember
+    .findUnique({ where: { id: payload.staffId }, select: { role: true, restaurantId: true, restaurant: { select: { status: true } } } })
+    .then((s) => {
+      if (!s || s.restaurant.status !== "ativo") return res.status(401).json({ error: "session revoked" });
+      req.staff = { staffId: payload.staffId, restaurantId: s.restaurantId, role: s.role as StaffRole };
+      next();
+    })
+    .catch(next);
 }
 
 /** Rejects if the :id route param doesn't match the authenticated staff's own restaurant. */
@@ -63,14 +73,8 @@ export function requireOwnRestaurant(req: Request, res: Response, next: NextFunc
   next();
 }
 
-/** Ordinal check (Funcionário 1 < Administrador 2 < Dono 3), run after requireStaff. The role is read from the
- *  database, not the token, so a change made in Equipe & Permissões applies on the next request. */
+/** Ordinal check (Funcionário 1 < Administrador 2 < Dono 3), run after requireStaff (which loaded the current role). */
 export function requireMinRole(min: number) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.staff) return res.status(401).json({ error: "authentication required" });
-    prisma.staffMember
-      .findUnique({ where: { id: req.staff.staffId }, select: { role: true } })
-      .then((s) => (s && roleLevel(s.role) >= min ? next() : res.status(403).json({ error: "forbidden: role not allowed" })))
-      .catch(next);
-  };
+  return (req: Request, res: Response, next: NextFunction) =>
+    req.staff && roleLevel(req.staff.role) >= min ? next() : res.status(403).json({ error: "forbidden: role not allowed" });
 }
