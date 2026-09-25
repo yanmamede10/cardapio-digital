@@ -11,6 +11,7 @@ import type {
   Order,
   OrderStatus,
   OperatingHoursRow,
+  PaymentMode,
   Restaurant,
   RestaurantProfile,
   RestaurantTable,
@@ -252,6 +253,9 @@ export const api = {
   getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
   updateFiscal: (payload: Partial<FiscalInfo>) =>
     request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) }),
+  getPaymentMode: () => request<{ paymentMode: PaymentMode }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`),
+  setPaymentMode: (paymentMode: PaymentMode) =>
+    request<{ paymentMode: PaymentMode }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`, { method: "PATCH", body: JSON.stringify({ paymentMode }) }),
 
   // Appearance
   getAppearanceDraft: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`),

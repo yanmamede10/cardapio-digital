@@ -42,6 +42,11 @@ model Restaurant {
   planDueDate       DateTime?
   planModulesJson   String   @default("[]")
 
+  // How the restaurant takes payment at the table/counter: "sistema" (PIX via
+  // our Asaas subconta) or "maquininha_propria" (their own card/PIX terminal —
+  // we just record the method and confirm manually, no QR/webhook).
+  paymentMode       String   @default("maquininha_propria")
+
   // Aparência — customer-facing menu page skin. "draft*" is what the dashboard
   // edits; the plain fields below are what's actually published and served by
   // the public appearance endpoint. No versioning, just draft vs. live.

@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
-import type { TaxRegime } from "@cardapio/shared";
-import { TAX_REGIME_LABEL } from "@cardapio/shared";
+import { useEffect, useRef, useState } from "react";
+import type { PaymentMode, TaxRegime } from "@cardapio/shared";
+import { PAYMENT_MODE_LABEL, TAX_REGIME_LABEL } from "@cardapio/shared";
 import { useNavigate } from "react-router-dom";
 import { Field } from "../components/SlideOver";
 import { Segmented } from "../components/Segmented";
+import { api } from "../lib/api";
 import { useDashboardState } from "../state/DashboardStateContext";
 
 type SubStatus = "form" | "pending" | "approved" | "rejected";
@@ -42,6 +43,23 @@ export default function PaymentSubaccountTab() {
   const [taxRegime, setTaxRegime] = useState<TaxRegime>("simples_nacional");
   const [doc, setDoc] = useState<DocState>(emptyDoc);
   const docInput = useRef<HTMLInputElement>(null);
+  const [paymentMode, setPaymentModeValue] = useState<PaymentMode>("maquininha_propria");
+
+  useEffect(() => {
+    api.getPaymentMode().then((r) => setPaymentModeValue(r.paymentMode)).catch(() => {});
+  }, []);
+
+  const changePaymentMode = async (mode: PaymentMode) => {
+    const previous = paymentMode;
+    setPaymentModeValue(mode);
+    try {
+      await api.setPaymentMode(mode);
+      notify("Forma de recebimento no balcão atualizada");
+    } catch {
+      setPaymentModeValue(previous);
+      notify("Não foi possível salvar — tente de novo");
+    }
+  };
 
   const onDocFile = (file: File) => {
     if (!/pdf|jpe?g|png/i.test(file.type)) {
@@ -65,6 +83,39 @@ export default function PaymentSubaccountTab() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>Como vocês recebem pagamento no balcão?</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6 }}>
+            Define se o fechamento de comanda mostra o QR PIX da MesaPronta ou só registra a forma paga na maquininha de vocês.
+          </div>
+        </div>
+        <Segmented
+          value={paymentMode}
+          onChange={changePaymentMode}
+          options={[
+            { value: "maquininha_propria", label: PAYMENT_MODE_LABEL.maquininha_propria },
+            { value: "sistema", label: PAYMENT_MODE_LABEL.sistema }
+          ]}
+        />
+      </section>
+
+      {paymentMode !== "sistema" && (
+        <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "flex-start" }}>
+          <div style={{ width: 46, height: 46, borderRadius: 16, background: "var(--surface2)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 46px" }}>
+            <i className="fa-solid fa-credit-card" style={{ fontSize: 20, lineHeight: 1 }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Não é necessário abrir subconta</div>
+            <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>
+              Como vocês recebem pela maquininha própria, o fechamento de comanda só registra a forma de pagamento usada — sem QR nem repasse pela MesaPronta.
+            </div>
+          </div>
+        </section>
+      )}
+
+      {paymentMode === "sistema" && (
+      <>
       <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div style={{ width: 46, height: 46, borderRadius: 16, background: "var(--brandSoft)", color: "var(--brandText)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 46px" }}>
           <i className="fa-solid fa-shield-halved" style={{ fontSize: 22, lineHeight: 1 }} />
@@ -266,6 +317,8 @@ export default function PaymentSubaccountTab() {
             </button>
           </div>
         </section>
+      )}
+      </>
       )}
     </div>
   );

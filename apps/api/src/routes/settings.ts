@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffRole, TaxRegime } from "@cardapio/shared";
+import type { FiscalInfo, OperatingHoursRow, PaymentMode, RestaurantProfile, StaffRole, TaxRegime } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
@@ -15,6 +15,7 @@ const MAX_RESTAURANT_NAME_LENGTH = 80;
 const MAX_CUISINE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 500;
 const TAX_REGIMES: TaxRegime[] = ["mei", "simples_nacional", "lucro_presumido", "lucro_real", "lucro_arbitrado"];
+const PAYMENT_MODES: PaymentMode[] = ["sistema", "maquininha_propria"];
 
 async function requireRestaurant(id: string) {
   return prisma.restaurant.findUnique({ where: { id } });
@@ -119,4 +120,21 @@ settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
     }
   });
   res.json(serializeFiscal(r));
+});
+
+settingsRouter.get("/:id/payment-mode", ...staffGuard, async (req, res) => {
+  const r = await requireRestaurant(req.params.id);
+  if (!r) return res.status(404).json({ error: "restaurant not found" });
+  res.json({ paymentMode: r.paymentMode as PaymentMode });
+});
+
+settingsRouter.patch("/:id/payment-mode", ...staffGuard, async (req, res) => {
+  const { paymentMode } = req.body as { paymentMode?: PaymentMode };
+  if (!paymentMode || !PAYMENT_MODES.includes(paymentMode)) {
+    return res.status(400).json({ error: `paymentMode must be one of ${PAYMENT_MODES.join(", ")}` });
+  }
+  const existing = await requireRestaurant(req.params.id);
+  if (!existing) return res.status(404).json({ error: "restaurant not found" });
+  const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { paymentMode } });
+  res.json({ paymentMode: r.paymentMode as PaymentMode });
 });

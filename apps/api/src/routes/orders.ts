@@ -79,6 +79,21 @@ ordersRouter.post("/", async (req, res) => {
 
   let round = 1;
   if (mode === "table" && body.tableNumber) {
+    // Open the table (stamp openedAt) BEFORE creating the order below — openOrdersForTable
+    // filters orders by createdAt >= table.openedAt, so if this ran after order.create the
+    // very first order's createdAt would always be a few ms earlier than openedAt and the
+    // order that opened the comanda would never appear in it.
+    const table = await prisma.restaurantTable.findUnique({
+      where: { restaurantId_number: { restaurantId: body.restaurantId, number: body.tableNumber } }
+    });
+    if (table) {
+      if (!table.openedAt) await prisma.restaurantTable.update({ where: { id: table.id }, data: { openedAt: new Date() } });
+    } else {
+      await prisma.restaurantTable.create({
+        data: { restaurantId: body.restaurantId, number: body.tableNumber, seats: 4, openedAt: new Date() }
+      });
+    }
+
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     round =
@@ -117,25 +132,15 @@ ordersRouter.post("/", async (req, res) => {
     include: { lines: true }
   });
 
-  if (mode === "table" && body.tableNumber) {
-    const table = await prisma.restaurantTable.findUnique({
-      where: { restaurantId_number: { restaurantId: body.restaurantId, number: body.tableNumber } }
-    });
-    if (table) {
-      if (!table.openedAt) await prisma.restaurantTable.update({ where: { id: table.id }, data: { openedAt: new Date() } });
-    } else {
-      await prisma.restaurantTable.create({
-        data: { restaurantId: body.restaurantId, number: body.tableNumber, seats: 4, openedAt: new Date() }
-      });
-    }
-  }
-
   res.status(201).json(serializeOrder(order));
 });
 
+// Customer-only (polled by the guest's own status screen) — no staff caller exists for this
+// route today (dashboard reads orders via GET /api/restaurants/:id/orders, staff-guarded).
+// 404 rather than 403 on a mismatch so an outsider can't even confirm the id exists.
 ordersRouter.get("/:id", async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id }, include: { lines: true } });
-  if (!order) return res.status(404).json({ error: "order not found" });
+  if (!order || order.guestSessionId !== sessionId(req)) return res.status(404).json({ error: "order not found" });
   res.json(serializeOrder(order));
 });
 

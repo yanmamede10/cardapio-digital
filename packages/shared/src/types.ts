@@ -367,6 +367,14 @@ export interface FiscalInfo {
   fiscalAddress: string;
 }
 
+/** How the restaurant takes payment at the table/counter. */
+export type PaymentMode = "sistema" | "maquininha_propria";
+
+export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
+  sistema: "PIX via sistema",
+  maquininha_propria: "Maquininha própria"
+};
+
 export interface BillingCharge {
   id: string;
   restaurantId: string;

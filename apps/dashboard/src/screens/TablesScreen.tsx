@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
+import type { PaymentMode, RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
 import {
   DndContext,
   DragOverlay,
@@ -16,6 +16,7 @@ import { ApiError, api } from "../lib/api";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { PixPaymentModal } from "../components/pix/PixPaymentModal";
+import { Segmented } from "../components/Segmented";
 
 const STATUS_MAP: Record<TableStatus, { label: string; bg: string; fg: string; bd: string }> = {
   free: { label: "Livre", bg: "var(--surface2)", fg: "var(--ink3)", bd: "var(--line)" },
@@ -42,8 +43,10 @@ export default function TablesScreen() {
   const [people, setPeople] = useState(2);
   const [transferTo, setTransferTo] = useState<number | "">("");
   const [pixTarget, setPixTarget] = useState<{ number: number; title: string; amount: number; itemsLabel: string } | null>(null);
+  const [manualMethod, setManualMethod] = useState<"cartao" | "pix" | "dinheiro">("cartao");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ table: RestaurantTable; x: number; y: number } | null>(null);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("maquininha_propria");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -153,12 +156,28 @@ export default function TablesScreen() {
   }, []);
 
   useEffect(() => {
+    api.getPaymentMode().then((r) => setPaymentMode(r.paymentMode)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (selected == null) return;
     setSplitMode(null);
     api.getComanda(selected).then(setComanda).catch(() => setComanda(null));
   }, [selected]);
 
   const selT = tables.find((t) => t.number === selected) || null;
+
+  const confirmCloseTable = async (number: number) => {
+    setPixTarget(null);
+    try {
+      await api.closeTable(number);
+      notify(`Conta da Mesa ${String(number).padStart(2, "0")} fechada`);
+      loadTables();
+      if (selected === number) api.getComanda(number).then(setComanda).catch(() => setComanda(null));
+    } catch {
+      notify("Não foi possível fechar a conta");
+    }
+  };
 
   const doTransfer = async () => {
     if (selected == null || transferTo === "") return;
@@ -424,27 +443,50 @@ export default function TablesScreen() {
         </div>
       </aside>
 
-      <PixPaymentModal
-        open={pixTarget != null}
-        title={pixTarget?.title || ""}
-        amount={pixTarget?.amount || 0}
-        itemsLabel={pixTarget?.itemsLabel}
-        onClose={() => setPixTarget(null)}
-        onConfirmed={async () => {
-          if (!pixTarget) return;
-          const number = pixTarget.number;
-          setPixTarget(null);
-          try {
-            await api.closeTable(number);
-            notify(`Conta da Mesa ${String(number).padStart(2, "0")} fechada`);
-            loadTables();
-            if (selected === number) api.getComanda(number).then(setComanda).catch(() => setComanda(null));
-          } catch {
-            notify("Não foi possível fechar a conta");
-          }
-        }}
-        onNotify={notify}
-      />
+      {paymentMode === "sistema" ? (
+        <PixPaymentModal
+          open={pixTarget != null}
+          title={pixTarget?.title || ""}
+          amount={pixTarget?.amount || 0}
+          itemsLabel={pixTarget?.itemsLabel}
+          onClose={() => setPixTarget(null)}
+          onConfirmed={() => pixTarget && confirmCloseTable(pixTarget.number)}
+          onNotify={notify}
+        />
+      ) : (
+        pixTarget && (
+          <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setPixTarget(null)}>
+            <div className="modal-panel" style={{ maxWidth: 400 }}>
+              <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--glassBd)" }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-.015em" }}>Fechar {pixTarget.title}</div>
+                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{pixTarget.itemsLabel}</div>
+              </div>
+              <div style={{ padding: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+                <div className="mono" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-.03em" }}>{brl(pixTarget.amount)}</div>
+                <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div className="field-label">Forma de pagamento na maquininha</div>
+                  <Segmented
+                    value={manualMethod}
+                    onChange={setManualMethod}
+                    options={[
+                      { value: "cartao", label: "Cartão" },
+                      { value: "pix", label: "PIX" },
+                      { value: "dinheiro", label: "Dinheiro" }
+                    ]}
+                  />
+                </div>
+                <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={() => confirmCloseTable(pixTarget.number)}>
+                  <i className="fa-solid fa-check" style={{ fontSize: 17, lineHeight: 1 }} />
+                  Confirmar pagamento
+                </button>
+                <button type="button" className="btn btn-outline" style={{ width: "100%" }} onClick={() => setPixTarget(null)}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      )}
 
       {menu && (
         <>
