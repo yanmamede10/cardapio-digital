@@ -21,7 +21,7 @@ restaurantsRouter.get("/:id/orders", requireStaff, requireOwnRestaurant, async (
 
 restaurantsRouter.get("/", async (req, res) => {
   const { query, cuisine, sort } = req.query as { query?: string; cuisine?: string; sort?: string };
-  const all = await prisma.restaurant.findMany({ orderBy: { sortOrder: "asc" } });
+  const all = await prisma.restaurant.findMany({ where: { status: "ativo" }, orderBy: { sortOrder: "asc" } });
 
   let list = all.filter((r) => {
     const okCuisine = !cuisine || cuisine === "Todos" || JSON.parse(r.cuisineTagsJson).includes(cuisine);

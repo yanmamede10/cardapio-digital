@@ -35,7 +35,7 @@ import type {
   FinanceSummary
 } from "@cardapio/shared";
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
+export const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
 const SESSION_STORAGE_KEY = "cardapio.dashboard.session";
 
 export interface StaffSession {

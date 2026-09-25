@@ -15,7 +15,13 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
       await login(email.trim(), password);
       onLoggedIn();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Não foi possível entrar. Tente novamente.");
+      setError(
+        err instanceof ApiError && err.status === 403
+          ? "Este restaurante não está ativo. Fale com o suporte da MesaPronta."
+          : err instanceof ApiError
+            ? err.message
+            : "Não foi possível entrar. Tente novamente."
+      );
     } finally {
       setLoading(false);
     }

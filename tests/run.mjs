@@ -10,7 +10,7 @@ const DB_URL = "postgresql://postgres:test@localhost:54329/cardapio_test";
 const CONTAINER = "cardapio-test-db";
 const only = process.argv[2]; // "api" | "e2e" | undefined (both)
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
-const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo" };
+const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SUPER_ADMIN_KEY: "test-admin-key" };
 
 const sh = (cmd, cwd = ROOT) => execSync(cmd, { cwd, env, stdio: "inherit" });
 const run = (cmd, args, cwd = ROOT) =>

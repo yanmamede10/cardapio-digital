@@ -64,6 +64,11 @@ model Restaurant {
   // Mapa do salão — square grid the dashboard positions tables on (SALAO-01).
   gridSize Int @default(9)
 
+  // Plataforma (super admin, ADMIN-01). Sign-ups start "pendente"; only "ativo" ones log in and are listed.
+  status    String   @default("ativo") // "ativo" | "inativo" | "pendente"
+  contact   String   @default("")
+  createdAt DateTime @default(now())
+
   categories     MenuCategory[]
   items          MenuItem[]
   orders         Order[]

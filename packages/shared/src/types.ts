@@ -453,7 +453,19 @@ export interface AppearanceState {
 export type PublicAppearance = AppearanceSettings & { publishedAt: string | null };
 
 /** The 5 official Brazilian tax regimes. */
-export type TaxRegime = "mei" | "simples_nacional" | "lucro_presumido" | "lucro_real" | "lucro_arbitrado";
+/** Platform-level status (super admin, ADMIN-01). */
+export type RestaurantStatus = "ativo" | "inativo" | "pendente";
+
+export interface AdminRestaurant {
+  id: string;
+  name: string;
+  cnpj: string;
+  contact: string;
+  status: RestaurantStatus;
+  createdAt: string;
+}
+
+export type TaxRegime ="mei" | "simples_nacional" | "lucro_presumido" | "lucro_real" | "lucro_arbitrado";
 
 export const TAX_REGIME_LABEL: Record<TaxRegime, string> = {
   mei: "MEI",
