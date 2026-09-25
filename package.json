@@ -9,6 +9,12 @@
     "dev:api": "npm run dev --workspace apps/api",
     "dev:web": "npm run dev --workspace apps/web",
     "dev:dashboard": "npm run dev --workspace apps/dashboard",
-    "build": "npm run build --workspace packages/shared && npm run build --workspace apps/api && npm run build --workspace apps/web && npm run build --workspace apps/dashboard"
+    "build": "npm run build --workspace packages/shared && npm run build --workspace apps/api && npm run build --workspace apps/web && npm run build --workspace apps/dashboard",
+    "test": "node tests/run.mjs",
+    "test:api": "node tests/run.mjs api",
+    "test:e2e": "node tests/run.mjs e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }
