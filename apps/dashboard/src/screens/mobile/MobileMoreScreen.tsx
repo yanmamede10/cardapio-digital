@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../lib/api";
+import { api, logout } from "../../lib/api";
 import { initialsOf } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { useDashboardState } from "../../state/DashboardStateContext";
@@ -24,7 +24,7 @@ export default function MobileMoreScreen() {
   const navigate = useNavigate();
   const { staffName, staffRole, theme, toggleTheme } = useDashboardState();
   const [restaurantName, setRestaurantName] = useState("");
-  const { tickets, notify } = useMobileScreen({ title: "Mais", subtitle: `${staffRole} · ${restaurantName}` });
+  const { tickets } = useMobileScreen({ title: "Mais", subtitle: `${staffRole} · ${restaurantName}` });
 
   useEffect(() => {
     api.getProfile().then((p) => setRestaurantName(p.name)).catch(() => {});
@@ -88,7 +88,7 @@ export default function MobileMoreScreen() {
 
       <button
         type="button"
-        onClick={() => notify("Sessão encerrada")}
+        onClick={logout}
         style={{ minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
       >
         <i className="fa-solid fa-power-off" style={{ fontSize: 13 }} />

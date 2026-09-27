@@ -114,3 +114,9 @@ test.describe("tema escuro", () => {
     expect(r).toBeGreaterThan(150);
   });
 });
+
+test("Sair da conta volta para a tela de login", async ({ page }) => {
+  await page.goto("/mais");
+  await page.getByRole("button", { name: "Sair da conta" }).click();
+  await expect(page.locator("input[type=email]")).toBeVisible();
+});

@@ -305,3 +305,20 @@ plain("Super Admin: mensalidade gera o mês, destaca a atrasada, marca como pago
   await expect(line).toContainText("Pago em 04/03/2025 · Transferência");
   await expect(page.getByText("R$ 199,90").first()).toBeVisible();
 });
+
+test("Sair no menu lateral volta para a tela de login", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Sair" }).click();
+  await expect(page.locator("input[type=email]")).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("cardapio.dashboard.session"))).toBeNull();
+});
+
+plain("sessão encerrada no meio do uso (restaurante desativado, token vencido) volta para a tela de login em vez de esvaziar a Central", async ({ page, request }) => {
+  const r = await newRestaurant(request);
+  await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "ativo" });
+  await loginFreshOwner(page, request, r);
+  await page.goto("/");
+  await expect(page.getByText("Nenhum pedido aqui").first()).toBeVisible();
+  await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "inativo" });
+  await expect(page.locator("input[type=email]")).toBeVisible({ timeout: 10_000 }); // the Central polls every 4 s
+});

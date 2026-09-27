@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "producti
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
 }
-const TOKEN_TTL = "12h";
+const TOKEN_TTL = "24h"; // a tablet lasts the whole service; revocation is live anyway (requireStaff reads the DB)
 
 export interface StaffTokenPayload {
   staffId: string;

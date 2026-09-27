@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "./lib/useIsMobile";
-import { getSession, refreshSession } from "./lib/api";
+import { SESSION_ENDED, getSession, refreshSession } from "./lib/api";
 import DesktopApp from "./DesktopApp";
 import MobileApp from "./MobileApp";
 import LoginScreen, { ChangePasswordScreen } from "./screens/LoginScreen";
@@ -13,6 +13,13 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [, passwordChanged] = useState(0);
   const isAdmin = useLocation().pathname.startsWith("/admin");
+
+  // Without this, an expired token left the screens polling in silence: the Central went empty instead of asking to log in.
+  useEffect(() => {
+    const ended = () => setLoggedIn(false);
+    window.addEventListener(SESSION_ENDED, ended);
+    return () => window.removeEventListener(SESSION_ENDED, ended);
+  }, []);
 
   // Role and contracted modules may have changed since the session was stored: re-read them before drawing the menu.
   // A 401 clears the session (back to login); a network error keeps the stored one.

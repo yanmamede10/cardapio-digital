@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { NAV_GROUPS, canSee, moduleByKey, moduleForPath } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
+import { logout } from "../lib/api";
 
 const rowStyle: CSSProperties = {
   display: "flex",
@@ -147,6 +148,15 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minWidth: 44, minHeight: 44, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >
           <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: 17, lineHeight: 1 }} />
+        </button>
+        <button
+          type="button"
+          onClick={logout}
+          title="Sair"
+          aria-label="Sair"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44, borderRadius: 999, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
+        >
+          <i className="fa-solid fa-power-off" style={{ fontSize: 15, lineHeight: 1 }} />
         </button>
       </div>
     </aside>

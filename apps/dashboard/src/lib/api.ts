@@ -67,8 +67,12 @@ let session: StaffSession | null = loadSession();
 // from the token itself, this is only for building the right path.
 let RESTAURANT_ID = session?.restaurantId ?? "";
 
+/** Fired when the session ends (Sair, or a 401: expired, revoked, restaurant deactivated) — App goes back to the login. */
+export const SESSION_ENDED = "mesapronta:sessao-encerrada";
+
 function setSession(next: StaffSession | null) {
   session = next;
+  if (!next) window.dispatchEvent(new Event(SESSION_ENDED));
   RESTAURANT_ID = next?.restaurantId ?? "";
   try {
     if (next) localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(next));
