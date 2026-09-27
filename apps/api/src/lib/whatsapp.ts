@@ -33,6 +33,8 @@ export interface WhatsAppProvider {
   /** Each send returns the provider's message id. Only ever called from a staff request — never on its own. */
   sendText(restaurantId: string, phone: string, text: string): Promise<string>;
   sendMedia(restaurantId: string, phone: string, media: WhatsAppMedia): Promise<string>;
+  /** Read receipts ("visto") for these incoming messages. Only after a reply from Atendimento went out — never on receiving or opening. */
+  markRead(restaurantId: string, phone: string, messageIds: string[]): Promise<void>;
   /** Webhook: is this request really from the provider? */
   verifyWebhook(header: (name: string) => string | undefined): boolean;
   /** Webhook body → messages worth a ticket (groups, reactions, receipts etc. are dropped). */

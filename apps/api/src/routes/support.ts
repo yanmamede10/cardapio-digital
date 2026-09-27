@@ -16,18 +16,39 @@ const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_R
 const MAX_MESSAGE_LENGTH = 2000;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: WHATSAPP_MEDIA_MAX_BYTES } });
 
-/** Sends through the WhatsApp provider. On failure it answers the request (503/502) and returns null: nothing is recorded as sent. */
-async function viaWhatsApp(res: Response, send: () => Promise<string>): Promise<string | null> {
+/** Sends through the WhatsApp provider. On failure it answers the request (503/502) and returns null: nothing is recorded as sent.
+ *  Once it went out, the contact's pending messages get read receipts. */
+async function viaWhatsApp(res: Response, t: SupportTicket, send: () => Promise<string>): Promise<string | null> {
   if (!whatsapp.configured) {
     res.status(503).json({ error: "WhatsApp is not configured on this server" });
     return null;
   }
+  let externalId: string;
   try {
-    return await send();
+    externalId = await send();
   } catch (err) {
     console.error(err);
     res.status(502).json({ error: "WhatsApp did not send the message" });
     return null;
+  }
+  await markPendingRead(t);
+  return externalId;
+}
+
+/** The customer's messages this reply answers — the unread ones — are marked read on WhatsApp.
+ *  Never fails the request: the reply already reached the customer. */
+async function markPendingRead(t: SupportTicket) {
+  if (!t.unreadCount) return;
+  try {
+    const pending = await prisma.supportMessage.findMany({
+      where: { ticketId: t.id, from: "customer", externalId: { not: null } },
+      orderBy: { createdAt: "desc" },
+      take: t.unreadCount,
+      select: { externalId: true }
+    });
+    if (pending.length) await whatsapp.markRead(t.restaurantId, t.contactPhone!, pending.map((m) => m.externalId!));
+  } catch (err) {
+    console.error(err);
   }
 }
 
@@ -80,7 +101,7 @@ supportRouter.post("/:id/tickets/:ticketId/messages", ...staffGuard, async (req,
   // WhatsApp goes out first: a message that didn't reach the customer is never shown as sent.
   let externalId: string | null = null;
   if (existing.channel === "whatsapp") {
-    externalId = await viaWhatsApp(res, () => whatsapp.sendText(existing.restaurantId, existing.contactPhone!, text.trim()));
+    externalId = await viaWhatsApp(res, existing, () => whatsapp.sendText(existing.restaurantId, existing.contactPhone!, text.trim()));
     if (!externalId) return;
   }
   await prisma.supportMessage.create({
@@ -105,7 +126,7 @@ supportRouter.post("/:id/tickets/:ticketId/media", ...staffGuard, upload.single(
     console.error(err);
     return res.status(503).json({ error: "file storage is not configured" });
   }
-  const externalId = await viaWhatsApp(res, () => whatsapp.sendMedia(existing.restaurantId, existing.contactPhone!, { kind, mimetype: file.mimetype, base64: file.buffer.toString("base64") }));
+  const externalId = await viaWhatsApp(res, existing, () => whatsapp.sendMedia(existing.restaurantId, existing.contactPhone!, { kind, mimetype: file.mimetype, base64: file.buffer.toString("base64") }));
   if (!externalId) return;
   await prisma.supportMessage.create({ data: { ticketId: existing.id, from: "staff", authorName: null, text: "", mediaType: kind, mediaKey, externalId } });
   res.status(201).json(await serializeTicket(await staffReplied(existing)));

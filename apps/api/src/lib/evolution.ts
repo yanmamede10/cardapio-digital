@@ -104,6 +104,12 @@ export class EvolutionProvider implements WhatsAppProvider {
     return sent.key.id;
   }
 
+  async markRead(restaurantId: string, phone: string, messageIds: string[]) {
+    // Evolution (2.3.7) only sends receipts in "@s.whatsapp.net" chats: a hidden "@lid" contact is skipped on its side.
+    const remoteJid = phone.includes("@") ? phone : `${phone}@s.whatsapp.net`;
+    await this.ok("POST", `/chat/markMessageAsRead/${encodeURIComponent(restaurantId)}`, { readMessages: messageIds.map((id) => ({ remoteJid, fromMe: false, id })) });
+  }
+
   verifyWebhook(header: (name: string) => string | undefined) {
     const got = Buffer.from(header(SECRET_HEADER) ?? "");
     const want = Buffer.from(SECRET ?? "");
