@@ -90,7 +90,16 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+/** Identical writes already on their way (double click, Enter held down) share one request instead of creating twice. */
+const inFlight = new Map<string, Promise<unknown>>();
+function request<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!init?.method || init.method === "GET") return send<T>(path, init);
+  const key = `${init.method} ${path} ${init.body ?? ""}`;
+  if (!inFlight.has(key)) inFlight.set(key, send<T>(path, init).finally(() => inFlight.delete(key)));
+  return inFlight.get(key) as Promise<T>;
+}
+
+async function send<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
