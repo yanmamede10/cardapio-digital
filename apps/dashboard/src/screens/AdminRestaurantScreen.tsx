@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { PAYMENT_MODE_LABEL, PLAN_MODULES, ROLE_LABEL, TAX_REGIME_LABEL, type AdminRestaurantDetail, type PlanModule } from "@cardapio/shared";
+import { PAYMENT_MODE_LABEL, PLAN_MODULES, ROLE_LABEL, TAX_REGIME_LABEL, type AdminRestaurantDetail, type PlanModule, type StaffMember } from "@cardapio/shared";
 import { fmtDate } from "../lib/format";
 import { moduleByKey } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
@@ -28,6 +28,8 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
   const [r, setR] = useState<AdminRestaurantDetail | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Shown once after a reset: the API never returns the provisional password again.
+  const [reset, setReset] = useState<{ name: string; email: string; password: string } | null>(null);
 
   useEffect(() => {
     call<AdminRestaurantDetail>(`/restaurants/${encodeURIComponent(id)}`)
@@ -68,6 +70,15 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       notify(`${moduleByKey(m).label} ${on ? "ligado" : "desligado"}`);
     } catch {
       notify("Não foi possível alterar o módulo");
+    }
+  };
+
+  const resetPassword = async (s: StaffMember) => {
+    try {
+      const { password } = await call<{ password: string }>(`/restaurants/${encodeURIComponent(r.id)}/staff/${s.id}/reset-password`, { method: "POST" });
+      setReset({ name: s.name, email: s.email, password });
+    } catch {
+      notify("Não foi possível resetar a senha");
     }
   };
 
@@ -139,6 +150,18 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       </Card>
 
       <Card title={`Equipe · ${r.staff.length}`}>
+        {reset && (
+          <div role="status" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: 12, border: "1px solid var(--ok)", borderRadius: 10, fontSize: 13, lineHeight: 1.5 }}>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              Nova senha provisória de <b>{reset.name}</b> (<span className="mono">{reset.email}</span>):{" "}
+              <span className="mono" style={{ fontWeight: 600 }}>{reset.password}</span>
+              <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No próximo login a pessoa troca por uma senha dela; até lá, as sessões abertas param.</div>
+            </div>
+            <button type="button" className="btn btn-outline" onClick={() => setReset(null)}>
+              Anotei
+            </button>
+          </div>
+        )}
         <div style={{ display: "flex", flexDirection: "column" }}>
           {r.staff.map((s) => (
             <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: "1px solid var(--line)", flexWrap: "wrap" }}>
@@ -151,6 +174,9 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
               <span className="pill" style={{ background: "var(--surface2)", color: "var(--ink2)" }}>
                 {ROLE_LABEL[s.role] ?? s.role}
               </span>
+              <button type="button" className="btn btn-outline" style={{ padding: "6px 13px", fontSize: 12.5 }} aria-label={`Resetar senha de ${s.name}`} onClick={() => resetPassword(s)}>
+                Resetar senha
+              </button>
             </div>
           ))}
           {r.staff.length === 0 && <div style={{ fontSize: 13, color: "var(--ink3)" }}>Ninguém na equipe.</div>}

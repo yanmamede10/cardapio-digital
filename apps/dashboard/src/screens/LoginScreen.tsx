@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ApiError, login } from "../lib/api";
+import { ApiError, changePassword, login, logout } from "../lib/api";
+import { Field } from "../components/SlideOver";
 
 export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [email, setEmail] = useState("");
@@ -112,3 +113,62 @@ const inputStyle: React.CSSProperties = {
   color: "var(--ink)",
   fontSize: 15
 };
+
+/** First login with a provisional password (super admin sign-up or reset): replace it before anything else. */
+export function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [repeat, setRepeat] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (next !== repeat) return setError("As duas senhas novas não são iguais.");
+    setError(null);
+    setLoading(true);
+    try {
+      await changePassword(current, next);
+      onDone();
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "";
+      setError(
+        msg.includes("current password") ? "A senha provisória não confere."
+        : msg.includes("at least") ? "A senha nova precisa ter pelo menos 6 caracteres."
+        : msg.includes("differ") ? "A senha nova precisa ser diferente da provisória."
+        : "Não foi possível trocar a senha. Tente novamente."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", fontFamily: "var(--font)" }}>
+      <form onSubmit={handleSubmit} className="card" style={{ width: 340, maxWidth: "calc(100vw - 32px)", padding: 28, display: "flex", flexDirection: "column", gap: 12 }}>
+        <h1 style={{ margin: 0, fontSize: 20, color: "var(--ink)" }}>Crie sua senha</h1>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--ink3)" }}>Você entrou com uma senha provisória. Troque por uma senha sua para continuar.</p>
+        <Field label="Senha provisória">
+          <input className="field" type="password" autoComplete="current-password" required autoFocus value={current} onChange={(e) => setCurrent(e.target.value)} />
+        </Field>
+        <Field label="Nova senha">
+          <input className="field" type="password" autoComplete="new-password" required minLength={6} value={next} onChange={(e) => setNext(e.target.value)} />
+        </Field>
+        <Field label="Repita a nova senha">
+          <input className="field" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+        </Field>
+        {error && (
+          <p style={{ color: "var(--alert)", fontSize: 13, margin: 0 }} role="alert">
+            {error}
+          </p>
+        )}
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? "Salvando…" : "Salvar e entrar"}
+        </button>
+        <button type="button" className="btn btn-outline" onClick={() => (logout(), location.reload())}>
+          Sair
+        </button>
+      </form>
+    </div>
+  );
+}

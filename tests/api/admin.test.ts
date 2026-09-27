@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { R, call, uid } from "./helpers.ts";
+import { R, call, firstLogin, uid } from "./helpers.ts";
 
 const token = process.env.SUPER_ADMIN_KEY ?? "test-admin-key"; // set by tests/run.mjs
 let seq = 0;
@@ -48,7 +48,7 @@ describe("super admin", () => {
     assert.equal((await login()).status, 403, "pendente não loga");
     await call("PATCH", `/api/admin/restaurants/${created.body.id}/status`, { token, body: { status: "ativo" } });
     const ok = await login();
-    assert.deepEqual([ok.status, ok.body.staff.role, ok.body.staff.restaurantId], [200, "owner", created.body.id]);
+    assert.deepEqual([ok.status, ok.body.staff.role, ok.body.staff.restaurantId, ok.body.mustChangePassword], [200, "owner", created.body.id, true]);
     assert.ok(!(await call("GET", "/api/admin/restaurants", { token })).body.some((r: object) => "ownerPassword" in r), "senha não volta na listagem");
   });
 
@@ -69,14 +69,15 @@ describe("super admin", () => {
   });
 });
 
+/** Fresh active restaurant + its Dono's login (provisional password). */
+async function fresh() {
+  const o = owner();
+  const created = (await call("POST", "/api/admin/restaurants", { token, body: { name: `Detalhe ${uid()}`, cnpj: cnpj(), contact: "Ana", ...o } })).body;
+  await call("PATCH", `/api/admin/restaurants/${created.id}/status`, { token, body: { status: "ativo" } });
+  return { id: created.id as string, email: o.ownerEmail, password: created.ownerPassword as string };
+}
+
 describe("super admin · detalhe do restaurante", () => {
-  /** Fresh active restaurant + its Dono's login. */
-  async function fresh() {
-    const o = owner();
-    const created = (await call("POST", "/api/admin/restaurants", { token, body: { name: `Detalhe ${uid()}`, cnpj: cnpj(), contact: "Ana", ...o } })).body;
-    await call("PATCH", `/api/admin/restaurants/${created.id}/status`, { token, body: { status: "ativo" } });
-    return { id: created.id as string, email: o.ownerEmail, password: created.ownerPassword as string };
-  }
 
   test("mostra configurações atuais, módulos, equipe com papel e o aceite do WhatsApp", async () => {
     const d = (await call("GET", `/api/admin/restaurants/${R}`, { token })).body;
@@ -89,7 +90,7 @@ describe("super admin · detalhe do restaurante", () => {
     const r = await fresh();
     const url = `/api/admin/restaurants/${r.id}`;
     assert.deepEqual((await call("GET", url, { token })).body.whatsapp, { state: "disconnected", termsAcceptedAt: null, termsAcceptedBy: null });
-    const dono = (await call("POST", "/api/auth/login", { body: { email: r.email, password: r.password } })).body.token;
+    const dono = await firstLogin(r.email, r.password);
     await call("POST", `/api/restaurants/${r.id}/whatsapp/terms`, { token: dono });
     const wa = (await call("GET", url, { token })).body.whatsapp;
     assert.equal(wa.termsAcceptedBy, "Dona Ana");
@@ -124,5 +125,48 @@ describe("super admin · detalhe do restaurante", () => {
     const staff = (await call("POST", "/api/auth/login", { body: { email: "marina@fogoeno.com.br", password: "senha123" } })).body.token;
     assert.equal((await call("GET", `/api/admin/restaurants/${R}`, { token: staff })).status, 401);
     assert.equal((await call("PATCH", `/api/admin/restaurants/${R}`, { token: staff, body: { name: "Hack" } })).status, 401);
+  });
+});
+
+describe("super admin · resetar senha", () => {
+  test("gera senha provisória, derruba a sessão aberta e obriga a troca no próximo login", async () => {
+    const r = await fresh();
+    const dono = await firstLogin(r.email, r.password);
+    const email = `garcom-${uid()}@t.com`;
+    const waiter = (await call("POST", `/api/restaurants/${r.id}/staff`, { token: dono, body: { name: "Gil", email, role: "waiter", password: "segredo1" } })).body;
+    const login = (password: string) => call("POST", "/api/auth/login", { body: { email, password } });
+    const before = await login("segredo1");
+    assert.equal(before.body.mustChangePassword, false, "senha dada pelo Dono não é provisória");
+    const tables = (t: string) => call("GET", `/api/restaurants/${r.id}/tables`, { token: t });
+    assert.equal((await tables(before.body.token)).status, 200);
+
+    const reset = await call("POST", `/api/admin/restaurants/${r.id}/staff/${waiter.id}/reset-password`, { token });
+    assert.equal(reset.status, 200);
+    assert.ok(reset.body.password.length >= 12);
+    const pwd = reset.body.password as string;
+    assert.equal((await tables(before.body.token)).status, 403, "sessão aberta antes do reset para");
+    assert.equal((await login("segredo1")).status, 401, "senha antiga não vale mais");
+
+    const t = await login(pwd);
+    assert.deepEqual([t.status, t.body.mustChangePassword], [200, true]);
+    const tok = t.body.token as string;
+    assert.equal((await tables(tok)).status, 403, "com senha provisória, só a troca");
+    assert.equal((await call("GET", "/api/auth/me", { token: tok })).body.mustChangePassword, true);
+    const change = (currentPassword: string, newPassword: string) => call("POST", "/api/auth/password", { token: tok, body: { currentPassword, newPassword } });
+    assert.equal((await change("errada", "nova-senha-1")).status, 400);
+    assert.equal((await change(pwd, "123")).status, 400, "curta");
+    assert.equal((await change(pwd, pwd)).status, 400, "igual à provisória");
+    assert.equal((await change(pwd, "nova-senha-1")).status, 200);
+    assert.equal((await tables(tok)).status, 200, "trocou: o mesmo token volta a valer");
+    assert.equal((await login("nova-senha-1")).body.mustChangePassword, false);
+  });
+
+  test("404 pra usuário de outro restaurante; token de staff não reseta", async () => {
+    const r = await fresh();
+    const donoId = (await call("GET", `/api/admin/restaurants/${r.id}`, { token })).body.staff[0].id;
+    assert.equal((await call("POST", `/api/admin/restaurants/${R}/staff/${donoId}/reset-password`, { token })).status, 404);
+    const staff = (await call("POST", "/api/auth/login", { body: { email: "marina@fogoeno.com.br", password: "senha123" } })).body.token;
+    assert.equal((await call("POST", `/api/admin/restaurants/${r.id}/staff/${donoId}/reset-password`, { token: staff })).status, 401);
+    assert.equal((await call("POST", "/api/auth/login", { body: { email: r.email, password: r.password } })).status, 200, "nada foi resetado");
   });
 });

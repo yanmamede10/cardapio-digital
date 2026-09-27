@@ -217,7 +217,7 @@ function RestaurantList({ call }: { call: AdminCall }) {
           <div style={{ flex: 1, minWidth: 240, fontSize: 13, lineHeight: 1.5 }}>
             Acesso do Dono de <b>{ownerAccess.restaurant}</b> (entra depois de ativar): <span className="mono">{ownerAccess.email}</span> · senha provisória{" "}
             <span className="mono" style={{ fontWeight: 600 }}>{ownerAccess.password}</span>
-            <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. O Dono troca em Configurações › Equipe & Permissões.</div>
+            <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No primeiro login o Dono troca por uma senha dele.</div>
           </div>
           <button type="button" className="btn btn-outline" onClick={() => setOwnerAccess(null)}>
             Anotei

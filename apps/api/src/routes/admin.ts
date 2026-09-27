@@ -41,6 +41,9 @@ function fieldError(b: SignUpFields): string | null {
   return null;
 }
 
+/** Handed to the super admin once (sign-up, reset) to pass on; the first login with it must replace it. */
+const provisionalPassword = () => randomBytes(9).toString("base64url");
+
 // Same "12.345.678/0001-90" shape the Fiscal settings tab shows.
 const formatCnpj = (cnpj: string) => cnpj.replace(/\D/g, "").replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 
@@ -82,9 +85,9 @@ adminRouter.post("/restaurants", async (req, res) => {
   if (await prisma.restaurant.findFirst({ where: { cnpj: formatted } })) return res.status(409).json({ error: "cnpj already registered" });
   if (await prisma.staffMember.findUnique({ where: { email } })) return res.status(409).json({ error: "owner email already in use" });
 
-  // The first Dono, so the restaurant can log in once activated. Temporary password returned once, for the super
-  // admin to pass on; the Dono changes it in Equipe & Permissões.
-  const ownerPassword = randomBytes(9).toString("base64url");
+  // The first Dono, so the restaurant can log in once activated. Provisional password returned once, for the super
+  // admin to pass on; the Dono's first login replaces it.
+  const ownerPassword = provisionalPassword();
 
   const slug = name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
   const initials = name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -106,7 +109,7 @@ adminRouter.post("/restaurants", async (req, res) => {
       deliveryFee: 0,
       isOpen: false,
       coverLabel: name.trim(),
-      staff: { create: { name: ownerName.trim(), email, role: "owner", passwordHash: hashPassword(ownerPassword) } }
+      staff: { create: { name: ownerName.trim(), email, role: "owner", passwordHash: hashPassword(ownerPassword), mustChangePassword: true } }
     }
   });
   res.status(201).json({ ...serialize(r), ownerPassword });
@@ -161,4 +164,13 @@ adminRouter.patch("/restaurants/:id/modules", async (req, res) => {
   const ordered = PLAN_MODULES.filter((m) => modules.includes(m));
   await prisma.restaurant.update({ where: { id: req.params.id }, data: { planModulesJson: JSON.stringify(ordered) } });
   res.json({ modules: ordered });
+});
+
+// Locked out? A new provisional password, shown once — sessions already open stop too until it's replaced (requireStaff).
+adminRouter.post("/restaurants/:id/staff/:staffId/reset-password", async (req, res) => {
+  const staff = await prisma.staffMember.findFirst({ where: { id: req.params.staffId, restaurantId: req.params.id } });
+  if (!staff) return res.status(404).json({ error: "staff member not found" });
+  const password = provisionalPassword();
+  await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(password), mustChangePassword: true } });
+  res.json({ password });
 });

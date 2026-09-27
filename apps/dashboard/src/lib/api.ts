@@ -48,6 +48,8 @@ export interface StaffSession {
   name: string;
   /** Contracted modules (PLAN_MODULES keys), refreshed from /api/auth/me on every app start. */
   modules?: string[];
+  /** Logged in with a provisional password (super admin sign-up/reset): only the change-password screen until replaced. */
+  mustChangePassword?: boolean;
 }
 
 function loadSession(): StaffSession | null {
@@ -139,7 +141,7 @@ export function getSession(): StaffSession | null {
 }
 
 export async function login(email: string, password: string): Promise<StaffSession> {
-  const result = await request<{ token: string; staff: { id: string; name: string; role: StaffRole; restaurantId: string } }>(
+  const result = await request<{ token: string; staff: { id: string; name: string; role: StaffRole; restaurantId: string }; mustChangePassword: boolean }>(
     "/api/auth/login",
     { method: "POST", body: JSON.stringify({ email, password }) }
   );
@@ -148,7 +150,8 @@ export async function login(email: string, password: string): Promise<StaffSessi
     restaurantId: result.staff.restaurantId,
     role: result.staff.role,
     staffId: result.staff.id,
-    name: result.staff.name
+    name: result.staff.name,
+    mustChangePassword: result.mustChangePassword
   };
   setSession(next);
   return next;
@@ -156,8 +159,13 @@ export async function login(email: string, password: string): Promise<StaffSessi
 
 /** Re-reads role and contracted modules — both change server-side (Equipe, super admin) while a session lives. */
 export async function refreshSession() {
-  const me = await request<{ staff: StaffMember; modules: string[] }>("/api/auth/me");
-  if (session) setSession({ ...session, role: me.staff.role, name: me.staff.name, modules: me.modules });
+  const me = await request<{ staff: StaffMember; modules: string[]; mustChangePassword: boolean }>("/api/auth/me");
+  if (session) setSession({ ...session, role: me.staff.role, name: me.staff.name, modules: me.modules, mustChangePassword: me.mustChangePassword });
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  await request<{ ok: true }>("/api/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) });
+  if (session) setSession({ ...session, mustChangePassword: false });
 }
 
 export function logout() {

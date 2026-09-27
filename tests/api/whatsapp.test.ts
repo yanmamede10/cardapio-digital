@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import http from "node:http";
 import { after, before, describe, test } from "node:test";
-import { R, call, login, uid } from "./helpers.ts";
+import { R, call, firstLogin, login, uid } from "./helpers.ts";
 
 // The API under test is pointed (tests/run.mjs) at this fake Evolution on :4299, so it runs its real Evolution adapter
 // against canned answers — no Evolution, no phone. Webhook payloads below have the shape Evolution v2.3.7 posts.
@@ -69,7 +69,7 @@ before(async () => {
   const created = await call("POST", "/api/admin/restaurants", { token: admin, body: { name: `Zap ${uid()}`, cnpj, ownerName: "Dona Zap", ownerEmail: email } });
   A = created.body.id;
   await call("PATCH", `/api/admin/restaurants/${A}/status`, { token: admin, body: { status: "ativo" } });
-  owner = (await call("POST", "/api/auth/login", { body: { email, password: created.body.ownerPassword } })).body.token;
+  owner = await firstLogin(email, created.body.ownerPassword);
   fogoOwner = await login();
 });
 after(() => new Promise<void>((ok) => evolution.close(() => ok())));

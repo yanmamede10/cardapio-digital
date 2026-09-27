@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, SEED_MODULES, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, newRestaurant, setModules, test, uid } from "./fixtures";
+import { R, SEED_MODULES, adminApi, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, newRestaurant, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -241,4 +241,33 @@ plain("Super Admin: detalhe do restaurante edita os dados, liga/desliga módulo 
   await expect(page.getByLabel("Contato")).toHaveValue("Beto · (11) 3333-0000");
   await expect(page.getByLabel("Emissão Fiscal")).not.toBeChecked();
   await expect(page.getByLabel("Cardápio")).toBeChecked();
+});
+
+plain("Super Admin: resetar senha mostra a provisória uma vez e o próximo login obriga a troca", async ({ page, request }) => {
+  const r = await newRestaurant(request);
+  await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "ativo" });
+  await asSuperAdmin(page);
+  await page.goto(`/admin/restaurantes/${r.id}`);
+  await page.getByRole("button", { name: "Resetar senha de Dona Ana" }).click();
+  const banner = page.getByRole("status").filter({ hasText: "Nova senha provisória" });
+  const provisional = (await banner.locator("span.mono").last().textContent())!.trim();
+  expect(provisional.length).toBeGreaterThanOrEqual(12);
+  await banner.getByRole("button", { name: "Anotei" }).click();
+  await expect(banner).toBeHidden();
+
+  await page.goto("/");
+  await page.locator("input[type=email]").fill(r.ownerEmail);
+  await page.locator("input[type=password]").fill(provisional);
+  await page.getByRole("button", { name: /entrar/i }).click();
+  await expect(page.getByRole("heading", { name: "Crie sua senha" })).toBeVisible();
+  await page.getByLabel("Senha provisória").fill(provisional);
+  await page.getByLabel("Nova senha", { exact: true }).fill("minha-senha-1");
+  await page.getByLabel("Repita a nova senha").fill("minha-senha-2");
+  await page.getByRole("button", { name: "Salvar e entrar" }).click();
+  await expect(page.getByRole("alert")).toContainText("não são iguais");
+  await page.getByLabel("Repita a nova senha").fill("minha-senha-1");
+  await page.getByRole("button", { name: "Salvar e entrar" }).click();
+  await expect(page.getByRole("button", { name: "Operação" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Operação" })).toBeVisible(); // flag cleared server-side
 });

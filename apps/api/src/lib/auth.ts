@@ -45,24 +45,35 @@ declare global {
 
 /** Verifies the token, then reads the staff member's current role and restaurant status/modules — one query per request,
  *  so a role change (Equipe & Permissões) or a deactivation/module toggle (super admin) applies to the very next request. */
-export function requireStaff(req: Request, res: Response, next: NextFunction) {
-  const header = req.header("Authorization");
-  const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
-  if (!token) return res.status(401).json({ error: "authentication required" });
-  let payload: StaffTokenPayload;
-  try {
-    payload = jwt.verify(token, JWT_SECRET) as StaffTokenPayload;
-  } catch {
-    return res.status(401).json({ error: "invalid or expired token" });
-  }
-  prisma.staffMember
-    .findUnique({ where: { id: payload.staffId }, select: { role: true, restaurantId: true, restaurant: { select: { status: true, planModulesJson: true } } } })
-    .then((s) => {
-      if (!s || s.restaurant.status !== "ativo") return res.status(401).json({ error: "session revoked" });
-      req.staff = { staffId: payload.staffId, restaurantId: s.restaurantId, role: s.role as StaffRole, modules: JSON.parse(s.restaurant.planModulesJson) };
-      next();
-    })
-    .catch(next);
+export const requireStaff = staffGuard(false);
+/** Also lets through a login still on a provisional password — only for /api/auth/me and changing that password. */
+export const requireStaffWithProvisionalPassword = staffGuard(true);
+
+function staffGuard(allowProvisional: boolean) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const header = req.header("Authorization");
+    const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
+    if (!token) return res.status(401).json({ error: "authentication required" });
+    let payload: StaffTokenPayload;
+    try {
+      payload = jwt.verify(token, JWT_SECRET) as StaffTokenPayload;
+    } catch {
+      return res.status(401).json({ error: "invalid or expired token" });
+    }
+    prisma.staffMember
+      .findUnique({
+        where: { id: payload.staffId },
+        select: { role: true, restaurantId: true, mustChangePassword: true, restaurant: { select: { status: true, planModulesJson: true } } }
+      })
+      .then((s) => {
+        if (!s || s.restaurant.status !== "ativo") return res.status(401).json({ error: "session revoked" });
+        // A reset also stops sessions opened before it: nothing but the password change until it's replaced.
+        if (s.mustChangePassword && !allowProvisional) return res.status(403).json({ error: "password change required" });
+        req.staff = { staffId: payload.staffId, restaurantId: s.restaurantId, role: s.role as StaffRole, modules: JSON.parse(s.restaurant.planModulesJson) };
+        next();
+      })
+      .catch(next);
+  };
 }
 
 /** Contracted-module gate (ADMIN-03), run after requireStaff (which loaded the restaurant's current modules). */
