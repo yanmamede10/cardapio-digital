@@ -16,7 +16,10 @@ const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "
 // ponytail: same public bucket as the product photos — the URL is an unguessable UUID, but anyone holding it can open it.
 // Before this leaves dev, customer media moves to a private bucket served through signed URLs.
 export function storeMedia(restaurantId: string, buffer: Buffer, mimetype: string) {
-  return uploadPublicFile({ buffer, contentType: mimetype, folder: `whatsapp/${restaurantId}`, extension: EXT[mimetype.split(";")[0].trim()] ?? "bin" });
+  // Bare type: WhatsApp voice notes come as "audio/ogg; codecs=opus", Chrome records "audio/webm;codecs=opus" — and Supabase
+  // matches the bucket's allowed MIME types against the whole subtype, so the parameter alone gets the upload refused.
+  const type = mimetype.split(";")[0].trim();
+  return uploadPublicFile({ buffer, contentType: type, folder: `whatsapp/${restaurantId}`, extension: EXT[type] ?? "bin" });
 }
 
 async function statusOf(restaurantId: string): Promise<WhatsAppStatus> {
