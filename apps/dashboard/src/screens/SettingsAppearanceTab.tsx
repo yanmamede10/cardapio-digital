@@ -5,7 +5,7 @@ import { ApiError, api } from "../lib/api";
 import { fmtDateTime, initialsOf } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 
-const TEMPLATES: { id: MenuTemplateId; name: string; desc: string }[] = [
+export const TEMPLATES: { id: MenuTemplateId; name: string; desc: string }[] = [
   { id: "classico", name: "Clássico", desc: "Banner no topo, cardápio em duas colunas." },
   { id: "moderno", name: "Moderno", desc: "Hero grande com foto e cards de destaque." },
   { id: "minimalista", name: "Minimalista", desc: "Tipografia grande, sem imagem de fundo." },

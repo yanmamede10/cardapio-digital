@@ -485,6 +485,19 @@ export interface AdminRestaurant {
   createdAt: string;
 }
 
+/** Super admin → restaurant detail: editable sign-up data, read-only current settings, team and WhatsApp. */
+export interface AdminRestaurantDetail extends AdminRestaurant {
+  /** Login of the first Dono (the one created at sign-up); "" if the restaurant has none. */
+  ownerEmail: string;
+  template: MenuTemplateId;
+  brandColor: string;
+  paymentMode: PaymentMode;
+  taxRegime: TaxRegime | "";
+  modules: PlanModule[];
+  staff: StaffMember[];
+  whatsapp: WhatsAppStatus;
+}
+
 export type TaxRegime ="mei" | "simples_nacional" | "lucro_presumido" | "lucro_real" | "lucro_arbitrado";
 
 export const TAX_REGIME_LABEL: Record<TaxRegime, string> = {

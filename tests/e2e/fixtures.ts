@@ -74,3 +74,20 @@ export async function setModules(request: APIRequestContext, modules: string[]) 
   const res = await request.patch(`${API}/api/admin/restaurants/${R}/modules`, { data: { modules }, headers: { Authorization: `Bearer ${ADMIN_KEY}` } });
   if (!res.ok()) throw new Error(`setModules → ${res.status()}`);
 }
+
+/** Super admin API call (throws on HTTP errors). */
+export async function adminApi<T = any>(request: APIRequestContext, method: string, path: string, body?: unknown): Promise<T> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const res = await request.fetch(`${API}/api/admin${path}`, { method, data: body, headers: { Authorization: `Bearer ${ADMIN_KEY}` } });
+  if (!res.ok()) throw new Error(`${method} ${path} → ${res.status()} ${await res.text()}`);
+  return res.json();
+}
+/** Opens /admin screens already past the key prompt. */
+export const asSuperAdmin = (page: import("@playwright/test").Page) => page.addInitScript((k) => sessionStorage.setItem("mesapronta.adminKey", k), ADMIN_KEY);
+/** Registers a fresh restaurant (pendente) with its Dono; returns its id, name, owner e-mail and temporary password. */
+export async function newRestaurant(request: APIRequestContext) {
+  const name = `Bistrô ${uid()}`;
+  const ownerEmail = `dono-${uid()}@t.com`;
+  const cnpj = String(Date.now()).padStart(12, "0").slice(-12) + String(Math.floor(Math.random() * 90) + 10);
+  const r = await adminApi(request, "POST", "/restaurants", { name, cnpj, contact: "Ana", ownerName: "Dona Ana", ownerEmail });
+  return { id: r.id as string, name, ownerEmail, password: r.ownerPassword as string };
+}

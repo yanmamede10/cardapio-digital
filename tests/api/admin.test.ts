@@ -68,3 +68,61 @@ describe("super admin", () => {
     assert.deepEqual(await statuses(), [200, 200], "status é lido ao vivo — reativar devolve o acesso");
   });
 });
+
+describe("super admin · detalhe do restaurante", () => {
+  /** Fresh active restaurant + its Dono's login. */
+  async function fresh() {
+    const o = owner();
+    const created = (await call("POST", "/api/admin/restaurants", { token, body: { name: `Detalhe ${uid()}`, cnpj: cnpj(), contact: "Ana", ...o } })).body;
+    await call("PATCH", `/api/admin/restaurants/${created.id}/status`, { token, body: { status: "ativo" } });
+    return { id: created.id as string, email: o.ownerEmail, password: created.ownerPassword as string };
+  }
+
+  test("mostra configurações atuais, módulos, equipe com papel e o aceite do WhatsApp", async () => {
+    const d = (await call("GET", `/api/admin/restaurants/${R}`, { token })).body;
+    assert.equal(d.ownerEmail, "marina@fogoeno.com.br");
+    assert.deepEqual([d.template, d.paymentMode, d.taxRegime], ["classico", "maquininha_propria", "simples_nacional"]);
+    assert.ok(!d.modules.includes("fiscal"));
+    assert.ok(d.staff.some((s: { email: string; role: string }) => s.email === "paula@fogoeno.com.br" && s.role === "waiter"));
+    assert.ok(!("passwordHash" in d.staff[0]));
+
+    const r = await fresh();
+    const url = `/api/admin/restaurants/${r.id}`;
+    assert.deepEqual((await call("GET", url, { token })).body.whatsapp, { state: "disconnected", termsAcceptedAt: null, termsAcceptedBy: null });
+    const dono = (await call("POST", "/api/auth/login", { body: { email: r.email, password: r.password } })).body.token;
+    await call("POST", `/api/restaurants/${r.id}/whatsapp/terms`, { token: dono });
+    const wa = (await call("GET", url, { token })).body.whatsapp;
+    assert.equal(wa.termsAcceptedBy, "Dona Ana");
+    assert.ok(Date.now() - Date.parse(wa.termsAcceptedAt) < 60_000);
+    assert.equal((await call("GET", "/api/admin/restaurants/nao-existe", { token })).status, 404);
+  });
+
+  test("edita nome, CNPJ, contato e e-mail do dono — o Dono passa a logar com o e-mail novo", async () => {
+    const r = await fresh();
+    const url = `/api/admin/restaurants/${r.id}`;
+    const digits = cnpj();
+    const newEmail = `novo-${uid()}@t.com`;
+    const res = await call("PATCH", url, { token, body: { name: "Cantina Nova", cnpj: digits, contact: "Beto · (11) 3333-0000", ownerEmail: newEmail.toUpperCase() } });
+    assert.equal(res.status, 200);
+    assert.deepEqual([res.body.name, res.body.cnpj.replace(/\D/g, ""), res.body.contact, res.body.ownerEmail], ["Cantina Nova", digits, "Beto · (11) 3333-0000", newEmail]);
+    assert.equal((await call("PATCH", url, { token, body: { contact: "só contato" } })).body.name, "Cantina Nova", "campo ausente não muda");
+
+    const login = (email: string) => call("POST", "/api/auth/login", { body: { email, password: r.password } });
+    assert.equal((await login(r.email)).status, 401);
+    assert.equal((await login(newEmail)).status, 200);
+  });
+
+  test("valida: nome vazio, CNPJ inválido ou de outro restaurante, e-mail inválido ou de outra pessoa", async () => {
+    const url = `/api/admin/restaurants/${(await fresh()).id}`;
+    for (const bad of [{ name: " " }, { cnpj: "123" }, { ownerEmail: "sem-arroba" }]) assert.equal((await call("PATCH", url, { token, body: bad })).status, 400, JSON.stringify(bad));
+    assert.equal((await call("PATCH", url, { token, body: { cnpj: "12.345.678/0001-90" } })).status, 409, "CNPJ do fogo");
+    assert.equal((await call("PATCH", url, { token, body: { ownerEmail: "marina@fogoeno.com.br" } })).status, 409);
+    assert.equal((await call("PATCH", "/api/admin/restaurants/nao-existe", { token, body: { name: "X" } })).status, 404);
+  });
+
+  test("token de staff não lê nem edita o detalhe", async () => {
+    const staff = (await call("POST", "/api/auth/login", { body: { email: "marina@fogoeno.com.br", password: "senha123" } })).body.token;
+    assert.equal((await call("GET", `/api/admin/restaurants/${R}`, { token: staff })).status, 401);
+    assert.equal((await call("PATCH", `/api/admin/restaurants/${R}`, { token: staff, body: { name: "Hack" } })).status, 401);
+  });
+});

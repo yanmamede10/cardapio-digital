@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import type { AdminRestaurant, RestaurantStatus } from "@cardapio/shared";
 import { BASE_URL } from "../lib/api";
 import { fmtDate } from "../lib/format";
@@ -6,11 +7,25 @@ import { useDashboardState } from "../state/DashboardStateContext";
 import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
 import { Toast } from "../components/Toast";
+import AdminRestaurantScreen from "./AdminRestaurantScreen";
 
 const KEY_STORAGE = "mesapronta.adminKey";
-const STATUS_LABEL: Record<RestaurantStatus, string> = { ativo: "Ativo", pendente: "Pendente", inativo: "Inativo" };
-const STATUS_FG: Record<RestaurantStatus, string> = { ativo: "var(--ok)", pendente: "var(--warn)", inativo: "var(--ink3)" };
+export const STATUS_LABEL: Record<RestaurantStatus, string> = { ativo: "Ativo", pendente: "Pendente", inativo: "Inativo" };
+export const STATUS_FG: Record<RestaurantStatus, string> = { ativo: "var(--ok)", pendente: "var(--warn)", inativo: "var(--ink3)" };
 const EMPTY_FORM = { name: "", cnpj: "", contact: "", ownerName: "", ownerEmail: "" };
+
+export type AdminCall = <T>(path: string, init?: RequestInit) => Promise<T>;
+
+/** The API's validation errors on sign-up data, in Portuguese. */
+export function signUpErrorText(msg: string, fallback: string): string {
+  return msg.includes("cnpj already") ? "Esse CNPJ já está cadastrado"
+    : msg.includes("cnpj") ? "CNPJ precisa ter 14 dígitos"
+    : msg.includes("owner email already") ? "Esse e-mail já é usado por outra pessoa"
+    : msg.includes("ownerEmail") ? "E-mail do dono inválido"
+    : msg.includes("ownerName") ? "Informe o nome do dono"
+    : msg.includes("name must") ? "O nome precisa ter de 1 a 80 caracteres"
+    : fallback;
+}
 
 function loadKey(): string {
   try {
@@ -20,26 +35,26 @@ function loadKey(): string {
   }
 }
 
-/** Super admin (ADMIN-01) at /admin: platform key instead of a staff login; lists, registers and (de)activates restaurants. */
+/** Super admin (ADMIN-01) at /admin: platform key instead of a staff login. Restaurant list and, at
+ *  /admin/restaurantes/:id, one restaurant's detail. */
 export default function AdminScreen() {
-  const { notify } = useDashboardState();
   const [key, setKey] = useState(loadKey);
   const [keyDraft, setKeyDraft] = useState("");
-  const [list, setList] = useState<AdminRestaurant[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"todos" | RestaurantStatus>("todos");
-  const [query, setQuery] = useState("");
-  const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
-  // Shown once after a sign-up: the API never returns the temporary password again.
-  const [ownerAccess, setOwnerAccess] = useState<{ restaurant: string; email: string; password: string } | null>(null);
+  const detailId = useLocation().pathname.match(/^\/admin\/restaurantes\/([^/]+)/)?.[1];
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
-  const call = async <T,>(path: string, init?: RequestInit): Promise<T> => {
+  const call: AdminCall = async <T,>(path: string, init?: RequestInit): Promise<T> => {
     const res = await fetch(`${BASE_URL}/api/admin${path}`, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` } });
     const body = await res.json().catch(() => null);
     if (res.status === 401) {
-      signOut();
+      signOut("Chave de administrador inválida");
       throw new Error("Chave de administrador inválida");
+    }
+    try {
+      sessionStorage.setItem(KEY_STORAGE, key); // the key worked
+    } catch {
+      // ignore — works for this page load
     }
     if (!res.ok) throw new Error(body?.error ?? `Erro ${res.status}`);
     return body as T;
@@ -52,57 +67,10 @@ export default function AdminScreen() {
       // ignore
     }
     setKey("");
-    setList(null);
     setError(message ?? null);
   };
 
-  useEffect(() => {
-    if (!key) return;
-    call<AdminRestaurant[]>("/restaurants")
-      .then((l) => {
-        setList(l);
-        try {
-          sessionStorage.setItem(KEY_STORAGE, key);
-        } catch {
-          // ignore — works for this page load
-        }
-      })
-      .catch((e: Error) => setError(e.message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-
-  const create = async () => {
-    if (!form) return;
-    try {
-      const { ownerPassword, ...created } = await call<AdminRestaurant & { ownerPassword: string }>("/restaurants", { method: "POST", body: JSON.stringify(form) });
-      setList((prev) => [created, ...(prev ?? [])]);
-      setOwnerAccess({ restaurant: created.name, email: form.ownerEmail.trim().toLowerCase(), password: ownerPassword });
-      setForm(null);
-      notify(`${created.name} cadastrado como pendente`);
-    } catch (e) {
-      const msg = (e as Error).message;
-      notify(
-        msg.includes("cnpj already") ? "Esse CNPJ já está cadastrado"
-        : msg.includes("cnpj") ? "CNPJ precisa ter 14 dígitos"
-        : msg.includes("owner email already") ? "Esse e-mail já é usado por outra pessoa"
-        : msg.includes("ownerEmail") ? "E-mail do dono inválido"
-        : msg.includes("ownerName") ? "Informe o nome do dono"
-        : "Não foi possível cadastrar"
-      );
-    }
-  };
-
-  const setStatus = async (r: AdminRestaurant, status: "ativo" | "inativo") => {
-    try {
-      const updated = await call<AdminRestaurant>(`/restaurants/${r.id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
-      setList((prev) => prev!.map((x) => (x.id === r.id ? updated : x)));
-      notify(`${r.name} ${status === "ativo" ? "ativado" : "desativado"}`);
-    } catch {
-      notify("Não foi possível alterar o status");
-    }
-  };
-
-  const page = (children: ReactNode) => (
+  return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "28px 16px" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -118,35 +86,77 @@ export default function AdminScreen() {
             </button>
           )}
         </div>
-        {children}
+        {!key ? (
+          <form
+            className="card"
+            style={{ padding: 18, maxWidth: 420, display: "flex", flexDirection: "column", gap: 12 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              setError(null);
+              setKey(keyDraft);
+            }}
+          >
+            <Field label="Chave de administrador">
+              <input className="field" type="password" autoComplete="current-password" value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} autoFocus />
+            </Field>
+            {error && <div style={{ fontSize: 12.5, color: "var(--alert)" }}>{error}</div>}
+            <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
+              Entrar
+            </button>
+          </form>
+        ) : detailId ? (
+          <AdminRestaurantScreen key={detailId} id={decodeURIComponent(detailId)} call={call} />
+        ) : (
+          <RestaurantList call={call} />
+        )}
       </div>
       <Toast />
     </div>
   );
+}
 
-  if (!key) {
-    return page(
-      <form
-        className="card"
-        style={{ padding: 18, maxWidth: 420, display: "flex", flexDirection: "column", gap: 12 }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          setError(null);
-          setKey(keyDraft);
-        }}
-      >
-        <Field label="Chave de administrador">
-          <input className="field" type="password" autoComplete="current-password" value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} autoFocus />
-        </Field>
-        {error && <div style={{ fontSize: 12.5, color: "var(--alert)" }}>{error}</div>}
-        <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
-          Entrar
-        </button>
-      </form>
-    );
-  }
+/** Lists, registers and (de)activates restaurants. */
+function RestaurantList({ call }: { call: AdminCall }) {
+  const { notify } = useDashboardState();
+  const [list, setList] = useState<AdminRestaurant[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"todos" | RestaurantStatus>("todos");
+  const [query, setQuery] = useState("");
+  const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
+  // Shown once after a sign-up: the API never returns the temporary password again.
+  const [ownerAccess, setOwnerAccess] = useState<{ restaurant: string; email: string; password: string } | null>(null);
 
-  if (!list) return page(error ? <p style={{ color: "var(--ink2)" }}>{error}</p> : <div className="skeleton" style={{ height: 300 }} />);
+  useEffect(() => {
+    call<AdminRestaurant[]>("/restaurants")
+      .then(setList)
+      .catch((e: Error) => setError(e.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const create = async () => {
+    if (!form) return;
+    try {
+      const { ownerPassword, ...created } = await call<AdminRestaurant & { ownerPassword: string }>("/restaurants", { method: "POST", body: JSON.stringify(form) });
+      setList((prev) => [created, ...(prev ?? [])]);
+      setOwnerAccess({ restaurant: created.name, email: form.ownerEmail.trim().toLowerCase(), password: ownerPassword });
+      setForm(null);
+      notify(`${created.name} cadastrado como pendente`);
+    } catch (e) {
+      notify(signUpErrorText((e as Error).message, "Não foi possível cadastrar"));
+    }
+  };
+
+  const setStatus = async (r: AdminRestaurant, status: "ativo" | "inativo") => {
+    try {
+      const updated = await call<AdminRestaurant>(`/restaurants/${r.id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+      setList((prev) => prev!.map((x) => (x.id === r.id ? updated : x)));
+      notify(`${r.name} ${status === "ativo" ? "ativado" : "desativado"}`);
+    } catch {
+      notify("Não foi possível alterar o status");
+    }
+  };
+
+  if (!list) return error ? <p style={{ color: "var(--ink2)" }}>{error}</p> : <div className="skeleton" style={{ height: 300 }} />;
 
   const q = query.trim().toLowerCase();
   const digitsQ = q.replace(/\D/g, "");
@@ -156,7 +166,7 @@ export default function AdminScreen() {
   const count = (s: RestaurantStatus) => list.filter((r) => r.status === s).length;
   const cols = "minmax(0,1.4fr) 160px minmax(0,1fr) 100px 95px 110px";
 
-  return page(
+  return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <input className="field" style={{ width: 260 }} placeholder="Buscar por nome ou CNPJ" aria-label="Buscar restaurante" value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -228,7 +238,9 @@ export default function AdminScreen() {
           {shown.map((r) => (
             <div key={r.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{r.name}</div>
+                <Link to={`/admin/restaurantes/${encodeURIComponent(r.id)}`} style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
+                  {r.name}
+                </Link>
                 <div className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
                   {r.id}
                 </div>
@@ -237,10 +249,7 @@ export default function AdminScreen() {
                 {r.cnpj || "—"}
               </div>
               <div style={{ fontSize: 12.5, color: "var(--ink2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.contact || "—"}</div>
-              <span className="pill" style={{ justifySelf: "start", background: "var(--surface2)", color: STATUS_FG[r.status] }}>
-                <span className="dot" style={{ background: STATUS_FG[r.status] }} />
-                {STATUS_LABEL[r.status]}
-              </span>
+              <StatusPill status={r.status} />
               <div className="mono" style={{ fontSize: 11.5, color: "var(--ink3)" }}>
                 {fmtDate(r.createdAt)}
               </div>
@@ -257,5 +266,14 @@ export default function AdminScreen() {
         </div>
       </section>
     </>
+  );
+}
+
+export function StatusPill({ status }: { status: RestaurantStatus }) {
+  return (
+    <span className="pill" style={{ justifySelf: "start", background: "var(--surface2)", color: STATUS_FG[status] }}>
+      <span className="dot" style={{ background: STATUS_FG[status] }} />
+      {STATUS_LABEL[status]}
+    </span>
   );
 }

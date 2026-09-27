@@ -11,7 +11,7 @@ export const whatsappRouter = Router();
 const supportGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES), requireModule("atendimento")];
 const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO), requireModule("atendimento")];
 
-async function statusOf(restaurantId: string): Promise<WhatsAppStatus> {
+export async function statusOf(restaurantId: string): Promise<WhatsAppStatus> {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { whatsappTermsAcceptedAt: true, whatsappTermsAcceptedBy: true } });
   if (!r?.whatsappTermsAcceptedAt) return { state: "disconnected", termsAcceptedAt: null, termsAcceptedBy: null };
   const by = r.whatsappTermsAcceptedBy ? await prisma.staffMember.findUnique({ where: { id: r.whatsappTermsAcceptedBy }, select: { name: true } }) : null;

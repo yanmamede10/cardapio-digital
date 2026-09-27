@@ -1,9 +1,11 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Restaurant } from "@prisma/client";
-import { PLAN_MODULES, type AdminRestaurant, type RestaurantStatus } from "@cardapio/shared";
+import { PLAN_MODULES, type AdminRestaurant, type AdminRestaurantDetail, type RestaurantStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword } from "../lib/auth.js";
+import { serializeStaff } from "../lib/serialize.js";
+import { statusOf } from "./whatsapp.js";
 
 // Super admin (ADMIN-01): the platform team, i.e. one person for now. A single key from env sent as a Bearer
 // token — deliberately not a staff JWT, so no staff token can ever pass here and vice versa.
@@ -27,6 +29,21 @@ const MAX_CONTACT_LENGTH = 200;
 const MAX_OWNER_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 
+type SignUpFields = { name?: string; cnpj?: string; contact?: string; ownerName?: string; ownerEmail?: string };
+
+/** Checks the fields that are present — sign-up passes all of them (missing = ""), an edit only what changed. */
+function fieldError(b: SignUpFields): string | null {
+  if (b.name !== undefined && (!b.name.trim() || b.name.length > MAX_NAME_LENGTH)) return `name must be 1-${MAX_NAME_LENGTH} characters`;
+  if (b.cnpj !== undefined && b.cnpj.replace(/\D/g, "").length !== 14) return "cnpj must have 14 digits";
+  if (b.contact !== undefined && b.contact.length > MAX_CONTACT_LENGTH) return `contact must be at most ${MAX_CONTACT_LENGTH} characters`;
+  if (b.ownerName !== undefined && (!b.ownerName.trim() || b.ownerName.length > MAX_OWNER_NAME_LENGTH)) return `ownerName must be 1-${MAX_OWNER_NAME_LENGTH} characters`;
+  if (b.ownerEmail !== undefined && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.ownerEmail.trim()) || b.ownerEmail.length > MAX_EMAIL_LENGTH)) return "ownerEmail must be a valid e-mail";
+  return null;
+}
+
+// Same "12.345.678/0001-90" shape the Fiscal settings tab shows.
+const formatCnpj = (cnpj: string) => cnpj.replace(/\D/g, "").replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+
 const serialize = (r: Restaurant): AdminRestaurant => ({
   id: r.id,
   name: r.name,
@@ -36,23 +53,32 @@ const serialize = (r: Restaurant): AdminRestaurant => ({
   createdAt: r.createdAt.toISOString()
 });
 
+async function detail(r: Restaurant): Promise<AdminRestaurantDetail> {
+  const staff = await prisma.staffMember.findMany({ where: { restaurantId: r.id }, orderBy: { invitedAt: "asc" } });
+  return {
+    ...serialize(r),
+    ownerEmail: staff.find((s) => s.role === "owner")?.email ?? "",
+    template: r.template as AdminRestaurantDetail["template"],
+    brandColor: r.brandColor,
+    paymentMode: r.paymentMode as AdminRestaurantDetail["paymentMode"],
+    taxRegime: r.taxRegime as AdminRestaurantDetail["taxRegime"],
+    modules: JSON.parse(r.planModulesJson),
+    staff: staff.map(serializeStaff),
+    whatsapp: await statusOf(r.id)
+  };
+}
+
 adminRouter.get("/restaurants", async (_req, res) => {
   const list = await prisma.restaurant.findMany({ orderBy: { createdAt: "desc" } });
   res.json(list.map(serialize));
 });
 
 adminRouter.post("/restaurants", async (req, res) => {
-  const { name = "", cnpj = "", contact = "", ownerName = "", ownerEmail = "" } = req.body as Record<string, string | undefined>;
-  const digits = cnpj.replace(/\D/g, "");
+  const { name = "", cnpj = "", contact = "", ownerName = "", ownerEmail = "" } = req.body as SignUpFields;
+  const error = fieldError({ name, cnpj, contact, ownerName, ownerEmail });
+  if (error) return res.status(400).json({ error });
   const email = ownerEmail.trim().toLowerCase();
-  if (!name.trim() || name.length > MAX_NAME_LENGTH) return res.status(400).json({ error: `name must be 1-${MAX_NAME_LENGTH} characters` });
-  if (digits.length !== 14) return res.status(400).json({ error: "cnpj must have 14 digits" });
-  if (contact.length > MAX_CONTACT_LENGTH) return res.status(400).json({ error: `contact must be at most ${MAX_CONTACT_LENGTH} characters` });
-  if (!ownerName.trim() || ownerName.length > MAX_OWNER_NAME_LENGTH) return res.status(400).json({ error: `ownerName must be 1-${MAX_OWNER_NAME_LENGTH} characters` });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > MAX_EMAIL_LENGTH) return res.status(400).json({ error: "ownerEmail must be a valid e-mail" });
-
-  // Same "12.345.678/0001-90" shape the Fiscal settings tab shows.
-  const formatted = digits.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  const formatted = formatCnpj(cnpj);
   if (await prisma.restaurant.findFirst({ where: { cnpj: formatted } })) return res.status(409).json({ error: "cnpj already registered" });
   if (await prisma.staffMember.findUnique({ where: { email } })) return res.status(409).json({ error: "owner email already in use" });
 
@@ -84,6 +110,37 @@ adminRouter.post("/restaurants", async (req, res) => {
     }
   });
   res.status(201).json({ ...serialize(r), ownerPassword });
+});
+
+adminRouter.get("/restaurants/:id", async (req, res) => {
+  const r = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+  if (!r) return res.status(404).json({ error: "restaurant not found" });
+  res.json(await detail(r));
+});
+
+// Sign-up data: name, CNPJ, contact and the first Dono's login e-mail. Only the fields sent change.
+adminRouter.patch("/restaurants/:id", async (req, res) => {
+  const { name, cnpj, contact, ownerEmail } = req.body as SignUpFields;
+  const error = fieldError({ name, cnpj, contact, ownerEmail });
+  if (error) return res.status(400).json({ error });
+  const r = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+  if (!r) return res.status(404).json({ error: "restaurant not found" });
+
+  const formatted = cnpj === undefined ? undefined : formatCnpj(cnpj);
+  if (formatted && (await prisma.restaurant.findFirst({ where: { cnpj: formatted, id: { not: r.id } } }))) return res.status(409).json({ error: "cnpj already registered" });
+  const email = ownerEmail?.trim().toLowerCase();
+  const owner = email ? await prisma.staffMember.findFirst({ where: { restaurantId: r.id, role: "owner" }, orderBy: { invitedAt: "asc" } }) : null;
+  if (email && !owner) return res.status(409).json({ error: "restaurant has no owner" });
+  if (email && owner && email !== owner.email && (await prisma.staffMember.findUnique({ where: { email } }))) return res.status(409).json({ error: "owner email already in use" });
+
+  const [updated] = await prisma.$transaction([
+    prisma.restaurant.update({
+      where: { id: r.id },
+      data: { ...(name !== undefined ? { name: name.trim() } : {}), ...(formatted ? { cnpj: formatted } : {}), ...(contact !== undefined ? { contact: contact.trim() } : {}) }
+    }),
+    ...(email && owner ? [prisma.staffMember.update({ where: { id: owner.id }, data: { email } })] : [])
+  ]);
+  res.json(await detail(updated));
 });
 
 adminRouter.patch("/restaurants/:id/status", async (req, res) => {

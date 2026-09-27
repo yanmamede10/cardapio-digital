@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, SEED_MODULES, burgerKit, dayLabel, expect, isoDay, loginAs, setModules, test, uid } from "./fixtures";
+import { R, SEED_MODULES, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, newRestaurant, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -219,4 +219,26 @@ test("Visão Geral · DRE: entrou/saiu/sobrou e demonstrativo contábil; Adminis
   await page.goto("/visao-geral");
   await expect(page.getByText("Saldo do período")).toBeVisible();
   await expect(page.getByRole("button", { name: "DRE" })).toHaveCount(0);
+});
+
+plain("Super Admin: detalhe do restaurante edita os dados, liga/desliga módulo e mostra equipe, configurações e WhatsApp", async ({ page, request }) => {
+  const r = await newRestaurant(request);
+  await asSuperAdmin(page);
+  await page.goto("/admin");
+  await page.getByRole("link", { name: r.name }).click();
+  await expect(page).toHaveURL(new RegExp(`/admin/restaurantes/${r.id}$`));
+  await expect(page.getByText(r.ownerEmail).first()).toBeVisible();
+  await expect(page.getByText("Dono", { exact: true })).toBeVisible(); // role in Equipe
+  for (const t of ["Clássico", "Maquininha própria", "Não informado", "Aviso de risco ainda não aceito"]) await expect(page.getByText(t, { exact: false }).first()).toBeVisible();
+
+  await page.getByLabel("Contato").fill("Beto · (11) 3333-0000");
+  await page.getByRole("button", { name: "Salvar dados" }).click();
+  await expect(toast(page)).toContainText("Dados salvos");
+  await page.getByLabel("Emissão Fiscal").click(); // controlled: flips once the API answers
+  await expect(toast(page)).toContainText("Emissão Fiscal desligado");
+
+  await page.reload();
+  await expect(page.getByLabel("Contato")).toHaveValue("Beto · (11) 3333-0000");
+  await expect(page.getByLabel("Emissão Fiscal")).not.toBeChecked();
+  await expect(page.getByLabel("Cardápio")).toBeChecked();
 });
