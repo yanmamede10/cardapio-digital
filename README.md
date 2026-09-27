@@ -60,7 +60,7 @@ Logins do seed (senha `senha123`), um por papel:
 | paula@fogoeno.com.br | Funcionário (garçom) |
 | igor@fogoeno.com.br | Funcionário (cozinha) |
 
-**Super admin:** abra `http://localhost:5174/admin` e entre com o valor de `SUPER_ADMIN_KEY` da API. Sem essa variável, o `/api/admin` responde 503. Na lista, o nome do restaurante abre o detalhe: dados cadastrais, módulos contratados (desligado some do menu e a API responde 403), configurações atuais, equipe e WhatsApp. Senha provisória — a do Dono no cadastro ou a de "Resetar senha" na equipe — aparece uma vez e obriga a troca no primeiro login; até lá a API só aceita a troca.
+**Super admin:** abra `http://localhost:5174/admin` e entre com o valor de `SUPER_ADMIN_KEY` da API. Sem essa variável, o `/api/admin` responde 503. Na lista, o nome do restaurante abre o detalhe: dados cadastrais, módulos contratados (desligado some do menu e a API responde 403), configurações atuais, equipe e WhatsApp. Senha provisória — a do Dono no cadastro ou a de "Resetar senha" na equipe — aparece uma vez e obriga a troca no primeiro login; até lá a API só aceita a troca. Em **Mensalidades**: o valor e o dia de vencimento ficam no detalhe de cada restaurante; "Gerar cobranças do mês" cria a mensalidade dos ativos com valor (de novo, só acrescenta quem falta); atrasado é calculado (pendente depois do vencimento) e destacado; "Marcar como pago" registra data e forma. É a mesma tabela que o restaurante vê em Minha Fatura. Inadimplência não desativa ninguém sozinha.
 
 ### Cardápio do cliente (`apps/web`)
 

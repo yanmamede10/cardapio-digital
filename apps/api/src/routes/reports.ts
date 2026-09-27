@@ -34,12 +34,17 @@ reportsRouter.get("/:id/finance", requireStaff, requireOwnRestaurant, requireMin
   const deliveryFeeMonthToDate = round2(deliveryOrders.reduce((t, o) => t + o.deliveryFee, 0));
 
   const charges = await prisma.billingCharge.findMany({ where: { restaurantId: req.params.id }, orderBy: { date: "desc" } });
+  // Next due date: the oldest mensalidade still open, else this month's due day (next month's once it has passed).
+  const now = new Date();
+  const due =
+    charges.filter((c) => c.month && c.status === "pending").pop()?.date ??
+    new Date(now.getFullYear(), now.getMonth() + (now.getDate() > restaurant.planDueDay ? 1 : 0), restaurant.planDueDay);
 
   res.json({
     deliveryFeeMonthToDate,
     deliveryFeeCap: restaurant.deliveryFeeCap,
     planPrice: restaurant.planPrice,
-    planDueDate: restaurant.planDueDate ? restaurant.planDueDate.toISOString() : new Date().toISOString(),
+    planDueDate: due.toISOString(),
     planModules: JSON.parse(restaurant.planModulesJson) as string[],
     charges: charges.map(serializeCharge)
   });

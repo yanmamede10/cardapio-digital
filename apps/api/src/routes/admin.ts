@@ -1,10 +1,10 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Restaurant } from "@prisma/client";
-import { PLAN_MODULES, type AdminRestaurant, type AdminRestaurantDetail, type RestaurantStatus } from "@cardapio/shared";
+import { PAYMENT_METHODS, PLAN_MODULES, type AdminCharge, type AdminRestaurant, type AdminRestaurantDetail, type RestaurantStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword } from "../lib/auth.js";
-import { serializeStaff } from "../lib/serialize.js";
+import { serializeCharge, serializeStaff } from "../lib/serialize.js";
 import { statusOf } from "./whatsapp.js";
 
 // Super admin (ADMIN-01): the platform team, i.e. one person for now. A single key from env sent as a Bearer
@@ -67,7 +67,9 @@ async function detail(r: Restaurant): Promise<AdminRestaurantDetail> {
     taxRegime: r.taxRegime as AdminRestaurantDetail["taxRegime"],
     modules: JSON.parse(r.planModulesJson),
     staff: staff.map(serializeStaff),
-    whatsapp: await statusOf(r.id)
+    whatsapp: await statusOf(r.id),
+    planPrice: r.planPrice,
+    planDueDay: r.planDueDay
   };
 }
 
@@ -173,4 +175,62 @@ adminRouter.post("/restaurants/:id/staff/:staffId/reset-password", async (req, r
   const password = provisionalPassword();
   await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(password), mustChangePassword: true } });
   res.json({ password });
+});
+
+// ---- Mensalidades: BillingCharge, the same table Minha Fatura reads — what's recorded here is what the restaurant sees.
+// Inadimplência never deactivates anyone by itself: that stays a manual status change.
+
+adminRouter.patch("/restaurants/:id/plan", async (req, res) => {
+  const { planPrice, planDueDay } = req.body as { planPrice?: unknown; planDueDay?: unknown };
+  if (typeof planPrice !== "number" || !Number.isFinite(planPrice) || planPrice < 0) return res.status(400).json({ error: "planPrice must be a number >= 0" });
+  if (typeof planDueDay !== "number" || !Number.isInteger(planDueDay) || planDueDay < 1 || planDueDay > 28) return res.status(400).json({ error: "planDueDay must be 1-28" });
+  if (!(await prisma.restaurant.findUnique({ where: { id: req.params.id } }))) return res.status(404).json({ error: "restaurant not found" });
+  const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { planPrice: Math.round(planPrice * 100) / 100, planDueDay } });
+  res.json(await detail(r));
+});
+
+const withName = (c: Parameters<typeof serializeCharge>[0] & { restaurant: { name: string } }): AdminCharge => ({ ...serializeCharge(c), restaurantName: c.restaurant.name });
+
+// Every mensalidade, newest month first. The screen filters by status ("overdue" is computed in serializeCharge).
+adminRouter.get("/billing", async (_req, res) => {
+  const charges = await prisma.billingCharge.findMany({
+    where: { month: { not: null } },
+    include: { restaurant: { select: { name: true } } },
+    orderBy: [{ month: "desc" }, { date: "asc" }]
+  });
+  res.json(charges.map(withName));
+});
+
+// A month's mensalidade for every active restaurant with a price, due on its due day. Idempotent (unique restaurant +
+// month): running it again only adds restaurants that didn't have that month yet.
+adminRouter.post("/billing", async (req, res) => {
+  const { month } = req.body as { month?: unknown };
+  if (typeof month !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return res.status(400).json({ error: "month must be YYYY-MM" });
+  const [y, m] = month.split("-").map(Number);
+  const restaurants = await prisma.restaurant.findMany({ where: { status: "ativo", planPrice: { gt: 0 } } });
+  const { count } = await prisma.billingCharge.createMany({
+    data: restaurants.map((r) => ({
+      restaurantId: r.id,
+      month,
+      date: new Date(y, m - 1, r.planDueDay),
+      description: `Mensalidade ${month.slice(5)}/${y}`,
+      value: r.planPrice,
+      status: "pending"
+    })),
+    skipDuplicates: true
+  });
+  res.status(201).json({ created: count });
+});
+
+adminRouter.post("/billing/:chargeId/pay", async (req, res) => {
+  const { paidOn, paymentMethod } = req.body as { paidOn?: unknown; paymentMethod?: unknown };
+  if (typeof paidOn !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(paidOn) || Number.isNaN(Date.parse(paidOn))) return res.status(400).json({ error: "paidOn must be YYYY-MM-DD" });
+  if (!(PAYMENT_METHODS as readonly unknown[]).includes(paymentMethod)) return res.status(400).json({ error: `paymentMethod must be one of ${PAYMENT_METHODS.join(", ")}` });
+  if (!(await prisma.billingCharge.findUnique({ where: { id: req.params.chargeId } }))) return res.status(404).json({ error: "charge not found" });
+  const c = await prisma.billingCharge.update({
+    where: { id: req.params.chargeId },
+    data: { status: "paid", paidOn, paymentMethod: paymentMethod as string },
+    include: { restaurant: { select: { name: true } } }
+  });
+  res.json(withName(c));
 });

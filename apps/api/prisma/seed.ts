@@ -332,7 +332,7 @@ async function main() {
       fiscalAddress: "Rua Aurora, 214 — Vila Madalena, São Paulo/SP",
       deliveryFeeCap: 400,
       planPrice: 189.9,
-      planDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 10),
+      planDueDay: 10,
       // The demo restaurant: everything but Emissão Fiscal (no NFC-e provider yet).
       planModulesJson: JSON.stringify(PLAN_MODULES.filter((m) => m !== "fiscal"))
     }
@@ -548,11 +548,18 @@ async function main() {
     }))
   });
 
+  // Mensalidades of the demo restaurant: last month's and this month's, both paid (a demo shouldn't open on "Atrasado").
+  const dueOn = (monthsAgo: number) => new Date(new Date().getFullYear(), new Date().getMonth() - monthsAgo, 10);
+  const ymd = (d: Date) => d.toLocaleDateString("sv-SE");
+  const mensalidade = (monthsAgo: number) => {
+    const date = dueOn(monthsAgo);
+    return { restaurantId: "fogo", date, description: `Mensalidade ${ymd(date).slice(5, 7)}/${ymd(date).slice(0, 4)}`, value: 189.9, status: "paid", month: ymd(date).slice(0, 7), paidOn: ymd(new Date(date.getTime() - 2 * 86400000)), paymentMethod: "PIX" };
+  };
   await prisma.billingCharge.createMany({
     data: [
-      { restaurantId: "fogo", date: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 10), description: "Mensalidade do plano — Gestão", value: 189.9, status: "paid" },
-      { restaurantId: "fogo", date: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 10), description: "Taxa de entrega excedente", value: 42.5, status: "paid" },
-      { restaurantId: "fogo", date: new Date(new Date().getFullYear(), new Date().getMonth(), 10), description: "Mensalidade do plano — Gestão", value: 189.9, status: "pending" }
+      mensalidade(1),
+      { restaurantId: "fogo", date: dueOn(1), description: "Taxa de entrega excedente", value: 42.5, status: "paid" },
+      mensalidade(0)
     ]
   });
 

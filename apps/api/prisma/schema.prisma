@@ -38,8 +38,9 @@ model Restaurant {
   taxRegime         String   @default("")
   fiscalAddress     String   @default("")
   deliveryFeeCap    Float    @default(0)
+  // Mensalidade (super admin): monthly price and due day (1-28, so every month has it).
   planPrice         Float    @default(0)
-  planDueDate       DateTime?
+  planDueDay        Int      @default(10)
   // Contracted modules (PLAN_MODULES keys) — gate the dashboard menu and API; toggled by the super admin.
   planModulesJson   String   @default("[\"pedidos\",\"cardapio\",\"mesas\",\"promocoes\",\"atendimento\",\"produtos\",\"relatorios\",\"visao\",\"pagar\",\"receber\",\"fiscal\"]")
 
@@ -359,12 +360,19 @@ model OperatingHour {
   @@unique([restaurantId, weekday])
 }
 
+// Minha Fatura's extrato. A mensalidade has its month ("2026-09") and date = due date; the super admin generates and
+// settles it. status "pending" | "paid" ("failed" legacy); overdue = pending past its date, computed on read.
 model BillingCharge {
-  id           String   @id @default(cuid())
-  restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  date         DateTime
-  description  String
-  value        Float
-  status       String
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  date          DateTime
+  description   String
+  value         Float
+  status        String
+  month         String?
+  paidOn        String?  // YYYY-MM-DD
+  paymentMethod String?
+
+  @@unique([restaurantId, month])
 }

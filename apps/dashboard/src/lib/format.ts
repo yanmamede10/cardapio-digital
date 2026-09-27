@@ -60,6 +60,9 @@ export function shortDate(iso: string): string {
   return `${Number(iso.slice(8, 10))} ${MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]}`;
 }
 
+/** "2026-09-23" → "23/09/2026" */
+export const brDate = (iso: string) => iso.split("-").reverse().join("/");
+
 /** "2026-09-23" → "23/09" */
 export function dayMonth(iso: string): string {
   return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;

@@ -28,6 +28,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
   const [r, setR] = useState<AdminRestaurantDetail | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState({ price: "", day: "" });
   // Shown once after a reset: the API never returns the provisional password again.
   const [reset, setReset] = useState<{ name: string; email: string; password: string } | null>(null);
 
@@ -36,6 +37,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       .then((d) => {
         setR(d);
         setForm(formOf(d));
+        setPlan({ price: String(d.planPrice), day: String(d.planDueDay) });
       })
       .catch((e: Error) => setError(e.message.includes("not found") ? "Restaurante não encontrado." : e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,6 +72,19 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       notify(`${moduleByKey(m).label} ${on ? "ligado" : "desligado"}`);
     } catch {
       notify("Não foi possível alterar o módulo");
+    }
+  };
+
+  const savePlan = async () => {
+    try {
+      const updated = await call<AdminRestaurantDetail>(`/restaurants/${encodeURIComponent(r.id)}/plan`, {
+        method: "PATCH",
+        body: JSON.stringify({ planPrice: Number(plan.price.replace(",", ".")), planDueDay: Number(plan.day) })
+      });
+      setR(updated);
+      notify("Mensalidade salva");
+    } catch (e) {
+      notify((e as Error).message.includes("planDueDay") ? "O vencimento é um dia de 1 a 28" : "Informe um valor válido para a mensalidade");
     }
   };
 
@@ -124,6 +139,23 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
         <button type="button" className="btn btn-primary" style={{ alignSelf: "flex-start" }} onClick={save}>
           Salvar dados
         </button>
+      </Card>
+
+      <Card title="Mensalidade">
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" }}>
+          <Field label="Valor (R$)">
+            <input className="field mono" inputMode="decimal" style={{ width: 140 }} value={plan.price} onChange={(e) => setPlan({ ...plan, price: e.target.value })} />
+          </Field>
+          <Field label="Dia de vencimento">
+            <input className="field mono" type="number" min={1} max={28} style={{ width: 110 }} value={plan.day} onChange={(e) => setPlan({ ...plan, day: e.target.value })} />
+          </Field>
+          <button type="button" className="btn btn-primary" onClick={savePlan}>
+            Salvar mensalidade
+          </button>
+          <Link to="/admin/mensalidades" style={{ fontSize: 12.5, color: "var(--ink2)", alignSelf: "center" }}>
+            Ver cobranças →
+          </Link>
+        </div>
       </Card>
 
       <Card title="Módulos contratados">

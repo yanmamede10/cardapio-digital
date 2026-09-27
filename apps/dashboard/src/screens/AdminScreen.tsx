@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import type { AdminRestaurant, RestaurantStatus } from "@cardapio/shared";
 import { BASE_URL } from "../lib/api";
 import { fmtDate } from "../lib/format";
@@ -8,6 +8,7 @@ import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
 import { Toast } from "../components/Toast";
 import AdminRestaurantScreen from "./AdminRestaurantScreen";
+import AdminBillingScreen from "./AdminBillingScreen";
 
 const KEY_STORAGE = "mesapronta.adminKey";
 export const STATUS_LABEL: Record<RestaurantStatus, string> = { ativo: "Ativo", pendente: "Pendente", inativo: "Inativo" };
@@ -35,13 +36,15 @@ function loadKey(): string {
   }
 }
 
-/** Super admin (ADMIN-01) at /admin: platform key instead of a staff login. Restaurant list and, at
- *  /admin/restaurantes/:id, one restaurant's detail. */
+/** Super admin (ADMIN-01) at /admin: platform key instead of a staff login. Restaurant list, one restaurant's
+ *  detail at /admin/restaurantes/:id, and every restaurant's mensalidades at /admin/mensalidades. */
 export default function AdminScreen() {
   const [key, setKey] = useState(loadKey);
   const [keyDraft, setKeyDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const detailId = useLocation().pathname.match(/^\/admin\/restaurantes\/([^/]+)/)?.[1];
+  const { pathname } = useLocation();
+  const billing = pathname.startsWith("/admin/mensalidades");
+  const detailId = pathname.match(/^\/admin\/restaurantes\/([^/]+)/)?.[1];
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
   const call: AdminCall = async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -73,13 +76,25 @@ export default function AdminScreen() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "28px 16px" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 600, letterSpacing: "-.015em" }}>Restaurantes</h1>
+            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 600, letterSpacing: "-.015em" }}>{billing ? "Mensalidades" : "Restaurantes"}</h1>
             <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
               MesaPronta · Plataforma
             </div>
           </div>
+          {key && (
+            <nav style={{ display: "flex", gap: 6 }}>
+              {[
+                ["/admin", "Restaurantes"],
+                ["/admin/mensalidades", "Mensalidades"]
+              ].map(([to, label]) => (
+                <NavLink key={to} to={to} end={to === "/admin"} className={({ isActive }) => (isActive ? "btn btn-primary" : "btn btn-outline")}>
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+          )}
           {key && (
             <button type="button" className="btn btn-outline" onClick={() => signOut()}>
               Sair
@@ -104,6 +119,8 @@ export default function AdminScreen() {
               Entrar
             </button>
           </form>
+        ) : billing ? (
+          <AdminBillingScreen call={call} />
         ) : detailId ? (
           <AdminRestaurantScreen key={detailId} id={decodeURIComponent(detailId)} call={call} />
         ) : (

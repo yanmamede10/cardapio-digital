@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import type { FinanceSummary } from "@cardapio/shared";
 import { api } from "../../lib/api";
-import { brl, fmtDate } from "../../lib/format";
+import { brDate, brl, fmtDate } from "../../lib/format";
 import { moduleByKey } from "../../lib/modules";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
 const CHARGE_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
   paid: { label: "Pago", bg: "color-mix(in srgb, var(--ok) 16%, transparent)", fg: "var(--ok)" },
   pending: { label: "Pendente", bg: "color-mix(in srgb, var(--warn) 18%, transparent)", fg: "var(--warn)" },
+  overdue: { label: "Atrasado", bg: "color-mix(in srgb, var(--alert) 16%, transparent)", fg: "var(--alert)" },
   failed: { label: "Falhou", bg: "color-mix(in srgb, var(--alert) 16%, transparent)", fg: "var(--alert)" }
 };
 
@@ -84,6 +85,7 @@ export default function MobileFinanceScreen() {
                 <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.description}</div>
                 <div className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
                   {fmtDate(c.date)}
+                  {c.paidOn && ` · pago em ${brDate(c.paidOn)}${c.paymentMethod ? ` · ${c.paymentMethod}` : ""}`}
                 </div>
               </div>
               <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import type { FinanceSummary } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
-import { brl, fmtDate } from "../lib/format";
+import { brDate, brl, fmtDate } from "../lib/format";
 import { moduleByKey } from "../lib/modules";
 
 const CHARGE_STATUS: Record<string, { label: string; color: string }> = {
   paid: { label: "Pago", color: "var(--ok)" },
   pending: { label: "Pendente", color: "var(--warn)" },
+  overdue: { label: "Atrasado", color: "var(--alert)" },
   failed: { label: "Falhou", color: "var(--alert)" }
 };
 
@@ -85,7 +86,15 @@ export default function FinanceScreen() {
             <div className="mono" style={{ fontSize: 12, color: "var(--ink3)" }}>
               {fmtDate(c.date)}
             </div>
-            <div style={{ fontSize: 13 }}>{c.description}</div>
+            <div style={{ fontSize: 13 }}>
+              {c.description}
+              {c.paidOn && (
+                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+                  Pago em {brDate(c.paidOn)}
+                  {c.paymentMethod && ` · ${c.paymentMethod}`}
+                </div>
+              )}
+            </div>
             <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
               {brl(c.value)}
             </div>

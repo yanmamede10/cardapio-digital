@@ -91,3 +91,10 @@ export async function newRestaurant(request: APIRequestContext) {
   const r = await adminApi(request, "POST", "/restaurants", { name, cnpj, contact: "Ana", ownerName: "Dona Ana", ownerEmail });
   return { id: r.id as string, name, ownerEmail, password: r.ownerPassword as string };
 }
+/** Puts a fresh restaurant's Dono in the dashboard session, past the forced change of the provisional password. */
+export async function loginFreshOwner(page: import("@playwright/test").Page, request: APIRequestContext, r: { ownerEmail: string; password: string }) {
+  const { token, staff } = await (await request.post(`${API}/api/auth/login`, { data: { email: r.ownerEmail, password: r.password } })).json();
+  await request.post(`${API}/api/auth/password`, { data: { currentPassword: r.password, newPassword: "senha-nova-1" }, headers: { Authorization: `Bearer ${token}` } });
+  const session = JSON.stringify({ token, restaurantId: staff.restaurantId, role: staff.role, staffId: staff.id, name: staff.name });
+  await page.addInitScript((s) => localStorage.setItem("cardapio.dashboard.session", s), session);
+}

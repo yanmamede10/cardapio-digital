@@ -496,6 +496,9 @@ export interface AdminRestaurantDetail extends AdminRestaurant {
   modules: PlanModule[];
   staff: StaffMember[];
   whatsapp: WhatsAppStatus;
+  planPrice: number;
+  /** Day of the month the mensalidade falls due (1-28). */
+  planDueDay: number;
 }
 
 export type TaxRegime ="mei" | "simples_nacional" | "lucro_presumido" | "lucro_real" | "lucro_arbitrado";
@@ -524,14 +527,21 @@ export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
   maquininha_propria: "Maquininha própria"
 };
 
+/** A platform charge in Minha Fatura. A mensalidade has its month and date = due date; "overdue" = pending past it (computed). */
 export interface BillingCharge {
   id: string;
   restaurantId: string;
   date: string;
   description: string;
   value: number;
-  status: "paid" | "pending" | "failed";
+  status: "paid" | "pending" | "overdue" | "failed";
+  month: string | null;
+  paidOn: string | null;
+  paymentMethod: string | null;
 }
+
+/** Super admin → Mensalidades: every restaurant's monthly charges. */
+export type AdminCharge = BillingCharge & { restaurantName: string };
 
 export interface FinanceSummary {
   deliveryFeeMonthToDate: number;

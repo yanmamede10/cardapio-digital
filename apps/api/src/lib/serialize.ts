@@ -1,5 +1,6 @@
 import type {
   Address as ApiAddress,
+  BillingCharge as ApiBillingCharge,
   AppearanceState,
   CartLine,
   Coupon as ApiCoupon,
@@ -280,14 +281,20 @@ export function serializeFiscal(r: Restaurant): FiscalInfo {
   };
 }
 
-export function serializeCharge(c: BillingCharge): { id: string; restaurantId: string; date: string; description: string; value: number; status: "paid" | "pending" | "failed" } {
+/** "overdue" is never stored: a pending charge whose due date is before today (server zone, pinned in app.ts). */
+export function serializeCharge(c: BillingCharge): ApiBillingCharge {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   return {
     id: c.id,
     restaurantId: c.restaurantId,
     date: c.date.toISOString(),
     description: c.description,
     value: c.value,
-    status: c.status as "paid" | "pending" | "failed"
+    status: c.status === "pending" && c.date < today ? "overdue" : (c.status as ApiBillingCharge["status"]),
+    month: c.month,
+    paidOn: c.paidOn,
+    paymentMethod: c.paymentMethod
   };
 }
 

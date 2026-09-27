@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, SEED_MODULES, adminApi, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, newRestaurant, setModules, test, uid } from "./fixtures";
+import { R, SEED_MODULES, adminApi, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, loginFreshOwner, newRestaurant, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -270,4 +270,38 @@ plain("Super Admin: resetar senha mostra a provisória uma vez e o próximo logi
   await expect(page.getByRole("button", { name: "Operação" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button", { name: "Operação" })).toBeVisible(); // flag cleared server-side
+});
+
+plain("Super Admin: mensalidade gera o mês, destaca a atrasada, marca como pago e a Minha Fatura do restaurante mostra", async ({ page, request }) => {
+  const r = await newRestaurant(request);
+  await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "ativo" });
+  await asSuperAdmin(page);
+  await page.goto(`/admin/restaurantes/${r.id}`);
+  await page.getByLabel("Valor (R$)").fill("199,90");
+  await page.getByLabel("Dia de vencimento").fill("5");
+  await page.getByRole("button", { name: "Salvar mensalidade" }).click();
+  await expect(toast(page)).toContainText("Mensalidade salva");
+
+  await page.getByRole("link", { name: "Mensalidades" }).click();
+  await page.getByLabel("Mês").fill("2025-03"); // past month → overdue
+  await page.getByRole("button", { name: "Gerar cobranças do mês" }).click();
+  await expect(toast(page)).toContainText("03/2025");
+  const row = page.locator("[data-status]", { hasText: r.name });
+  await expect(row).toHaveAttribute("data-status", "overdue");
+  await expect(row).toContainText("R$ 199,90");
+  await page.getByRole("button", { name: /Atrasadas/ }).click();
+  await row.getByRole("button", { name: "Marcar como pago" }).click();
+  await row.getByLabel("Data do pagamento").fill("2025-03-04");
+  await row.getByLabel("Forma de pagamento").selectOption("Transferência");
+  await row.getByRole("button", { name: "Confirmar" }).click();
+  await expect(toast(page)).toContainText(`Pagamento de ${r.name} registrado`);
+  await expect(row).toHaveCount(0); // no longer in "Atrasadas"
+  await page.getByRole("button", { name: /Pagas/ }).click();
+  await expect(row).toContainText("Pago em 04/03/2025 · Transferência");
+
+  await loginFreshOwner(page, request, r);
+  await page.goto("/financeiro");
+  const line = page.locator("main div", { hasText: "Mensalidade 03/2025" }).last();
+  await expect(line).toContainText("Pago em 04/03/2025 · Transferência");
+  await expect(page.getByText("R$ 199,90").first()).toBeVisible();
 });

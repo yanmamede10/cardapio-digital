@@ -170,3 +170,81 @@ describe("super admin · resetar senha", () => {
     assert.equal((await call("POST", "/api/auth/login", { body: { email: r.email, password: r.password } })).status, 200, "nada foi resetado");
   });
 });
+
+describe("super admin · mensalidades", () => {
+  test("ciclo: valor e dia, gerar o mês, atrasar, marcar pago — a Minha Fatura mostra igual e ninguém é desativado", async () => {
+    const r = await fresh();
+    const dono = await firstLogin(r.email, r.password);
+    const plan = await call("PATCH", `/api/admin/restaurants/${r.id}/plan`, { token, body: { planPrice: 249.9, planDueDay: 5 } });
+    assert.deepEqual([plan.status, plan.body.planPrice, plan.body.planDueDay], [200, 249.9, 5]);
+
+    const month = "2025-01"; // past: due on the 5th and unpaid → atrasado (computed, never stored)
+    const gen = await call("POST", "/api/admin/billing", { token, body: { month } });
+    assert.equal(gen.status, 201);
+    assert.ok(gen.body.created >= 1);
+    assert.equal((await call("POST", "/api/admin/billing", { token, body: { month } })).body.created, 0, "gerar de novo não duplica");
+
+    const charge = (await call("GET", "/api/admin/billing", { token })).body.find((c: { restaurantId: string; month: string }) => c.restaurantId === r.id && c.month === month);
+    assert.deepEqual([charge.status, charge.value, charge.description, charge.restaurantName.startsWith("Detalhe")], ["overdue", 249.9, "Mensalidade 01/2025", true]);
+    assert.equal(new Date(charge.date).toLocaleDateString("sv-SE"), "2025-01-05");
+
+    const fatura = async () => (await call("GET", `/api/restaurants/${r.id}/finance`, { token: dono })).body;
+    let f = await fatura();
+    assert.equal(f.planPrice, 249.9);
+    assert.equal(f.charges.find((c: { id: string }) => c.id === charge.id).status, "overdue");
+    assert.equal(new Date(f.planDueDate).toLocaleDateString("sv-SE"), "2025-01-05", "vence = a mensalidade mais antiga em aberto");
+    assert.equal((await call("GET", `/api/admin/restaurants/${r.id}`, { token })).body.status, "ativo", "atrasado não desativa");
+
+    const paid = await call("POST", `/api/admin/billing/${charge.id}/pay`, { token, body: { paidOn: "2025-02-03", paymentMethod: "PIX" } });
+    assert.deepEqual([paid.status, paid.body.status, paid.body.paidOn, paid.body.paymentMethod], [200, "paid", "2025-02-03", "PIX"]);
+    f = await fatura();
+    const seen = f.charges.find((c: { id: string }) => c.id === charge.id);
+    assert.deepEqual([seen.status, seen.paidOn, seen.paymentMethod], ["paid", "2025-02-03", "PIX"]);
+  });
+
+  test("antes do vencimento é pendente; só restaurante ativo com valor entra na geração", async () => {
+    const active = await fresh();
+    await call("PATCH", `/api/admin/restaurants/${active.id}/plan`, { token, body: { planPrice: 100, planDueDay: 28 } });
+    const pending = (await call("POST", "/api/admin/restaurants", { token, body: { name: `Pendente ${uid()}`, cnpj: cnpj(), ...owner() } })).body;
+    await call("PATCH", `/api/admin/restaurants/${pending.id}/plan`, { token, body: { planPrice: 100, planDueDay: 28 } });
+    const noPrice = await fresh();
+
+    await call("POST", "/api/admin/billing", { token, body: { month: "2099-12" } });
+    const list = (await call("GET", "/api/admin/billing", { token })).body.filter((c: { month: string }) => c.month === "2099-12");
+    assert.equal(list.find((c: { restaurantId: string }) => c.restaurantId === active.id)?.status, "pending");
+    assert.ok(!list.some((c: { restaurantId: string }) => c.restaurantId === pending.id || c.restaurantId === noPrice.id));
+  });
+
+  test("valida valor, dia, mês, data e forma de pagamento", async () => {
+    const url = `/api/admin/restaurants/${(await fresh()).id}/plan`;
+    for (const bad of [{ planPrice: -1, planDueDay: 5 }, { planPrice: "10", planDueDay: 5 }, { planPrice: 10, planDueDay: 0 }, { planPrice: 10, planDueDay: 29 }, { planPrice: 10, planDueDay: 1.5 }]) {
+      assert.equal((await call("PATCH", url, { token, body: bad })).status, 400, JSON.stringify(bad));
+    }
+    assert.equal((await call("PATCH", "/api/admin/restaurants/nao-existe/plan", { token, body: { planPrice: 1, planDueDay: 1 } })).status, 404);
+    for (const month of ["2025-13", "jan", undefined]) assert.equal((await call("POST", "/api/admin/billing", { token, body: { month } })).status, 400, String(month));
+    const charge = (await call("GET", "/api/admin/billing", { token })).body[0];
+    assert.equal((await call("POST", `/api/admin/billing/${charge.id}/pay`, { token, body: { paidOn: "03/02/2025", paymentMethod: "PIX" } })).status, 400);
+    assert.equal((await call("POST", `/api/admin/billing/${charge.id}/pay`, { token, body: { paidOn: "2025-02-03", paymentMethod: "Cheque" } })).status, 400);
+    assert.equal((await call("POST", "/api/admin/billing/nao-existe/pay", { token, body: { paidOn: "2025-02-03", paymentMethod: "PIX" } })).status, 404);
+  });
+});
+
+test("só o super admin: token de staff (até de Dono) recebe 401 em todas as rotas de /api/admin", async () => {
+  const staff = (await call("POST", "/api/auth/login", { body: { email: "marina@fogoeno.com.br", password: "senha123" } })).body.token;
+  const routes: [string, string][] = [
+    ["GET", "/restaurants"],
+    ["POST", "/restaurants"],
+    ["GET", `/restaurants/${R}`],
+    ["PATCH", `/restaurants/${R}`],
+    ["PATCH", `/restaurants/${R}/status`],
+    ["PATCH", `/restaurants/${R}/modules`],
+    ["PATCH", `/restaurants/${R}/plan`],
+    ["POST", `/restaurants/${R}/staff/x/reset-password`],
+    ["GET", "/billing"],
+    ["POST", "/billing"],
+    ["POST", "/billing/x/pay"]
+  ];
+  for (const [method, path] of routes) {
+    for (const t of [staff, undefined]) assert.equal((await call(method, `/api/admin${path}`, { token: t, body: method === "GET" ? undefined : {} })).status, 401, `${method} ${path}`);
+  }
+});
