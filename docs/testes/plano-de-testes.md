@@ -142,7 +142,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | QR-01 | QR abre o restaurante certo | cliente | Link da Mesa 12 do Chapa 27 | Cardápio do Chapa 27, modo mesa, Mesa 12 | api:salao, e2e:fluxo | ✅ corrigido (B01) |
 | QR-02 | QR de mesa que não existe | cliente | `/t/chapa27.99` | "Mesa não encontrada" | api:salao | ✅ |
 | QR-03 | QR de restaurante inativo ou inexistente | cliente | `/t/naoexiste.1` | "Mesa não encontrada" | api:salao | ✅ |
-| QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens em até 2 s | carga | ✅ p95 0,53 s |
+| QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens em até 2 s | carga | ✅ p95 0,39–0,53 s |
 | QR-05 | Item com opções obrigatórias | cliente | Cheddar & Bacon: ponto "Bem passado" + Bacon extra | Preço 38,90 + 6,00 = 44,90 | api:salao, e2e:fluxo | ✅ |
 | QR-06 | Observação com acento e emoji | cliente | "sem cebola, pão bem tostado 🍔" | Chega igual na Central | e2e:fluxo | ✅ |
 | QR-07 | Observação longa | cliente | 301 caracteres | Campo limita a 300; API 400 acima | api:salao | ✅ |
@@ -164,7 +164,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 | ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
 | --- | --- | --- | --- | --- | --- | --- |
-| PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ p95 3,4 s |
+| PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ p95 3,4–4,1 s |
 | PED-02 | Card mostra opções e observação | Cozinha | Pedido com ponto + adicional + obs | Card mostra "Bem passado · Bacon extra" e "Obs: …" | e2e:fluxo | ✅ corrigido (B07) |
 | PED-03 | Aceitar | Cozinha | Aceitar | Vai para "Preparando" | e2e:fluxo | ✅ |
 | PED-04 | Recusar | Garçom | Recusar | Sai da Central (não aparece como entregue); some da comanda | api:salao, e2e:desktop | ✅ corrigido (B11) |
@@ -320,8 +320,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | ID | Caso | Como | Meta | Auto | 27/09 |
 | --- | --- | --- | --- | --- | --- |
 | CARGA-01 | 30 mesas pedindo ao mesmo tempo | 30 clientes carregam o cardápio e enviam pedidos juntos, em 3 rodadas | Todos os pedidos gravados, sem erro | carga | ✅ 90/90 |
-| CARGA-02 | Pedido até aparecer no painel | 4 painéis (Central, como na tela, a cada 4 s) + 6 tablets (Mesas a cada 10 s) consultando em paralelo | p95 ≤ 5 s | carga | ✅ p95 3,4 s |
-| CARGA-03 | Carregamento do cardápio | Restaurante + categorias + itens + aparência, 30 clientes simultâneos | p95 ≤ 2 s | carga | ✅ p95 0,53 s |
+| CARGA-02 | Pedido até aparecer no painel | 4 painéis (Central, como na tela, a cada 4 s) + 6 tablets (Mesas a cada 10 s) consultando em paralelo | p95 ≤ 5 s | carga | ✅ p95 3,4–4,1 s |
+| CARGA-03 | Carregamento do cardápio | Restaurante + categorias + itens + aparência, 30 clientes simultâneos | p95 ≤ 2 s | carga | ✅ p95 0,39–0,53 s |
 
 ### 4.17 Varredura de telas (UI)
 
@@ -346,7 +346,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ## 6. Rodada de 27/09/2026
 
-156 casos: **153 passaram** (25 só depois de corrigidos nesta rodada), **2 falham como P2**, **1 depende do ambiente hospedado**. Suíte automática: 83 testes de API + 65 de tela (desktop, tablet e celular; claro e escuro), verde no CI. Carga: 90/90 pedidos, pedido → cada Central p95 3,4 s (meta 5 s), cardápio p95 0,53 s (meta 2 s).
+156 casos: **153 passaram** (25 só depois de corrigidos nesta rodada), **2 falham como P2**, **1 depende do ambiente hospedado**. Suíte automática: 83 testes de API + 65 de tela (desktop, tablet e celular; claro e escuro), verde no CI. Carga (duas rodadas, local): 90/90 pedidos, pedido → cada Central p95 3,4–4,1 s (meta 5 s; a Central consulta a cada 4 s), cardápio p95 0,39–0,53 s (meta 2 s).
 
 Bugs corrigidos (P0 = quebra fluxo da demo, perde dado ou erra dinheiro/estoque; P1 = atrapalha o uso):
 
