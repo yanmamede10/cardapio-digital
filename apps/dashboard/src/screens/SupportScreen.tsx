@@ -229,7 +229,9 @@ export default function SupportScreen() {
               </section>
             </div>
 
-            <section className="card" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", minHeight: 460 }}>
+            {/* Viewport-tall so long WhatsApp threads scroll inside, not the page. 175px = header + tab bar + main's padding, so the composer
+                fits on the first screen; top pins it under the sticky header when a long ticket list scrolls the page. */}
+            <section className="card" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "sticky", top: 98, height: "calc(100vh - 175px)", minHeight: 460 }}>
               {selected ? (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 16px", borderBottom: "1px solid var(--line)" }}>
@@ -255,8 +257,9 @@ export default function SupportScreen() {
                       ))}
                     </select>
                   </div>
-                  <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
-                    {selected.messages.map((m) => (
+                  {/* column-reverse over the reversed list: same visual order, but the scroll starts (and stays) at the newest message. */}
+                  <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column-reverse", gap: 10 }}>
+                    {[...selected.messages].reverse().map((m) => (
                       <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: m.from === "staff" ? "flex-end" : "flex-start" }}>
                         <div
                           style={{
