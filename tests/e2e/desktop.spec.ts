@@ -394,3 +394,26 @@ plain("cabeçalho mostra o nome do restaurante; Atribuir a mim põe o nome de qu
   await page.getByRole("button", { name: "Atribuir a mim" }).click();
   expect((await (await assigned).json()).assignee).toBe("Bruno Castro");
 });
+
+plain("serviço de 10% desligado em Configurações some da comanda do Chapa 27", async ({ page, request }) => {
+  await loginAs(page, request, "dono@chapa27.example");
+  await page.goto("/config");
+  await page.locator("main").getByRole("button", { name: "Financeiro", exact: true }).click();
+  const toggle = page.getByRole("switch", { name: /Cobrar 10% de serviço/ });
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  try {
+    const { token } = await (await request.post("http://localhost:4200/api/auth/login", { data: { email: "dono@chapa27.example", password: "senha123" } })).json();
+    const comanda = await (await request.get("http://localhost:4200/api/restaurants/chapa27/tables/30/comanda", { headers: { Authorization: `Bearer ${token}` } })).json();
+    expect([comanda.servicePct, comanda.service]).toEqual([0, 0]);
+    await page.goto("/mesas");
+    await page.getByRole("button", { name: /^30$/ }).first().click();
+    await expect(page.locator("aside.card")).not.toContainText("Serviço");
+  } finally {
+    await page.goto("/config");
+    await page.locator("main").getByRole("button", { name: "Financeiro", exact: true }).click();
+    await page.getByRole("switch", { name: /Cobrar 10% de serviço/ }).click();
+    await expect(page.getByRole("switch", { name: /Cobrar 10% de serviço/ })).toHaveAttribute("aria-checked", "true");
+  }
+});

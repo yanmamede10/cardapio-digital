@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest # already has Docker (test Postgres) and Google Chrome (Playwright channel "chrome")
-    timeout-minutes: 15
+    timeout-minutes: 25 # the screen sweep runs every screen × role × 3 sizes × 2 themes
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
