@@ -8,7 +8,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const API_DIR = `${ROOT}apps/api`;
 const DB_URL = "postgresql://postgres:test@localhost:54329/cardapio_test";
 const CONTAINER = "cardapio-test-db";
-const only = process.argv[2]; // "api" | "e2e" | undefined (both)
+const only = process.argv[2]; // "api" | "e2e" | "carga" (horário de pico) | undefined (api + e2e)
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
 const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SUPER_ADMIN_KEY: "test-admin-key", SEED_DEMO_PASSWORD: "senha123" };
 // WhatsApp: the API talks to a fake Evolution that tests/api/whatsapp.test.ts serves on :4299 — no real Evolution needed.
@@ -55,8 +55,11 @@ try {
     await sleep(500);
   }
 
-  if (only !== "e2e") failed = (await run("node", ["--import", "tsx", "--test", "--test-reporter=spec", "--test-concurrency=1", '"tests/api/*.test.ts"'])) !== 0 || failed;
-  if (only !== "api") failed = (await run("npx", ["playwright", "test"])) !== 0 || failed;
+  if (only === "carga") failed = (await run("node", ["tests/load/pico.mjs"])) !== 0;
+  else {
+    if (only !== "e2e") failed = (await run("node", ["--import", "tsx", "--test", "--test-reporter=spec", "--test-concurrency=1", '"tests/api/*.test.ts"'])) !== 0 || failed;
+    if (only !== "api") failed = (await run("npx", ["playwright", "test"])) !== 0 || failed;
+  }
 } catch (err) {
   console.error(err);
   failed = true;
