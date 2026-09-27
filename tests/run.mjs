@@ -12,8 +12,10 @@ const only = process.argv[2]; // "api" | "e2e" | undefined (both)
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
 const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SUPER_ADMIN_KEY: "test-admin-key" };
 // WhatsApp: the API talks to a fake Evolution that tests/api/whatsapp.test.ts serves on :4299 — no real Evolution needed.
-// Storage blanked (set-but-empty beats apps/api/.env), so a test never uploads to the real bucket.
-Object.assign(env, { EVOLUTION_API_URL: "http://localhost:4299", EVOLUTION_API_KEY: "test-evo-key", WHATSAPP_WEBHOOK_URL: "http://localhost:4200/api/whatsapp/webhook", WHATSAPP_WEBHOOK_SECRET: "test-webhook-secret", STORAGE_S3_ENDPOINT: "" });
+// Storage: the private WhatsApp bucket points at that same fake (it answers S3 PUTs too) with dummy keys; the public bucket
+// is blanked (set-but-empty beats apps/api/.env). No test ever reaches the real Supabase.
+Object.assign(env, { EVOLUTION_API_URL: "http://localhost:4299", EVOLUTION_API_KEY: "test-evo-key", WHATSAPP_WEBHOOK_URL: "http://localhost:4200/api/whatsapp/webhook", WHATSAPP_WEBHOOK_SECRET: "test-webhook-secret" });
+Object.assign(env, { STORAGE_S3_ENDPOINT: "http://localhost:4299", STORAGE_S3_REGION: "us-east-1", STORAGE_S3_ACCESS_KEY_ID: "test", STORAGE_S3_SECRET_ACCESS_KEY: "test", STORAGE_S3_WHATSAPP_BUCKET: "wa-test", STORAGE_S3_BUCKET: "", STORAGE_PUBLIC_URL: "https://public.invalid/storage/v1/object/public/cardapio" });
 
 const sh = (cmd, cwd = ROOT) => execSync(cmd, { cwd, env, stdio: "inherit" });
 const run = (cmd, args, cwd = ROOT) =>

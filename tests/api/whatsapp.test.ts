@@ -5,15 +5,24 @@ import { R, call, login, uid } from "./helpers.ts";
 
 // The API under test is pointed (tests/run.mjs) at this fake Evolution on :4299, so it runs its real Evolution adapter
 // against canned answers — no Evolution, no phone. Webhook payloads below have the shape Evolution v2.3.7 posts.
+// The same server is the S3 of the private WhatsApp bucket ("wa-test"): PutObject = PUT /wa-test/<key>.
 type Req = { method: string; path: string; body: any; apikey?: string };
 const seen: Req[] = [];
+const uploads: { path: string; type?: string }[] = [];
 const instances = new Set<string>();
 let scanned = false;
 let failSends = false;
+let failReads = false;
+let failUploads = false;
 
 const evolution = http.createServer((req, res) => {
-  let raw = "";
-  req.on("data", (c) => (raw += c)).on("end", () => {
+  const chunks: Buffer[] = [];
+  req.on("data", (c) => chunks.push(c)).on("end", () => {
+    if (req.method === "PUT" && req.url!.startsWith("/wa-test/")) {
+      uploads.push({ path: req.url!.split("?")[0], type: req.headers["content-type"] });
+      return res.writeHead(failUploads ? 403 : 200, { ETag: '"fake"' }).end();
+    }
+    const raw = Buffer.concat(chunks).toString();
     const r: Req = { method: req.method!, path: req.url!, body: raw ? JSON.parse(raw) : null, apikey: req.headers.apikey as string };
     seen.push(r);
     const json = (status: number, b: unknown) => res.writeHead(status, { "Content-Type": "application/json" }).end(JSON.stringify(b));
@@ -25,11 +34,14 @@ const evolution = http.createServer((req, res) => {
     if (action === "connect") return json(200, scanned ? { instance: { instanceName: name, state: "open" } } : { pairingCode: null, code: "2@abc", base64: "data:image/png;base64,QR", count: 1 });
     if (action === "delete") return instances.delete(decodeURIComponent(name)), json(200, { status: "SUCCESS", error: false });
     if (group === "message") return failSends ? json(500, { status: 500, error: "Internal Server Error" }) : json(201, { key: { id: `SENT-${seen.length}` } });
+    if (action === "markMessageAsRead") return failReads ? json(500, { status: 500, error: "Internal Server Error" }) : json(201, { message: "Read messages", read: "success" });
     json(404, {});
   });
 });
 const sends = () => seen.filter((r) => r.path.startsWith("/message/"));
+const reads = () => seen.filter((r) => r.path.startsWith("/chat/markMessageAsRead/"));
 
+let firstId = ""; // the first customer message — still unread when Atendimento first replies
 let A: string; // fresh restaurant that sets WhatsApp up (keeps the seeded one untouched for the UI tests)
 let owner: string;
 let fogoOwner: string;
@@ -94,8 +106,9 @@ describe("WhatsApp (Evolution)", () => {
     assert.equal(await ticketOf(), undefined);
   });
 
-  test("mensagem recebida vira ticket WhatsApp no restaurante certo; reentrega não duplica; receber nunca envia nada", async () => {
+  test("mensagem recebida vira ticket WhatsApp no restaurante certo; reentrega não duplica; receber nunca envia nada nem marca como lida", async () => {
     const msg = text("Oi, vocês abrem hoje?");
+    firstId = msg.key.id;
     assert.equal((await hook(upsert(msg))).status, 200);
     assert.equal((await hook(upsert(msg))).status, 200, "Evolution reentregando");
 
@@ -103,6 +116,7 @@ describe("WhatsApp (Evolution)", () => {
     assert.deepEqual([t.customerName, t.refLabel, t.status, t.unreadCount], ["João Cliente", `WhatsApp · +${phone}`, "new", 1]);
     assert.deepEqual(t.messages.map((m: { from: string; text: string }) => [m.from, m.text]), [["customer", "Oi, vocês abrem hoje?"]]);
     assert.equal(sends().length, 0, "nada de confirmação/boas-vindas automática");
+    assert.equal(reads().length, 0, "receber não dá visto");
 
     // Groups and reactions are not conversations.
     await hook(upsert(text("grupo", { key: { remoteJid: "1203630@g.us", fromMe: false, id: `G-${uid()}` } })));
@@ -124,19 +138,32 @@ describe("WhatsApp (Evolution)", () => {
     assert.equal(sends().length, 0);
   });
 
-  test("responder no Atendimento chama o provedor com o número do contato; se o provedor falha, nada fica como enviado", async () => {
+  test("responder no Atendimento envia pelo provedor e dá visto nas pendentes; envio que falha não fica como enviado nem dá visto", async () => {
     const t = await ticketOf();
     const sent = await call("POST", `${P()}/tickets/${t.id}/messages`, { token: owner, body: { text: "Abrimos às 18h!" } });
     assert.equal(sent.status, 201);
     const [out] = sends();
     assert.deepEqual([out.path, out.apikey, out.body], [`/message/sendText/${A}`, "test-evo-key", { number: phone, text: "Abrimos às 18h!" }]);
     assert.deepEqual([sent.body.status, sent.body.unreadCount, sent.body.messages.at(-1).text], ["in_progress", 0, "Abrimos às 18h!"]);
+    assert.deepEqual(
+      reads().map((r) => [r.path, r.body]),
+      [[`/chat/markMessageAsRead/${A}`, { readMessages: [{ remoteJid: `${phone}@s.whatsapp.net`, fromMe: false, id: firstId }] }]],
+      "visto só na mensagem que estava pendente"
+    );
 
+    await hook(upsert(text("E no domingo?"))); // pending again, so a failed send would have something to mark
     failSends = true;
     const failed = await call("POST", `${P()}/tickets/${t.id}/messages`, { token: owner, body: { text: "não vai" } });
     failSends = false;
     assert.equal(failed.status, 502);
-    assert.equal((await ticketOf()).messages.length, 2);
+    assert.equal(reads().length, 1, "envio que falhou não dá visto");
+    assert.equal((await ticketOf()).messages.length, 3);
+
+    failReads = true;
+    const delivered = await call("POST", `${P()}/tickets/${t.id}/messages`, { token: owner, body: { text: "Domingo também!" } });
+    failReads = false;
+    assert.equal(reads().length, 2, "tentou dar o visto");
+    assert.deepEqual([delivered.status, delivered.body.messages.at(-1).text], [201, "Domingo também!"], "visto que falha não vira erro da resposta já enviada");
   });
 
   test("o que o celular do restaurante manda aparece na conversa; cliente escrevendo num resolvido reabre o mesmo ticket", async () => {
@@ -153,10 +180,26 @@ describe("WhatsApp (Evolution)", () => {
     assert.equal((await call("GET", `${P()}/tickets`, { token: owner })).body.filter((x: { channel: string }) => x.channel === "whatsapp").length, 1);
   });
 
-  test("imagem sem Storage não se perde: fica o aviso para ver no celular", async () => {
+  test("imagem que o Storage recusa não se perde: fica o aviso para ver no celular", async () => {
+    failUploads = true;
     await hook(upsert({ ...text(""), messageType: "imageMessage", message: { imageMessage: { mimetype: "image/jpeg", caption: "cardápio?" }, base64: Buffer.from("fake").toString("base64") } }));
+    failUploads = false;
     const last = (await ticketOf()).messages.at(-1);
     assert.deepEqual([last.text, last.mediaUrl], ["[Imagem — não foi possível salvar, veja no celular] cardápio?", null]);
+  });
+
+  test("mídia vai para o bucket privado (tipo sem parâmetro) e o payload só traz URL assinada, nunca a pública", async () => {
+    await hook(upsert({ ...text(""), messageType: "audioMessage", message: { audioMessage: { mimetype: "audio/ogg; codecs=opus" }, base64: Buffer.from("OggS").toString("base64") } }));
+    const up = uploads.at(-1)!;
+    assert.match(up.path, new RegExp(`^/wa-test/${A}/[0-9a-f-]{36}\\.ogg$`));
+    assert.equal(up.type, "audio/ogg");
+
+    const t = await ticketOf();
+    const url = new URL(t.messages.at(-1).mediaUrl);
+    assert.equal(url.origin + url.pathname, `http://localhost:4299${up.path}`);
+    assert.ok(url.searchParams.get("X-Amz-Signature"), "assinada");
+    assert.equal(url.searchParams.get("X-Amz-Expires"), "3600");
+    assert.ok(process.env.STORAGE_PUBLIC_URL && !JSON.stringify(t).includes(process.env.STORAGE_PUBLIC_URL), "nada do bucket público");
   });
 
   test("desconectar remove a sessão no provedor", async () => {

@@ -94,7 +94,7 @@ npm run test:api    # só a API
 npm run test:e2e    # só o Playwright
 ```
 
-O `tests/run.mjs` sobe um Postgres descartável em Docker (porta 54329), aplica as migrações e o seed, sobe a API na 4200 e, para o e2e, o dashboard na 5274. No fim, derruba tudo. O banco real nunca é tocado. Os testes de WhatsApp não precisam da Evolution: `tests/api/whatsapp.test.ts` serve uma Evolution falsa na 4299 e manda webhooks simulados; o Storage fica desligado nos testes. Rode `npm run db:generate --workspace apps/api` uma vez antes, porque o CI faz o mesmo. O CI (`.github/workflows/test.yml`) roda o typecheck e o `npm test` em cada PR e em cada push na `master`.
+O `tests/run.mjs` sobe um Postgres descartável em Docker (porta 54329), aplica as migrações e o seed, sobe a API na 4200 e, para o e2e, o dashboard na 5274. No fim, derruba tudo. O banco real nunca é tocado. Os testes de WhatsApp não precisam da Evolution: `tests/api/whatsapp.test.ts` serve uma Evolution falsa na 4299 e manda webhooks simulados; o mesmo servidor faz o papel do S3 do bucket privado do WhatsApp, com credenciais falsas, e o bucket público fica desligado nos testes. Rode `npm run db:generate --workspace apps/api` uma vez antes, porque o CI faz o mesmo. O CI (`.github/workflows/test.yml`) roda o typecheck e o `npm test` em cada PR e em cada push na `master`.
 
 ## Variáveis de ambiente
 
