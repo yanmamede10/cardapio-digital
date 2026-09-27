@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QtyStepper } from "../components/QtyStepper";
 import { ScreenHeader } from "../components/ScreenHeader";
-import { Toast } from "../components/Toast";
 import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
@@ -134,7 +133,6 @@ export default function CartScreen() {
           </button>
         </div>
       )}
-      <Toast />
     </div>
   );
 }

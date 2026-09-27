@@ -109,3 +109,25 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
   await expect(office.getByText(brl(kpis.revenue)).first()).toBeVisible();
   await owners.close();
 });
+
+test("cliente vê o aviso quando o item esgota enquanto revisa o pedido (antes a revisão não mostrava erro nenhum)", async ({ browser, request }) => {
+  const kitchen = (await staff(request, "cozinha")).token;
+  const items = await (await request.get(`${API}/api/restaurants/${D}/items`)).json();
+  const polenta = items.find((i: { name: string }) => i.name === "Polenta Frita");
+  const soldOut = (v: boolean) => request.patch(`${API}/api/restaurants/${D}/items/${polenta.id}/sold-out`, { data: { soldOut: v }, headers: { Authorization: `Bearer ${kitchen}` } });
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const guest = await phone.newPage();
+  try {
+    await guest.goto(`${WEB}/t/${D}.29`);
+    await guest.getByRole("button", { name: "Adicionar Polenta Frita ao pedido" }).first().click();
+    await guest.getByRole("button", { name: /Ver carrinho/ }).click();
+    await guest.getByRole("button", { name: /Enviar pedido para a cozinha/ }).click();
+    await soldOut(true);
+    await guest.getByRole("button", { name: /Confirmar e enviar para a cozinha/ }).click();
+    await expect(guest.locator(".toast")).toContainText("Polenta Frita está esgotado");
+    await expect(guest.getByText("Polenta Frita", { exact: true })).toBeVisible(); // still on the review, cart kept
+  } finally {
+    await soldOut(false);
+    await phone.close();
+  }
+});

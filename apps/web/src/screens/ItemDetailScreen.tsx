@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IconButton } from "../components/IconButton";
 import { photoStyle } from "../components/menu/ItemCard";
-import { Toast } from "../components/Toast";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
@@ -157,7 +156,6 @@ export default function ItemDetailScreen() {
           <span style={{ fontWeight: 700 }}>{formatMoney(unit * draft.qty)}</span>
         </button>
       </div>
-      <Toast />
     </div>
   );
 }

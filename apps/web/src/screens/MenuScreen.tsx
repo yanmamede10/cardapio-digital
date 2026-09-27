@@ -7,7 +7,6 @@ import { IconButton } from "../components/IconButton";
 import { CategoryNav } from "../components/menu/CategoryNav";
 import { ItemCard } from "../components/menu/ItemCard";
 import { MenuSkeleton } from "../components/Skeletons";
-import { Toast } from "../components/Toast";
 import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
@@ -97,7 +96,6 @@ export default function MenuScreen() {
         <MenuSkeleton />
         <BottomBar />
         <SupportFab />
-        <Toast />
       </div>
     );
   }
@@ -444,7 +442,6 @@ export default function MenuScreen() {
       {content}
       <BottomBar />
       <SupportFab />
-      <Toast />
     </div>
   );
 }

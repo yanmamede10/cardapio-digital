@@ -5,7 +5,6 @@ import { DiscoveryListSkeleton } from "../components/Skeletons";
 import { IconButton } from "../components/IconButton";
 import { Pill } from "../components/Pill";
 import { SupportFab } from "../components/FloatingControls";
-import { Toast } from "../components/Toast";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
@@ -237,7 +236,6 @@ export default function DiscoveryScreen() {
       )}
 
       <SupportFab />
-      <Toast />
     </div>
   );
 }
