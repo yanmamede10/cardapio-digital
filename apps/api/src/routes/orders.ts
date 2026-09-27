@@ -1,4 +1,5 @@
 import { Router, type Request } from "express";
+import { Prisma } from "@prisma/client";
 import type { CreateOrderRequest, OrderStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireStaff } from "../lib/auth.js";
@@ -80,18 +81,13 @@ ordersRouter.post("/", async (req, res) => {
 
   let round = 1;
   if (mode === "table" && body.tableNumber) {
-    // Open the table (stamp openedAt) BEFORE creating the order below — openOrdersForTable
-    // filters orders by createdAt >= table.openedAt, so if this ran after order.create the
-    // very first order's createdAt would always be a few ms earlier than openedAt and the
-    // order that opened the comanda would never appear in it.
-    const table = await prisma.restaurantTable.findUnique({
-      where: { restaurantId_number: { restaurantId: body.restaurantId, number: body.tableNumber } }
-    });
-    if (table) {
-      if (!table.openedAt) await prisma.restaurantTable.update({ where: { id: table.id }, data: { openedAt: new Date() } });
-    } else {
-      await prisma.restaurantTable.create({
-        data: { restaurantId: body.restaurantId, number: body.tableNumber, seats: 4, openedAt: new Date() }
+    // First order of a seating stamps openedAt ("aberta às"); the comanda itself is the table's orders with no closedAt.
+    const where = { restaurantId: body.restaurantId, number: body.tableNumber };
+    const { count } = await prisma.restaurantTable.updateMany({ where: { ...where, openedAt: null }, data: { openedAt: new Date() } });
+    if (!count && !(await prisma.restaurantTable.findUnique({ where: { restaurantId_number: where } }))) {
+      // Unknown number (not from a QR): the table is created. Two first orders at once → the loser finds it created.
+      await prisma.restaurantTable.create({ data: { ...where, seats: 4, openedAt: new Date() } }).catch((err) => {
+        if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002")) throw err;
       });
     }
 

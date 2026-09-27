@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
-import { ADMIN_KEY, call, uid } from "./helpers.ts";
+import { ADMIN_KEY, call, firstLogin, uid } from "./helpers.ts";
 
 // Salão of the demo hamburgueria (prisma/seed-demo.ts): QR → pedido → Central → comanda → fechamento.
 const D = "chapa27";
@@ -28,13 +28,89 @@ describe("QR da mesa", () => {
     for (const code of ["chapa27.99", "naoexiste.1", "12", "chapa27.", ".3", "chapa27.1.5"]) {
       assert.equal((await call("GET", `/api/tables/${encodeURIComponent(code)}`)).status, 404, code);
     }
-    assert.equal((await call("GET", "/api/tables/fogo.1")).status, 200);
-    const status = (s: string) => call("PATCH", "/api/admin/restaurants/fogo/status", { token: ADMIN_KEY, body: { status: s } });
-    try {
-      await status("inativo");
-      assert.equal((await call("GET", "/api/tables/fogo.1")).status, 404, "restaurante inativo");
-    } finally {
-      await status("ativo");
-    }
+    // A restaurant of its own, so deactivating it can't disturb other tests.
+    const email = `dono-qr-${uid()}@t.com`;
+    const r = (await call("POST", "/api/admin/restaurants", { token: ADMIN_KEY, body: { name: `QR ${uid()}`, cnpj: String(Date.now()).slice(-12) + "31", ownerName: "Dona QR", ownerEmail: email } })).body;
+    const status = (s: string) => call("PATCH", `/api/admin/restaurants/${r.id}/status`, { token: ADMIN_KEY, body: { status: s } });
+    await status("ativo");
+    await call("POST", `/api/restaurants/${r.id}/tables`, { token: await firstLogin(email, r.ownerPassword), body: { seats: 2 } });
+    assert.equal((await call("GET", `/api/tables/${r.id}.1`)).status, 200);
+    await status("inativo");
+    assert.equal((await call("GET", `/api/tables/${r.id}.1`)).status, 404, "restaurante inativo");
   });
 });
+
+/** A guest order at a table of the demo restaurant. */
+const order = (table: number, lines: { name: string; qty?: number; options?: string[]; notes?: string }[], session = `s-${uid()}`) =>
+  call("POST", "/api/orders", {
+    session,
+    body: {
+      mode: "table",
+      restaurantId: D,
+      tableNumber: table,
+      guestName: "Cliente",
+      lines: lines.map((l) => {
+        const it = item(l.name);
+        const selectedOptions = (l.options ?? []).map((label) => {
+          const g = it.optionGroups.find((g) => g.options.some((o) => o.label === label))!;
+          return { groupId: g.id, optionId: g.options.find((o) => o.label === label)!.id };
+        });
+        return { itemId: it.id, quantity: l.qty ?? 1, notes: l.notes ?? "", selectedOptions };
+      })
+    }
+  });
+const comanda = async (table: number) => (await call("GET", `${P}/tables/${table}/comanda`, { token: waiter })).body;
+const close = (table: number, body?: object) => call("POST", `${P}/tables/${table}/close`, { token: waiter, body });
+const transfer = (from: number, to: number) => call("POST", `${P}/tables/${from}/transfer`, { token: waiter, body: { toNumber: to } });
+const tableStatus = async (n: number) => (await call("GET", `${P}/tables`, { token: waiter })).body.find((t: { number: number }) => t.number === n).status;
+
+describe("comanda", () => {
+  test("transferir para uma mesa que acabou de ser paga não traz de volta a conta anterior dela", async () => {
+    const a = (await order(13, [{ name: "Clássico" }])).body; // 13 opens first
+    const b = (await order(14, [{ name: "Picanha" }])).body; // 14 opens later, is paid and freed
+    await close(14);
+    assert.equal((await transfer(13, 14)).status, 200);
+    assert.deepEqual((await comanda(14)).orderIds, [a.id], `o pedido já pago ${b.id} não pode voltar a ser cobrado`);
+    assert.equal(await tableStatus(13), "free");
+  });
+
+  test("transferir para uma mesa aberta sem pedidos válidos não some com os pedidos", async () => {
+    const c = (await order(15, [{ name: "Salada" }])).body;
+    const d = (await order(16, [{ name: "Kids" }])).body; // 16 opens later…
+    await call("POST", `/api/orders/${d.id}/reject`, { token: kitchen }); // …and its only order is refused: "Livre", but opened
+    await transfer(15, 16);
+    assert.deepEqual((await comanda(16)).orderIds, [c.id]);
+  });
+
+  test("fecha só o que o garçom viu: pedido que chega durante o fechamento fica na mesa", async () => {
+    const e = (await order(17, [{ name: "Batata Frita" }])).body;
+    const seen = (await comanda(17)).orderIds;
+    const f = (await order(17, [{ name: "Onion Rings" }])).body; // arrives while the waiter is at the card machine
+    const res = await close(17, { orderIds: seen, paymentMethod: "Cartão" });
+    assert.deepEqual([res.status, res.body.closed, res.body.remaining], [200, 1, 1]);
+    assert.deepEqual((await comanda(17)).orderIds, [f.id]);
+    assert.equal(await tableStatus(17), "occupied");
+    assert.notEqual(e.id, f.id);
+  });
+
+  test("dois garçons fecham a mesma mesa ao mesmo tempo: um fecha, nada em dobro", async () => {
+    await order(18, [{ name: "Chope Pilsen 300 ml", qty: 2 }]);
+    const ids = (await comanda(18)).orderIds;
+    const results = await Promise.all([close(18, { orderIds: ids }), close(18, { orderIds: ids }), close(18)]);
+    assert.deepEqual(results.map((r) => r.body.closed).sort(), [0, 0, 1]);
+    const out = (await call("GET", `${P}/stock-movements`, { token: owner })).body.filter((m: { productName: string; source: string }) => m.productName === "Chope pilsen (barril)" && m.source.includes(results.find((r) => r.body.closed)!.body.code));
+    assert.equal(out.length, 1);
+  });
+
+  test("transferir e fechar ao mesmo tempo: nenhum pedido cobrado duas vezes nem perdido", async () => {
+    const g = (await order(19, [{ name: "Nuggets (10 un)" }])).body;
+    const ids = (await comanda(19)).orderIds;
+    await Promise.all([transfer(19, 20), close(19, { orderIds: ids })]);
+    const [c19, c20] = await Promise.all([comanda(19), comanda(20)]);
+    const stillOpen = [...c19.orderIds, ...c20.orderIds].filter((id: string) => id === g.id).length;
+    const closedMoves = (await call("GET", `${P}/stock-movements`, { token: owner })).body.filter((m: { source: string }) => m.source === `Fechamento de comanda ${g.code}`).length;
+    assert.equal(stillOpen + (closedMoves > 0 ? 1 : 0), 1, "fechado uma vez ou ainda aberto numa mesa — nunca os dois, nunca nenhum");
+    if (c20.orderIds.length) await close(20);
+  });
+});
+

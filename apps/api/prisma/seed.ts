@@ -450,6 +450,7 @@ async function main() {
           round: 1,
           createdAt,
           updatedAt: cancelled ? createdAt : new Date(createdAt.getTime() + prepMinutes * 60000),
+          closedAt: mode === "table" ? new Date(createdAt.getTime() + prepMinutes * 60000) : null, // past comandas were paid
           lines: { create: lineRows }
         }
       });

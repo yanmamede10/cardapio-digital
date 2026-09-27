@@ -223,6 +223,8 @@ model Order {
   total           Float
   status          String
   round           Int       @default(1)
+  // Table orders: when their comanda was closed (paid). The open comanda = the table's orders with no closedAt.
+  closedAt        DateTime?
   waiterCalledAt  DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @default(now()) @updatedAt

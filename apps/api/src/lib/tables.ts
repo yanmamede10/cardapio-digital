@@ -9,30 +9,23 @@ const SERVICE_PCT = 10;
  *  of what the Emissão Fiscal queue adds to each of its orders. */
 export const serviceFee = (o: Pick<Order, "mode" | "subtotal">) => (o.mode === "table" ? round2(o.subtotal * (SERVICE_PCT / 100)) : 0);
 
-/**
- * A table's comanda is every non-cancelled order for that number placed since
- * it was last opened — `openedAt` is cleared on close, so a fresh seating
- * never sees the previous guest's paid orders.
- */
-export async function openOrdersForTable(restaurantId: string, table: RestaurantTable): Promise<(Order & { lines: OrderLine[] })[]> {
-  if (!table.openedAt) return [];
-  return prisma.order.findMany({
-    where: {
-      restaurantId,
-      mode: "table",
-      tableNumber: table.number,
-      createdAt: { gte: table.openedAt },
-      status: { not: "cancelled" }
-    },
-    include: { lines: true },
-    orderBy: { createdAt: "asc" }
-  });
+/** A table's open comanda: its non-cancelled orders not closed yet (closing stamps closedAt on exactly the orders it charged). */
+const openWhere = (restaurantId: string) => ({ restaurantId, mode: "table", closedAt: null, status: { not: "cancelled" } });
+
+export function openOrdersForTable(restaurantId: string, number: number): Promise<(Order & { lines: OrderLine[] })[]> {
+  return prisma.order.findMany({ where: { ...openWhere(restaurantId), tableNumber: number }, include: { lines: true }, orderBy: { createdAt: "asc" } });
 }
 
-export function statusForTable(table: RestaurantTable, openOrders: Order[]): TableStatus {
-  if (!table.openedAt || openOrders.length === 0) return "free";
-  const allServed = openOrders.every((o) => o.status === "served");
-  return allServed ? "awaiting_payment" : "occupied";
+/** Every table's open orders in one query (salon map, table list). */
+export async function openOrdersByTable(restaurantId: string): Promise<Map<number, Order[]>> {
+  const byTable = new Map<number, Order[]>();
+  for (const o of await prisma.order.findMany({ where: openWhere(restaurantId) })) byTable.set(o.tableNumber!, [...(byTable.get(o.tableNumber!) ?? []), o]);
+  return byTable;
+}
+
+export function statusForTable(openOrders: Order[] = []): TableStatus {
+  if (openOrders.length === 0) return "free";
+  return openOrders.every((o) => o.status === "served") ? "awaiting_payment" : "occupied";
 }
 
 export function buildComanda(table: RestaurantTable, orders: (Order & { lines: OrderLine[] })[]): TableComanda {
@@ -54,7 +47,7 @@ export function buildComanda(table: RestaurantTable, orders: (Order & { lines: O
       restaurantId: table.restaurantId,
       number: table.number,
       seats: table.seats,
-      status: statusForTable(table, orders),
+      status: statusForTable(orders),
       openedAt: table.openedAt ? table.openedAt.toISOString() : null,
       gridRow: table.gridRow ?? null,
       gridCol: table.gridCol ?? null

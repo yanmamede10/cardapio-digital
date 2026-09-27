@@ -70,16 +70,11 @@ financeRouter.post("/:id/finance-entries/:entryId/pay", ...staffGuard, async (re
  *  charged: table orders include their share of the comanda's service. */
 financeRouter.get("/:id/closed-orders", ...staffGuard, requireModule("fiscal"), async (req, res) => {
   // ponytail: newest 500, add paging when a restaurant outgrows it
-  const [orders, openTables] = await Promise.all([
-    prisma.order.findMany({
-      where: { restaurantId: req.params.id, status: { in: ["served", "delivered"] } },
-      include: { lines: true },
-      orderBy: { createdAt: "desc" },
-      take: 500
-    }),
-    prisma.restaurantTable.findMany({ where: { restaurantId: req.params.id, openedAt: { not: null } } })
-  ]);
-  const stillOpen = (o: (typeof orders)[number]) =>
-    o.mode === "table" && openTables.some((t) => t.number === o.tableNumber && o.createdAt >= t.openedAt!);
-  res.json(orders.filter((o) => !stillOpen(o)).map((o) => ({ ...serializeOrder(o), total: round2(o.total + serviceFee(o)) })));
+  const orders = await prisma.order.findMany({
+    where: { restaurantId: req.params.id, OR: [{ mode: "delivery", status: "delivered" }, { mode: "table", closedAt: { not: null }, status: "served" }] },
+    include: { lines: true },
+    orderBy: { createdAt: "desc" },
+    take: 500
+  });
+  res.json(orders.map((o) => ({ ...serializeOrder(o), total: round2(o.total + serviceFee(o)) })));
 });

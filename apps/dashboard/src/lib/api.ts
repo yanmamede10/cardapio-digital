@@ -205,7 +205,9 @@ export const api = {
     request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}`, { method: "PATCH", body: JSON.stringify({ number: nextNumber }) }),
   deleteTable: (number: number) => request<SalonGrid>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}`, { method: "DELETE" }),
   getComanda: (number: number) => request<TableComanda>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/comanda`),
-  closeTable: (number: number) => request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/close`, { method: "POST" }),
+  /** orderIds = the comanda on screen: an order that arrives meanwhile stays open (remaining > 0). */
+  closeTable: (number: number, body: { orderIds?: string[]; paymentMethod?: string } = {}) =>
+    request<{ ok: true; closed: number; remaining: number }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/close`, { method: "POST", body: JSON.stringify(body) }),
   transferTable: (number: number, toNumber: number) =>
     request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/transfer`, { method: "POST", body: JSON.stringify({ toNumber }) }),
   getTableQr: (number: number) => request<{ tableCode: string }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/qr`),

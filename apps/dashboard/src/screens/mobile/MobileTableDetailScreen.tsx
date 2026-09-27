@@ -44,9 +44,14 @@ export default function MobileTableDetailScreen() {
   const loadComanda = () => api.getComanda(num).then(setComanda).catch(() => setComanda(null));
 
   useEffect(() => {
-    api.listTables().then(setTables).catch(() => {});
-    loadComanda();
+    const load = () => {
+      api.listTables().then(setTables).catch(() => {});
+      loadComanda();
+    };
+    load();
     setSplitOpen(false);
+    const id = setInterval(load, 10000); // same as the desktop map: the total on screen is the one being charged
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [num]);
 
@@ -61,9 +66,14 @@ export default function MobileTableDetailScreen() {
 
   const closeBill = async () => {
     try {
-      await api.closeTable(num);
-      notify(`Conta da Mesa ${number} enviada para pagamento`);
-      navigate("/mesas");
+      const { remaining } = await api.closeTable(num, { orderIds: comanda?.orderIds ?? [] });
+      if (remaining) {
+        notify(`Conta fechada — chegou pedido novo na Mesa ${number}, confira a comanda`);
+        loadComanda();
+      } else {
+        notify(`Conta da Mesa ${number} fechada`);
+        navigate("/mesas");
+      }
     } catch {
       notify("Não foi possível fechar a conta");
     }

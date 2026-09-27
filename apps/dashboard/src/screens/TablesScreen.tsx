@@ -57,10 +57,12 @@ export default function TablesScreen() {
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
 
+  // The open comanda refreshes with the map, so the total on screen is the one being charged.
   const loadTables = () => api.getSalonGrid().then((grid) => {
     setGridSize(grid.gridSize);
     setTables(grid.tables);
     if (selectedRef.current == null && grid.tables.length) setSelected(grid.tables[0].number);
+    else if (selectedRef.current != null) api.getComanda(selectedRef.current).then(setComanda).catch(() => {});
   });
 
   const changeGridSize = async (size: number) => {
@@ -170,8 +172,8 @@ export default function TablesScreen() {
   const confirmCloseTable = async (number: number) => {
     setPixTarget(null);
     try {
-      await api.closeTable(number);
-      notify(`Conta da Mesa ${String(number).padStart(2, "0")} fechada`);
+      const { remaining } = await api.closeTable(number, { orderIds: comanda?.orderIds ?? [] });
+      notify(remaining ? `Conta fechada — chegou pedido novo na Mesa ${String(number).padStart(2, "0")}, confira a comanda` : `Conta da Mesa ${String(number).padStart(2, "0")} fechada`);
       loadTables();
       if (selected === number) api.getComanda(number).then(setComanda).catch(() => setComanda(null));
     } catch {

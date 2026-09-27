@@ -1,8 +1,9 @@
 import { Router } from "express";
 import type { SalonGrid } from "@cardapio/shared";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
-import { buildComanda, openOrdersForTable, statusForTable } from "../lib/tables.js";
+import { buildComanda, openOrdersByTable, openOrdersForTable, statusForTable } from "../lib/tables.js";
 import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
 
@@ -18,23 +19,23 @@ async function findTable(restaurantId: string, number: number) {
   return prisma.restaurantTable.findUnique({ where: { restaurantId_number: { restaurantId, number } } });
 }
 
+async function tablesWithStatus(restaurantId: string) {
+  const [tables, open] = await Promise.all([
+    prisma.restaurantTable.findMany({ where: { restaurantId }, orderBy: { number: "asc" } }),
+    openOrdersByTable(restaurantId)
+  ]);
+  return tables.map((t) => serializeTable(t, statusForTable(open.get(t.number))));
+}
+
 /** Mapa do salão — grid size plus every table's position, always returned together so the
  *  dashboard can sync both after a resize or a drag without a second round trip. */
 async function buildSalonGrid(restaurantId: string): Promise<SalonGrid> {
   const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId } });
-  const tables = await prisma.restaurantTable.findMany({ where: { restaurantId }, orderBy: { number: "asc" } });
-  const withStatus = await Promise.all(
-    tables.map(async (t) => serializeTable(t, statusForTable(t, await openOrdersForTable(restaurantId, t))))
-  );
-  return { gridSize: restaurant?.gridSize ?? MIN_GRID_SIZE, tables: withStatus };
+  return { gridSize: restaurant?.gridSize ?? MIN_GRID_SIZE, tables: await tablesWithStatus(restaurantId) };
 }
 
 restaurantTablesRouter.get("/:id/tables", ...staffGuard, async (req, res) => {
-  const tables = await prisma.restaurantTable.findMany({ where: { restaurantId: req.params.id }, orderBy: { number: "asc" } });
-  const withStatus = await Promise.all(
-    tables.map(async (t) => serializeTable(t, statusForTable(t, await openOrdersForTable(req.params.id, t))))
-  );
-  res.json(withStatus);
+  res.json(await tablesWithStatus(req.params.id));
 });
 
 restaurantTablesRouter.post("/:id/tables", ...staffGuard, async (req, res) => {
@@ -100,7 +101,7 @@ restaurantTablesRouter.patch("/:id/tables/:number", ...staffGuard, async (req, r
   const current = parseInt(req.params.number, 10);
   const table = await findTable(req.params.id, current);
   if (!table) return res.status(404).json({ error: "table not found" });
-  if (table.openedAt) return res.status(409).json({ error: "feche a conta antes de editar o número da mesa" });
+  if ((await openOrdersForTable(req.params.id, current)).length) return res.status(409).json({ error: "feche a conta antes de editar o número da mesa" });
   if (!Number.isInteger(nextNumber) || nextNumber! <= 0) {
     return res.status(400).json({ error: "number must be a positive integer" });
   }
@@ -115,7 +116,7 @@ restaurantTablesRouter.patch("/:id/tables/:number", ...staffGuard, async (req, r
 restaurantTablesRouter.delete("/:id/tables/:number", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
-  if (table.openedAt) return res.status(409).json({ error: "feche a conta antes de excluir a mesa" });
+  if ((await openOrdersForTable(req.params.id, table.number)).length) return res.status(409).json({ error: "feche a conta antes de excluir a mesa" });
   await prisma.restaurantTable.delete({ where: { id: table.id } });
   res.json(await buildSalonGrid(req.params.id));
 });
@@ -123,19 +124,28 @@ restaurantTablesRouter.delete("/:id/tables/:number", ...staffGuard, async (req, 
 restaurantTablesRouter.get("/:id/tables/:number/comanda", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
-  const orders = await openOrdersForTable(req.params.id, table);
-  res.json(buildComanda(table, orders));
+  res.json(buildComanda(table, await openOrdersForTable(req.params.id, table.number)));
 });
 
 restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
-  const orders = await openOrdersForTable(req.params.id, table);
-  await prisma.order.updateMany({ where: { id: { in: orders.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
-  // updateMany on openedAt≠null so only one of two concurrent closes "wins" and takes stock.
-  const closed = await prisma.restaurantTable.updateMany({ where: { id: table.id, openedAt: { not: null } }, data: { openedAt: null } });
-  if (closed.count && orders.length) await takeStockForOrders(req.params.id, orders, `Fechamento de comanda ${orders[0].code}`);
-  res.json({ ok: true });
+  // orderIds = the comanda the waiter was looking at: an order that arrives meanwhile stays open on the table.
+  const { orderIds } = (req.body ?? {}) as { orderIds?: unknown };
+  const open = await openOrdersForTable(req.params.id, table.number);
+  const target = Array.isArray(orderIds) ? open.filter((o) => orderIds.includes(o.id)) : open;
+  // Claims each order once (closedAt IS NULL), so two waiters/double clicks never charge or take stock twice.
+  const claimed = target.length
+    ? await prisma.$queryRaw<{ id: string }[]>`UPDATE "Order" SET "closedAt" = NOW() WHERE "id" IN (${Prisma.join(target.map((o) => o.id))}) AND "closedAt" IS NULL RETURNING "id"`
+    : [];
+  const closed = target.filter((o) => claimed.some((c) => c.id === o.id));
+  if (closed.length) {
+    await prisma.order.updateMany({ where: { id: { in: closed.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
+    await takeStockForOrders(req.params.id, closed, `Fechamento de comanda ${closed[0].code}`);
+  }
+  const remaining = (await openOrdersForTable(req.params.id, table.number)).length;
+  if (!remaining) await prisma.restaurantTable.update({ where: { id: table.id }, data: { openedAt: null } });
+  res.json({ ok: true, closed: closed.length, remaining, code: closed[0]?.code ?? null });
 });
 
 restaurantTablesRouter.post("/:id/tables/:number/transfer", ...staffGuard, async (req, res) => {
@@ -144,13 +154,17 @@ restaurantTablesRouter.post("/:id/tables/:number/transfer", ...staffGuard, async
   if (!toNumber || toNumber === fromNumber) return res.status(400).json({ error: "invalid destination table" });
   const from = await findTable(req.params.id, fromNumber);
   if (!from) return res.status(404).json({ error: "table not found" });
-  let to = await findTable(req.params.id, toNumber);
+  const to = await findTable(req.params.id, toNumber);
   if (!to) return res.status(404).json({ error: "destination table not found" });
 
-  const orders = await openOrdersForTable(req.params.id, from);
-  await prisma.order.updateMany({ where: { id: { in: orders.map((o) => o.id) } }, data: { tableNumber: toNumber } });
-  await prisma.restaurantTable.update({ where: { id: to.id }, data: { openedAt: to.openedAt ?? from.openedAt } });
-  await prisma.restaurantTable.update({ where: { id: from.id }, data: { openedAt: null } });
+  // Only orders still open move (closedAt: null) — one closed by a concurrent "Fechar conta" stays charged where it was.
+  const orders = await openOrdersForTable(req.params.id, from.number);
+  const openedAt = [to.openedAt, from.openedAt].filter((d): d is Date => !!d).sort((a, b) => +a - +b)[0] ?? null;
+  await prisma.$transaction([
+    prisma.order.updateMany({ where: { id: { in: orders.map((o) => o.id) }, closedAt: null }, data: { tableNumber: toNumber } }),
+    prisma.restaurantTable.update({ where: { id: to.id }, data: { openedAt } }),
+    prisma.restaurantTable.update({ where: { id: from.id }, data: { openedAt: null } })
+  ]);
   res.json({ ok: true });
 });
 
