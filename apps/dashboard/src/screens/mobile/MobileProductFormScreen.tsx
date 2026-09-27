@@ -39,7 +39,7 @@ export default function MobileProductFormScreen() {
       setItem(found);
       setDesc(found.shortDescription);
       setCategoryId(found.categoryId);
-      setExtras(found.optionGroups[0]?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || []);
+      setExtras(found.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || []);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);

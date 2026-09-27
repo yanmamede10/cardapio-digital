@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { MenuCategory, MenuItem } from "@cardapio/shared";
+import { LEVEL } from "@cardapio/shared";
 import { api } from "../../lib/api";
+import { myLevel } from "../../lib/modules";
 import { brl } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
@@ -10,6 +12,8 @@ import { ActionSheet } from "../../components/mobile/ActionSheet";
 import { LinkDishModal } from "../../components/LinkDishModal";
 
 export default function MobileMenuScreen() {
+  // Funcionário (garçom, cozinha) only flips Esgotado/Disponível; adding, editing and removing dishes is Administrador+.
+  const canEdit = myLevel() >= LEVEL.ADMINISTRADOR;
   const navigate = useNavigate();
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -23,7 +27,7 @@ export default function MobileMenuScreen() {
   const { notify } = useMobileScreen({
     title: "Cardápio",
     subtitle: `${items.length} ${items.length === 1 ? "prato" : "pratos"} em ${categories.length} ${categories.length === 1 ? "categoria" : "categorias"}`,
-    fab: items.length > 0 ? { label: "Adicionar prato", onClick: () => setLinking(true) } : undefined
+    fab: items.length > 0 && canEdit ? { label: "Adicionar prato", onClick: () => setLinking(true) } : undefined
   });
 
   const reload = () =>
@@ -50,7 +54,7 @@ export default function MobileMenuScreen() {
 
   const toggleAvailable = async (m: MenuItem) => {
     try {
-      const updated = await api.updateItem(m.id, { soldOut: !m.soldOut });
+      const updated = await api.setSoldOut(m.id, !m.soldOut);
       setItems((prev) => prev.map((x) => (x.id === m.id ? updated : x)));
       notify(m.name + (m.soldOut ? " disponível novamente" : " marcado como esgotado"));
     } catch {
@@ -97,14 +101,14 @@ export default function MobileMenuScreen() {
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13.5, color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
-        <button
+        {canEdit && <button
           type="button"
           onClick={() => setReorderOn((v) => !v)}
           title="Reordenar categorias"
           style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: reorderOn ? "var(--brandSoft)" : "var(--surface2)", color: reorderOn ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${reorderOn ? "var(--brand)" : "var(--line)"}` }}
         >
           <i className="fa-solid fa-grip-vertical" style={{ fontSize: 15 }} />
-        </button>
+        </button>}
       </div>
 
       <div style={{ padding: "12px 12px 90px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -156,9 +160,11 @@ export default function MobileMenuScreen() {
                           </div>
                         </div>
                         <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} />
-                        <button type="button" onClick={() => setMenuFor(p)} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
-                          <i className="fa-solid fa-ellipsis" style={{ fontSize: 14 }} />
-                        </button>
+                        {canEdit && (
+                          <button type="button" aria-label={`Opções de ${p.name}`} onClick={() => setMenuFor(p)} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
+                            <i className="fa-solid fa-ellipsis" style={{ fontSize: 14 }} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -176,7 +182,7 @@ export default function MobileMenuScreen() {
             title="Seu cardápio está vazio"
             sub="Vincule o primeiro prato do Catálogo para começar a receber pedidos pelo QR code das mesas."
             action={
-              <button type="button" onClick={() => setLinking(true)} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              canEdit && <button type="button" onClick={() => setLinking(true)} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
                 <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
                 Adicionar primeiro prato
               </button>

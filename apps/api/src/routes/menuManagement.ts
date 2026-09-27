@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { asyncRouter } from "../lib/router.js";
 import multer from "multer";
-import { LEVEL, type UpsertMenuItemRequest } from "@cardapio/shared";
+import { LEVEL, type MenuItemOptionGroup, type UpsertMenuItemRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem } from "../lib/serialize.js";
@@ -41,6 +41,12 @@ function optionGroupsJsonFor(extras: UpsertMenuItemRequest["extras"]): string {
       options: extras.map((e, i) => ({ id: `extra-${i}`, label: e.name, priceDelta: e.priceDelta }))
     }
   ]);
+}
+
+/** The dashboard edits only the "Adicionais" group (id "extra"); every other group (e.g. "Ponto da carne") is kept as is. */
+function withExtras(currentJson: string, extras: UpsertMenuItemRequest["extras"]): string {
+  const others = (JSON.parse(currentJson) as MenuItemOptionGroup[]).filter((g) => g.id !== "extra");
+  return JSON.stringify([...others, ...JSON.parse(optionGroupsJsonFor(extras))]);
 }
 
 async function itemsFor(restaurantId: string) {
@@ -121,10 +127,20 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
       ...(body.price !== undefined ? { price: body.price } : {}),
       ...(body.soldOut !== undefined ? { soldOut: body.soldOut } : {}),
       ...(body.scheduleLabel !== undefined ? { scheduleLabel: body.scheduleLabel } : {}),
-      ...(body.extras !== undefined ? { optionGroupsJson: optionGroupsJsonFor(body.extras) } : {})
+      ...(body.extras !== undefined ? { optionGroupsJson: withExtras(existing.optionGroupsJson, body.extras) } : {})
     },
     include: { category: true }
   });
+  res.json(serializeMenuItem(item, item.category.name));
+});
+
+// Esgotado/Disponível: any role — the kitchen is who knows the bacon ran out. Everything else on a dish is Administrador+.
+menuManagementRouter.patch("/:id/items/:itemId/sold-out", requireStaff, requireOwnRestaurant, requireModule("cardapio"), async (req, res) => {
+  const { soldOut } = req.body as { soldOut?: unknown };
+  if (typeof soldOut !== "boolean") return res.status(400).json({ error: "soldOut must be true or false" });
+  const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
+  if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
+  const item = await prisma.menuItem.update({ where: { id: existing.id }, data: { soldOut }, include: { category: true } });
   res.json(serializeMenuItem(item, item.category.name));
 });
 

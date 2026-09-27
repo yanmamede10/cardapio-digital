@@ -1,0 +1,62 @@
+import assert from "node:assert/strict";
+import { before, test } from "node:test";
+import { call, uid } from "./helpers.ts";
+
+// Cardápio of the demo hamburgueria (prisma/seed-demo.ts).
+const D = "chapa27";
+const P = `/api/restaurants/${D}`;
+type Item = { id: string; name: string; price: number; soldOut: boolean; shortDescription: string; optionGroups: { id: string; label: string; options: { id: string; label: string; priceDelta: number }[] }[] };
+const tokens: Record<string, string> = {};
+const items = async () => (await call("GET", `${P}/items`)).body as Item[];
+const byName = async (n: string) => (await items()).find((i) => i.name === n)!;
+
+before(async () => {
+  for (const u of ["dono", "gerente", "garcom", "cozinha"]) tokens[u] = (await call("POST", "/api/auth/login", { body: { email: `${u}@chapa27.example`, password: "senha123" } })).body.token;
+});
+
+test("cozinha e garçom marcam Esgotado/Disponível; o cliente não consegue pedir o esgotado", async () => {
+  const batata = await byName("Batata Frita");
+  const soldOut = (who: string, v: unknown) => call("PATCH", `${P}/items/${batata.id}/sold-out`, { token: tokens[who], body: { soldOut: v } });
+  assert.equal((await soldOut("cozinha", true)).body.soldOut, true);
+  const orderIt = () => call("POST", "/api/orders", { session: `s-${uid()}`, body: { mode: "table", restaurantId: D, tableNumber: 25, lines: [{ itemId: batata.id, quantity: 1, notes: "", selectedOptions: [] }] } });
+  const refused = await orderIt();
+  assert.equal(refused.status, 400);
+  assert.match(refused.body.error, /esgotado/);
+  assert.equal((await soldOut("garcom", false)).body.soldOut, false);
+  assert.equal((await orderIt()).status, 201);
+  assert.equal((await soldOut("garcom", "sim")).status, 400);
+  assert.equal((await call("PATCH", `${P}/items/fogo-burger/sold-out`, { token: tokens.garcom, body: { soldOut: true } })).status, 404, "prato de outro restaurante");
+});
+
+test("Funcionário não edita o resto do prato", async () => {
+  const kids = await byName("Kids");
+  for (const who of ["garcom", "cozinha"]) {
+    assert.equal((await call("PATCH", `${P}/items/${kids.id}`, { token: tokens[who], body: { shortDescription: "x" } })).status, 403, who);
+    assert.equal((await call("DELETE", `${P}/items/${kids.id}`, { token: tokens[who] })).status, 403, who);
+  }
+});
+
+test("Organizar prato mexe só nos adicionais: o Ponto da carne continua, e o adicional novo vale no pedido", async () => {
+  const classico = await byName("Clássico");
+  const extras = [...classico.optionGroups.find((g) => g.id === "extra")!.options.map((o) => ({ name: o.label, priceDelta: o.priceDelta })), { name: "Cheddar cremoso", priceDelta: 5 }];
+  const res = await call("PATCH", `${P}/items/${classico.id}`, { token: tokens.gerente, body: { categoryId: `${D}-cat-0`, shortDescription: "Blend 150 g, cheddar, salada e molho — pão brioche tostado", extras } });
+  assert.equal(res.status, 200);
+  const after = await byName("Clássico");
+  assert.deepEqual(after.optionGroups.map((g) => g.label), ["Ponto da carne", "Adicionais"]);
+  assert.equal(after.optionGroups[0].options.length, 3);
+  const cremoso = after.optionGroups[1].options.find((o) => o.label === "Cheddar cremoso")!;
+  const order = await call("POST", "/api/orders", {
+    session: `s-${uid()}`,
+    body: { mode: "table", restaurantId: D, tableNumber: 26, lines: [{ itemId: after.id, quantity: 1, notes: "", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: cremoso.id }] }] }
+  });
+  assert.equal(order.body.total, 37.9, "32,90 + 5,00");
+  assert.deepEqual(order.body.lines[0].selectedOptions.map((o: { label: string }) => o.label), ["Bem passado", "Cheddar cremoso"]);
+});
+
+test("textos: acento aceito, acima do limite recusado", async () => {
+  const salada = await byName("Salada");
+  const patch = (body: object) => call("PATCH", `${P}/items/${salada.id}`, { token: tokens.gerente, body });
+  assert.equal((await patch({ shortDescription: "Alface, tomate, cebola roxa e maionese de açafrão — pão de fermentação natural" })).status, 200);
+  assert.equal((await patch({ shortDescription: "x".repeat(201) })).status, 400);
+  assert.equal((await byName("Salada")).shortDescription.includes("açafrão"), true);
+});

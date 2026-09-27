@@ -344,3 +344,26 @@ test("Central: card mostra opções e observação; pedido recusado sai do quadr
   await page.unroute("http://localhost:4200/**");
   await expect(page.getByText("Atualizando em tempo real")).toBeVisible({ timeout: 6_000 });
 });
+
+plain("cozinha marca Esgotado no Cardápio e não vê os botões de edição", async ({ page, request }) => {
+  await loginAs(page, request, "igor@fogoeno.com.br");
+  await page.goto("/cardapio");
+  await expect(page.getByRole("button", { name: "Adicionar prato" })).toHaveCount(0);
+  const row = page.locator("div").filter({ has: page.getByText("Água com Gás", { exact: true }) }).filter({ has: page.getByRole("button", { name: /Disponível|Esgotado/ }) }).last();
+  await row.getByRole("button", { name: /Disponível/ }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("marcado esgotado");
+  await row.getByRole("button", { name: /Esgotado/ }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("disponível novamente");
+});
+
+test("Organizar prato: mudar a descrição mantém Ponto da carne e Pão; só os adicionais aparecem para editar", async ({ page, api }) => {
+  await page.goto("/cardapio");
+  await page.getByRole("button", { name: "Organizar Burger da Casa" }).click();
+  const drawer = page.locator(".drawer-panel");
+  await expect(drawer.locator("input.field").first()).toHaveValue("Bacon"); // first adicional, not "Ao ponto"
+  await drawer.locator("textarea").fill("Blend 180 g, cheddar inglês e cebola caramelizada — descrição nova");
+  await drawer.getByRole("button", { name: "Salvar prato" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("Prato salvo");
+  const burger = (await api("GET", `/api/restaurants/${R}/items`)).find((i: { id: string }) => i.id === `${R}-burger`);
+  expect(burger.optionGroups.map((g: { label: string }) => g.label)).toEqual(["Ponto da carne", "Pão", "Adicionais"]);
+});

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import type { MenuCategory, MenuItem } from "@cardapio/shared";
+import { LEVEL, type MenuCategory, type MenuItem } from "@cardapio/shared";
 import {
   DndContext,
   DragOverlay,
@@ -16,6 +16,7 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "../lib/api";
+import { myLevel } from "../lib/modules";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
@@ -52,6 +53,8 @@ const scopedCollisionDetection: CollisionDetection = (args) => {
 };
 
 export default function MenuScreen() {
+  // Funcionário (garçom, cozinha) only flips Esgotado/Disponível; adding, editing, reordering and removing is Administrador+.
+  const canEdit = myLevel() >= LEVEL.ADMINISTRADOR;
   const { notify } = useDashboardState();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<MenuCategory[]>([]);
@@ -101,7 +104,7 @@ export default function MenuScreen() {
       categoryId: m.categoryId,
       lunch: "11:00 – 15:00",
       dinner: "18:00 – 23:00",
-      extras: m.optionGroups[0]?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || [],
+      extras: m.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || [],
       imageUrl: m.imageUrl
     });
 
@@ -137,7 +140,7 @@ export default function MenuScreen() {
 
   const toggleAvailable = async (m: MenuItem) => {
     try {
-      const updated = await api.updateItem(m.id, { soldOut: !m.soldOut });
+      const updated = await api.setSoldOut(m.id, !m.soldOut);
       setItems((prev) => prev.map((x) => (x.id === m.id ? updated : x)));
       notify(m.name + (m.soldOut ? " disponível novamente" : " marcado esgotado"));
     } catch {
@@ -236,10 +239,12 @@ export default function MenuScreen() {
         <div className="mono" style={{ fontSize: 12, color: "var(--ink3)" }}>
           {filtered.length} de {items.length} pratos
         </div>
-        <button type="button" className="btn btn-primary" onClick={openLink}>
-          <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
-          Adicionar prato
-        </button>
+        {canEdit && (
+          <button type="button" className="btn btn-primary" onClick={openLink}>
+            <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
+            Adicionar prato
+          </button>
+        )}
       </div>
 
       {items.length === 0 ? (
@@ -248,7 +253,7 @@ export default function MenuScreen() {
           title="Seu cardápio ainda está vazio"
           sub="Vincule o primeiro prato do Catálogo para que ele apareça no cardápio digital e possa ser pedido nas mesas e no delivery."
           action={
-            <button type="button" className="btn btn-primary" onClick={openLink}>
+            canEdit && <button type="button" className="btn btn-primary" onClick={openLink}>
               <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
               Adicionar primeiro prato
             </button>
@@ -268,10 +273,10 @@ export default function MenuScreen() {
           <SortableContext items={groups.map((g) => catSortId(g.cat.id))} strategy={verticalListSortingStrategy}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {groups.map((g) => (
-                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length}>
+                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit}>
                   <SortableContext items={g.items.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {g.items.map((m) => (
-                      <ItemRow key={m.id} item={m} onToggleAvailable={() => toggleAvailable(m)} onUnlink={() => unlink(m)} onEdit={() => openEdit(m)} />
+                      <ItemRow key={m.id} item={m} canEdit={canEdit} onToggleAvailable={() => toggleAvailable(m)} onUnlink={() => unlink(m)} onEdit={() => openEdit(m)} />
                     ))}
                   </SortableContext>
                 </CategorySection>
@@ -477,13 +482,13 @@ function ItemDragPreview({ name, price }: { name: string; price: string }) {
   );
 }
 
-function CategorySection({ cat, count, children }: { cat: MenuCategory; count: number; children: ReactNode }) {
+function CategorySection({ cat, count, canEdit, children }: { cat: MenuCategory; count: number; canEdit: boolean; children: ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: catSortId(cat.id) });
   const style: CSSProperties = { overflowX: "auto", transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
   return (
     <section ref={setNodeRef} style={style} className="card">
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 18px", background: "var(--surface2)", borderBottom: "1px solid var(--line)", minWidth: 820 }}>
-        <DragHandle ariaLabel={`Reordenar categoria ${cat.name}`} {...attributes} {...listeners} />
+        {canEdit && <DragHandle ariaLabel={`Reordenar categoria ${cat.name}`} {...attributes} {...listeners} />}
         <div style={{ fontWeight: 600, fontSize: 13.5 }}>{cat.name}</div>
         <span className="mono" style={{ fontSize: 11, color: "var(--ink3)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
           {count}
@@ -494,7 +499,7 @@ function CategorySection({ cat, count, children }: { cat: MenuCategory; count: n
   );
 }
 
-function ItemRow({ item: m, onToggleAvailable, onUnlink, onEdit }: { item: MenuItem; onToggleAvailable: () => void; onUnlink: () => void; onEdit: () => void }) {
+function ItemRow({ item: m, canEdit, onToggleAvailable, onUnlink, onEdit }: { item: MenuItem; canEdit: boolean; onToggleAvailable: () => void; onUnlink: () => void; onEdit: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: m.id });
   const style: CSSProperties = {
     display: "grid",
@@ -511,7 +516,7 @@ function ItemRow({ item: m, onToggleAvailable, onUnlink, onEdit }: { item: MenuI
   };
   return (
     <div ref={setNodeRef} style={style}>
-      <DragHandle ariaLabel={`Reordenar ${m.name}`} {...attributes} {...listeners} />
+      {canEdit ? <DragHandle ariaLabel={`Reordenar ${m.name}`} {...attributes} {...listeners} /> : <span />}
       <div
         style={{
           height: 44,
@@ -550,7 +555,7 @@ function ItemRow({ item: m, onToggleAvailable, onUnlink, onEdit }: { item: MenuI
         </span>
         <span style={{ fontSize: 12, fontWeight: 600, color: m.soldOut ? "var(--ink3)" : "var(--ok)" }}>{m.soldOut ? "Esgotado" : "Disponível"}</span>
       </button>
-      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", visibility: canEdit ? undefined : "hidden" }}>
         <button type="button" title="Remover do cardápio" aria-label={`Remover ${m.name} do cardápio`} className="icon-btn" onClick={onUnlink}>
           <i className="fa-solid fa-link-slash" style={{ fontSize: 15, lineHeight: 1 }} />
         </button>

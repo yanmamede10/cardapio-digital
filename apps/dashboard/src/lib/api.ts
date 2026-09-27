@@ -228,6 +228,9 @@ export const api = {
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items`, { method: "POST", body: JSON.stringify(payload) }),
   updateItem: (itemId: string, payload: Partial<UpsertMenuItemRequest> & { soldOut?: boolean }) =>
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  /** Esgotado/Disponível — the one thing on a dish every role may change. */
+  setSoldOut: (itemId: string, soldOut: boolean) =>
+    request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/sold-out`, { method: "PATCH", body: JSON.stringify({ soldOut }) }),
   duplicateItem: (itemId: string) =>
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/duplicate`, { method: "POST" }),
   deleteItem: (itemId: string) => request<void>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "DELETE" }),
