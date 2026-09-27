@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { LEVEL, PAYMENT_METHODS, type CreateFinanceEntryRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hasModule, requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
@@ -6,7 +6,7 @@ import { round2 } from "../lib/pricing.js";
 import { serializeFinanceEntry, serializeOrder } from "../lib/serialize.js";
 import { serviceFee, servicePct } from "../lib/tables.js";
 
-export const financeRouter = Router();
+export const financeRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
 const MAX_TEXT_LENGTH = 120;

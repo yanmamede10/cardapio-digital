@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { PAYMENT_METHODS, type SalonGrid } from "@cardapio/shared";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
@@ -7,7 +7,7 @@ import { buildComanda, openOrdersByTable, openOrdersForTable, servicePct, status
 import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
 
-export const restaurantTablesRouter = Router();
+export const restaurantTablesRouter = asyncRouter();
 // Applied per-route (not via router.use) because several routers share the
 // "/api/restaurants" mount point — a path-based router.use() here would also
 // run for sibling routers' routes (e.g. reports' /:id/shift-stats).

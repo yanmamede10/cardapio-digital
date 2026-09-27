@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import multer from "multer";
 import { LEVEL, type MenuTemplateId } from "@cardapio/shared";
 import { prisma } from "../db.js";
@@ -6,7 +6,7 @@ import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.
 import { serializeAppearanceState, serializePublicAppearance } from "../lib/serialize.js";
 import { uploadPublicFile } from "../lib/storage.js";
 
-export const appearanceRouter = Router();
+export const appearanceRouter = asyncRouter();
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 

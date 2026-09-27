@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import multer from "multer";
 import { LEVEL, type UpsertMenuItemRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
@@ -7,7 +7,7 @@ import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } fro
 import { serializeMenuItem } from "../lib/serialize.js";
 import { uploadPublicFile } from "../lib/storage.js";
 
-export const menuManagementRouter = Router();
+export const menuManagementRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.

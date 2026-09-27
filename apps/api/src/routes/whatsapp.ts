@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { Prisma } from "@prisma/client";
 import { LEVEL, SUPPORT_ROLES, type WhatsAppStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
@@ -7,7 +7,7 @@ import { storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp, type WhatsAppMessage } from "../lib/whatsapp.js";
 
 // Configurações → WhatsApp is Dono-only; the connection indicator is for everyone who sees Atendimento.
-export const whatsappRouter = Router();
+export const whatsappRouter = asyncRouter();
 const supportGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES), requireModule("atendimento")];
 const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO), requireModule("atendimento")];
 
@@ -58,7 +58,7 @@ whatsappRouter.post("/:id/whatsapp/disconnect", ...ownerGuard, async (req, res) 
 });
 
 // Provider → API. Authenticated by the provider's own check (a shared secret header for Evolution); receiving never sends anything.
-export const whatsappWebhookRouter = Router();
+export const whatsappWebhookRouter = asyncRouter();
 
 whatsappWebhookRouter.post("/", async (req, res, next) => {
   if (!whatsapp.verifyWebhook((name) => req.header(name))) return res.status(401).json({ error: "invalid webhook secret" });

@@ -1,4 +1,5 @@
-import { Router, type Response } from "express";
+import { type Response } from "express";
+import { asyncRouter } from "../lib/router.js";
 import multer from "multer";
 import type { SupportTicket } from "@prisma/client";
 import { SUPPORT_ROLES } from "@cardapio/shared";
@@ -8,7 +9,7 @@ import { serializeReview, serializeTicket } from "../lib/serialize.js";
 import { WHATSAPP_MEDIA_MAX_BYTES, storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp } from "../lib/whatsapp.js";
 
-export const supportRouter = Router();
+export const supportRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.

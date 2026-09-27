@@ -1,7 +1,7 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 
-export const tablesRouter = Router();
+export const tablesRouter = asyncRouter();
 
 // A table's QR encodes "<restaurantId>.<number>" (restaurant ids are [a-z0-9-], so the last "." splits them).
 // Only an existing table of an active restaurant resolves — anything else is "mesa não encontrada".

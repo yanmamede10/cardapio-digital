@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { LEVEL, type CreateCouponRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeCoupon } from "../lib/serialize.js";
 
-export const dashboardCouponsRouter = Router();
+export const dashboardCouponsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.

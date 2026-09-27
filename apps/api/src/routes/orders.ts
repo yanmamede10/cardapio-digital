@@ -1,4 +1,5 @@
-import { Router, type Request } from "express";
+import { type Request } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { Prisma } from "@prisma/client";
 import type { CreateOrderRequest, OrderStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
@@ -13,7 +14,7 @@ const VALID_STAGES: OrderStatus[] = ["preparing", "ready", "out_for_delivery", "
 const MAX_NOTES_LENGTH = 300;
 const MAX_GUEST_NAME_LENGTH = 120;
 
-export const ordersRouter = Router();
+export const ordersRouter = asyncRouter();
 
 function sessionId(req: Request): string {
   const raw = req.header("X-Session-Id");

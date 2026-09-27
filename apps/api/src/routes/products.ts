@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { LEVEL, PRODUCT_UNITS, type UpsertProductRequest, type XmlImportRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMovement, serializeProduct } from "../lib/serialize.js";
 
-export const productsRouter = Router();
+export const productsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("produtos")];
 const withComponents = { components: { include: { component: true } } } as const;

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { LEVEL, type AnalyticsPeriod } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
@@ -6,7 +6,7 @@ import { buildAnalytics, buildShiftStats } from "../lib/analytics.js";
 import { serializeCharge } from "../lib/serialize.js";
 import { round2 } from "../lib/pricing.js";
 
-export const reportsRouter = Router();
+export const reportsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.

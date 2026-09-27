@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { serializeStaff } from "../lib/serialize.js";
 import { hashPassword, requireStaffWithProvisionalPassword, signStaffToken, verifyPassword } from "../lib/auth.js";
 import type { StaffRole } from "@cardapio/shared";
 
-export const authRouter = Router();
+export const authRouter = asyncRouter();
 const MIN_PASSWORD_LENGTH = 6; // same as Equipe & Permissões
 
 authRouter.post("/login", async (req, res) => {

@@ -1,9 +1,9 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem, serializeOrder, serializeRestaurant } from "../lib/serialize.js";
 
-export const restaurantsRouter = Router();
+export const restaurantsRouter = asyncRouter();
 
 // Staff-facing order queue: every order placed today for this restaurant,
 // regardless of which guest session created it (unlike GET /api/orders,

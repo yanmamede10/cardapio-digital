@@ -1,5 +1,6 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { Router, type NextFunction, type Request, type Response } from "express";
+import { type NextFunction, type Request, type Response } from "express";
+import { asyncRouter } from "../lib/router.js";
 import type { Restaurant } from "@prisma/client";
 import { PAYMENT_METHODS, PLAN_MODULES, type AdminCharge, type AdminRestaurant, type AdminRestaurantDetail, type RestaurantStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
@@ -21,7 +22,7 @@ function requireSuperAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export const adminRouter = Router();
+export const adminRouter = asyncRouter();
 adminRouter.use(requireSuperAdmin); // own mount point (/api/admin), so router-wide is safe here
 
 const MAX_NAME_LENGTH = 80;

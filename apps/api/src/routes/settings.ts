@@ -1,10 +1,10 @@
-import { Router } from "express";
+import { asyncRouter } from "../lib/router.js";
 import { LEVEL, ROLE_LEVEL, type FiscalInfo, type OperatingHoursRow, type PaymentMode, type RestaurantProfile, type StaffRole, type TaxRegime } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
 
-export const settingsRouter = Router();
+export const settingsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
