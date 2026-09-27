@@ -1,16 +1,20 @@
 import { Router } from "express";
+import { prisma } from "../db.js";
 
 export const tablesRouter = Router();
 
-const TABLE_RESTAURANT_ID = "fogo";
-
-// Seed simplification: every table code resolves to the Fogo & Nó dining
-// room (the only restaurant the design's table/QR flow ever shows). A real
-// deployment would look up the physical table row a QR code encodes.
-tablesRouter.get("/:tableCode", (req, res) => {
-  const tableNumber = parseInt(req.params.tableCode, 10);
-  if (!Number.isInteger(tableNumber) || tableNumber < 1 || tableNumber > 99) {
-    return res.status(404).json({ error: "table not found" });
-  }
-  res.json({ restaurantId: TABLE_RESTAURANT_ID, tableNumber });
+// A table's QR encodes "<restaurantId>.<number>" (restaurant ids are [a-z0-9-], so the last "." splits them).
+// Only an existing table of an active restaurant resolves — anything else is "mesa não encontrada".
+tablesRouter.get("/:tableCode", async (req, res) => {
+  const code = req.params.tableCode;
+  const dot = code.lastIndexOf(".");
+  const restaurantId = code.slice(0, dot);
+  const tableNumber = Number(code.slice(dot + 1));
+  if (dot < 1 || !Number.isInteger(tableNumber)) return res.status(404).json({ error: "table not found" });
+  const table = await prisma.restaurantTable.findUnique({
+    where: { restaurantId_number: { restaurantId, number: tableNumber } },
+    select: { restaurant: { select: { status: true } } }
+  });
+  if (table?.restaurant.status !== "ativo") return res.status(404).json({ error: "table not found" });
+  res.json({ restaurantId, tableNumber });
 });

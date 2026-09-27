@@ -158,7 +158,7 @@ restaurantTablesRouter.get("/:id/tables/:number/qr", ...staffGuard, async (req, 
   const number = parseInt(req.params.number, 10);
   const table = await findTable(req.params.id, number);
   if (!table) return res.status(404).json({ error: "table not found" });
-  res.json({ tableCode: String(number) });
+  res.json({ tableCode: `${req.params.id}.${number}` }); // resolved back by GET /api/tables/:tableCode
 });
 
 restaurantTablesRouter.get("/:id/waiter-calls", ...staffGuard, async (req, res) => {
