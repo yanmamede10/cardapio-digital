@@ -322,3 +322,25 @@ plain("sessão encerrada no meio do uso (restaurante desativado, token vencido) 
   await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "inativo" });
   await expect(page.locator("input[type=email]")).toBeVisible({ timeout: 10_000 }); // the Central polls every 4 s
 });
+
+test("Central: card mostra opções e observação; pedido recusado sai do quadro; sem conexão aparece o aviso", async ({ page, api }) => {
+  const items = await api("GET", `/api/restaurants/${R}/items`);
+  const burger = items.find((i: { id: string }) => i.id === `${R}-burger`);
+  const table = 100 + Math.floor(Math.random() * 800);
+  const lines = [{ itemId: burger.id, quantity: 1, notes: "sem cebola, pão bem tostado", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: "extra-0" }] }];
+  await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableNumber: table, lines });
+  const refused = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableNumber: table + 1, lines: [{ ...lines[0], notes: "recusado" }] });
+  await api("POST", `/api/orders/${refused.id}/reject`);
+
+  await page.goto("/");
+  const card = page.locator("article").filter({ hasText: `Mesa ${table}` });
+  await expect(card).toContainText("Bem passada · Bacon");
+  await expect(card).toContainText("Obs: sem cebola, pão bem tostado");
+  await expect(page.locator("article").filter({ hasText: "recusado" })).toHaveCount(0);
+
+  await page.route("http://localhost:4200/**", (r) => r.abort());
+  await expect(page.getByRole("alert")).toContainText("Sem conexão com o servidor", { timeout: 6_000 });
+  await expect(card).toBeVisible(); // the cards stay
+  await page.unroute("http://localhost:4200/**");
+  await expect(page.getByText("Atualizando em tempo real")).toBeVisible({ timeout: 6_000 });
+});

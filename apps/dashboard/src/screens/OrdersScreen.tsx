@@ -15,6 +15,7 @@ import {
 import { api } from "../lib/api";
 import { brl, minutesSince } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
+import { LineExtras } from "../components/OrderCard";
 
 const ALERT_MINUTES = 20;
 
@@ -53,6 +54,7 @@ export default function OrdersScreen() {
   const [shift, setShift] = useState<{ closedOrders: number; avgTicket: number; avgPrepMinutes: number; shiftRevenue: number } | null>(null);
   const [filter, setFilter] = useState<"todos" | "table" | "delivery">("todos");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -63,7 +65,11 @@ export default function OrdersScreen() {
   useEffect(() => {
     let alive = true;
     const load = () => {
-      api.listOrders().then((o) => alive && setOrders(o)).catch(() => {});
+      // A failed poll keeps the cards on screen but says so: a kitchen tablet must never look "quiet" while it's offline.
+      api
+        .listOrders()
+        .then((o) => alive && (setOrders(o), setOffline(false)))
+        .catch(() => alive && setOffline(true));
       api.listWaiterCalls().then((c) => alive && setCalls(c)).catch(() => {});
       api.getShiftStats().then((s) => alive && setShift(s)).catch(() => {});
     };
@@ -75,7 +81,9 @@ export default function OrdersScreen() {
     };
   }, []);
 
-  const visible = useMemo(() => orders.filter((o) => filter === "todos" || o.mode === filter), [orders, filter]);
+  // Refused orders leave the board (they used to land in "Entregue / Servido").
+  const live = useMemo(() => orders.filter((o) => o.status !== "cancelled"), [orders]);
+  const visible = useMemo(() => live.filter((o) => filter === "todos" || o.mode === filter), [live, filter]);
 
   const setStage = async (id: string, stage: OrderStatus, label: string, ref: string) => {
     try {
@@ -142,7 +150,7 @@ export default function OrdersScreen() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: 4, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14, padding: 3 }}>
             {filters.map((f) => {
-              const count = f.key === "todos" ? orders.length : orders.filter((o) => o.mode === f.key).length;
+              const count = f.key === "todos" ? live.length : live.filter((o) => o.mode === f.key).length;
               const active = filter === f.key;
               return (
                 <button
@@ -174,9 +182,9 @@ export default function OrdersScreen() {
             })}
           </div>
           <div style={{ flex: 1 }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "var(--ink3)" }}>
-            <span className="dot" style={{ background: "var(--ok)" }} />
-            Atualizando em tempo real
+          <div role={offline ? "alert" : undefined} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: offline ? 600 : 400, color: offline ? "var(--alert)" : "var(--ink3)" }}>
+            <span className="dot" style={{ background: offline ? "var(--alert)" : "var(--ok)" }} />
+            {offline ? "Sem conexão com o servidor — tentando de novo" : "Atualizando em tempo real"}
           </div>
           <button type="button" className="btn btn-outline" onClick={() => notify("Fila de produção enviada à impressora")}>
             <i className="fa-solid fa-print" style={{ fontSize: 17, lineHeight: 1 }} />
@@ -377,11 +385,14 @@ function KanbanCardBody({
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "11px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
         {o.lines.map((l) => (
-          <div key={l.id} style={{ display: "flex", gap: 8, fontSize: 12.5, color: "var(--ink2)" }}>
-            <span className="mono" style={{ color: "var(--ink)", fontWeight: 500 }}>
-              {l.quantity}×
-            </span>
-            <span style={{ minWidth: 0, flex: 1 }}>{l.name}</span>
+          <div key={l.id}>
+            <div style={{ display: "flex", gap: 8, fontSize: 12.5, color: "var(--ink2)" }}>
+              <span className="mono" style={{ color: "var(--ink)", fontWeight: 500 }}>
+                {l.quantity}×
+              </span>
+              <span style={{ minWidth: 0, flex: 1 }}>{l.name}</span>
+            </div>
+            <LineExtras line={l} />
           </div>
         ))}
       </div>

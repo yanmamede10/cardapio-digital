@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Order, OrderStatus, WaiterCall } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { brl, minutesSince } from "../../lib/format";
-import { orderRef, orderSubtitle } from "../../components/OrderCard";
+import { LineExtras, orderRef, orderSubtitle } from "../../components/OrderCard";
 import { nextStatusFor } from "../OrdersScreen";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
@@ -31,11 +31,15 @@ export default function MobileOrdersScreen() {
   const [channel, setChannel] = useState<"todos" | "table" | "delivery">("todos");
   const [tab, setTab] = useState<Tab>("pending");
   const [callsOpen, setCallsOpen] = useState(true);
+  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let alive = true;
     const load = () => {
-      api.listOrders().then((o) => alive && (setOrders(o), setLoaded(true))).catch(() => {});
+      api
+        .listOrders()
+        .then((o) => alive && (setOrders(o), setLoaded(true), setOffline(false)))
+        .catch(() => alive && setOffline(true)); // cards stay; the banner says the list is stale
       api.listWaiterCalls().then((c) => alive && setCalls(c)).catch(() => {});
     };
     load();
@@ -106,6 +110,11 @@ export default function MobileOrdersScreen() {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
+        {offline && (
+          <div role="alert" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--alert)" }}>
+            Sem conexão com o servidor — tentando de novo
+          </div>
+        )}
         <div style={{ display: "flex", gap: 6 }}>
           <MobileChip active={channel === "todos"} onClick={() => setChannel("todos")} icon="fa-list-check" grow>
             Todos
@@ -223,8 +232,11 @@ export default function MobileOrdersScreen() {
 
               <div style={{ background: "var(--surface2)", borderRadius: 10, padding: "9px 11px", display: "flex", flexDirection: "column", gap: 3 }}>
                 {o.lines.map((l) => (
-                  <div key={l.id} style={{ fontSize: 12.5, color: "var(--ink2)" }}>
-                    {l.quantity}× {l.name}
+                  <div key={l.id}>
+                    <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+                      {l.quantity}× {l.name}
+                    </div>
+                    <LineExtras line={l} />
                   </div>
                 ))}
                 {o.lines.length === 0 && <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Sem itens</div>}
