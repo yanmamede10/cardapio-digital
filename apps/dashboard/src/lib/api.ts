@@ -313,9 +313,10 @@ export const api = {
   getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
   updateFiscal: (payload: Partial<FiscalInfo>) =>
     request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) }),
-  getPaymentMode: () => request<{ paymentMode: PaymentMode }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`),
-  setPaymentMode: (paymentMode: PaymentMode) =>
-    request<{ paymentMode: PaymentMode }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`, { method: "PATCH", body: JSON.stringify({ paymentMode }) }),
+  /** How the table pays and whether its comanda adds the 10% service. */
+  getPaymentMode: () => request<{ paymentMode: PaymentMode; serviceCharge: boolean }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`),
+  setPaymentMode: (payload: { paymentMode?: PaymentMode; serviceCharge?: boolean }) =>
+    request<{ paymentMode: PaymentMode; serviceCharge: boolean }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`, { method: "PATCH", body: JSON.stringify(payload) }),
 
   // Appearance
   getAppearanceDraft: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`),

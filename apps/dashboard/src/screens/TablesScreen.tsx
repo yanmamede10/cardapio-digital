@@ -43,7 +43,7 @@ export default function TablesScreen() {
   const [people, setPeople] = useState(2);
   const [transferTo, setTransferTo] = useState<number | "">("");
   const [pixTarget, setPixTarget] = useState<{ number: number; title: string; amount: number; itemsLabel: string } | null>(null);
-  const [manualMethod, setManualMethod] = useState<"cartao" | "pix" | "dinheiro">("cartao");
+  const [manualMethod, setManualMethod] = useState<"Cartão" | "PIX" | "Dinheiro">("Cartão");
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ table: RestaurantTable; x: number; y: number } | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("maquininha_propria");
@@ -158,7 +158,7 @@ export default function TablesScreen() {
   }, []);
 
   useEffect(() => {
-    api.getPaymentMode().then((r) => setPaymentMode(r.paymentMode)).catch(() => {});
+    api.getPaymentMode().then((r) => setPaymentMode(r.paymentMode)).catch(() => {}); // Funcionário gets 403: maquininha própria
   }, []);
 
   useEffect(() => {
@@ -169,10 +169,10 @@ export default function TablesScreen() {
 
   const selT = tables.find((t) => t.number === selected) || null;
 
-  const confirmCloseTable = async (number: number) => {
+  const confirmCloseTable = async (number: number, paymentMethod: string) => {
     setPixTarget(null);
     try {
-      const { remaining } = await api.closeTable(number, { orderIds: comanda?.orderIds ?? [] });
+      const { remaining } = await api.closeTable(number, { orderIds: comanda?.orderIds ?? [], paymentMethod });
       notify(remaining ? `Conta fechada — chegou pedido novo na Mesa ${String(number).padStart(2, "0")}, confira a comanda` : `Conta da Mesa ${String(number).padStart(2, "0")} fechada`);
       loadTables();
       if (selected === number) api.getComanda(number).then(setComanda).catch(() => setComanda(null));
@@ -352,10 +352,12 @@ export default function TablesScreen() {
             <span style={{ flex: 1 }}>Subtotal</span>
             <span className="mono">{brl(subtotal)}</span>
           </div>
-          <div style={{ display: "flex", fontSize: 12.5, color: "var(--ink2)" }}>
-            <span style={{ flex: 1 }}>Serviço {comanda ? comanda.servicePct : 10}%</span>
-            <span className="mono">{brl(service)}</span>
-          </div>
+          {!!comanda?.servicePct && (
+            <div style={{ display: "flex", fontSize: 12.5, color: "var(--ink2)" }}>
+              <span style={{ flex: 1 }}>Serviço {comanda.servicePct}%</span>
+              <span className="mono">{brl(service)}</span>
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "baseline", marginTop: 4 }}>
             <span style={{ flex: 1, fontWeight: 600, fontSize: 13.5 }}>Total</span>
             <span className="mono" style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-.03em" }}>
@@ -374,7 +376,7 @@ export default function TablesScreen() {
                 number: selT.number,
                 title: `Mesa ${String(selT.number).padStart(2, "0")}`,
                 amount: total,
-                itemsLabel: `${(comanda?.lines || []).length} itens · serviço ${comanda ? comanda.servicePct : 10}% incluso`
+                itemsLabel: `${(comanda?.lines || []).length} itens${comanda?.servicePct ? ` · serviço ${comanda.servicePct}% incluso` : ""}`
               })
             }
           >
@@ -452,7 +454,7 @@ export default function TablesScreen() {
           amount={pixTarget?.amount || 0}
           itemsLabel={pixTarget?.itemsLabel}
           onClose={() => setPixTarget(null)}
-          onConfirmed={() => pixTarget && confirmCloseTable(pixTarget.number)}
+          onConfirmed={() => pixTarget && confirmCloseTable(pixTarget.number, "PIX")}
           onNotify={notify}
         />
       ) : (
@@ -471,13 +473,13 @@ export default function TablesScreen() {
                     value={manualMethod}
                     onChange={setManualMethod}
                     options={[
-                      { value: "cartao", label: "Cartão" },
-                      { value: "pix", label: "PIX" },
-                      { value: "dinheiro", label: "Dinheiro" }
+                      { value: "Cartão", label: "Cartão" },
+                      { value: "PIX", label: "PIX" },
+                      { value: "Dinheiro", label: "Dinheiro" }
                     ]}
                   />
                 </div>
-                <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={() => confirmCloseTable(pixTarget.number)}>
+                <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={() => confirmCloseTable(pixTarget.number, manualMethod)}>
                   <i className="fa-solid fa-check" style={{ fontSize: 17, lineHeight: 1 }} />
                   Confirmar pagamento
                 </button>

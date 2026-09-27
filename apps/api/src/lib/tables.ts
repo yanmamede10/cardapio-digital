@@ -3,11 +3,12 @@ import type { Order, OrderLine, RestaurantTable } from "@prisma/client";
 import { prisma } from "../db.js";
 import { round2 } from "./pricing.js";
 
-const SERVICE_PCT = 10;
+/** The table's service: 10% when the restaurant charges it (Restaurant.serviceCharge), else 0. */
+export const servicePct = (r: { serviceCharge: boolean } | null) => (r?.serviceCharge === false ? 0 : 10);
 
 /** Service charged on one order (table only). Per order, so the comanda's service is exactly the sum
- *  of what the Emissão Fiscal queue adds to each of its orders. */
-export const serviceFee = (o: Pick<Order, "mode" | "subtotal">) => (o.mode === "table" ? round2(o.subtotal * (SERVICE_PCT / 100)) : 0);
+ *  of what the Emissão Fiscal queue adds to each of its orders. ponytail: reads today's setting, not the one when it was charged. */
+export const serviceFee = (o: Pick<Order, "mode" | "subtotal">, pct: number) => (o.mode === "table" ? round2(o.subtotal * (pct / 100)) : 0);
 
 /** A table's open comanda: its non-cancelled orders not closed yet (closing stamps closedAt on exactly the orders it charged). */
 const openWhere = (restaurantId: string) => ({ restaurantId, mode: "table", closedAt: null, status: { not: "cancelled" } });
@@ -28,7 +29,7 @@ export function statusForTable(openOrders: Order[] = []): TableStatus {
   return openOrders.every((o) => o.status === "served") ? "awaiting_payment" : "occupied";
 }
 
-export function buildComanda(table: RestaurantTable, orders: (Order & { lines: OrderLine[] })[]): TableComanda {
+export function buildComanda(table: RestaurantTable, orders: (Order & { lines: OrderLine[] })[], pct: number): TableComanda {
   const lines = orders.flatMap((o) =>
     o.lines.map((l) => ({
       orderId: o.id,
@@ -40,7 +41,7 @@ export function buildComanda(table: RestaurantTable, orders: (Order & { lines: O
     }))
   );
   const subtotal = round2(lines.reduce((t, l) => t + l.subtotal, 0));
-  const service = round2(orders.reduce((t, o) => t + serviceFee(o), 0));
+  const service = round2(orders.reduce((t, o) => t + serviceFee(o, pct), 0));
   return {
     table: {
       id: table.id,
@@ -55,7 +56,7 @@ export function buildComanda(table: RestaurantTable, orders: (Order & { lines: O
     orderIds: orders.map((o) => o.id),
     lines,
     subtotal,
-    servicePct: SERVICE_PCT,
+    servicePct: pct,
     service,
     total: round2(subtotal + service)
   };

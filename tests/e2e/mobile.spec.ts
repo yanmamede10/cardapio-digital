@@ -24,14 +24,17 @@ test("módulo desligado some da barra de abas", async ({ page, request }) => {
   }
 });
 
-test("fechar a conta no celular baixa os insumos da ficha técnica", async ({ page, api }) => {
+test("fechar a conta no celular pede a forma de pagamento, baixa a ficha técnica e lança em Contas a Receber", async ({ page, api }) => {
   const { pao, blend, item } = await burgerKit(api);
   const table = 100 + Math.floor(Math.random() * 800);
   const order = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 3, notes: "", selectedOptions: [] }] });
 
   await page.goto(`/mesas/${table}`);
   await page.getByRole("button", { name: /Fechar conta/ }).click();
+  await page.getByRole("button", { name: "PIX" }).click();
   await expect(toast(page)).toContainText(`Mesa ${table}`);
+  const entry = (await api("GET", `/api/restaurants/${R}/finance-entries?kind=receivable`)).find((e: { description: string }) => e.description.includes(order.code));
+  expect([entry.amount, entry.status, entry.paymentMethod]).toEqual([99, "paid", "PIX"]); // 3 × 30,00 + 10%
 
   await page.goto("/produtos");
   await expect(page.getByRole("button", { name: new RegExp(pao.name) })).toContainText("-3 un");

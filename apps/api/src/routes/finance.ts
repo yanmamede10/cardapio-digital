@@ -4,7 +4,7 @@ import { prisma } from "../db.js";
 import { hasModule, requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { round2 } from "../lib/pricing.js";
 import { serializeFinanceEntry, serializeOrder } from "../lib/serialize.js";
-import { serviceFee } from "../lib/tables.js";
+import { serviceFee, servicePct } from "../lib/tables.js";
 
 export const financeRouter = Router();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
@@ -76,5 +76,6 @@ financeRouter.get("/:id/closed-orders", ...staffGuard, requireModule("fiscal"), 
     orderBy: { createdAt: "desc" },
     take: 500
   });
-  res.json(orders.map((o) => ({ ...serializeOrder(o), total: round2(o.total + serviceFee(o)) })));
+  const pct = servicePct(await prisma.restaurant.findUnique({ where: { id: req.params.id } }));
+  res.json(orders.map((o) => ({ ...serializeOrder(o), total: round2(o.total + serviceFee(o, pct)) })));
 });

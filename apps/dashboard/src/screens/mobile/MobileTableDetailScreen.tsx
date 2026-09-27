@@ -40,6 +40,7 @@ export default function MobileTableDetailScreen() {
   const [splitMode, setSplitMode] = useState<"pessoa" | "item">("pessoa");
   const [people, setPeople] = useState(4);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
 
   const loadComanda = () => api.getComanda(num).then(setComanda).catch(() => setComanda(null));
 
@@ -64,9 +65,10 @@ export default function MobileTableDetailScreen() {
   const service = comanda?.service ?? 0;
   const total = comanda?.total ?? 0;
 
-  const closeBill = async () => {
+  const closeBill = async (paymentMethod: string) => {
+    setPayOpen(false);
     try {
-      const { remaining } = await api.closeTable(num, { orderIds: comanda?.orderIds ?? [] });
+      const { remaining } = await api.closeTable(num, { orderIds: comanda?.orderIds ?? [], paymentMethod });
       if (remaining) {
         notify(`Conta fechada — chegou pedido novo na Mesa ${number}, confira a comanda`);
         loadComanda();
@@ -162,10 +164,12 @@ export default function MobileTableDetailScreen() {
               <span>Subtotal</span>
               <span className="mono">{brl(subtotal)}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--ink2)" }}>
-              <span>Serviço {comanda?.servicePct ?? 10}%</span>
-              <span className="mono">{brl(service)}</span>
-            </div>
+            {!!comanda?.servicePct && (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--ink2)" }}>
+                <span>Serviço {comanda.servicePct}%</span>
+                <span className="mono">{brl(service)}</span>
+              </div>
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontWeight: 600, paddingTop: 6, borderTop: "1px solid var(--line)" }}>
               <span style={{ fontSize: 13 }}>Total</span>
               <span className="mono" style={{ fontSize: 18, letterSpacing: "-.02em" }}>
@@ -274,7 +278,7 @@ export default function MobileTableDetailScreen() {
           </div>
           <button
             type="button"
-            onClick={closeBill}
+            onClick={() => setPayOpen(true)}
             style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
           >
             <i className="fa-solid fa-receipt" style={{ fontSize: 15 }} />
@@ -288,6 +292,16 @@ export default function MobileTableDetailScreen() {
         onClose={() => setTransferOpen(false)}
         title="Transferir para qual mesa?"
         actions={freeTables.map((t) => ({ label: `Mesa ${String(t.number).padStart(2, "0")}`, icon: "fa-chair", onClick: () => doTransfer(t.number) }))}
+      />
+      <ActionSheet
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        title={`Fechar ${brl(total)} · forma de pagamento na maquininha`}
+        actions={[
+          { label: "Cartão", icon: "fa-credit-card", onClick: () => closeBill("Cartão") },
+          { label: "PIX", icon: "fa-qrcode", onClick: () => closeBill("PIX") },
+          { label: "Dinheiro", icon: "fa-money-bill-wave", onClick: () => closeBill("Dinheiro") }
+        ]}
       />
     </div>
   );

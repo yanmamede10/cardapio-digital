@@ -161,16 +161,18 @@ settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
 settingsRouter.get("/:id/payment-mode", ...staffGuard, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
-  res.json({ paymentMode: r.paymentMode as PaymentMode });
+  res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge });
 });
 
+// Configurações → Financeiro: how the table pays and whether its comanda adds the 10% service. Only the fields sent change.
 settingsRouter.patch("/:id/payment-mode", ...staffGuard, async (req, res) => {
-  const { paymentMode } = req.body as { paymentMode?: PaymentMode };
-  if (!paymentMode || !PAYMENT_MODES.includes(paymentMode)) {
+  const { paymentMode, serviceCharge } = req.body as { paymentMode?: PaymentMode; serviceCharge?: unknown };
+  if ((paymentMode === undefined && serviceCharge === undefined) || (paymentMode !== undefined && !PAYMENT_MODES.includes(paymentMode))) {
     return res.status(400).json({ error: `paymentMode must be one of ${PAYMENT_MODES.join(", ")}` });
   }
+  if (serviceCharge !== undefined && typeof serviceCharge !== "boolean") return res.status(400).json({ error: "serviceCharge must be true or false" });
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });
-  const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { paymentMode } });
-  res.json({ paymentMode: r.paymentMode as PaymentMode });
+  const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { paymentMode, serviceCharge } });
+  res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge });
 });

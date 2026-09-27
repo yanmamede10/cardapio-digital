@@ -48,6 +48,8 @@ model Restaurant {
   // our Asaas subconta) or "maquininha_propria" (their own card/PIX terminal —
   // we just record the method and confirm manually, no QR/webhook).
   paymentMode       String   @default("maquininha_propria")
+  // Table comandas add a 10% service — optional per restaurant (Configurações → Financeiro).
+  serviceCharge     Boolean  @default(true)
 
   // Aparência — customer-facing menu page skin. "draft*" is what the dashboard
   // edits; the plain fields below are what's actually published and served by

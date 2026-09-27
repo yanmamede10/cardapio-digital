@@ -1,9 +1,9 @@
 import { Router } from "express";
-import type { SalonGrid } from "@cardapio/shared";
+import { PAYMENT_METHODS, type SalonGrid } from "@cardapio/shared";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
-import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
-import { buildComanda, openOrdersByTable, openOrdersForTable, statusForTable } from "../lib/tables.js";
+import { hasModule, requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
+import { buildComanda, openOrdersByTable, openOrdersForTable, servicePct, statusForTable } from "../lib/tables.js";
 import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
 
@@ -124,14 +124,18 @@ restaurantTablesRouter.delete("/:id/tables/:number", ...staffGuard, async (req, 
 restaurantTablesRouter.get("/:id/tables/:number/comanda", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
-  res.json(buildComanda(table, await openOrdersForTable(req.params.id, table.number)));
+  const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+  res.json(buildComanda(table, await openOrdersForTable(req.params.id, table.number), servicePct(restaurant)));
 });
 
 restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
   // orderIds = the comanda the waiter was looking at: an order that arrives meanwhile stays open on the table.
-  const { orderIds } = (req.body ?? {}) as { orderIds?: unknown };
+  const { orderIds, paymentMethod } = (req.body ?? {}) as { orderIds?: unknown; paymentMethod?: unknown };
+  if (paymentMethod !== undefined && !(PAYMENT_METHODS as readonly unknown[]).includes(paymentMethod)) {
+    return res.status(400).json({ error: `paymentMethod must be one of ${PAYMENT_METHODS.join(", ")}` });
+  }
   const open = await openOrdersForTable(req.params.id, table.number);
   const target = Array.isArray(orderIds) ? open.filter((o) => orderIds.includes(o.id)) : open;
   // Claims each order once (closedAt IS NULL), so two waiters/double clicks never charge or take stock twice.
@@ -142,6 +146,26 @@ restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (r
   if (closed.length) {
     await prisma.order.updateMany({ where: { id: { in: closed.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
     await takeStockForOrders(req.params.id, closed, `Fechamento de comanda ${closed[0].code}`);
+    // What was charged at the table enters Contas a Receber as paid (only when the restaurant has that module).
+    if (hasModule(req, "receber")) {
+      const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+      const bill = buildComanda(table, closed, servicePct(restaurant));
+      const today = new Date().toLocaleDateString("sv-SE");
+      await prisma.financeEntry.create({
+        data: {
+          restaurantId: req.params.id,
+          kind: "receivable",
+          description: `Mesa ${String(table.number).padStart(2, "0")} · comanda ${closed[0].code}`,
+          amount: bill.total,
+          dueDate: today,
+          status: "paid",
+          paidOn: today,
+          paymentMethod: (paymentMethod as string | undefined) ?? null,
+          category: "Vendas salão",
+          costCenter: "Salão"
+        }
+      });
+    }
   }
   const remaining = (await openOrdersForTable(req.params.id, table.number)).length;
   if (!remaining) await prisma.restaurantTable.update({ where: { id: table.id }, data: { openedAt: null } });
