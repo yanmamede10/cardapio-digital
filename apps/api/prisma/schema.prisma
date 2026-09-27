@@ -313,8 +313,8 @@ model SupportMessage {
   authorName String?
   text       String
   createdAt  DateTime @default(now())
-  mediaType  String? // "image" | "audio" (WhatsApp); mediaUrl = its public Storage URL
-  mediaUrl   String?
+  mediaType  String? // "image" | "audio" (WhatsApp)
+  mediaKey   String? // its object key in the private WhatsApp bucket — the API only hands out short-lived signed URLs
   externalId String? // WhatsApp message id — a redelivered webhook never duplicates a message
 
   @@unique([ticketId, externalId])

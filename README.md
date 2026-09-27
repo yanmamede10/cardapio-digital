@@ -38,7 +38,7 @@ npm install
 docker run -d --name pg -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=cardapio -p 5432:5432 postgres:16-alpine
 cp apps/api/.env.example apps/api/.env      # já aponta para esse Postgres
 npm run db:generate --workspace apps/api    # Prisma Client
-npm run db:deploy   --workspace apps/api    # aplica as migrações
+npm run db:deploy   --workspace apps/api    # aplica as migrações (e cria o bucket privado do WhatsApp, se configurado)
 npm run db:seed     --workspace apps/api    # dados de exemplo (restaurante "fogo" com equipe)
 npm run dev:api                             # http://localhost:4100
 ```
@@ -78,7 +78,7 @@ docker compose up -d                        # Evolution v2.3.7 em http://localho
 npm run dev:api
 ```
 
-Depois, no dashboard, entre como Dono → **Configurações → WhatsApp**: aceite o aviso de risco (fica registrado quem e quando), escaneie o QR com o celular do restaurante e as conversas passam a chegar em **Atendimento**, canal WhatsApp. Um ticket por contato; o que o celular do restaurante envia (resposta manual ou a saudação automática do WhatsApp Business) também aparece na conversa. O sistema só envia o que alguém digita no Atendimento — nunca mensagem automática. Mídia recebida e enviada vai para o Supabase Storage (`STORAGE_*`); sem ele, texto funciona e a mídia recebida vira um aviso "veja no celular".
+Depois, no dashboard, entre como Dono → **Configurações → WhatsApp**: aceite o aviso de risco (fica registrado quem e quando), escaneie o QR com o celular do restaurante e as conversas passam a chegar em **Atendimento**, canal WhatsApp. Um ticket por contato; o que o celular do restaurante envia (resposta manual ou a saudação automática do WhatsApp Business) também aparece na conversa. O sistema só envia o que alguém digita no Atendimento — nunca mensagem automática. Mídia recebida e enviada vai para um bucket **privado** do Supabase Storage (`STORAGE_S3_WHATSAPP_BUCKET`, criado pelo `db:deploy`), separado do bucket público das fotos do cardápio: a API guarda só a chave do arquivo e, a cada leitura de ticket (só para quem acessa o Atendimento daquele restaurante), entrega uma URL assinada que vale de 30 a 60 min. Sem Storage, texto funciona e a mídia recebida vira um aviso "veja no celular".
 
 `docker compose down` para; `down -v` apaga também as sessões do WhatsApp.
 
@@ -115,6 +115,7 @@ Cada app tem um `.env.example`. Copie para `.env` no mesmo diretório.
 | `CORS_ORIGINS` | não | Origens liberadas, separadas por vírgula. Sem ela, qualquer origem é aceita (dev/Android). |
 | `APP_TZ` | não | Fuso usado para "hoje"/"mês" (padrão `America/Sao_Paulo`). |
 | `STORAGE_S3_ENDPOINT`, `STORAGE_S3_REGION`, `STORAGE_S3_ACCESS_KEY_ID`, `STORAGE_S3_SECRET_ACCESS_KEY`, `STORAGE_S3_BUCKET`, `STORAGE_PUBLIC_URL` | para upload | Supabase Storage via API S3 (logo, capa, fotos). Sem elas, os uploads respondem 503. |
+| `STORAGE_S3_WHATSAPP_BUCKET` | para mídia do WhatsApp | Bucket privado (mesmas credenciais S3 acima); lido só por URL assinada. |
 
 ### `apps/dashboard`
 

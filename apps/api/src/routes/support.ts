@@ -5,8 +5,8 @@ import { SUPPORT_ROLES } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeReview, serializeTicket } from "../lib/serialize.js";
+import { storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp } from "../lib/whatsapp.js";
-import { storeMedia } from "./whatsapp.js";
 
 export const supportRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
@@ -51,7 +51,7 @@ supportRouter.get("/:id/tickets", ...staffGuard, async (req, res) => {
     include: { messages: { orderBy: { createdAt: "asc" } } },
     orderBy: { lastActivityAt: "desc" }
   });
-  res.json(tickets.map(serializeTicket));
+  res.json(await Promise.all(tickets.map(serializeTicket)));
 });
 
 supportRouter.patch("/:id/tickets/:ticketId", ...staffGuard, async (req, res) => {
@@ -67,7 +67,7 @@ supportRouter.patch("/:id/tickets/:ticketId", ...staffGuard, async (req, res) =>
     },
     include: { messages: { orderBy: { createdAt: "asc" } } }
   });
-  res.json(serializeTicket(ticket));
+  res.json(await serializeTicket(ticket));
 });
 
 supportRouter.post("/:id/tickets/:ticketId/messages", ...staffGuard, async (req, res) => {
@@ -86,7 +86,7 @@ supportRouter.post("/:id/tickets/:ticketId/messages", ...staffGuard, async (req,
   await prisma.supportMessage.create({
     data: { ticketId: req.params.ticketId, from: "staff", authorName: null, text: text.trim(), externalId }
   });
-  res.status(201).json(serializeTicket(await staffReplied(existing)));
+  res.status(201).json(await serializeTicket(await staffReplied(existing)));
 });
 
 // Image (upload) or voice note (recorded in the browser) — WhatsApp conversations only.
@@ -98,17 +98,17 @@ supportRouter.post("/:id/tickets/:ticketId/media", ...staffGuard, upload.single(
   const kind = file?.mimetype.startsWith("image/") ? "image" : file?.mimetype.startsWith("audio/") ? "audio" : null;
   if (!file || !kind) return res.status(400).json({ error: "file must be an image or an audio recording" });
 
-  let mediaUrl: string;
+  let mediaKey: string;
   try {
-    mediaUrl = await storeMedia(existing.restaurantId, file.buffer, file.mimetype);
+    mediaKey = await storeWhatsAppMedia(existing.restaurantId, file.buffer, file.mimetype);
   } catch (err) {
     console.error(err);
     return res.status(503).json({ error: "file storage is not configured" });
   }
   const externalId = await viaWhatsApp(res, () => whatsapp.sendMedia(existing.restaurantId, existing.contactPhone!, { kind, mimetype: file.mimetype, base64: file.buffer.toString("base64") }));
   if (!externalId) return;
-  await prisma.supportMessage.create({ data: { ticketId: existing.id, from: "staff", authorName: null, text: "", mediaType: kind, mediaUrl, externalId } });
-  res.status(201).json(serializeTicket(await staffReplied(existing)));
+  await prisma.supportMessage.create({ data: { ticketId: existing.id, from: "staff", authorName: null, text: "", mediaType: kind, mediaKey, externalId } });
+  res.status(201).json(await serializeTicket(await staffReplied(existing)));
 });
 
 supportRouter.get("/:id/reviews", ...staffGuard, async (req, res) => {

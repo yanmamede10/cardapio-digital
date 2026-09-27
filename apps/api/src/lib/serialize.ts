@@ -47,6 +47,7 @@ import type {
   WaiterCall
 } from "@prisma/client";
 import { round2 } from "./pricing.js";
+import { signedMediaUrl } from "./storage.js";
 
 export function serializeRestaurant(r: Restaurant): ApiRestaurant {
   return {
@@ -170,7 +171,7 @@ export function serializeCoupon(c: Coupon): ApiCoupon {
   };
 }
 
-export function serializeTicket(t: SupportTicket & { messages: SupportMessage[] }): ApiSupportTicket {
+export async function serializeTicket(t: SupportTicket & { messages: SupportMessage[] }): Promise<ApiSupportTicket> {
   return {
     id: t.id,
     restaurantId: t.restaurantId,
@@ -180,20 +181,21 @@ export function serializeTicket(t: SupportTicket & { messages: SupportMessage[] 
     status: t.status as ApiSupportTicket["status"],
     assignee: t.assignee,
     unreadCount: t.unreadCount,
-    messages: t.messages.map(serializeMessage),
+    messages: await Promise.all(t.messages.map(serializeMessage)),
     createdAt: t.createdAt.toISOString(),
     lastActivityAt: t.lastActivityAt.toISOString()
   };
 }
 
-export function serializeMessage(m: SupportMessage): ApiSupportMessage {
+export async function serializeMessage(m: SupportMessage): Promise<ApiSupportMessage> {
   return {
     id: m.id,
     from: m.from as ApiSupportMessage["from"],
     authorName: m.authorName,
     text: m.text,
     mediaType: m.mediaType as ApiSupportMessage["mediaType"],
-    mediaUrl: m.mediaUrl,
+    // Private bucket: only a short-lived signed URL ever leaves the API — and only through support.ts (Atendimento guard).
+    mediaUrl: m.mediaKey ? await signedMediaUrl(m.mediaKey).catch((err) => (console.error(err), null)) : null,
     createdAt: m.createdAt.toISOString()
   };
 }

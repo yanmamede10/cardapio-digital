@@ -3,24 +3,13 @@ import { Prisma } from "@prisma/client";
 import { LEVEL, SUPPORT_ROLES, type WhatsAppStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireMinRole, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
-import { uploadPublicFile } from "../lib/storage.js";
+import { storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp, type WhatsAppMessage } from "../lib/whatsapp.js";
 
 // Configurações → WhatsApp is Dono-only; the connection indicator is for everyone who sees Atendimento.
 export const whatsappRouter = Router();
 const supportGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES)];
 const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO)];
-
-const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/aac": "aac", "audio/webm": "webm" };
-
-// ponytail: same public bucket as the product photos — the URL is an unguessable UUID, but anyone holding it can open it.
-// Before this leaves dev, customer media moves to a private bucket served through signed URLs.
-export function storeMedia(restaurantId: string, buffer: Buffer, mimetype: string) {
-  // Bare type: WhatsApp voice notes come as "audio/ogg; codecs=opus", Chrome records "audio/webm;codecs=opus" — and Supabase
-  // matches the bucket's allowed MIME types against the whole subtype, so the parameter alone gets the upload refused.
-  const type = mimetype.split(";")[0].trim();
-  return uploadPublicFile({ buffer, contentType: type, folder: `whatsapp/${restaurantId}`, extension: EXT[type] ?? "bin" });
-}
 
 async function statusOf(restaurantId: string): Promise<WhatsAppStatus> {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { whatsappTermsAcceptedAt: true, whatsappTermsAcceptedBy: true } });
@@ -108,12 +97,12 @@ async function receive(m: WhatsAppMessage) {
   const key = { ticketId_externalId: { ticketId: ticket.id, externalId: m.externalId } };
   if (await prisma.supportMessage.findUnique({ where: key })) return; // redelivered webhook
 
-  let mediaUrl: string | null = null;
+  let mediaKey: string | null = null;
   if (m.media) {
     // A failed upload must not lose the message itself: it's kept with a note to check the phone.
-    mediaUrl = await storeMedia(m.restaurantId, Buffer.from(m.media.base64, "base64"), m.media.mimetype).catch((err) => (console.error(err), null));
+    mediaKey = await storeWhatsAppMedia(m.restaurantId, Buffer.from(m.media.base64, "base64"), m.media.mimetype).catch((err) => (console.error(err), null));
   }
-  const lost = m.media && !mediaUrl ? `[${m.media.kind === "image" ? "Imagem" : "Áudio"} — não foi possível salvar, veja no celular] ` : "";
+  const lost = m.media && !mediaKey ? `[${m.media.kind === "image" ? "Imagem" : "Áudio"} — não foi possível salvar, veja no celular] ` : "";
   const { count } = await prisma.supportMessage.createMany({
     skipDuplicates: true, // the same redelivery, racing the check above
     data: [
@@ -122,8 +111,8 @@ async function receive(m: WhatsAppMessage) {
         from: m.fromMe ? "staff" : "customer",
         authorName: m.fromMe ? "Celular do restaurante" : null,
         text: (lost + m.text).trim(),
-        mediaType: mediaUrl ? m.media!.kind : null,
-        mediaUrl,
+        mediaType: mediaKey ? m.media!.kind : null,
+        mediaKey,
         externalId: m.externalId
       }
     ]

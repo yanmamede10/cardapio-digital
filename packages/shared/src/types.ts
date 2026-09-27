@@ -371,8 +371,9 @@ export interface SupportMessage {
   from: "customer" | "staff";
   authorName: string | null;
   text: string;
-  /** WhatsApp only: an image or voice note, served from Storage. */
+  /** WhatsApp only: an image or voice note. */
   mediaType: "image" | "audio" | null;
+  /** Signed URL to the private bucket, good for 30–60 min — every ticket read hands out a current one. */
   mediaUrl: string | null;
   createdAt: string;
 }
