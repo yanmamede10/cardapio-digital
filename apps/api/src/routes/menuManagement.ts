@@ -3,7 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 import { LEVEL, type UpsertMenuItemRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem } from "../lib/serialize.js";
 import { uploadPublicFile } from "../lib/storage.js";
 
@@ -11,7 +11,7 @@ export const menuManagementRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("cardapio")];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;

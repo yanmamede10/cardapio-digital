@@ -1,7 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { roleLevel, type StaffRole } from "@cardapio/shared";
+import { roleLevel, type PlanModule, type StaffRole } from "@cardapio/shared";
 import { prisma } from "../db.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? "" : "dev-only-insecure-secret");
@@ -38,13 +38,13 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
-      staff?: StaffTokenPayload;
+      staff?: StaffTokenPayload & { modules: string[] };
     }
   }
 }
 
-/** Verifies the token, then reads the staff member's current role and restaurant status — one query per request,
- *  so a role change (Equipe & Permissões) or a deactivation (super admin) applies to the very next request. */
+/** Verifies the token, then reads the staff member's current role and restaurant status/modules — one query per request,
+ *  so a role change (Equipe & Permissões) or a deactivation/module toggle (super admin) applies to the very next request. */
 export function requireStaff(req: Request, res: Response, next: NextFunction) {
   const header = req.header("Authorization");
   const token = header?.startsWith("Bearer ") ? header.slice(7) : undefined;
@@ -56,13 +56,19 @@ export function requireStaff(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ error: "invalid or expired token" });
   }
   prisma.staffMember
-    .findUnique({ where: { id: payload.staffId }, select: { role: true, restaurantId: true, restaurant: { select: { status: true } } } })
+    .findUnique({ where: { id: payload.staffId }, select: { role: true, restaurantId: true, restaurant: { select: { status: true, planModulesJson: true } } } })
     .then((s) => {
       if (!s || s.restaurant.status !== "ativo") return res.status(401).json({ error: "session revoked" });
-      req.staff = { staffId: payload.staffId, restaurantId: s.restaurantId, role: s.role as StaffRole };
+      req.staff = { staffId: payload.staffId, restaurantId: s.restaurantId, role: s.role as StaffRole, modules: JSON.parse(s.restaurant.planModulesJson) };
       next();
     })
     .catch(next);
+}
+
+/** Contracted-module gate (ADMIN-03), run after requireStaff (which loaded the restaurant's current modules). */
+export const hasModule = (req: Request, key: PlanModule) => !!req.staff?.modules.includes(key);
+export function requireModule(key: PlanModule) {
+  return (req: Request, res: Response, next: NextFunction) => (hasModule(req, key) ? next() : res.status(403).json({ error: "forbidden: module not contracted" }));
 }
 
 /** Rejects if the :id route param doesn't match the authenticated staff's own restaurant. */

@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { LEVEL, type CreateCouponRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeCoupon } from "../lib/serialize.js";
 
 export const dashboardCouponsRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("promocoes")];
 
 dashboardCouponsRouter.get("/:id/coupons", ...staffGuard, async (req, res) => {
   const { query } = req.query as { query?: string };

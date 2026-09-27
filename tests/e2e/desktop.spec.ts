@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, burgerKit, dayLabel, expect, isoDay, loginAs, test, uid } from "./fixtures";
+import { R, SEED_MODULES, burgerKit, dayLabel, expect, isoDay, loginAs, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -28,6 +28,23 @@ plain("menu mostra só o que o papel alcança: Funcionário só Operação (gar�
   await page.goto("/");
   for (const shown of ["Atendimento", "Produtos", "Financeiro", "Relatórios"]) await expect(nav).toContainText(shown);
   await expect(nav).not.toContainText("Configurações");
+});
+
+test("módulo desligado some do menu; sem Central de Pedidos a tela inicial é o primeiro módulo ligado", async ({ page, request }) => {
+  await setModules(request, SEED_MODULES.filter((m) => m !== "pedidos" && m !== "promocoes")); // + fiscal, off in the seed
+  try {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/cardapio$/);
+    const nav = page.locator("aside nav");
+    await page.getByRole("button", { name: /Financeiro/ }).click();
+    await expect(nav).toContainText("Contas a Pagar");
+    await expect(nav).toContainText("Atendimento"); // Operação is open by default
+    for (const off of ["Central de Pedidos", "Promoções", "Emissão Fiscal"]) await expect(nav).not.toContainText(off);
+    await page.goto("/emissao-fiscal"); // typed URL: the API says no
+    await expect(page.getByText("Você não tem permissão para acessar a Emissão Fiscal.")).toBeVisible();
+  } finally {
+    await setModules(request, SEED_MODULES);
+  }
 });
 
 test("Equipe & Permissões: adicionar e editar o papel", async ({ page }) => {

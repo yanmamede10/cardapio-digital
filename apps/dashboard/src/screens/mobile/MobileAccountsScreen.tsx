@@ -18,7 +18,7 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
   const [paying, setPaying] = useState<FinanceEntry | null>(null);
   useMobileScreen({ title: payable ? "Contas a pagar" : "Contas a receber", subtitle: "Financeiro", fab: entries ? { label: "Novo lançamento", onClick: () => setCreating(true) } : undefined });
 
-  const reload = () => api.listFinanceEntries().then((all) => setEntries(all.filter((e) => e.kind === kind)));
+  const reload = () => api.listFinanceEntries(kind).then(setEntries);
 
   useEffect(() => {
     reload().catch((err) => setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar o Financeiro." : "Não foi possível carregar as contas."));

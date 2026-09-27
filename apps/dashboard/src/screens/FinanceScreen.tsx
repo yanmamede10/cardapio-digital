@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FinanceSummary } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { brl, fmtDate } from "../lib/format";
+import { moduleByKey } from "../lib/modules";
 
 const CHARGE_STATUS: Record<string, { label: string; color: string }> = {
   paid: { label: "Pago", color: "var(--ok)" },
@@ -63,7 +64,7 @@ export default function FinanceScreen() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {data.planModules.map((m) => (
               <span key={m} className="pill" style={{ background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)" }}>
-                {m}
+                {moduleByKey(m)?.label ?? m}
               </span>
             ))}
           </div>

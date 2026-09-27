@@ -1,7 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Router, type NextFunction, type Request, type Response } from "express";
 import type { Restaurant } from "@prisma/client";
-import type { AdminRestaurant, RestaurantStatus } from "@cardapio/shared";
+import { PLAN_MODULES, type AdminRestaurant, type RestaurantStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword } from "../lib/auth.js";
 
@@ -92,4 +92,16 @@ adminRouter.patch("/restaurants/:id/status", async (req, res) => {
   if (!(await prisma.restaurant.findUnique({ where: { id: req.params.id } }))) return res.status(404).json({ error: "restaurant not found" });
   const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { status } });
   res.json(serialize(r));
+});
+
+// ADMIN-03: the contracted modules — the restaurant's menu and API follow on the very next request (requireStaff reads them live).
+adminRouter.patch("/restaurants/:id/modules", async (req, res) => {
+  const { modules } = req.body as { modules?: unknown };
+  if (!Array.isArray(modules) || !modules.every((m) => (PLAN_MODULES as readonly unknown[]).includes(m))) {
+    return res.status(400).json({ error: `modules must be a list of ${PLAN_MODULES.join(", ")}` });
+  }
+  if (!(await prisma.restaurant.findUnique({ where: { id: req.params.id } }))) return res.status(404).json({ error: "restaurant not found" });
+  const ordered = PLAN_MODULES.filter((m) => modules.includes(m));
+  await prisma.restaurant.update({ where: { id: req.params.id }, data: { planModulesJson: JSON.stringify(ordered) } });
+  res.json({ modules: ordered });
 });

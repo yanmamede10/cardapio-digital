@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { serializeStaff } from "../lib/serialize.js";
-import { signStaffToken, verifyPassword } from "../lib/auth.js";
+import { requireStaff, signStaffToken, verifyPassword } from "../lib/auth.js";
 import type { StaffRole } from "@cardapio/shared";
 
 export const authRouter = Router();
@@ -18,4 +18,10 @@ authRouter.post("/login", async (req, res) => {
 
   const token = signStaffToken({ staffId: staff.id, restaurantId: staff.restaurantId, role: staff.role as StaffRole });
   res.json({ token, staff: serializeStaff(staff) });
+});
+
+// The dashboard re-reads this on every start: current role and the restaurant's contracted modules (menu filter).
+authRouter.get("/me", requireStaff, async (req, res) => {
+  const staff = await prisma.staffMember.findUniqueOrThrow({ where: { id: req.staff!.staffId } });
+  res.json({ staff: serializeStaff(staff), modules: req.staff!.modules });
 });

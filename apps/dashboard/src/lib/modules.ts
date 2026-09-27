@@ -1,4 +1,4 @@
-import { LEVEL, SUPPORT_ROLES, roleLevel, type StaffRole } from "@cardapio/shared";
+import { LEVEL, PLAN_MODULES, SUPPORT_ROLES, roleLevel, type StaffRole } from "@cardapio/shared";
 import { getSession } from "./api";
 
 export interface ModuleDef {
@@ -34,7 +34,13 @@ export const MODULES: ModuleDef[] = [
 
 /** Logged-in staff's level. Nav only — the API re-checks the role on every guarded request. */
 export const myLevel = () => roleLevel(getSession()?.role);
-export const canSee = (m: ModuleDef) => (m.roles ? m.roles.includes(getSession()?.role as StaffRole) : myLevel() >= m.level);
+/** Contracted by the restaurant (the super admin toggles them; the API answers 403 when off). Minha Fatura and
+ *  Configurações aren't modules. No list yet (a session from before the refresh) → show all; the API has the last word. */
+export const moduleOn = (key: string) => {
+  const on = getSession()?.modules;
+  return !on || !(PLAN_MODULES as readonly string[]).includes(key) || on.includes(key);
+};
+export const canSee = (m: ModuleDef) => moduleOn(m.key) && (m.roles ? m.roles.includes(getSession()?.role as StaffRole) : myLevel() >= m.level);
 
 /** Menu sections, shared by the desktop sidebar and the mobile "Mais" screen.
  *  A section with a single module is shown as a plain link under the section's name. */
@@ -47,6 +53,9 @@ export const NAV_GROUPS: { label: string; icon: string; keys: string[] }[] = [
 ];
 
 export const moduleByKey = (key: string) => MODULES.find((m) => m.key === key)!;
+
+/** Where "/" lands: Central de Pedidos, or the first screen this user sees when it's off. */
+export const homePath = () => (canSee(MODULES[0]) ? "/" : MODULES.find(canSee)?.path ?? "/");
 
 /** "/" is the landing module, so it only matches exactly. */
 export function moduleForPath(pathname: string): ModuleDef {

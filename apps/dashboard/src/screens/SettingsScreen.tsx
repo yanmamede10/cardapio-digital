@@ -3,6 +3,7 @@ import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffMember, Sta
 import { ROLE_LABEL, TAX_REGIME_LABEL } from "@cardapio/shared";
 import { ApiError, api, getSession } from "../lib/api";
 import { fmtDate } from "../lib/format";
+import { moduleOn } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
@@ -112,7 +113,7 @@ export default function SettingsScreen() {
           { value: "staff", label: "Equipe & Permissões" },
           { value: "finance", label: "Financeiro" },
           { value: "fiscal", label: "Fiscal" },
-          { value: "whatsapp", label: "WhatsApp" }
+          ...(moduleOn("atendimento") ? [{ value: "whatsapp" as const, label: "WhatsApp" }] : [])
         ]}
       />
 

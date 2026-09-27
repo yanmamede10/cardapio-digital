@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate, useOutletContext } from "react-router
 import { App } from "@capacitor/app";
 import { type LiveData, buildNotifs, useLiveData } from "../../lib/live";
 import { initialsOf } from "../../lib/format";
+import { canSee, moduleByKey } from "../../lib/modules";
 import { useDashboardState } from "../../state/DashboardStateContext";
 import { Toast } from "../Toast";
 
@@ -281,7 +282,7 @@ export function MobileLayout() {
             padding: "6px 6px calc(14px + env(safe-area-inset-bottom, 0px))"
           }}
         >
-          {TABS.map((t) => {
+          {TABS.filter((t) => t.key === "mais" || canSee(moduleByKey(t.key))).map((t) => {
             const active = activeTab === t.key;
             const badge = t.key === "pedidos" && pendingCount > 0 ? String(pendingCount) : null;
             return (

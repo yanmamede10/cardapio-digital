@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem, serializeOrder, serializeRestaurant } from "../lib/serialize.js";
 
 export const restaurantsRouter = Router();
@@ -8,7 +8,7 @@ export const restaurantsRouter = Router();
 // Staff-facing order queue: every order placed today for this restaurant,
 // regardless of which guest session created it (unlike GET /api/orders,
 // which is scoped to the caller's own X-Session-Id for the customer app).
-restaurantsRouter.get("/:id/orders", requireStaff, requireOwnRestaurant, async (req, res) => {
+restaurantsRouter.get("/:id/orders", requireStaff, requireOwnRestaurant, requireModule("pedidos"), async (req, res) => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
   const orders = await prisma.order.findMany({

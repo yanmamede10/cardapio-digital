@@ -65,3 +65,12 @@ export async function loginAs(page: import("@playwright/test").Page, request: AP
   const session = JSON.stringify({ token, restaurantId: staff.restaurantId, role: staff.role, staffId: staff.id, name: staff.name });
   await page.addInitScript((s) => localStorage.setItem("cardapio.dashboard.session", s), session);
 }
+
+/** Every module; the seed leaves "fiscal" off for fogo (demo restaurant). Tests that change them restore SEED_MODULES. */
+export const ALL_MODULES = ["pedidos", "cardapio", "mesas", "promocoes", "atendimento", "produtos", "relatorios", "visao", "pagar", "receber", "fiscal"];
+export const SEED_MODULES = ALL_MODULES.filter((m) => m !== "fiscal");
+export const ADMIN_KEY = "test-admin-key"; // tests/run.mjs
+export async function setModules(request: APIRequestContext, modules: string[]) {
+  const res = await request.patch(`${API}/api/admin/restaurants/${R}/modules`, { data: { modules }, headers: { Authorization: `Bearer ${ADMIN_KEY}` } });
+  if (!res.ok()) throw new Error(`setModules → ${res.status()}`);
+}

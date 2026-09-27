@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FinanceSummary } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { brl, fmtDate } from "../../lib/format";
+import { moduleByKey } from "../../lib/modules";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
 const CHARGE_STATUS: Record<string, { label: string; bg: string; fg: string }> = {
@@ -63,7 +64,7 @@ export default function MobileFinanceScreen() {
           <div className="mono" style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-.03em" }}>
             {brl(data.planPrice)}
           </div>
-          <div style={{ fontSize: 12, color: "var(--ink3)" }}>{data.planModules.join(" + ")}</div>
+          <div style={{ fontSize: 12, color: "var(--ink3)" }}>{data.planModules.map((m) => moduleByKey(m)?.label ?? m).join(" + ")}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>Vence em</div>

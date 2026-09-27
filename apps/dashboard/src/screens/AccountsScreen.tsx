@@ -49,7 +49,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
   const [creating, setCreating] = useState(false);
   const [paying, setPaying] = useState<FinanceEntry | null>(null);
 
-  const reload = () => api.listFinanceEntries().then((all) => setEntries(all.filter((e) => e.kind === kind)));
+  const reload = () => api.listFinanceEntries(kind).then(setEntries);
 
   useEffect(() => {
     reload().catch((err) => setError(err instanceof ApiError && err.status === 403 ? "Você não tem permissão para acessar o Financeiro." : "Não foi possível carregar as contas."));

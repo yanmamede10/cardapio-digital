@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
+import { moduleOn } from "../../lib/modules";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 
 export default function MobileSettingsScreen() {
@@ -27,7 +28,7 @@ export default function MobileSettingsScreen() {
       items: [
         { label: "Equipe e permissões", sub: staffCount != null ? `${staffCount} ${staffCount === 1 ? "membro ativo" : "membros ativos"}` : "…", icon: "fa-users", go: () => navigate("/config/equipe") },
         { label: "Dados fiscais", sub: "CNPJ, razão social, endereço", icon: "fa-file-invoice", go: () => navigate("/config/fiscal") },
-        { label: "WhatsApp", sub: "Conexão do Atendimento", icon: "fa-mobile-screen-button", go: () => navigate("/config/whatsapp") }
+        ...(moduleOn("atendimento") ? [{ label: "WhatsApp", sub: "Conexão do Atendimento", icon: "fa-mobile-screen-button", go: () => navigate("/config/whatsapp") }] : [])
       ]
     }
   ];

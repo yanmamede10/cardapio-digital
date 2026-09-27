@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { before, describe, test } from "node:test";
-import { R, call, login, uid } from "./helpers.ts";
+import { after, before, describe, test } from "node:test";
+import { ALL_MODULES, R, SEED_MODULES, call, login, setModules, uid } from "./helpers.ts";
 
 let owner: string;
 let waiter: string;
@@ -39,6 +39,9 @@ describe("contas a pagar / receber", () => {
 });
 
 describe("emissão fiscal", () => {
+  before(() => setModules(ALL_MODULES)); // the seeded demo restaurant has it off
+  after(() => setModules(SEED_MODULES));
+
   test("lista a comanda só depois de fechada, pelo valor cobrado (com serviço)", async () => {
     const items = (await call("GET", `${P}/items`, { token: owner })).body;
     const table = 100 + Math.floor(Math.random() * 800);

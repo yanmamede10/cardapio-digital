@@ -22,12 +22,13 @@ import MobileOverviewScreen from "./screens/mobile/MobileOverviewScreen";
 import MobileAccountsScreen from "./screens/mobile/MobileAccountsScreen";
 import MobileFiscalEmissionScreen from "./screens/mobile/MobileFiscalEmissionScreen";
 import { MobileWhatsAppScreen } from "./screens/SettingsWhatsAppTab";
+import { homePath } from "./lib/modules";
 
 export default function MobileApp() {
   return (
     <Routes>
       <Route element={<MobileLayout />}>
-        <Route path="/" element={<MobileOrdersScreen />} />
+        <Route path="/" element={homePath() === "/" ? <MobileOrdersScreen /> : <Navigate to={homePath()} replace />} />
         <Route path="/mesas" element={<MobileTablesScreen />} />
         <Route path="/mesas/:number" element={<MobileTableDetailScreen />} />
         <Route path="/cardapio" element={<MobileMenuScreen />} />

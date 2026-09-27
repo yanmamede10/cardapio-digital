@@ -1,15 +1,27 @@
-import { R, burgerKit, dayLabel, expect, test, uid } from "./fixtures";
+import { R, SEED_MODULES, burgerKit, dayLabel, expect, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
 test("Mais agrupa as telas nas mesmas seções do desktop", async ({ page }) => {
   await page.goto("/mais");
   for (const section of ["Operação", "Financeiro"]) await expect(page.getByText(section, { exact: true })).toBeVisible();
-  for (const screen of ["Visão Geral", "Contas a Pagar", "Contas a Receber", "Emissão Fiscal", "Minha Fatura", "Produtos"]) {
+  for (const screen of ["Visão Geral", "Contas a Pagar", "Contas a Receber", "Minha Fatura", "Produtos"]) {
     await expect(page.getByRole("button", { name: new RegExp(screen) })).toBeVisible();
   }
+  await expect(page.getByRole("button", { name: /Emissão Fiscal/ })).toHaveCount(0); // module off for the demo restaurant
   await page.getByRole("button", { name: /Contas a Pagar/ }).click();
   await expect(page).toHaveURL(/contas-a-pagar/);
+});
+
+test("módulo desligado some da barra de abas", async ({ page, request }) => {
+  await setModules(request, SEED_MODULES.filter((m) => m !== "mesas"));
+  try {
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: /Cardápio$/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Mesas$/ })).toHaveCount(0);
+  } finally {
+    await setModules(request, SEED_MODULES);
+  }
 });
 
 test("fechar a conta no celular baixa os insumos da ficha técnica", async ({ page, api }) => {

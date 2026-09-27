@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { LEVEL, type AnalyticsPeriod } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { buildAnalytics, buildShiftStats } from "../lib/analytics.js";
 import { serializeCharge } from "../lib/serialize.js";
 import { round2 } from "../lib/pricing.js";
@@ -11,13 +11,13 @@ export const reportsRouter = Router();
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
 
-reportsRouter.get("/:id/analytics", requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), async (req, res) => {
+reportsRouter.get("/:id/analytics", requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("relatorios"), async (req, res) => {
   const { period } = req.query as { period?: AnalyticsPeriod };
   res.json(await buildAnalytics(req.params.id, period || "today"));
 });
 
 // Shift stats power the operational Central de Pedidos view, so any staff role can read them.
-reportsRouter.get("/:id/shift-stats", requireStaff, requireOwnRestaurant, async (req, res) => {
+reportsRouter.get("/:id/shift-stats", requireStaff, requireOwnRestaurant, requireModule("pedidos"), async (req, res) => {
   res.json(await buildShiftStats(req.params.id));
 });
 

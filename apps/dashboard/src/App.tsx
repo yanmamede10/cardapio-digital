@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useIsMobile } from "./lib/useIsMobile";
-import { getSession } from "./lib/api";
+import { getSession, refreshSession } from "./lib/api";
 import DesktopApp from "./DesktopApp";
 import MobileApp from "./MobileApp";
 import LoginScreen from "./screens/LoginScreen";
@@ -10,7 +10,21 @@ import AdminScreen from "./screens/AdminScreen";
 export default function App() {
   const isMobile = useIsMobile();
   const [loggedIn, setLoggedIn] = useState(() => getSession() !== null);
+  const [ready, setReady] = useState(false);
   const isAdmin = useLocation().pathname.startsWith("/admin");
+
+  // Role and contracted modules may have changed since the session was stored: re-read them before drawing the menu.
+  // A 401 clears the session (back to login); a network error keeps the stored one.
+  useEffect(() => {
+    if (!loggedIn || isAdmin) return;
+    setReady(false);
+    refreshSession()
+      .catch(() => {})
+      .finally(() => {
+        setLoggedIn(getSession() !== null);
+        setReady(true);
+      });
+  }, [loggedIn, isAdmin]);
 
   // Platform super admin: its own key, independent of any staff session.
   if (isAdmin) return <AdminScreen />;
@@ -18,5 +32,6 @@ export default function App() {
   if (!loggedIn) {
     return <LoginScreen onLoggedIn={() => setLoggedIn(true)} />;
   }
+  if (!ready) return null;
   return isMobile ? <MobileApp /> : <DesktopApp />;
 }

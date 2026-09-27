@@ -46,6 +46,8 @@ export interface StaffSession {
   role: StaffRole;
   staffId: string;
   name: string;
+  /** Contracted modules (PLAN_MODULES keys), refreshed from /api/auth/me on every app start. */
+  modules?: string[];
 }
 
 function loadSession(): StaffSession | null {
@@ -152,6 +154,12 @@ export async function login(email: string, password: string): Promise<StaffSessi
   return next;
 }
 
+/** Re-reads role and contracted modules — both change server-side (Equipe, super admin) while a session lives. */
+export async function refreshSession() {
+  const me = await request<{ staff: StaffMember; modules: string[] }>("/api/auth/me");
+  if (session) setSession({ ...session, role: me.staff.role, name: me.staff.name, modules: me.modules });
+}
+
 export function logout() {
   setSession(null);
 }
@@ -230,7 +238,8 @@ export const api = {
     request<{ imported: number }>(`/api/restaurants/${RESTAURANT_ID}/stock-movements/xml`, { method: "POST", body: JSON.stringify(payload) }),
 
   // Contas a pagar / receber, Emissão Fiscal
-  listFinanceEntries: () => request<FinanceEntry[]>(`/api/restaurants/${RESTAURANT_ID}/finance-entries`),
+  /** With a kind: Contas a Pagar/Receber (each its own module); without: both, for Visão Geral. */
+  listFinanceEntries: (kind?: FinanceEntry["kind"]) => request<FinanceEntry[]>(`/api/restaurants/${RESTAURANT_ID}/finance-entries${qs({ kind })}`),
   createFinanceEntry: (payload: CreateFinanceEntryRequest) =>
     request<FinanceEntry>(`/api/restaurants/${RESTAURANT_ID}/finance-entries`, { method: "POST", body: JSON.stringify(payload) }),
   payFinanceEntry: (entryId: string, paidOn: string, paymentMethod: string) =>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { SalonGrid } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { buildComanda, openOrdersForTable, statusForTable } from "../lib/tables.js";
 import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
@@ -10,7 +10,7 @@ export const restaurantTablesRouter = Router();
 // Applied per-route (not via router.use) because several routers share the
 // "/api/restaurants" mount point — a path-based router.use() here would also
 // run for sibling routers' routes (e.g. reports' /:id/shift-stats).
-const staffGuard = [requireStaff, requireOwnRestaurant];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireModule("mesas")];
 const MIN_GRID_SIZE = 7;
 const MAX_GRID_SIZE = 15; // odd sizes only (validated in the PATCH below)
 

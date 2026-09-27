@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { LEVEL, PRODUCT_UNITS, type UpsertProductRequest, type XmlImportRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMovement, serializeProduct } from "../lib/serialize.js";
 
 export const productsRouter = Router();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("produtos")];
 const withComponents = { components: { include: { component: true } } } as const;
 const MAX_NAME_LENGTH = 80;
 const MAX_TAX_CODE_LENGTH = 20;

@@ -12,12 +12,13 @@ import ProductsScreen from "./screens/ProductsScreen";
 import AccountsScreen from "./screens/AccountsScreen";
 import FiscalScreen from "./screens/FiscalScreen";
 import FinanceOverviewScreen from "./screens/FinanceOverviewScreen";
+import { homePath } from "./lib/modules";
 
 export default function DesktopApp() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<OrdersScreen />} />
+        <Route path="/" element={homePath() === "/" ? <OrdersScreen /> : <Navigate to={homePath()} replace />} />
         <Route path="/pedidos" element={<Navigate to="/" replace />} />
         <Route path="/cardapio" element={<MenuScreen />} />
         <Route path="/mesas" element={<TablesScreen />} />

@@ -3,7 +3,7 @@ import multer from "multer";
 import type { SupportTicket } from "@prisma/client";
 import { SUPPORT_ROLES } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { requireModule, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeReview, serializeTicket } from "../lib/serialize.js";
 import { WHATSAPP_MEDIA_MAX_BYTES, storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp } from "../lib/whatsapp.js";
@@ -12,7 +12,7 @@ export const supportRouter = Router();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES)];
+const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES), requireModule("atendimento")];
 const MAX_MESSAGE_LENGTH = 2000;
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: WHATSAPP_MEDIA_MAX_BYTES } });
 

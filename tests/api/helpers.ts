@@ -30,3 +30,9 @@ export async function call(method: string, path: string, { token, body, session,
 export const uid = () => Math.random().toString(36).slice(2, 7);
 
 export const product = (over: Record<string, unknown>) => ({ type: "insumo", unit: "un", price: 0, cost: 0, ncm: "", cst: "", taxRate: 0, composed: false, components: [], ...over });
+
+export const ADMIN_KEY = process.env.SUPER_ADMIN_KEY ?? "test-admin-key"; // set by tests/run.mjs
+/** Every module; the seed leaves "fiscal" off for fogo (demo restaurant). */
+export const ALL_MODULES = ["pedidos", "cardapio", "mesas", "promocoes", "atendimento", "produtos", "relatorios", "visao", "pagar", "receber", "fiscal"];
+export const SEED_MODULES = ALL_MODULES.filter((m) => m !== "fiscal");
+export const setModules = (modules: string[], restaurantId = R) => call("PATCH", `/api/admin/restaurants/${restaurantId}/modules`, { token: ADMIN_KEY, body: { modules } });

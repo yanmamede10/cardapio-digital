@@ -1,7 +1,7 @@
 import { Router, type Request } from "express";
 import type { CreateOrderRequest, OrderStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireStaff } from "../lib/auth.js";
+import { requireModule, requireStaff } from "../lib/auth.js";
 import { generateOrderCode } from "../lib/codes.js";
 import { evaluateCoupon } from "../lib/coupons.js";
 import { priceLine, round2 } from "../lib/pricing.js";
@@ -231,7 +231,7 @@ ordersRouter.post("/:id/repeat", async (req, res) => {
   res.status(201).json(serializeOrder(order));
 });
 
-ordersRouter.post("/:id/accept", requireStaff, async (req, res) => {
+ordersRouter.post("/:id/accept", requireStaff, requireModule("pedidos"), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
@@ -240,7 +240,7 @@ ordersRouter.post("/:id/accept", requireStaff, async (req, res) => {
   res.json(serializeOrder(updated));
 });
 
-ordersRouter.post("/:id/reject", requireStaff, async (req, res) => {
+ordersRouter.post("/:id/reject", requireStaff, requireModule("pedidos"), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
@@ -249,7 +249,7 @@ ordersRouter.post("/:id/reject", requireStaff, async (req, res) => {
   res.json({ ok: true });
 });
 
-ordersRouter.patch("/:id/stage", requireStaff, async (req, res) => {
+ordersRouter.patch("/:id/stage", requireStaff, requireModule("pedidos"), async (req, res) => {
   const { stage } = req.body as { stage?: OrderStatus };
   if (!stage || !VALID_STAGES.includes(stage)) return res.status(400).json({ error: "invalid stage" });
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });

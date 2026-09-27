@@ -2,6 +2,7 @@
 // (the `places` and `menu` arrays inside Component), so the real app launches with
 // the exact copy/pricing the design was approved with instead of placeholder text.
 import { PrismaClient } from "@prisma/client";
+import { PLAN_MODULES } from "@cardapio/shared";
 import { hashPassword } from "../src/lib/auth.js";
 
 const prisma = new PrismaClient();
@@ -332,7 +333,8 @@ async function main() {
       deliveryFeeCap: 400,
       planPrice: 189.9,
       planDueDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 10),
-      planModulesJson: JSON.stringify(["Pedidos", "Cardápio", "Mesas", "Promoções", "Atendimento", "Relatórios"])
+      // The demo restaurant: everything but Emissão Fiscal (no NFC-e provider yet).
+      planModulesJson: JSON.stringify(PLAN_MODULES.filter((m) => m !== "fiscal"))
     }
   });
 

@@ -2,14 +2,14 @@ import { Router } from "express";
 import { Prisma } from "@prisma/client";
 import { LEVEL, SUPPORT_ROLES, type WhatsAppStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { requireMinRole, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
+import { requireMinRole, requireModule, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp, type WhatsAppMessage } from "../lib/whatsapp.js";
 
 // Configurações → WhatsApp is Dono-only; the connection indicator is for everyone who sees Atendimento.
 export const whatsappRouter = Router();
-const supportGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES)];
-const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO)];
+const supportGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES), requireModule("atendimento")];
+const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO), requireModule("atendimento")];
 
 async function statusOf(restaurantId: string): Promise<WhatsAppStatus> {
   const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { whatsappTermsAcceptedAt: true, whatsappTermsAcceptedBy: true } });
