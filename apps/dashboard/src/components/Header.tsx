@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
 import { initialsOf } from "../lib/format";
 import type { NotifItem } from "../lib/live";
 import { useDashboardState } from "../state/DashboardStateContext";
 
-// Single-restaurant app: there is no login and no open/closed schedule check yet.
-const RESTAURANT_NAME = "Fogo & Nó";
 
 export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem[] }) {
   const { staffName, staffRole } = useDashboardState();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [restaurantName, setRestaurantName] = useState("");
+  useEffect(() => {
+    api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {});
+  }, []);
   const notifCount = notifs.length;
 
   return (
@@ -30,7 +33,7 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
       <div style={{ minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {RESTAURANT_NAME}
+            {restaurantName}
           </h1>
           <span className="pill" style={{ color: "var(--ok)", background: "var(--surface2)", border: "1px solid var(--line)" }}>
             <span className="dot" style={{ background: "var(--ok)" }} />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Review, SupportTicket, TicketChannel, TicketStatus } from "@cardapio/shared";
-import { ApiError, api } from "../lib/api";
+import { ApiError, api, getSession } from "../lib/api";
 import { fmtDateTime, minutesSince, stars } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
@@ -70,7 +70,7 @@ export default function SupportScreen() {
 
   const assignToMe = async (t: SupportTicket) => {
     try {
-      const updated = await api.updateTicket(t.id, { assignee: "Marina Duarte" });
+      const updated = await api.updateTicket(t.id, { assignee: getSession()?.name ?? "" });
       setTickets((prev) => prev.map((x) => (x.id === t.id ? updated : x)));
     } catch {
       notify("Não foi possível atribuir o ticket");

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Order, SupportTicket, WaiterCall } from "@cardapio/shared";
 import { api } from "./api";
+import { canSee, moduleByKey } from "./modules";
 import { fmtMinutes, minutesSince } from "./format";
 
 /**
@@ -43,10 +44,12 @@ export function useLiveData(): LiveData {
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      // Only what this role/restaurant can see (the kitchen has no Atendimento, a module may be off) — no pointless 403s.
+      const can = (key: string) => canSee(moduleByKey(key));
       const [o, c, t] = await Promise.all([
-        safe(() => api.listOrders(), [] as Order[]),
-        safe(() => api.listWaiterCalls(), [] as WaiterCall[]),
-        safe(() => api.listTickets(), [] as SupportTicket[])
+        can("pedidos") ? safe(() => api.listOrders(), [] as Order[]) : [],
+        can("mesas") ? safe(() => api.listWaiterCalls(), [] as WaiterCall[]) : [],
+        can("atendimento") ? safe(() => api.listTickets(), [] as SupportTicket[]) : []
       ]);
       if (!alive) return;
       setOrders(o);

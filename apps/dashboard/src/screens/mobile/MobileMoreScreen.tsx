@@ -27,7 +27,7 @@ export default function MobileMoreScreen() {
   const { tickets } = useMobileScreen({ title: "Mais", subtitle: `${staffRole} · ${restaurantName}` });
 
   useEffect(() => {
-    api.getProfile().then((p) => setRestaurantName(p.name)).catch(() => {});
+    api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {}); // public: works for every role
   }, []);
 
   const unread = tickets.reduce((t, x) => t + x.unreadCount, 0);

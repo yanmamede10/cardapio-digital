@@ -384,3 +384,13 @@ test("Contas: duplo clique em Salvar cria um lançamento só; Excluir tira da li
   await expect(page.locator(".toast-bubble")).toContainText("Lançamento excluído");
   await expect(page.getByText(description)).toHaveCount(0);
 });
+
+plain("cabeçalho mostra o nome do restaurante; Atribuir a mim põe o nome de quem clicou", async ({ page, request }) => {
+  await loginAs(page, request, "bruno@fogoeno.com.br");
+  await page.goto("/atendimento");
+  await expect(page.locator("header h1")).toHaveText("Fogo & Nó");
+  await page.getByText("Juliana Prado").first().click();
+  const assigned = page.waitForResponse((r) => r.request().method() === "PATCH" && r.url().includes("/tickets/"));
+  await page.getByRole("button", { name: "Atribuir a mim" }).click();
+  expect((await (await assigned).json()).assignee).toBe("Bruno Castro");
+});

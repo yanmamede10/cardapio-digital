@@ -158,7 +158,7 @@ export default function TablesScreen() {
   }, []);
 
   useEffect(() => {
-    api.getPaymentMode().then((r) => setPaymentMode(r.paymentMode)).catch(() => {}); // Funcionário gets 403: maquininha própria
+    api.getPaymentMode().then((r) => setPaymentMode(r.paymentMode)).catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -158,7 +158,8 @@ settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
   res.json(serializeFiscal(r));
 });
 
-settingsRouter.get("/:id/payment-mode", ...staffGuard, async (req, res) => {
+// Read by every role: the waiter's "Fechar conta" follows it (maquininha própria or PIX via sistema).
+settingsRouter.get("/:id/payment-mode", requireStaff, requireOwnRestaurant, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge });
