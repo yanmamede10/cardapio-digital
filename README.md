@@ -39,7 +39,7 @@ docker run -d --name pg -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=cardapio -p 5432:
 cp apps/api/.env.example apps/api/.env      # já aponta para esse Postgres
 npm run db:generate --workspace apps/api    # Prisma Client
 npm run db:deploy   --workspace apps/api    # aplica as migrações (e cria o bucket privado do WhatsApp, se configurado)
-npm run db:seed     --workspace apps/api    # dados de exemplo (restaurante "fogo" com equipe)
+npm run db:seed     --workspace apps/api    # dados de exemplo (restaurante "fogo" com equipe) — APAGA o banco antes
 npm run dev:api                             # http://localhost:4100
 ```
 
@@ -61,6 +61,10 @@ Logins do seed (senha `senha123`), um por papel:
 | igor@fogoeno.com.br | Funcionário (cozinha) |
 
 **Super admin:** abra `http://localhost:5174/admin` e entre com o valor de `SUPER_ADMIN_KEY` da API. Sem essa variável, o `/api/admin` responde 503. Na lista, o nome do restaurante abre o detalhe: dados cadastrais, módulos contratados (desligado some do menu e a API responde 403), configurações atuais, equipe e WhatsApp. Senha provisória — a do Dono no cadastro ou a de "Resetar senha" na equipe — aparece uma vez e obriga a troca no primeiro login; até lá a API só aceita a troca. Em **Mensalidades**: o valor e o dia de vencimento ficam no detalhe de cada restaurante; "Gerar cobranças do mês" cria a mensalidade dos ativos com valor (de novo, só acrescenta quem falta); atrasado é calculado (pendente depois do vencimento) e destacado; "Marcar como pago" registra data e forma. É a mesma tabela que o restaurante vê em Minha Fatura. Inadimplência não desativa ninguém sozinha.
+
+### Hamburgueria de demonstração (produção)
+
+`npm run db:seed:demo --workspace apps/api` cria o **Chapa 27 Burgers** (id `chapa27`): 4 categorias, 30 itens, insumos com custo e ficha técnica, estoque inicial (bacon, cheddar, pão australiano e água com gás quase no fim), 30 mesas no mapa 11×11, contas a pagar/receber do mês, horários, Emissão Fiscal desligada e mensalidade de R$ 299,90 (dia 10). Sem fotos. Roda num banco vazio já migrado e **nunca apaga nada**: se o restaurante já existe, sai sem alterar. Logins `dono@`, `gerente@`, `garcom@` e `cozinha@chapa27.example`; a senha vem de `SEED_DEMO_PASSWORD` ou é gerada e impressa uma única vez.
 
 ### Cardápio do cliente (`apps/web`)
 
@@ -94,7 +98,7 @@ npm run test:api    # só a API
 npm run test:e2e    # só o Playwright
 ```
 
-O `tests/run.mjs` sobe um Postgres descartável em Docker (porta 54329), aplica as migrações e o seed, sobe a API na 4200 e, para o e2e, o dashboard na 5274. No fim, derruba tudo. O banco real nunca é tocado. Os testes de WhatsApp não precisam da Evolution: `tests/api/whatsapp.test.ts` serve uma Evolution falsa na 4299 e manda webhooks simulados; o mesmo servidor faz o papel do S3 do bucket privado do WhatsApp, com credenciais falsas, e o bucket público fica desligado nos testes. Rode `npm run db:generate --workspace apps/api` uma vez antes, porque o CI faz o mesmo. O CI (`.github/workflows/test.yml`) roda o typecheck e o `npm test` em cada PR e em cada push na `master`.
+O `tests/run.mjs` sobe um Postgres descartável em Docker (porta 54329), aplica as migrações, roda o seed de demonstração no banco vazio (prova que ele funciona sozinho), depois o seed de dev e o de demonstração de novo, sobe a API na 4200 e, para o e2e, o dashboard na 5274. No fim, derruba tudo. O banco real nunca é tocado. Os testes de WhatsApp não precisam da Evolution: `tests/api/whatsapp.test.ts` serve uma Evolution falsa na 4299 e manda webhooks simulados; o mesmo servidor faz o papel do S3 do bucket privado do WhatsApp, com credenciais falsas, e o bucket público fica desligado nos testes. Rode `npm run db:generate --workspace apps/api` uma vez antes, porque o CI faz o mesmo. O CI (`.github/workflows/test.yml`) roda o typecheck e o `npm test` em cada PR e em cada push na `master`.
 
 ## Variáveis de ambiente
 

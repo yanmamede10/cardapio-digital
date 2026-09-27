@@ -10,7 +10,7 @@ const DB_URL = "postgresql://postgres:test@localhost:54329/cardapio_test";
 const CONTAINER = "cardapio-test-db";
 const only = process.argv[2]; // "api" | "e2e" | undefined (both)
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
-const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SUPER_ADMIN_KEY: "test-admin-key" };
+const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SUPER_ADMIN_KEY: "test-admin-key", SEED_DEMO_PASSWORD: "senha123" };
 // WhatsApp: the API talks to a fake Evolution that tests/api/whatsapp.test.ts serves on :4299 — no real Evolution needed.
 // Storage: the private WhatsApp bucket points at that same fake (it answers S3 PUTs too) with dummy keys; the public bucket
 // is blanked (set-but-empty beats apps/api/.env). No test ever reaches the real Supabase.
@@ -38,9 +38,11 @@ try {
     }
   }
 
-  console.log("▸ migrações + seed");
+  console.log("▸ migrações + seeds");
   sh("npx prisma migrate deploy", API_DIR);
-  sh("npx tsx prisma/seed.ts", API_DIR);
+  sh("npx tsx prisma/seed-demo.ts", API_DIR); // on the empty database: the production seed must run alone
+  sh("npx tsx prisma/seed.ts", API_DIR); // wipes everything, then "fogo" with its team
+  sh("npx tsx prisma/seed-demo.ts", API_DIR); // the hamburgueria again, for the end-to-end flow and the load test
 
   console.log("▸ API em :4200");
   // detached (non-Windows): own process group, so teardown can kill npx → tsx → node together.
