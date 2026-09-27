@@ -196,3 +196,60 @@ describe("horário de pico", () => {
     assert.equal((await ids()).filter((id) => !known.has(id)).length, 10, "um recebível por mesa");
   });
 });
+
+describe("pedido pelo QR: validações", () => {
+  const post = (body: object, session = `v-${uid()}`) => call("POST", "/api/orders", { session, body: { mode: "table", restaurantId: D, tableNumber: 30, ...body } });
+  const line = (name: string, over: object = {}) => ({ itemId: item(name).id, quantity: 1, notes: "", selectedOptions: [], ...over });
+
+  test("observação de 300 e nome de 120 caracteres passam; um a mais, não; carrinho vazio e item de outro restaurante, não", async () => {
+    await fresh(30);
+    assert.equal((await post({ guestName: "Á".repeat(120), lines: [line("Kids", { notes: "ç".repeat(300) })] })).status, 201);
+    assert.equal((await post({ lines: [line("Kids", { notes: "x".repeat(301) })] })).status, 400);
+    assert.equal((await post({ guestName: "x".repeat(121), lines: [line("Kids")] })).status, 400);
+    assert.equal((await post({ lines: [] })).status, 400);
+    assert.equal((await post({ lines: [{ itemId: "fogo-burger", quantity: 1, notes: "", selectedOptions: [] }] })).status, 400);
+    assert.equal((await post({ lines: [line("Kids", { selectedOptions: [{ groupId: "ponto", optionId: "ponto-9" }] })] })).status, 400, "opção que não existe");
+  });
+
+  test("o servidor recalcula o preço (valor adulterado não vale) e arredonda quantidades estranhas", async () => {
+    const tampered = await post({ lines: [line("Cheddar & Bacon", { quantity: 2.7, selectedOptions: [{ groupId: "extra", optionId: "extra-0", priceDelta: -30, label: "grátis" }] })] });
+    assert.equal(tampered.body.total, 89.8, "2 × (38,90 + 6,00)");
+    assert.equal(tampered.body.lines[0].quantity, 2);
+    const odd = await post({ lines: [line("Kids", { quantity: 0 }), line("Salada", { quantity: -3 })] });
+    assert.deepEqual(odd.body.lines.map((l: { quantity: number }) => l.quantity), [1, 1]);
+  });
+
+  test("rodadas do mesmo aparelho, duas pessoas na mesma mesa e chamar garçom", async () => {
+    await fresh(29);
+    const phone = `celular-${uid()}`;
+    const first = await order(29, [{ name: "Kids" }], phone);
+    const second = await order(29, [{ name: "Chope Pilsen 300 ml" }], phone);
+    const other = await order(29, [{ name: "Salada" }]); // another guest at the same table
+    assert.deepEqual([first.body.round, second.body.round, other.body.round], [1, 2, 1]);
+    assert.deepEqual((await comanda(29)).orderIds.sort(), [first.body.id, second.body.id, other.body.id].sort());
+    await call("POST", `/api/orders/${other.body.id}/call-waiter`);
+    const calls = (await call("GET", `${P}/waiter-calls`, { token: waiter })).body;
+    assert.ok(calls.some((c: { tableNumber: number }) => c.tableNumber === 29));
+  });
+
+  test("status da mesa: livre → ocupada → aguardando pagamento → livre; pedido recusado sai da comanda", async () => {
+    await fresh(28);
+    assert.equal(await tableStatus(28), "free");
+    const a = (await order(28, [{ name: "Kids" }])).body;
+    const b = (await order(28, [{ name: "Salada" }])).body;
+    assert.equal(await tableStatus(28), "occupied");
+    await call("POST", `/api/orders/${b.id}/reject`, { token: kitchen });
+    assert.deepEqual((await comanda(28)).orderIds, [a.id]);
+    await call("PATCH", `/api/orders/${a.id}/stage`, { token: kitchen, body: { stage: "served" } });
+    assert.equal(await tableStatus(28), "awaiting_payment");
+    await close(28);
+    assert.equal(await tableStatus(28), "free");
+  });
+
+  test("dois aparelhos aceitam o mesmo pedido ao mesmo tempo: um aceita, o outro recebe 409", async () => {
+    await fresh(27);
+    const o = (await order(27, [{ name: "Kids" }])).body;
+    const both = await Promise.all([call("POST", `/api/orders/${o.id}/accept`, { token: kitchen }), call("POST", `/api/orders/${o.id}/accept`, { token: waiter })]);
+    assert.deepEqual(both.map((r) => r.status).sort(), [200, 409]);
+  });
+});

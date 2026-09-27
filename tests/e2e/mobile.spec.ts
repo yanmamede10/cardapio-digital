@@ -33,7 +33,7 @@ test("fechar a conta no celular pede a forma de pagamento, baixa a ficha técnic
   await page.getByRole("button", { name: /Fechar conta/ }).click();
   await page.getByRole("button", { name: "PIX" }).click();
   await expect(toast(page)).toContainText(`Mesa ${table}`);
-  const entry = (await api("GET", `/api/restaurants/${R}/finance-entries?kind=receivable`)).find((e: { description: string }) => e.description.includes(order.code));
+  const entry = (await api("GET", `/api/restaurants/${R}/finance-entries?kind=receivable`)).find((e: { description: string }) => e.description === `Mesa ${table} · comanda ${order.code}`); // codes are 4 random digits: the table disambiguates
   expect([entry.amount, entry.status, entry.paymentMethod]).toEqual([99, "paid", "PIX"]); // 3 × 30,00 + 10%
 
   await page.goto("/produtos");

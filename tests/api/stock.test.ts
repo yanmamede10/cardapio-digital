@@ -128,3 +128,10 @@ describe("baixa de estoque", () => {
     assert.equal((await stockOf(pao.id)).stock, -2);
   });
 });
+
+test("nome de insumo com acento é aceito; acima de 80 caracteres, não", async () => {
+  const ok = await call("POST", `${P}/products`, { token, body: product({ name: `Pão de açúcar ç ${uid()}` }) });
+  assert.equal(ok.status, 201);
+  assert.match(ok.body.name, /açúcar ç/);
+  assert.equal((await call("POST", `${P}/products`, { token, body: product({ name: "x".repeat(81) }) })).status, 400);
+});
