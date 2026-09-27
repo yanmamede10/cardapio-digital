@@ -35,8 +35,10 @@ export async function takeStockForOrders(restaurantId: string, orders: { lines: 
     lines.map((l) => ({ productId: productOf.get(l.itemId) ?? null, quantity: l.quantity })),
     new Map(products.map((p) => [p.id, p]))
   );
+  // Rows locked in id order, as in the XML import: two comandas closing at once over the same insumos (pão, blend…)
+  // used to lock them in opposite orders and deadlock — the loser's stock and receivable were lost.
   await prisma.$transaction(
-    [...out].flatMap(([productId, quantity]) => [
+    [...out].sort(([a], [b]) => a.localeCompare(b)).flatMap(([productId, quantity]) => [
       prisma.product.update({ where: { id: productId }, data: { stock: { decrement: quantity } } }),
       prisma.stockMovement.create({ data: { restaurantId, productId, kind: "out", quantity, source } })
     ])

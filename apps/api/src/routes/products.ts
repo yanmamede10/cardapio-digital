@@ -162,7 +162,7 @@ productsRouter.post("/:id/stock-movements/xml", ...staffGuard, async (req, res) 
   }
   // Increment (not set) stock so a comanda closed meanwhile isn't overwritten.
   await prisma.$transaction([
-    ...[...touched.values()].map((p) =>
+    ...[...touched.values()].sort((a, b) => a.id.localeCompare(b.id)).map((p) => // id order, like lib/stock.ts: no deadlock
       prisma.product.update({ where: { id: p.id }, data: { stock: { increment: p.added }, cost: Math.round(p.cost * 10000) / 10000 } })
     ),
     ...movements.map((m) => prisma.stockMovement.create({ data: { restaurantId, productId: m.productId, kind: "in", quantity: m.quantity, source: fileName } }))

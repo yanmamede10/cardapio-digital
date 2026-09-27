@@ -100,11 +100,12 @@ describe("comanda", () => {
 
   test("dois garçons fecham a mesma mesa ao mesmo tempo: um fecha, nada em dobro", async () => {
     await fresh(18);
+    const started = Date.now() - 1000; // order codes are 4 random digits: only this test's movements count
     await order(18, [{ name: "Chope Pilsen 300 ml", qty: 2 }]);
     const ids = (await comanda(18)).orderIds;
     const results = await Promise.all([close(18, { orderIds: ids }), close(18, { orderIds: ids }), close(18)]);
     assert.deepEqual(results.map((r) => r.body.closed).sort(), [0, 0, 1]);
-    const out = (await call("GET", `${P}/stock-movements`, { token: owner })).body.filter((m: { productName: string; source: string }) => m.productName === "Chope pilsen (barril)" && m.source.includes(results.find((r) => r.body.closed)!.body.code));
+    const out = (await call("GET", `${P}/stock-movements`, { token: owner })).body.filter((m: { productName: string; source: string; createdAt: string }) => m.productName === "Chope pilsen (barril)" && m.source === `Fechamento de comanda ${results.find((r) => r.body.closed)!.body.code}` && Date.parse(m.createdAt) > started);
     assert.equal(out.length, 1);
   });
 
@@ -132,7 +133,7 @@ describe("fechamento → Contas a Receber", () => {
     const c = await comanda(21);
     assert.deepEqual([c.subtotal, c.service, c.total], [32.9, 3.29, 36.19]);
     const res = await close(21, { orderIds: c.orderIds, paymentMethod: "Cartão" });
-    const entry = (await receivables()).find((e) => e.description.includes(res.body.code))!;
+    const entry = (await receivables()).find((e) => e.description === `Mesa 21 · comanda ${res.body.code}`)!;
     assert.deepEqual([entry.amount, entry.status, entry.paidOn, entry.paymentMethod, entry.category], [36.19, "paid", today(), "Cartão", "Vendas salão"]);
     assert.match(entry.description, /Mesa 21/);
   });
@@ -145,7 +146,7 @@ describe("fechamento → Contas a Receber", () => {
       const c = await comanda(22);
       assert.deepEqual([c.servicePct, c.service, c.total], [0, 0, 65.8]);
       const res = await close(22, { orderIds: c.orderIds, paymentMethod: "PIX" });
-      assert.equal((await receivables()).find((e) => e.description.includes(res.body.code))!.amount, 65.8);
+      assert.equal((await receivables()).find((e) => e.description === `Mesa 22 · comanda ${res.body.code}`)!.amount, 65.8);
     } finally {
       await setService(true);
     }
@@ -160,7 +161,7 @@ describe("fechamento → Contas a Receber", () => {
     assert.deepEqual((await comanda(23)).orderIds, ids);
     const [a, b] = await Promise.all([close(23, { orderIds: ids, paymentMethod: "Dinheiro" }), close(23, { orderIds: ids, paymentMethod: "Dinheiro" })]);
     const code = a.body.code ?? b.body.code;
-    assert.equal((await receivables()).filter((e) => e.description.includes(code)).length, 1);
+    assert.equal((await receivables()).filter((e) => e.description === `Mesa 23 · comanda ${code}`).length, 1);
   });
 
   test("com Contas a Receber desligado, fecha a conta sem lançar", async () => {
@@ -174,6 +175,24 @@ describe("fechamento → Contas a Receber", () => {
     } finally {
       await setModules(SEED_MODULES, D);
     }
-    assert.equal((await receivables()).some((e) => e.description.includes(res.body.code)), false);
+    assert.equal((await receivables()).some((e) => e.description === `Mesa 24 · comanda ${res.body.code}`), false);
+  });
+});
+
+describe("horário de pico", () => {
+  test("10 mesas fecham ao mesmo tempo com os mesmos insumos: todas fecham, estoque e recebíveis certos (sem deadlock)", async () => {
+    const tables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    await fresh(...tables);
+    const brioche = async () => ((await call("GET", `${P}/products`, { token: owner })).body as { name: string; stock: number }[]).find((p) => p.name === "Pão brioche")!.stock;
+    // Opposite item orders on alternate tables: each close then touches the shared insumos in a different order.
+    const lines = [{ name: "Clássico" }, { name: "Cheddar & Bacon" }, { name: "Batata com Cheddar e Bacon" }, { name: "Onion Rings" }];
+    for (const t of tables) await order(t, t % 2 ? lines : [...lines].reverse());
+    const before = await brioche();
+    const ids = async () => ((await call("GET", `${P}/finance-entries?kind=receivable`, { token: owner })).body as { id: string }[]).map((e) => e.id);
+    const known = new Set(await ids());
+    const results = await Promise.all(tables.map((t) => close(t, { paymentMethod: "Cartão" })));
+    assert.deepEqual(results.map((r) => [r.status, r.body.closed]), tables.map(() => [200, 1]));
+    assert.equal(Math.round((before - (await brioche())) * 1000) / 1000, 20);
+    assert.equal((await ids()).filter((id) => !known.has(id)).length, 10, "um recebível por mesa");
   });
 });
