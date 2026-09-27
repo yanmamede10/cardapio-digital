@@ -6,6 +6,7 @@ import { fmtMinutes, minutesSince, slaFg } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
 import { FilterPopover, type FilterValues } from "../../components/FilterPopover";
+import { CHANNEL_ICON, WhatsAppIndicator, lastMessagePreview, useWhatsAppStatus } from "../../components/WhatsApp";
 
 const STATUS_MAP: Record<TicketStatus, { label: string; bg: string; fg: string }> = {
   new: { label: "Novo", bg: "color-mix(in srgb, var(--sec) 22%, transparent)", fg: "var(--brandText)" },
@@ -14,7 +15,7 @@ const STATUS_MAP: Record<TicketStatus, { label: string; bg: string; fg: string }
 };
 
 const STATUS_BY_LABEL: Record<string, TicketStatus> = { Novo: "new", "Em andamento": "in_progress", Resolvido: "resolved" };
-const CHANNEL_BY_LABEL: Record<string, TicketChannel> = { Mesa: "table", Delivery: "delivery" };
+const CHANNEL_BY_LABEL: Record<string, TicketChannel> = { Mesa: "table", Delivery: "delivery", WhatsApp: "whatsapp" };
 const FILTER_GROUPS = [
   { id: "status", label: "Status", options: Object.keys(STATUS_BY_LABEL) },
   { id: "canal", label: "Canal", options: Object.keys(CHANNEL_BY_LABEL) }
@@ -25,12 +26,15 @@ export default function MobileSupportScreen() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState<FilterValues>({});
+  const [whatsapp] = useWhatsAppStatus();
   useMobileScreen({ title: "Atendimento", subtitle: "Tickets e conversas" });
 
   const reload = () => api.listTickets({ status: STATUS_BY_LABEL[filter.status ?? ""] ?? "all", channel: CHANNEL_BY_LABEL[filter.canal ?? ""] ?? "all" }).then((t) => (setTickets(t), setLoaded(true)));
 
   useEffect(() => {
     reload();
+    const id = setInterval(() => reload().catch(() => {}), 6000); // new WhatsApp conversations appear on their own
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
@@ -54,6 +58,9 @@ export default function MobileSupportScreen() {
             {tickets.length === 1 ? "1 conversa" : `${tickets.length} conversas`}
           </div>
           <FilterPopover sheet groups={FILTER_GROUPS} value={filter} onChange={setFilter} resultCount={tickets.length} />
+        </div>
+        <div style={{ display: "flex" }}>
+          <WhatsAppIndicator status={whatsapp} />
         </div>
         {late > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, color: "var(--alert)" }}>
@@ -80,12 +87,12 @@ export default function MobileSupportScreen() {
               <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.customerName}</span>
-                  <i className={`fa-solid ${t.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 12, color: "var(--ink3)" }} />
+                  <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: 12, color: "var(--ink3)" }} />
                   <span className="mono" style={{ fontSize: 11.5, fontWeight: 600, color: slaFg(since) }}>
                     {fmtMinutes(since)}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{last?.text ?? ""}</div>
+                <div style={{ fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lastMessagePreview(last)}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <span style={{ fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "1px 8px", background: st.bg, color: st.fg }}>{st.label}</span>
                   <span style={{ fontSize: 11, color: "var(--ink3)", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.assignee || "Não atribuído"}</span>

@@ -21,6 +21,7 @@ import MobileProductsScreen from "./screens/mobile/MobileProductsScreen";
 import MobileOverviewScreen from "./screens/mobile/MobileOverviewScreen";
 import MobileAccountsScreen from "./screens/mobile/MobileAccountsScreen";
 import MobileFiscalEmissionScreen from "./screens/mobile/MobileFiscalEmissionScreen";
+import { MobileWhatsAppScreen } from "./screens/SettingsWhatsAppTab";
 
 export default function MobileApp() {
   return (
@@ -48,6 +49,7 @@ export default function MobileApp() {
         <Route path="/config/horarios" element={<MobileHoursScreen />} />
         <Route path="/config/equipe" element={<MobileTeamScreen />} />
         <Route path="/config/fiscal" element={<MobileFiscalScreen />} />
+        <Route path="/config/whatsapp" element={<MobileWhatsAppScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

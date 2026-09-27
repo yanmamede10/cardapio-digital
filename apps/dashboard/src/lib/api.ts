@@ -31,6 +31,8 @@ import type {
   UpsertMenuItemRequest,
   UpsertProductRequest,
   WaiterCall,
+  WhatsAppState,
+  WhatsAppStatus,
   XmlImportRequest,
   FinanceSummary
 } from "@cardapio/shared";
@@ -107,6 +109,27 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+/** Multipart POST (the browser sets the multipart Content-Type itself, so this can't go through request()). */
+async function upload<T>(path: string, form: FormData): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { method: "POST", headers: session ? { Authorization: `Bearer ${session.token}` } : undefined, body: form });
+  } catch {
+    throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
+  }
+  if (!res.ok) {
+    let message = `Erro ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.error) message = body.error;
+    } catch {
+      // ignore malformed error body
+    }
+    throw new ApiError(res.status, message);
+  }
+  return res.json();
 }
 
 export function getSession(): StaffSession | null {
@@ -186,30 +209,10 @@ export const api = {
   duplicateItem: (itemId: string) =>
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/duplicate`, { method: "POST" }),
   deleteItem: (itemId: string) => request<void>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "DELETE" }),
-  uploadItemImage: async (itemId: string, file: File): Promise<MenuItem> => {
+  uploadItemImage: (itemId: string, file: File) => {
     const form = new FormData();
     form.append("file", file);
-    let res: Response;
-    try {
-      res = await fetch(`${BASE_URL}/api/restaurants/${RESTAURANT_ID}/items/${itemId}/image`, {
-        method: "POST",
-        headers: session ? { Authorization: `Bearer ${session.token}` } : undefined,
-        body: form
-      });
-    } catch {
-      throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
-    }
-    if (!res.ok) {
-      let message = `Erro ${res.status}`;
-      try {
-        const body = await res.json();
-        if (body?.error) message = body.error;
-      } catch {
-        // ignore malformed error body
-      }
-      throw new ApiError(res.status, message);
-    }
-    return res.json();
+    return upload<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/image`, form);
   },
   moveItem: (itemId: string, direction: "up" | "down") =>
     request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
@@ -259,6 +262,18 @@ export const api = {
   listReviews: () => request<Review[]>(`/api/restaurants/${RESTAURANT_ID}/reviews`),
   replyReview: (reviewId: string, text: string) =>
     request<Review>(`/api/restaurants/${RESTAURANT_ID}/reviews/${reviewId}/reply`, { method: "POST", body: JSON.stringify({ text }) }),
+  /** Image or voice note on a WhatsApp conversation. */
+  sendTicketMedia: (ticketId: string, file: Blob, name: string) => {
+    const form = new FormData();
+    form.append("file", file, name);
+    return upload<SupportTicket>(`/api/restaurants/${RESTAURANT_ID}/tickets/${ticketId}/media`, form);
+  },
+
+  // WhatsApp — connecting is Dono-only; the status also feeds the Atendimento indicator.
+  getWhatsApp: () => request<WhatsAppStatus>(`/api/restaurants/${RESTAURANT_ID}/whatsapp`),
+  acceptWhatsAppTerms: () => request<WhatsAppStatus>(`/api/restaurants/${RESTAURANT_ID}/whatsapp/terms`, { method: "POST" }),
+  connectWhatsApp: () => request<{ state: WhatsAppState; qr: string | null }>(`/api/restaurants/${RESTAURANT_ID}/whatsapp/connect`, { method: "POST" }),
+  disconnectWhatsApp: () => request<WhatsAppStatus>(`/api/restaurants/${RESTAURANT_ID}/whatsapp/disconnect`, { method: "POST" }),
 
   // Reports / finance
   getAnalytics: (period: AnalyticsPeriod) => request<AnalyticsSummary>(`/api/restaurants/${RESTAURANT_ID}/analytics${qs({ period })}`),
@@ -288,30 +303,10 @@ export const api = {
   updateAppearanceDraft: (payload: Partial<{ template: MenuTemplateId; brandColor: string; logoUrl: string | null; coverPhotos: string[] }>) =>
     request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`, { method: "PATCH", body: JSON.stringify(payload) }),
   publishAppearance: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/publish`, { method: "POST" }),
-  uploadAppearanceFile: async (kind: "logo" | "cover", file: File): Promise<{ url: string } & AppearanceState> => {
+  uploadAppearanceFile: (kind: "logo" | "cover", file: File) => {
     const form = new FormData();
     form.append("kind", kind);
     form.append("file", file);
-    let res: Response;
-    try {
-      res = await fetch(`${BASE_URL}/api/restaurants/${RESTAURANT_ID}/appearance/upload`, {
-        method: "POST",
-        headers: session ? { Authorization: `Bearer ${session.token}` } : undefined,
-        body: form
-      });
-    } catch {
-      throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
-    }
-    if (!res.ok) {
-      let message = `Erro ${res.status}`;
-      try {
-        const body = await res.json();
-        if (body?.error) message = body.error;
-      } catch {
-        // ignore malformed error body
-      }
-      throw new ApiError(res.status, message);
-    }
-    return res.json();
+    return upload<{ url: string } & AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/upload`, form);
   }
 };

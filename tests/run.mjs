@@ -11,6 +11,9 @@ const CONTAINER = "cardapio-test-db";
 const only = process.argv[2]; // "api" | "e2e" | undefined (both)
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
 const env = { ...process.env, DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SUPER_ADMIN_KEY: "test-admin-key" };
+// WhatsApp: the API talks to a fake Evolution that tests/api/whatsapp.test.ts serves on :4299 — no real Evolution needed.
+// Storage blanked (set-but-empty beats apps/api/.env), so a test never uploads to the real bucket.
+Object.assign(env, { EVOLUTION_API_URL: "http://localhost:4299", EVOLUTION_API_KEY: "test-evo-key", WHATSAPP_WEBHOOK_URL: "http://localhost:4200/api/whatsapp/webhook", WHATSAPP_WEBHOOK_SECRET: "test-webhook-secret", STORAGE_S3_ENDPOINT: "" });
 
 const sh = (cmd, cwd = ROOT) => execSync(cmd, { cwd, env, stdio: "inherit" });
 const run = (cmd, args, cwd = ROOT) =>

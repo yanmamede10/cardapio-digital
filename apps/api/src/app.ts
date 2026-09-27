@@ -17,6 +17,7 @@ import { restaurantTablesRouter } from "./routes/restaurantTables.js";
 import { settingsRouter } from "./routes/settings.js";
 import { supportRouter } from "./routes/support.js";
 import { tablesRouter } from "./routes/tables.js";
+import { whatsappRouter, whatsappWebhookRouter } from "./routes/whatsapp.js";
 
 // Day/month boundaries ("hoje", "mês corrente") are computed in server-local time. Vercel runs in UTC,
 // which would shift them 3h vs. a Brazilian dev machine, so pin the zone explicitly.
@@ -28,6 +29,9 @@ const app = express();
 // Unset → open to any origin, which keeps local dev and the Capacitor Android builds working.
 const origins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
 app.use(cors(origins?.length ? { origin: origins } : undefined));
+// Evolution posts received media as base64 inside the JSON, far past express.json()'s 100kb default — so this one route
+// gets its own parser first (the global one below then skips the already-parsed body).
+app.use("/api/whatsapp/webhook", express.json({ limit: "25mb" }), whatsappWebhookRouter);
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
@@ -44,6 +48,7 @@ app.use("/api/restaurants", settingsRouter);
 app.use("/api/restaurants", appearanceRouter);
 app.use("/api/restaurants", productsRouter);
 app.use("/api/restaurants", financeRouter);
+app.use("/api/restaurants", whatsappRouter);
 app.use("/api/tables", tablesRouter);
 app.use("/api/addresses", addressesRouter);
 app.use("/api/payment-methods", paymentMethodsRouter);

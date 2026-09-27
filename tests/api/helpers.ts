@@ -10,13 +10,14 @@ export async function login(email = "marina@fogoeno.com.br") {
 }
 
 /** Returns { status, body } and never throws on HTTP errors, so tests can assert on 4xx. */
-export async function call(method: string, path: string, { token, body, session }: { token?: string; body?: unknown; session?: string } = {}) {
+export async function call(method: string, path: string, { token, body, session, headers }: { token?: string; body?: unknown; session?: string; headers?: Record<string, string> } = {}) {
   const res = await fetch(`${API}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(session ? { "X-Session-Id": session } : {})
+      ...(session ? { "X-Session-Id": session } : {}),
+      ...headers
     },
     body: body === undefined ? undefined : JSON.stringify(body)
   });

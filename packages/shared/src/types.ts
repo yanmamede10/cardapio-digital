@@ -364,14 +364,26 @@ export interface CreateCouponRequest {
 }
 
 export type TicketStatus = "new" | "in_progress" | "resolved";
-export type TicketChannel = "table" | "delivery";
+export type TicketChannel = "table" | "delivery" | "whatsapp";
 
 export interface SupportMessage {
   id: string;
   from: "customer" | "staff";
   authorName: string | null;
   text: string;
+  /** WhatsApp only: an image or voice note, served from Storage. */
+  mediaType: "image" | "audio" | null;
+  mediaUrl: string | null;
   createdAt: string;
+}
+
+export type WhatsAppState = "connected" | "connecting" | "disconnected";
+
+/** Configurações → WhatsApp and the Atendimento indicator. termsAcceptedAt null = the Dono never set it up. */
+export interface WhatsAppStatus {
+  state: WhatsAppState;
+  termsAcceptedAt: string | null;
+  termsAcceptedBy: string | null;
 }
 
 export interface SupportTicket {

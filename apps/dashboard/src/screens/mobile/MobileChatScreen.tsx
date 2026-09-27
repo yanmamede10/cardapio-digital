@@ -4,6 +4,7 @@ import type { SupportTicket, TicketStatus } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { fmtMinutes, minutesSince, slaFg } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
+import { MediaButtons, MessageBody, WhatsAppIndicator, useWhatsAppStatus } from "../../components/WhatsApp";
 
 const STATUS_MAP: Record<TicketStatus, { label: string; bg: string; fg: string }> = {
   new: { label: "Novo", bg: "color-mix(in srgb, var(--sec) 22%, transparent)", fg: "var(--brandText)" },
@@ -23,6 +24,7 @@ export default function MobileChatScreen() {
   const [ticket, setTicket] = useState<SupportTicket | null>(null);
   const [draft, setDraft] = useState("");
   const [quickOpen, setQuickOpen] = useState(false);
+  const [whatsapp] = useWhatsAppStatus();
 
   const { notify } = useMobileScreen({ title: ticket?.customerName ?? "Conversa", subtitle: "Histórico completo", hideTabs: true });
 
@@ -54,7 +56,17 @@ export default function MobileChatScreen() {
       const updated = await api.sendTicketMessage(ticket.id, text);
       setTicket(updated);
     } catch {
+      setDraft(text); // e.g. WhatsApp disconnected — keep what was typed
       notify("Não foi possível enviar a mensagem");
+    }
+  };
+
+  const sendMedia = async (file: Blob, name: string) => {
+    if (!ticket) return;
+    try {
+      setTicket(await api.sendTicketMedia(ticket.id, file, name));
+    } catch {
+      notify("Não foi possível enviar pelo WhatsApp");
     }
   };
 
@@ -86,12 +98,20 @@ export default function MobileChatScreen() {
         )}
       </div>
 
+      {ticket.channel === "whatsapp" && (
+        <div style={{ padding: "8px 12px 0", display: "flex" }}>
+          <WhatsAppIndicator status={whatsapp} />
+        </div>
+      )}
+
       <div style={{ flex: 1, padding: "14px 12px", display: "flex", flexDirection: "column", gap: 11 }}>
         {ticket.messages.map((m) => {
           const isStaff = m.from === "staff";
           return (
             <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: 3, alignSelf: isStaff ? "flex-end" : "flex-start", maxWidth: "82%" }}>
-              <div style={{ borderRadius: isStaff ? "13px 13px 4px 13px" : "13px 13px 13px 4px", padding: "10px 13px", fontSize: 13, lineHeight: 1.45, background: isStaff ? "var(--brand)" : "var(--surface2)", color: isStaff ? "var(--brandInk)" : "var(--ink)", textWrap: "pretty" }}>{m.text}</div>
+              <div style={{ borderRadius: isStaff ? "13px 13px 4px 13px" : "13px 13px 13px 4px", padding: "10px 13px", fontSize: 13, lineHeight: 1.45, background: isStaff ? "var(--brand)" : "var(--surface2)", color: isStaff ? "var(--brandInk)" : "var(--ink)", textWrap: "pretty" }}>
+                <MessageBody m={m} />
+              </div>
               <div className="mono" style={{ fontSize: 10.5, color: "var(--ink3)", textAlign: isStaff ? "right" : "left" }}>
                 {isStaff ? m.authorName || "Você" : ticket.customerName} · {new Date(m.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </div>
@@ -129,6 +149,7 @@ export default function MobileChatScreen() {
         >
           <i className="fa-solid fa-bolt" style={{ fontSize: 15 }} />
         </button>
+        {ticket.channel === "whatsapp" && <MediaButtons onSend={sendMedia} onError={notify} />}
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

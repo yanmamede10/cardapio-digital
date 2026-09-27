@@ -69,6 +69,10 @@ model Restaurant {
   contact   String   @default("")
   createdAt DateTime @default(now())
 
+  // WhatsApp no Atendimento (conexão não oficial): o Dono aceitou o aviso de risco de bloqueio — quando e quem (StaffMember.id).
+  whatsappTermsAcceptedAt DateTime?
+  whatsappTermsAcceptedBy String?
+
   categories     MenuCategory[]
   items          MenuItem[]
   orders         Order[]
@@ -293,8 +297,12 @@ model SupportTicket {
   unreadCount    Int      @default(0)
   createdAt      DateTime @default(now())
   lastActivityAt DateTime @default(now())
+  // Canal "whatsapp": o contato (dígitos, ex. 5511999990000). Um ticket por contato por restaurante; null nos outros canais.
+  contactPhone   String?
 
   messages SupportMessage[]
+
+  @@unique([restaurantId, contactPhone])
 }
 
 model SupportMessage {
@@ -305,6 +313,11 @@ model SupportMessage {
   authorName String?
   text       String
   createdAt  DateTime @default(now())
+  mediaType  String? // "image" | "audio" (WhatsApp); mediaUrl = its public Storage URL
+  mediaUrl   String?
+  externalId String? // WhatsApp message id — a redelivered webhook never duplicates a message
+
+  @@unique([ticketId, externalId])
 }
 
 model Review {

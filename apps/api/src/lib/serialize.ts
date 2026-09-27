@@ -192,6 +192,8 @@ export function serializeMessage(m: SupportMessage): ApiSupportMessage {
     from: m.from as ApiSupportMessage["from"],
     authorName: m.authorName,
     text: m.text,
+    mediaType: m.mediaType as ApiSupportMessage["mediaType"],
+    mediaUrl: m.mediaUrl,
     createdAt: m.createdAt.toISOString()
   };
 }

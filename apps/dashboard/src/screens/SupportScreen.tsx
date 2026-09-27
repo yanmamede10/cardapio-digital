@@ -6,9 +6,10 @@ import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
 import { Segmented } from "../components/Segmented";
 import { FilterPopover } from "../components/FilterPopover";
+import { CHANNEL_ICON, MediaButtons, MessageBody, WhatsAppIndicator, useWhatsAppStatus } from "../components/WhatsApp";
 
 const STATUS_LABEL: Record<TicketStatus, string> = { new: "Novo", in_progress: "Em andamento", resolved: "Resolvido" };
-const CHANNEL_LABEL: Record<TicketChannel, string> = { table: "Mesa", delivery: "Delivery" };
+const CHANNEL_LABEL: Record<TicketChannel, string> = { table: "Mesa", delivery: "Delivery", whatsapp: "WhatsApp" };
 const keyOf = <K extends string>(labels: Record<K, string>, label?: string) => (Object.keys(labels) as K[]).find((k) => labels[k] === label);
 const STATUS_COLOR: Record<TicketStatus, string> = { new: "var(--brandText)", in_progress: "var(--warn)", resolved: "var(--ok)" };
 
@@ -24,6 +25,7 @@ export default function SupportScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({});
+  const [whatsapp] = useWhatsAppStatus();
 
   const reloadTickets = () => api.listTickets({ status: statusFilter, channel: channelFilter }).then(setTickets);
 
@@ -45,6 +47,14 @@ export default function SupportScreen() {
     if (!loading) reloadTickets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, channelFilter]);
+
+  // WhatsApp messages (and replies typed on the restaurant's phone) show up without reloading the page.
+  useEffect(() => {
+    if (loading) return;
+    const id = setInterval(() => reloadTickets().catch(() => {}), 6000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, statusFilter, channelFilter]);
 
   const selected = tickets.find((t) => t.id === selectedId) || null;
 
@@ -75,6 +85,16 @@ export default function SupportScreen() {
       setDraft("");
     } catch {
       notify("Não foi possível enviar a mensagem");
+    }
+  };
+
+  const sendMedia = async (file: Blob, name: string) => {
+    if (!selected) return;
+    try {
+      const updated = await api.sendTicketMedia(selected.id, file, name);
+      setTickets((prev) => prev.map((x) => (x.id === selected.id ? updated : x)));
+    } catch {
+      notify("Não foi possível enviar pelo WhatsApp");
     }
   };
 
@@ -131,6 +151,7 @@ export default function SupportScreen() {
           </div>
         )}
         <div style={{ flex: 1 }} />
+        {tab === "tickets" && <WhatsAppIndicator status={whatsapp} />}
         {tab === "tickets" && late > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 14%, transparent)", border: "1px solid var(--alert)", borderRadius: 999, padding: "7px 16px" }}>
             <i className="fa-solid fa-stopwatch" style={{ fontSize: 15 }} />
@@ -141,7 +162,7 @@ export default function SupportScreen() {
 
       {tab === "tickets" ? (
         tickets.length === 0 && statusFilter === "all" && channelFilter === "all" ? (
-          <EmptyState icon="fa-comments" title="Nenhuma conversa ainda" sub="Mensagens de clientes sobre pedidos na mesa ou no delivery aparecem aqui." />
+          <EmptyState icon="fa-comments" title="Nenhuma conversa ainda" sub="Mensagens de clientes da mesa, do delivery e do WhatsApp aparecem aqui." />
         ) : (
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
             <div style={{ width: 330, flex: "0 0 330px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -188,7 +209,7 @@ export default function SupportScreen() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <i className={`fa-solid ${t.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 15, color: "var(--ink3)" }} />
+                        <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: 15, color: "var(--ink3)" }} />
                         <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.customerName}</span>
                         {t.unreadCount > 0 && (
                           <span className="mono" style={{ fontSize: 10, fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 20, padding: "1px 6px" }}>
@@ -248,13 +269,17 @@ export default function SupportScreen() {
                             color: m.from === "staff" ? "var(--brandInk)" : "var(--ink)"
                           }}
                         >
-                          {m.text}
+                          <MessageBody m={m} />
                         </div>
-                        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 3 }}>{fmtDateTime(m.createdAt)}</div>
+                        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 3 }}>
+                          {m.authorName ? `${m.authorName} · ` : ""}
+                          {fmtDateTime(m.createdAt)}
+                        </div>
                       </div>
                     ))}
                   </div>
                   <div style={{ display: "flex", gap: 8, padding: 12, borderTop: "1px solid var(--line)" }}>
+                    {selected.channel === "whatsapp" && <MediaButtons onSend={sendMedia} onError={notify} />}
                     <input
                       className="field"
                       value={draft}

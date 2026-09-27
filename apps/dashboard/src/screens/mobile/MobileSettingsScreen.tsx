@@ -26,7 +26,8 @@ export default function MobileSettingsScreen() {
       label: "Operação",
       items: [
         { label: "Equipe e permissões", sub: staffCount != null ? `${staffCount} ${staffCount === 1 ? "membro ativo" : "membros ativos"}` : "…", icon: "fa-users", go: () => navigate("/config/equipe") },
-        { label: "Dados fiscais", sub: "CNPJ, razão social, endereço", icon: "fa-file-invoice", go: () => navigate("/config/fiscal") }
+        { label: "Dados fiscais", sub: "CNPJ, razão social, endereço", icon: "fa-file-invoice", go: () => navigate("/config/fiscal") },
+        { label: "WhatsApp", sub: "Conexão do Atendimento", icon: "fa-mobile-screen-button", go: () => navigate("/config/whatsapp") }
       ]
     }
   ];

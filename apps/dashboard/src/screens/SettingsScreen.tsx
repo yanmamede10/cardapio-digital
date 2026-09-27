@@ -8,8 +8,9 @@ import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
 import AppearanceTab from "./SettingsAppearanceTab";
 import PaymentSubaccountTab from "./SettingsFinanceTab";
+import WhatsAppTab from "./SettingsWhatsAppTab";
 
-type Tab = "profile" | "appearance" | "hours" | "staff" | "finance" | "fiscal";
+type Tab = "profile" | "appearance" | "hours" | "staff" | "finance" | "fiscal" | "whatsapp";
 
 const WEEKDAY_LABEL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 const EMPTY_MEMBER = { id: null as string | null, name: "", email: "", role: "waiter" as StaffRole, password: "" };
@@ -110,7 +111,8 @@ export default function SettingsScreen() {
           { value: "hours", label: "Horários" },
           { value: "staff", label: "Equipe & Permissões" },
           { value: "finance", label: "Financeiro" },
-          { value: "fiscal", label: "Fiscal" }
+          { value: "fiscal", label: "Fiscal" },
+          { value: "whatsapp", label: "WhatsApp" }
         ]}
       />
 
@@ -134,6 +136,8 @@ export default function SettingsScreen() {
       {tab === "appearance" && <AppearanceTab restaurantName={profile.name} />}
 
       {tab === "finance" && <PaymentSubaccountTab />}
+
+      {tab === "whatsapp" && <WhatsAppTab />}
 
       {tab === "hours" && (
         <section className="card" style={{ padding: 18, maxWidth: 620, display: "flex", flexDirection: "column", gap: 12 }}>
