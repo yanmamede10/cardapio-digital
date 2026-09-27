@@ -5,7 +5,7 @@ import { SUPPORT_ROLES } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeReview, serializeTicket } from "../lib/serialize.js";
-import { storeWhatsAppMedia } from "../lib/storage.js";
+import { WHATSAPP_MEDIA_MAX_BYTES, storeWhatsAppMedia } from "../lib/storage.js";
 import { whatsapp } from "../lib/whatsapp.js";
 
 export const supportRouter = Router();
@@ -14,7 +14,7 @@ export const supportRouter = Router();
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES)];
 const MAX_MESSAGE_LENGTH = 2000;
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } }); // WhatsApp's own media cap
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: WHATSAPP_MEDIA_MAX_BYTES } });
 
 /** Sends through the WhatsApp provider. On failure it answers the request (503/502) and returns null: nothing is recorded as sent. */
 async function viaWhatsApp(res: Response, send: () => Promise<string>): Promise<string | null> {

@@ -15,8 +15,10 @@ const BUCKET = process.env.STORAGE_S3_BUCKET;
 const PUBLIC_URL = process.env.STORAGE_PUBLIC_URL;
 const WHATSAPP_BUCKET = process.env.STORAGE_S3_WHATSAPP_BUCKET;
 
-/** What the WhatsApp bucket takes (MIME type → file extension); prisma/whatsapp-bucket.ts sets the bucket's allow-list from it. */
+/** What the WhatsApp bucket takes (MIME type → file extension) and up to what size (WhatsApp's own cap for voice notes).
+ *  The one definition: the API's upload limit and prisma/whatsapp-bucket.ts (the bucket's allow-list and size limit) read these. */
 export const WHATSAPP_MEDIA_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/aac": "aac", "audio/webm": "webm" };
+export const WHATSAPP_MEDIA_MAX_BYTES = 16 * 1024 * 1024;
 
 // Signed URLs are signed at the start of the current 30-min window and live 60 min: each one works for 30–60 min after
 // it's handed out. Atendimento re-reads its tickets every few seconds, so it always holds a live one, and the fixed window
