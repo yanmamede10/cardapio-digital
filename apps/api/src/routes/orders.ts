@@ -232,17 +232,18 @@ ordersRouter.post("/:id/accept", requireStaff, requireModule("pedidos"), async (
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
-  if (order.status !== "pending") return res.status(409).json({ error: "order is not pending" });
-  const updated = await prisma.order.update({ where: { id: order.id }, data: { status: "preparing" }, include: { lines: true } });
-  res.json(serializeOrder(updated));
+  // Conditional: of two devices accepting/refusing the same order at once, exactly one wins (the other gets 409).
+  const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "pending" }, data: { status: "preparing" } });
+  if (!count) return res.status(409).json({ error: "order is not pending" });
+  res.json(serializeOrder(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { lines: true } })));
 });
 
 ordersRouter.post("/:id/reject", requireStaff, requireModule("pedidos"), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
-  if (order.status !== "pending") return res.status(409).json({ error: "order is not pending" });
-  await prisma.order.update({ where: { id: order.id }, data: { status: "cancelled" } });
+  const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "pending" }, data: { status: "cancelled" } }); // see accept
+  if (!count) return res.status(409).json({ error: "order is not pending" });
   res.json({ ok: true });
 });
 

@@ -253,3 +253,12 @@ describe("pedido pelo QR: validações", () => {
     assert.deepEqual(both.map((r) => r.status).sort(), [200, 409]);
   });
 });
+
+test("aceitar e recusar o mesmo pedido ao mesmo tempo: só um vale (antes a cozinha preparava um pedido cancelado, fora da conta)", async () => {
+  await fresh(26);
+  const o = (await order(26, [{ name: "Kids" }])).body;
+  const both = await Promise.all([call("POST", `/api/orders/${o.id}/accept`, { token: kitchen }), call("POST", `/api/orders/${o.id}/reject`, { token: waiter })]);
+  assert.deepEqual(both.map((r) => r.status).sort(), [200, 409]);
+  const status = (await call("GET", `${P}/orders`, { token: owner })).body.find((x: { id: string }) => x.id === o.id).status;
+  assert.equal((await comanda(26)).orderIds.includes(o.id), status !== "cancelled", "na comanda se e só se não foi recusado");
+});
