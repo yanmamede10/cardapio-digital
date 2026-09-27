@@ -259,3 +259,13 @@ textarea.field-mobile {
   .comp-line > :first-child { grid-column: 1 / -1; }
   .comp-head { display: none; }
 }
+
+/* Central de Pedidos: the four columns need ~964px. Below 1560px wide (desktop 1366, a 1280 kitchen tablet) the side
+   panel (waiter calls, shift) becomes a row above the board, so all four columns stay on screen. */
+.central { display: flex; gap: 18px; align-items: flex-start; }
+.central-side { width: 272px; flex: 0 0 272px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 86px; }
+@media (max-width: 1559px) {
+  .central { flex-direction: column-reverse; align-items: stretch; }
+  .central-side { width: auto; flex: none; flex-direction: row; align-items: flex-start; position: static; }
+  .central-side > * { flex: 1; min-width: 0; }
+}

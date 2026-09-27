@@ -145,7 +145,7 @@ export default function OrdersScreen() {
   ];
 
   return (
-    <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
+    <div className="central">
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ display: "flex", gap: 4, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14, padding: 3 }}>
@@ -212,7 +212,7 @@ export default function OrdersScreen() {
         </DndContext>
       </div>
 
-      <aside style={{ width: 272, flex: "0 0 272px", display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 86 }}>
+      <aside className="central-side">
         <section className="card" style={{ overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "12px 14px", borderBottom: "1px solid var(--line)" }}>
             <span style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 8, height: 8 }}>

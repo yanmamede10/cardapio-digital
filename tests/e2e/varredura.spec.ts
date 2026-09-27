@@ -71,3 +71,12 @@ for (const theme of ["light", "dark"] as const) {
     });
   });
 }
+
+test("Central de Pedidos: as quatro colunas cabem inteiras na tela (desktop 1366 e tablet 1280)", async ({ page }, info) => {
+  test.skip(info.project.name === "mobile", "o celular tem a própria Central, em abas");
+  await page.goto("/");
+  for (const label of ["Recebido", "Preparando", "Pronto", "Entregue / Servido"]) {
+    const box = (await page.locator("section").filter({ has: page.getByText(label, { exact: true }) }).first().boundingBox())!;
+    expect(box.x + box.width, label).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+});
