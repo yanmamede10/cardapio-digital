@@ -65,6 +65,15 @@ financeRouter.post("/:id/finance-entries/:entryId/pay", ...staffGuard, async (re
   res.json(serializeFinanceEntry(entry));
 });
 
+// Excluir: a typo or a duplicate would otherwise stay in Visão Geral and the DRE forever. Same access as creating it.
+financeRouter.delete("/:id/finance-entries/:entryId", ...staffGuard, async (req, res) => {
+  const existing = await prisma.financeEntry.findUnique({ where: { id: req.params.entryId } });
+  if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "entry not found" });
+  if (!hasModule(req, moduleFor(existing.kind))) return res.status(403).json(moduleOff);
+  await prisma.financeEntry.delete({ where: { id: existing.id } });
+  res.status(204).end();
+});
+
 /** Emissão Fiscal queue: finished orders — delivered deliveries and table orders whose comanda is
  *  already closed (a served order at a still-open table isn't billable yet). `total` is what was
  *  charged: table orders include their share of the comanda's service. */

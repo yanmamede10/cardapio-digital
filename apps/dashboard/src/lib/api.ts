@@ -270,6 +270,7 @@ export const api = {
     request<FinanceEntry>(`/api/restaurants/${RESTAURANT_ID}/finance-entries`, { method: "POST", body: JSON.stringify(payload) }),
   payFinanceEntry: (entryId: string, paidOn: string, paymentMethod: string) =>
     request<FinanceEntry>(`/api/restaurants/${RESTAURANT_ID}/finance-entries/${entryId}/pay`, { method: "POST", body: JSON.stringify({ paidOn, paymentMethod }) }),
+  deleteFinanceEntry: (entryId: string) => request<void>(`/api/restaurants/${RESTAURANT_ID}/finance-entries/${entryId}`, { method: "DELETE" }),
   listClosedOrders: () => request<Order[]>(`/api/restaurants/${RESTAURANT_ID}/closed-orders`),
 
   // Coupons

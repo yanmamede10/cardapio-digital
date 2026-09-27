@@ -74,3 +74,34 @@ describe("acesso", () => {
     }
   });
 });
+
+describe("excluir lançamento", () => {
+  const entry = async (kind = "payable", description = `Açougue São João ${uid()}`) =>
+    (await call("POST", `${P}/finance-entries`, { token: owner, body: { kind, description, amount: 1234.56, dueDate: "2026-09-25", status: "pending", category: "Insumos e bebidas" } })).body;
+  const list = async () => (await call("GET", `${P}/finance-entries`, { token: owner })).body as { id: string }[];
+
+  test("Dono ou Administrador excluem; some da lista (Visão Geral e DRE leem a mesma)", async () => {
+    const e = await entry();
+    assert.equal(e.description.startsWith("Açougue São João"), true, "acento preservado");
+    assert.equal((await call("DELETE", `${P}/finance-entries/${e.id}`, { token: await login("bruno@fogoeno.com.br") })).status, 204);
+    assert.equal((await list()).some((x) => x.id === e.id), false);
+    assert.equal((await call("DELETE", `${P}/finance-entries/${e.id}`, { token: owner })).status, 404, "já excluído");
+  });
+
+  test("garçom, outro restaurante e módulo desligado não excluem", async () => {
+    const e = await entry();
+    assert.equal((await call("DELETE", `${P}/finance-entries/${e.id}`, { token: waiter })).status, 403);
+    assert.equal((await call("DELETE", `/api/restaurants/napoli/finance-entries/${e.id}`, { token: owner })).status, 403);
+    try {
+      await setModules(SEED_MODULES.filter((m) => m !== "pagar"));
+      assert.equal((await call("DELETE", `${P}/finance-entries/${e.id}`, { token: owner })).status, 403);
+    } finally {
+      await setModules(SEED_MODULES);
+    }
+    assert.equal((await list()).some((x) => x.id === e.id), true);
+  });
+
+  test("descrição acima de 120 caracteres é recusada", async () => {
+    assert.equal((await call("POST", `${P}/finance-entries`, { token: owner, body: { kind: "payable", description: "x".repeat(121), amount: 1, dueDate: "2026-09-25", status: "pending" } })).status, 400);
+  });
+});

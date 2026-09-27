@@ -48,6 +48,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
   const [filter, setFilter] = useState<FilterValues>({});
   const [creating, setCreating] = useState(false);
   const [paying, setPaying] = useState<FinanceEntry | null>(null);
+  const { notify } = useDashboardState();
 
   const reload = () => api.listFinanceEntries(kind).then(setEntries);
 
@@ -67,7 +68,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
   }
 
   const rows = visibleEntries(entries, filter);
-  const cols = "96px minmax(160px,1fr) 150px 116px 130px 90px";
+  const cols = "96px minmax(160px,1fr) 150px 116px 130px 124px";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1120 }}>
@@ -116,12 +117,15 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
                     {brl(e.amount)}
                   </div>
                   <EntryStatus entry={e} />
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 4 }}>
                     {e.status !== "paid" && (
                       <button type="button" className="btn btn-ghost" style={{ padding: "6px 13px", fontSize: 12.5, color: "var(--brandText)" }} onClick={() => setPaying(e)}>
                         Quitar
                       </button>
                     )}
+                    <button type="button" className="icon-btn" title="Excluir" aria-label={`Excluir ${e.description}`} onClick={() => deleteEntry(e, notify, reload)}>
+                      <i className="fa-solid fa-trash" style={{ fontSize: 14 }} />
+                    </button>
                   </div>
                 </div>
               );
@@ -157,6 +161,18 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
       )}
     </div>
   );
+}
+
+/** Excluir (with confirmation): the only way to fix a typo or a duplicate. */
+export async function deleteEntry(e: FinanceEntry, notify: (m: string) => void, onDeleted: () => void) {
+  if (!window.confirm(`Excluir "${e.description}" (${brl(e.amount)})? Some também da Visão Geral e do DRE.`)) return;
+  try {
+    await api.deleteFinanceEntry(e.id);
+    notify("Lançamento excluído");
+    onDeleted();
+  } catch (err) {
+    notify(err instanceof ApiError ? err.message : "Não foi possível excluir o lançamento");
+  }
 }
 
 /** Status pill plus "em 21/09 · PIX" once paid. */

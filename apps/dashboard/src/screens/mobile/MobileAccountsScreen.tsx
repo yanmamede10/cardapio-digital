@@ -5,7 +5,7 @@ import { brl, dayMonth } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
 import { FilterPopover, type FilterValues } from "../../components/FilterPopover";
-import { EntryFormModal, EntryStatus, PayModal, accountFilters, entryStatus, entrySums, visibleEntries } from "../AccountsScreen";
+import { EntryFormModal, EntryStatus, PayModal, accountFilters, deleteEntry, entryStatus, entrySums, visibleEntries } from "../AccountsScreen";
 
 const card = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" } as const;
 
@@ -16,7 +16,7 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
   const [filter, setFilter] = useState<FilterValues>({});
   const [creating, setCreating] = useState(false);
   const [paying, setPaying] = useState<FinanceEntry | null>(null);
-  useMobileScreen({ title: payable ? "Contas a pagar" : "Contas a receber", subtitle: "Financeiro", fab: entries ? { label: "Novo lançamento", onClick: () => setCreating(true) } : undefined });
+  const { notify } = useMobileScreen({ title: payable ? "Contas a pagar" : "Contas a receber", subtitle: "Financeiro", fab: entries ? { label: "Novo lançamento", onClick: () => setCreating(true) } : undefined });
 
   const reload = () => api.listFinanceEntries(kind).then(setEntries);
 
@@ -89,6 +89,9 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
                       Quitar
                     </button>
                   )}
+                  <button type="button" className="icon-btn" style={{ minWidth: 40, minHeight: 40 }} aria-label={`Excluir ${e.description}`} onClick={() => deleteEntry(e, notify, reload)}>
+                    <i className="fa-solid fa-trash" style={{ fontSize: 14 }} />
+                  </button>
                 </div>
               </div>
             ))}

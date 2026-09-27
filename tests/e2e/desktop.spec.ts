@@ -367,3 +367,20 @@ test("Organizar prato: mudar a descrição mantém Ponto da carne e Pão; só os
   const burger = (await api("GET", `/api/restaurants/${R}/items`)).find((i: { id: string }) => i.id === `${R}-burger`);
   expect(burger.optionGroups.map((g: { label: string }) => g.label)).toEqual(["Ponto da carne", "Pão", "Adicionais"]);
 });
+
+test("Contas: duplo clique em Salvar cria um lançamento só; Excluir tira da lista", async ({ page, api }) => {
+  const description = `Hortifrúti ${uid()}`;
+  await page.goto("/contas-a-pagar");
+  await page.getByRole("button", { name: "Novo lançamento" }).click();
+  await page.getByPlaceholder("0,00").fill("1.234,56");
+  await page.getByPlaceholder(/Fornecedor/).fill(description);
+  await page.getByRole("button", { name: "Salvar lançamento" }).dblclick();
+  await expect(page.getByText(description)).toHaveCount(1);
+  const mine = (await api("GET", `/api/restaurants/${R}/finance-entries?kind=payable`)).filter((e: { description: string }) => e.description === description);
+  expect(mine.map((e: { amount: number }) => e.amount)).toEqual([1234.56]);
+
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Excluir ${description}` }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("Lançamento excluído");
+  await expect(page.getByText(description)).toHaveCount(0);
+});
