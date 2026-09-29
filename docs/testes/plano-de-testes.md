@@ -20,6 +20,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `api:seed` | `tests/api/demo-seed.test.ts` |
 | `api:grandes` | `tests/api/listas-grandes.test.ts` |
 | `api:robustez` | `tests/api/robustez.test.ts` |
+| `api:garcom` | `tests/api/garcom.test.ts` |
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
@@ -37,7 +38,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** copia o link `…/t/chapa27.<número>`.
 
-**Coluna 27/09:** resultado da rodada de 27/09/2026 (seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026 e, para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque, 29/09/2026 (seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -50,10 +51,11 @@ Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR c
 | Central de Pedidos (aceitar, recusar, avançar) | ✔ | ✔ | ✔ | ✔ |
 | Mesas: mapa, comanda, fechar conta, transferir, QR | ✔ | ✔ | ✔ | ✔ |
 | Mesas: editar ambiente (grade, nova mesa, renomear, excluir) | ✔ | ✔ | ✔ | ✔ |
+| Lançar pedido (o garçom faz o pedido pela mesa) | ✔ | ✔ | ✔ | ✔ |
 | Cardápio: ver e marcar Esgotado/Disponível | ✔ | ✔ | ✔ | ✔ |
-| Cardápio: adicionar, organizar, remover, reordenar, foto | ✔ | ✔ | 👁 | 👁 |
+| Cardápio: adicionar, organizar, remover, reordenar, foto; categorias | ✔ | ✔ | 👁 | 👁 |
 | Atendimento (tickets, WhatsApp, avaliações) | ✔ | ✔ | ✔ | — |
-| Produtos (catálogo, ficha técnica, XML, movimentações) | ✔ | ✔ | — | — |
+| Produtos (catálogo, ficha técnica, XML, ajuste manual, movimentações) | ✔ | ✔ | — | — |
 | Relatórios | ✔ | ✔ | — | — |
 | Visão Geral · Resumo | ✔ | ✔ | — | — |
 | Visão Geral · DRE | ✔ | — | — | — |
@@ -76,6 +78,7 @@ Todas as células são cobertas pela varredura automática (`e2e:varredura`: abr
 | Troca de senha provisória | `/` | todos | A+M | A+M | A+M |
 | Central de Pedidos | `/` | todos | A+M | A+M | A+M |
 | Mesas (mapa + comanda) | `/mesas`, `/mesas/:n` (celular) | todos | A+M | A+M | A+M |
+| Lançar pedido | `/mesas/:n/pedido` | todos | A+M | A+M | A+M |
 | Cardápio | `/cardapio` | todos | A+M | A+M | A+M |
 | Atendimento | `/atendimento` | Dono, Adm, Garçom | A+M | A+M | A+M |
 | Produtos | `/produtos` | Dono, Adm | A+M | A+M | A+M |
@@ -94,7 +97,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.1 Login e sessão (AUT)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | AUT-01 | Login correto | todos | E-mail e senha do seed | Entra no painel; menu conforme a matriz de acesso | e2e:desktop, api:seed | ✅ |
 | AUT-02 | E-mail com maiúsculas e espaços | Dono | ` DONO@Chapa27.example ` | Entra (e-mail normalizado) | api:sessao | ✅ |
@@ -110,7 +113,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.2 Troca obrigatória de senha (SEN)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | SEN-01 | Primeiro login com senha provisória | Dono novo | Super Admin cadastra; ativa; Dono entra com a provisória | Só aparece "Crie sua senha" | api:admin, e2e:desktop | ✅ + M |
 | SEN-02 | Provisória errada na troca | Dono novo | Senha provisória diferente | "A senha provisória não confere" | api:admin | ✅ |
@@ -121,7 +124,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.3 Permissões e módulos (PER)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | PER-01 | Menu por papel | todos | Logar com cada papel | Exatamente a matriz da seção 2 | e2e:desktop, e2e:mobile | ✅ |
 | PER-02 | Rota direta proibida | Garçom | Abrir `/produtos` pela URL | Mensagem "Você não tem permissão"; a API responde 403 | e2e:varredura, api:perm | ✅ + M |
@@ -137,7 +140,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.4 Cardápio do cliente — QR da mesa e tablet (QR)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | QR-01 | QR abre o restaurante certo | cliente | Link da Mesa 12 do Chapa 27 | Cardápio do Chapa 27, modo mesa, Mesa 12 | api:salao, e2e:fluxo | ✅ corrigido (B01) |
 | QR-02 | QR de mesa que não existe | cliente | `/t/chapa27.99` | "Mesa não encontrada" | api:salao | ✅ |
@@ -160,9 +163,24 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | QR-19 | Tema claro/escuro e cor da marca | cliente | Alternar tema | Legível nos dois; botões na cor da marca | M | ✅ M |
 | QR-20 | Erro ao confirmar aparece na revisão | cliente | Item esgota enquanto o cliente revisa; confirmar | Aviso "… está esgotado"; carrinho mantido | e2e:fluxo | ✅ corrigido (B19) |
 
+### 4.4b Lançar pedido: o garçom faz o pedido pela mesa (GAR)
+
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
+| --- | --- | --- | --- | --- | --- | --- |
+| GAR-01 | Lançar pelo celular | Garçom | Mesas → Mesa 8 (livre) → Lançar pedido → 2× Refrigerante lata, Cheddar & Bacon (Bem passado + Bacon extra, "sem cebola") → Revisar e enviar | R$ 58,90; aviso "Pedido da Mesa 08 enviado"; volta para a mesa | e2e:mobile | ✅ |
+| GAR-02 | Aparece na Central com o nome de quem lançou | Cozinha | Após GAR-01 | Card "Mesa 08" com "Diego Alves", opções e observação; entra na comanda | api:garcom, e2e:mobile | ✅ |
+| GAR-03 | Item com opções abre a escolha com o padrão marcado | Garçom | Tocar num lanche | Folha com "Ponto da carne" já em "Ao ponto"; um toque em Adicionar basta | e2e:mobile | ✅ |
+| GAR-04 | Item sem opções soma direto | Garçom | Tocar 2× em Refrigerante | Contador 2 no item; total atualizado | e2e:mobile | ✅ |
+| GAR-05 | Mesmas regras do pedido pelo QR | Garçom | Item esgotado, carrinho vazio, observação de 301 caracteres, mesa que não existe, sem login | 400/400/400/404/401 | api:garcom | ✅ |
+| GAR-06 | Duplo toque em Enviar | Garçom | Dois toques rápidos | Um pedido só | e2e:mobile | ✅ |
+| GAR-07 | Rodadas | Garçom | Segundo pedido na mesma mesa | Rodada 2; os dois na comanda | api:garcom | ✅ |
+| GAR-08 | Mesas desligado | Garçom | Super Admin desliga Mesas | 403 | api:garcom | ✅ |
+| GAR-09 | Tablet e desktop | Garçom | Mesas → selecionar mesa → Lançar pedido | Grade de pratos; barra de total fixa; volta com a mesa selecionada | e2e:varredura, M | ✅ M |
+| GAR-10 | Barra de total sempre visível | Garçom | Rolar a lista até o fim (celular) | "Revisar e enviar" continua na tela | e2e:mobile | ✅ |
+
 ### 4.5 Central de Pedidos (PED)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ p95 3,4–4,1 s |
 | PED-02 | Card mostra opções e observação | Cozinha | Pedido com ponto + adicional + obs | Card mostra "Bem passado · Bacon extra" e "Obs: …" | e2e:fluxo | ✅ corrigido (B07) |
@@ -181,7 +199,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.6 Mesas: mapa, comanda, fechamento e transferência (MES)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | MES-01 | Mapa do salão | qualquer | Abrir Mesas | 30 mesas na grade 11×11; legenda Livre/Ocupada/Aguardando | api:seed, e2e:varredura | ✅ |
 | MES-02 | Status da mesa | qualquer | Pedido na Mesa 4; servir tudo | Livre → Ocupada → Aguardando pagamento | api:salao | ✅ |
@@ -203,7 +221,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.7 Produtos, estoque e ficha técnica (EST)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | EST-01 | Cadastrar insumo | Adm | "Pão de batata", un, custo 2,35 | Aparece no catálogo, "Sem estoque" | api:estoque | ✅ |
 | EST-02 | Produto composto (ficha técnica) | Adm | Lanche com 1 pão + 1 blend | Custo = soma; campo travado | api:estoque, e2e:desktop | ✅ |
@@ -211,16 +229,18 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | EST-04 | Nome com acento e longo | Adm | "Pão de açúcar ç" e 81 caracteres | Aceita acento; limita a 80 | api:estoque | ✅ |
 | EST-05 | Importar XML de NF-e | Adm | Nota com pão e insumo novo | Estoque sobe; custo médio ponderado; insumo novo criado | api:estoque, e2e:desktop | ✅ |
 | EST-06 | XML inválido | Adm | Arquivo quebrado | "Arquivo XML inválido"; nada gravado | api:estoque | ✅ M |
-| EST-07 | Baixa pela ficha ao fechar comanda | Garçom | 2× Cheddar & Bacon | Pão −2, blend −2, cheddar −0,12 kg, bacon −0,08 kg | api:estoque, e2e:fluxo | ✅ |
+| EST-07 | Baixa pela ficha ao fechar comanda | Garçom | 2× Cheddar & Bacon | Pão −2, blend −2, cheddar −0,12 kg, bacon −0,08 kg (+0,03 kg por Bacon extra) | api:estoque, e2e:fluxo | ✅ |
 | EST-08 | Estoque pode ficar negativo | Garçom | Vender mais bacon do que há | Estoque negativo em vermelho; venda não é bloqueada | api:estoque | ✅ |
 | EST-09 | Produto simples baixa a si mesmo | Garçom | 3× Refrigerante lata | −3 no próprio produto | api:estoque | ✅ |
 | EST-10 | Movimentações | Adm | Aba Movimentações; filtros | Entradas (XML) e saídas (Fechamento de comanda #…) | e2e:desktop | ✅ |
 | EST-11 | Editar preço no catálogo | Adm | Clássico 32,90 → 33,90 | Cardápio mostra o preço novo | api:estoque | ✅ |
+| EST-13 | Entrada, saída e contagem manual | Adm | Produto → Ajustar estoque: Entrada 10,5; Saída 0,25 (perda); Contagem 9 | Estoque 10,5 → 10,25 → 9; três movimentos com o motivo | api:estoque, e2e:desktop | ✅ |
+| EST-14 | Validações do ajuste | Adm, Garçom | Tipo inválido, quantidade 0 ou negativa, produto com ficha técnica, outro restaurante, garçom | 400 / 400 / 400 / 403 / 403 | api:estoque | ✅ |
 | EST-12 | Lista grande | Adm | 150 produtos | Tela abre e filtra | api:grandes, M | ✅ + M (0,6 s) |
 
 ### 4.8 Cardápio no painel (CAR)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | CAR-01 | Vincular prato do catálogo | Adm | Adicionar prato → categoria | Aparece no cardápio | e2e:desktop | ✅ |
 | CAR-02 | Duplo clique em Adicionar | Adm | Clicar duas vezes | Um prato só | e2e:desktop | ✅ (mesmo mecanismo do FIN-06) |
@@ -229,11 +249,17 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | CAR-05 | Esgotado/Disponível | todos | Chave | Muda na hora; cliente vê em até 12 s | api:cardapio, e2e:desktop | ✅ (decisão: qualquer papel) |
 | CAR-06 | Remover do cardápio | Adm | Remover (confirma) | Some do cardápio; continua no catálogo | e2e:mobile | ✅ |
 | CAR-07 | Reordenar | Adm | Arrastar categoria/prato | Ordem salva e igual no cliente | M | ✅ M |
+| CAR-09 | Adicional com baixa de estoque | Adm | Organizar prato → Bacon extra → "Baixa: Bacon em fatias (kg)" 0,03 | Vender 2 Clássicos com Bacon extra e fechar baixa 0,06 kg de bacon; vínculo inválido (produto composto, outro restaurante, quantidade 0) → 400 | api:cardapio | ✅ |
+| CAR-10 | Criar, renomear e excluir categoria | Adm | Nova categoria "Combos"; renomear; excluir | Aparece vazia ("Nenhum prato nesta categoria"); renomeia; exclui | api:cardapio, e2e:desktop | ✅ |
+| CAR-11 | Categoria com pratos não é excluída | Adm | Excluir "Sobremesas" | "Mova ou remova os pratos desta categoria antes" | api:cardapio, e2e:desktop | ✅ |
+| CAR-12 | Nome de categoria repetido, vazio ou longo | Adm | "combos da casa" (já existe), "", 41 caracteres | 409 / 400 / 400 | api:cardapio | ✅ |
+| CAR-13 | Restaurante novo começa pelas categorias | Dono novo | Cardápio vazio | "Criar primeira categoria" | M | ✅ M |
+| CAR-14 | Categoria vazia não aparece para o cliente | cliente | Criar categoria sem pratos | Cardápio do cliente não mostra a categoria | M | ✅ M |
 | CAR-08 | Foto do prato | Adm | Enviar foto | Sem Storage configurado: aviso de erro; com Storage: aparece | M (hospedado) | ✅ M sem Storage · ⏳ com Storage |
 
 ### 4.9 Contas a pagar e a receber (FIN)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | FIN-01 | Lançar pendente e quitar | Adm | "Aluguel", 6.200,456, vencimento | Guarda 6.200,46; quitar grava data e forma | api:financeiro, e2e:desktop | ✅ |
 | FIN-02 | Lançar já pago | Adm | Status Pago | Data de pagamento = hoje | api:financeiro | ✅ |
@@ -251,7 +277,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.10 Visão Geral e DRE (VG)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | VG-01 | Resumo | Adm | Abrir | Saldo 30 dias, a pagar/receber 7 dias, atrasadas, maiores despesas | e2e:desktop | ✅ + M |
 | VG-02 | Comanda fechada entra nas entradas | Adm | Fechar uma comanda hoje | "Entradas" de hoje somam o valor cobrado | e2e:fluxo | ✅ |
@@ -261,7 +287,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.11 Relatórios (REL)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | REL-01 | Hoje/7 dias/Mês | Adm | Trocar o período | KPIs, gráfico, mais e menos vendidos, mapa de calor | M | ✅ M |
 | REL-02 | Números batem com as comandas | Adm | Fluxo crítico | Faturamento de hoje = soma dos pedidos (sem serviço); pedidos recusados não entram | e2e:fluxo, api:salao | ✅ |
@@ -269,7 +295,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.12 Atendimento e WhatsApp (ATD)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | ATD-01 | Aceitar aviso e conectar | Dono | Configurações → WhatsApp | Aceite registrado (quem/quando); QR do provedor | api:zap | ✅ |
 | ATD-02 | Só o Dono conecta | Adm | Conectar | 403 | api:zap | ✅ |
@@ -285,7 +311,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.13 Configurações (CFG)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | CFG-01 | Perfil | Dono | Nome e descrição com acento | Salva; cabeçalho mostra o nome do restaurante | e2e:desktop | ✅ corrigido (B13) M |
 | CFG-02 | Horários | Dono | Domingo fechado | Salva | M | ✅ M (seed: segunda fechada) |
@@ -297,7 +323,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.14 Super Admin (ADM)
 
-| ID | Caso | Papel | Passos e dados | Esperado | Auto | 27/09 |
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | ADM-01 | Chave | 🔑 | Sem chave, errada, token de staff | 401 | api:admin | ✅ |
 | ADM-02 | Cadastrar restaurante | 🔑 | CNPJ formatado, repetido, inválido | Pendente; 409; 400 | api:admin | ✅ |
@@ -311,13 +337,13 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.15 Fluxo crítico de ponta a ponta (E2E)
 
-| ID | Caso | Passos | Esperado | Auto | 27/09 |
+| ID | Caso | Passos | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- |
 | E2E-01 | Pedido pelo QR até o financeiro | 1. Cliente abre o QR da Mesa 12 do Chapa 27 e pede 2× Cheddar & Bacon (Bem passado + Bacon extra, obs "sem cebola") e 1× Refrigerante lata. 2. O pedido aparece na Central com opções e observação. 3. A cozinha aceita, marca pronto e entrega. 4. O garçom fecha a conta no Cartão. 5. Estoque baixa pela ficha técnica. 6. Contas a Receber, Visão Geral, Turno de hoje e Relatórios batem. | Itens 2×(38,90+6,00)+7,00 = 96,80; com serviço 10% = 106,48 cobrado e lançado; pão −2, blend −2, cheddar −0,12, bacon −0,08, refrigerante −1; Relatórios: 96,80 a mais em "Hoje" | e2e:fluxo | ✅ |
 
 ### 4.16 Carga de horário de pico (CARGA)
 
-| ID | Caso | Como | Meta | Auto | 27/09 |
+| ID | Caso | Como | Meta | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- |
 | CARGA-01 | 30 mesas pedindo ao mesmo tempo | 30 clientes carregam o cardápio e enviam pedidos juntos, em 3 rodadas | Todos os pedidos gravados, sem erro | carga | ✅ 90/90 |
 | CARGA-02 | Pedido até aparecer no painel | 4 painéis (Central, como na tela, a cada 4 s) + 6 tablets (Mesas a cada 10 s) consultando em paralelo | p95 ≤ 5 s | carga | ✅ p95 3,4–4,1 s |
@@ -325,12 +351,13 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 ### 4.17 Varredura de telas (UI)
 
-| ID | Caso | Como | Esperado | Auto | 27/09 |
+| ID | Caso | Como | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- |
 | UI-01 | Todas as telas × papel × tamanho × tema | Seção 3 | Sem rolagem horizontal, sem erro de JS, sem chamada com erro | e2e:varredura | ✅ 3 × 2 (sem erro, sem rolagem) |
 | UI-02 | Legibilidade no escuro | Olhar cada tela no tema escuro | Texto legível, nada branco-no-branco | M | ✅ M (amostra) |
 | UI-03 | Textos longos | Nome de prato com 80 caracteres, descrição de conta com 120 | Corta com reticências, não quebra o layout | M | ✅ M |
 | UI-04 | Central inteira no tablet e no desktop | Central com a cozinha em 1280×800 e com o Dono em 1366×820 | As 4 colunas cabem na tela; chamados e turno viram uma faixa acima | e2e:varredura | ✅ corrigido (B18) |
+| UI-05 | Barra de abas sempre na tela (celular) | Rolar Central, Cardápio e Mesas até o fim | Abas continuam visíveis (antes ficavam depois do conteúdo) | e2e:mobile | ✅ corrigido (B21) |
 | ROB-01 | Requisição malformada não derruba a API | PATCH de prato com preço "abc" (Administrador) | Erro só nessa requisição; a API segue respondendo | api:robustez | ✅ corrigido (B05) |
 
 ## 5. Só com aparelho na mão
@@ -373,6 +400,8 @@ Bugs corrigidos (P0 = quebra fluxo da demo, perde dado ou erra dinheiro/estoque;
 | B19 | P1 | A revisão do pedido (app do cliente) não mostrava erro nenhum: esgotado ou sem conexão, o botão simplesmente não fazia nada. |
 | B20 | P1 | Dois aparelhos aceitando/recusando o mesmo pedido: os dois "venciam" (cozinha preparava pedido cancelado, fora da conta). |
 
+**29/09:** implementadas as quatro decisões em aberto (Lançar pedido para o garçom, categorias, ajuste manual de estoque, adicionais com estoque) e corrigido B21 (P1): no celular, a barra de abas ficava depois do conteúdo — numa lista longa o garçom precisava rolar até o fim para trocar de aba.
+
 Mudanças de produto decididas: comanda fechada vira recebível pago; serviço de 10% opcional por restaurante; excluir lançamento; sessão de 24 h; Esgotado para qualquer papel.
 
 P2 (registrados, não corrigidos):
@@ -383,7 +412,6 @@ P2 (registrados, não corrigidos):
 | P2-02 | "1.500" num campo de valor vira R$ 1,50 (o ponto é lido como decimal quando não há vírgula). |
 | P2-03 | O código do pedido tem 4 dígitos aleatórios e se repete ao longo do dia (a descrição do recebível desambigua pela mesa). |
 | P2-04 | "Organizar prato" sempre regrava o horário como "Almoço 11:00 – 15:00 · Jantar 18:00 – 23:00". |
-| P2-05 | "Abrir comanda" na mesa livre (celular) só mostra um aviso; o texto fala em lançar pedido manualmente, o que não existe. |
 | P2-06 | A coluna "Entregue / Servido" acumula todos os pedidos do dia. |
 | P2-07 | No cabeçalho, "Aberto" é fixo e a busca não faz nada. |
 | P2-08 | O valor da mensalidade no Super Admin aparece como "299.9". |
@@ -395,4 +423,4 @@ P2 (registrados, não corrigidos):
 | P2-14 | A chave do serviço de 10% só existe no desktop (Configurações do celular não tem Financeiro). |
 | P2-15 | Chamar garçom duas vezes gera dois chamados. |
 
-Decisões em aberto (lacunas de produto, não bugs): criar/renomear/excluir categorias do cardápio (um restaurante cadastrado pelo Super Admin não consegue montar o cardápio); ajuste manual de estoque (estoque inicial, contagem); garçom lançar pedido sem QR; adicionais com ficha técnica (o "Bacon extra" não baixa bacon).
+As lacunas de produto listadas em 27/09 (categorias, ajuste manual de estoque, garçom lançar pedido, adicionais com estoque) foram implementadas em 29/09 (casos GAR, CAR-09 a CAR-14, EST-13, EST-14). P2-05 deixou de existir: "Abrir comanda" virou "Lançar pedido".

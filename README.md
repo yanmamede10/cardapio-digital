@@ -60,6 +60,10 @@ Logins do seed (senha `senha123`), um por papel:
 | paula@fogoeno.com.br | Funcionário (garçom) |
 | igor@fogoeno.com.br | Funcionário (cozinha) |
 
+**Garçom:** em **Mesas → mesa → Lançar pedido** (celular, tablet ou desktop) o garçom faz o pedido pela mesa, sem o cliente usar o QR: toca nos pratos, confirma as opções, revisa e envia. O pedido vai para a mesma Central e a mesma comanda de um pedido pelo QR, com o nome de quem lançou no card da cozinha.
+
+**Cardápio e estoque:** categorias são criadas, renomeadas e excluídas (só vazias) no próprio Cardápio; em **Produtos → item → Ajustar estoque** entram estoque inicial, entradas sem nota, perdas e a contagem; em **Organizar prato**, cada adicional pode baixar um insumo (ex.: Bacon extra → 0,03 kg de bacon).
+
 **Super admin:** abra `http://localhost:5174/admin` e entre com o valor de `SUPER_ADMIN_KEY` da API. Sem essa variável, o `/api/admin` responde 503. Na lista, o nome do restaurante abre o detalhe: dados cadastrais, módulos contratados (desligado some do menu e a API responde 403), configurações atuais, equipe e WhatsApp. Senha provisória — a do Dono no cadastro ou a de "Resetar senha" na equipe — aparece uma vez e obriga a troca no primeiro login; até lá a API só aceita a troca. Em **Mensalidades**: o valor e o dia de vencimento ficam no detalhe de cada restaurante; "Gerar cobranças do mês" cria a mensalidade dos ativos com valor (de novo, só acrescenta quem falta); atrasado é calculado (pendente depois do vencimento) e destacado; "Marcar como pago" registra data e forma. É a mesma tabela que o restaurante vê em Minha Fatura. Inadimplência não desativa ninguém sozinha.
 
 ### Hamburgueria de demonstração (produção)
