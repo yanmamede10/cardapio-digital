@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { myLevel } from "../lib/modules";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
@@ -25,6 +25,31 @@ import { LinkDishModal } from "../components/LinkDishModal";
 interface DraftExtra {
   name: string;
   price: string;
+}
+
+/** Nova / renomear / excluir categoria (prompt + confirm), shared by the desktop and phone Cardápio. */
+export function categoryActions(notify: (m: string) => void, onChanged: (list: MenuCategory[]) => void) {
+  const run = async (p: Promise<MenuCategory[]>, done: string) => {
+    try {
+      onChanged(await p);
+      notify(done);
+    } catch (err) {
+      notify(err instanceof ApiError && err.status === 400 ? "Informe um nome de até 40 caracteres" : err instanceof ApiError ? err.message : "Não foi possível salvar a categoria");
+    }
+  };
+  return {
+    create: () => {
+      const name = window.prompt("Nome da nova categoria (ex.: Combos)");
+      if (name?.trim()) run(api.createCategory(name), `Categoria ${name.trim()} criada`);
+    },
+    rename: (c: MenuCategory) => {
+      const name = window.prompt(`Novo nome para a categoria ${c.name}`, c.name);
+      if (name?.trim() && name.trim() !== c.name) run(api.renameCategory(c.id, name), `Categoria renomeada para ${name.trim()}`);
+    },
+    remove: (c: MenuCategory) => {
+      if (window.confirm(`Excluir a categoria ${c.name}?`)) run(api.deleteCategory(c.id), `Categoria ${c.name} excluída`);
+    }
+  };
 }
 
 /** "Organizar prato": name/price come from the catalog product and are read-only here. */
@@ -88,11 +113,14 @@ export default function MenuScreen() {
     return items.filter((m) => (activeCat === "Todas" || m.categoryName === activeCat) && (!q || m.name.toLowerCase().includes(q)));
   }, [items, query, activeCat]);
 
+  // Without a search or a category filter every category shows, empty ones too (a new one must be visible to fill).
+  const showAll = !query.trim() && activeCat === "Todas";
   const groups = categories
-    .filter((c) => filtered.some((m) => m.categoryId === c.id))
+    .filter((c) => showAll || filtered.some((m) => m.categoryId === c.id))
     .map((c) => ({ cat: c, items: filtered.filter((m) => m.categoryId === c.id) }));
 
   const openLink = () => setLinking(true);
+  const cats = categoryActions(notify, () => reload());
 
   const openEdit = (m: MenuItem) =>
     setDrawer({
@@ -240,6 +268,12 @@ export default function MenuScreen() {
           {filtered.length} de {items.length} pratos
         </div>
         {canEdit && (
+          <button type="button" className="btn btn-outline" onClick={cats.create}>
+            <i className="fa-solid fa-folder-plus" style={{ fontSize: 16, lineHeight: 1 }} />
+            Nova categoria
+          </button>
+        )}
+        {canEdit && (
           <button type="button" className="btn btn-primary" onClick={openLink}>
             <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
             Adicionar prato
@@ -247,15 +281,15 @@ export default function MenuScreen() {
         )}
       </div>
 
-      {items.length === 0 ? (
+      {categories.length === 0 ? (
         <EmptyState
           icon="fa-utensils"
           title="Seu cardápio ainda está vazio"
-          sub="Vincule o primeiro prato do Catálogo para que ele apareça no cardápio digital e possa ser pedido nas mesas e no delivery."
+          sub="Crie as categorias (ex.: Hambúrgueres, Bebidas) e depois vincule os pratos do Catálogo — eles aparecem no cardápio digital e no Lançar pedido."
           action={
-            canEdit && <button type="button" className="btn btn-primary" onClick={openLink}>
+            canEdit && <button type="button" className="btn btn-primary" onClick={cats.create}>
               <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
-              Adicionar primeiro prato
+              Criar primeira categoria
             </button>
           }
         />
@@ -273,7 +307,7 @@ export default function MenuScreen() {
           <SortableContext items={groups.map((g) => catSortId(g.cat.id))} strategy={verticalListSortingStrategy}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {groups.map((g) => (
-                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit}>
+                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit} onRename={() => cats.rename(g.cat)} onDelete={() => cats.remove(g.cat)}>
                   <SortableContext items={g.items.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {g.items.map((m) => (
                       <ItemRow key={m.id} item={m} canEdit={canEdit} onToggleAvailable={() => toggleAvailable(m)} onUnlink={() => unlink(m)} onEdit={() => openEdit(m)} />
@@ -482,7 +516,7 @@ function ItemDragPreview({ name, price }: { name: string; price: string }) {
   );
 }
 
-function CategorySection({ cat, count, canEdit, children }: { cat: MenuCategory; count: number; canEdit: boolean; children: ReactNode }) {
+function CategorySection({ cat, count, canEdit, onRename, onDelete, children }: { cat: MenuCategory; count: number; canEdit: boolean; onRename: () => void; onDelete: () => void; children: ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: catSortId(cat.id) });
   const style: CSSProperties = { overflowX: "auto", transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
   return (
@@ -493,7 +527,19 @@ function CategorySection({ cat, count, canEdit, children }: { cat: MenuCategory;
         <span className="mono" style={{ fontSize: 11, color: "var(--ink3)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
           {count}
         </span>
+        <div style={{ flex: 1 }} />
+        {canEdit && (
+          <>
+            <button type="button" className="icon-btn" title="Renomear categoria" aria-label={`Renomear categoria ${cat.name}`} onClick={onRename}>
+              <i className="fa-solid fa-pen" style={{ fontSize: 14, lineHeight: 1 }} />
+            </button>
+            <button type="button" className="icon-btn" title="Excluir categoria" aria-label={`Excluir categoria ${cat.name}`} onClick={onDelete}>
+              <i className="fa-solid fa-trash" style={{ fontSize: 14, lineHeight: 1 }} />
+            </button>
+          </>
+        )}
       </div>
+      {count === 0 && <div style={{ padding: "14px 18px", fontSize: 12.5, color: "var(--ink3)", minWidth: 820 }}>Nenhum prato nesta categoria ainda. Use "Adicionar prato".</div>}
       {children}
     </section>
   );

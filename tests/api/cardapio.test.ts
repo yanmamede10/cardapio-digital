@@ -60,3 +60,22 @@ test("textos: acento aceito, acima do limite recusado", async () => {
   assert.equal((await patch({ shortDescription: "x".repeat(201) })).status, 400);
   assert.equal((await byName("Salada")).shortDescription.includes("açafrão"), true);
 });
+
+test("categorias: criar, renomear e excluir (só vazia); nome único sem diferenciar maiúsculas", async () => {
+  const cats = (r: { body: { id: string; name: string }[] }) => r.body.map((c) => c.name);
+  const created = await call("POST", `${P}/categories`, { token: tokens.gerente, body: { name: "  Combos da Casa  " } });
+  assert.equal(created.status, 201);
+  assert.equal(cats(created).at(-1), "Combos da Casa", "entra no fim, sem os espaços");
+  const combos = created.body.at(-1).id;
+  assert.equal((await call("POST", `${P}/categories`, { token: tokens.gerente, body: { name: "combos da casa" } })).status, 409);
+  for (const name of ["", "   ", "x".repeat(41)]) assert.equal((await call("POST", `${P}/categories`, { token: tokens.gerente, body: { name } })).status, 400, JSON.stringify(name));
+  assert.equal((await call("PATCH", `${P}/categories/${combos}`, { token: tokens.gerente, body: { name: "Hambúrgueres" } })).status, 409, "nome de outra");
+  const renamed = await call("PATCH", `${P}/categories/${combos}`, { token: tokens.gerente, body: { name: "Combos & Promoções" } });
+  assert.ok(cats(renamed).includes("Combos & Promoções"));
+  assert.equal((await call("DELETE", `${P}/categories/${D}-cat-0`, { token: tokens.gerente })).status, 409, "Hambúrgueres tem pratos");
+  assert.equal((await call("DELETE", `${P}/categories/fogo-cat-0`, { token: tokens.gerente })).status, 404, "de outro restaurante");
+  for (const who of ["garcom", "cozinha"]) assert.equal((await call("POST", `${P}/categories`, { token: tokens[who], body: { name: "X" } })).status, 403, who);
+  assert.equal((await call("PATCH", `${P}/items/${(await byName("Kids")).id}`, { token: tokens.gerente, body: { categoryId: "fogo-cat-0" } })).status, 400, "prato não vai para categoria alheia");
+  const deleted = await call("DELETE", `${P}/categories/${combos}`, { token: tokens.gerente });
+  assert.equal(cats(deleted).includes("Combos & Promoções"), false);
+});

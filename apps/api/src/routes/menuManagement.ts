@@ -106,6 +106,9 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
   if (fieldError) return res.status(400).json({ error: fieldError });
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
+  if (body.categoryId && (await prisma.menuCategory.findUnique({ where: { id: body.categoryId } }))?.restaurantId !== req.params.id) {
+    return res.status(400).json({ error: "unknown category" });
+  }
 
   // Name/price belong to the catalog product (desktop edits them there). The mobile form still
   // sends them here — write them through to the product and every dish linked to it.
@@ -232,6 +235,45 @@ menuManagementRouter.post("/:id/categories/:categoryId/move", ...staffGuard, asy
       prisma.menuCategory.update({ where: { id: other.id }, data: { sortOrder: category.sortOrder } })
     ]);
   }
-  const categories = await prisma.menuCategory.findMany({ where: { restaurantId: req.params.id }, orderBy: { sortOrder: "asc" } });
-  res.json(categories.map((c) => ({ id: c.id, restaurantId: c.restaurantId, name: c.name, sortOrder: c.sortOrder })));
+  res.json(await categoriesFor(req.params.id));
+});
+
+// Categorias: a restaurant signed up by the super admin starts with none, and dishes need one. Names are unique per
+// restaurant (case-insensitive); only an empty category can be deleted (every dish belongs to one).
+const MAX_CATEGORY_LENGTH = 40;
+async function categoriesFor(restaurantId: string) {
+  const categories = await prisma.menuCategory.findMany({ where: { restaurantId }, orderBy: { sortOrder: "asc" } });
+  return categories.map((c) => ({ id: c.id, restaurantId: c.restaurantId, name: c.name, sortOrder: c.sortOrder }));
+}
+/** The trimmed name, or the error to answer with. */
+async function categoryName(restaurantId: string, raw: unknown, exceptId?: string): Promise<{ name: string } | { status: number; error: string }> {
+  const name = typeof raw === "string" ? raw.trim() : "";
+  if (!name || name.length > MAX_CATEGORY_LENGTH) return { status: 400, error: `name is required (max ${MAX_CATEGORY_LENGTH} characters)` };
+  const taken = await prisma.menuCategory.findFirst({ where: { restaurantId, name: { equals: name, mode: "insensitive" }, ...(exceptId ? { id: { not: exceptId } } : {}) } });
+  return taken ? { status: 409, error: `já existe a categoria ${taken.name}` } : { name };
+}
+
+menuManagementRouter.post("/:id/categories", ...staffGuard, async (req, res) => {
+  const checked = await categoryName(req.params.id, (req.body as { name?: unknown }).name);
+  if ("error" in checked) return res.status(checked.status).json({ error: checked.error });
+  const last = await prisma.menuCategory.findFirst({ where: { restaurantId: req.params.id }, orderBy: { sortOrder: "desc" } });
+  await prisma.menuCategory.create({ data: { id: `${req.params.id}-cat-${randomUUID()}`, restaurantId: req.params.id, name: checked.name, sortOrder: (last?.sortOrder ?? -1) + 1 } });
+  res.status(201).json(await categoriesFor(req.params.id));
+});
+
+menuManagementRouter.patch("/:id/categories/:categoryId", ...staffGuard, async (req, res) => {
+  const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
+  if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });
+  const checked = await categoryName(req.params.id, (req.body as { name?: unknown }).name, category.id);
+  if ("error" in checked) return res.status(checked.status).json({ error: checked.error });
+  await prisma.menuCategory.update({ where: { id: category.id }, data: { name: checked.name } });
+  res.json(await categoriesFor(req.params.id));
+});
+
+menuManagementRouter.delete("/:id/categories/:categoryId", ...staffGuard, async (req, res) => {
+  const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
+  if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });
+  if (await prisma.menuItem.count({ where: { categoryId: category.id } })) return res.status(409).json({ error: "mova ou remova os pratos desta categoria antes de excluí-la" });
+  await prisma.menuCategory.delete({ where: { id: category.id } });
+  res.json(await categoriesFor(req.params.id));
 });

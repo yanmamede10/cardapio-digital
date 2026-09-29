@@ -160,7 +160,8 @@ export default function MenuScreen() {
     </span>
   );
 
-  const categoryNav = (variant: "pill" | "vibrant" | "text") => <CategoryNav categories={categories} active={activeCategory} onPick={setActiveCategory} variant={variant} />;
+  // A category the restaurant just created (still without dishes) stays out of the customer's menu.
+  const categoryNav = (variant: "pill" | "vibrant" | "text") => <CategoryNav categories={categories.filter((c) => items.some((i) => i.categoryId === c.id))} active={activeCategory} onPick={setActiveCategory} variant={variant} />;
   const bottomSpacer = <div style={{ height: isMesa ? 116 : 104 }} />;
   const logoCircle = (size: number, radius: number) =>
     logo ? (

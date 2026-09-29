@@ -250,6 +250,10 @@ export const api = {
   },
   moveItem: (itemId: string, direction: "up" | "down") =>
     request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
+  createCategory: (name: string) => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories`, { method: "POST", body: JSON.stringify({ name }) }),
+  renameCategory: (categoryId: string, name: string) =>
+    request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}`, { method: "PATCH", body: JSON.stringify({ name }) }),
+  deleteCategory: (categoryId: string) => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}`, { method: "DELETE" }),
   moveCategory: (categoryId: string, direction: "up" | "down") =>
     request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
 

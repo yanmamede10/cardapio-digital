@@ -417,3 +417,22 @@ plain("serviço de 10% desligado em Configurações some da comanda do Chapa 27"
     await expect(page.getByRole("switch", { name: /Cobrar 10% de serviço/ })).toHaveAttribute("aria-checked", "true");
   }
 });
+
+plain("Cardápio: criar, renomear e excluir categoria; categoria nova aparece vazia para receber pratos", async ({ page, request }) => {
+  await loginAs(page, request, "gerente@chapa27.example");
+  await page.goto("/cardapio");
+  const name = `Combos ${uid()}`;
+  page.once("dialog", (d) => d.accept(name));
+  await page.getByRole("button", { name: "Nova categoria" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText(`Categoria ${name} criada`);
+  await expect(page.getByText("Nenhum prato nesta categoria ainda").first()).toBeVisible();
+  page.once("dialog", (d) => d.accept(`${name} da Casa`));
+  await page.getByRole("button", { name: `Renomear categoria ${name}` }).click();
+  await expect(page.getByRole("button", { name: `Excluir categoria ${name} da Casa` })).toBeVisible();
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: `Excluir categoria ${name} da Casa` }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("excluída");
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Excluir categoria Sobremesas" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("mova ou remova os pratos");
+});
