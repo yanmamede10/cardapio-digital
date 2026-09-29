@@ -20,7 +20,8 @@ before(async () => {
 test("o garçom lança o pedido da mesa: vai para a Central com o nome dele e entra na comanda", async () => {
   const res = await launch(11, [line("Cheddar & Bacon", { quantity: 2, notes: "sem cebola", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: "extra-0" }] }), line("Refrigerante lata 350 ml")]);
   assert.equal(res.status, 201);
-  assert.deepEqual([res.body.tableNumber, res.body.waiterName, res.body.status, res.body.total], [11, "Diego Alves", "pending", 96.8]);
+  assert.deepEqual([res.body.tableNumber, res.body.waiterName, res.body.status, res.body.total], [11, "Diego Alves", "preparing", 96.8], "vai direto para Preparando");
+  assert.equal((await call("POST", `/api/orders/${res.body.id}/accept`, { token: tokens.cozinha })).status, 409, "não há o que aceitar");
   const central = (await call("GET", `${P}/orders`, { token: tokens.cozinha })).body.find((o: { id: string }) => o.id === res.body.id);
   assert.equal(central.waiterName, "Diego Alves");
   assert.deepEqual(central.lines[0].selectedOptions.map((o: { label: string }) => o.label), ["Bem passado", "Bacon extra"]);

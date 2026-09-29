@@ -80,7 +80,8 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
       deliveryFee,
       discount,
       total: round2(subtotal + deliveryFee - discount),
-      status: "pending",
+      // Taken at the table by the waiter: no one needs to accept it, it goes straight into production.
+      status: waiterName ? "preparing" : "pending",
       round,
       lines: { create: pricedLines }
     },

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Order, OrderStatus, WaiterCall } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { brl, minutesSince } from "../../lib/format";
-import { LineExtras, orderRef, orderSubtitle } from "../../components/OrderCard";
+import { InHouseTag, LineExtras, orderRef, orderSubtitle } from "../../components/OrderCard";
 import { nextStatusFor } from "../OrdersScreen";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
@@ -223,6 +223,7 @@ export default function MobileOrdersScreen() {
                     </span>
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{orderSubtitle(o)}</div>
+                  <InHouseTag order={o} />
                 </div>
                 <div className="mono" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "4px 9px", background: tone.bg, color: tone.fg }}>
                   <i className="fa-solid fa-stopwatch" style={{ fontSize: 11 }} />

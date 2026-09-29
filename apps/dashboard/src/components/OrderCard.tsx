@@ -14,6 +14,16 @@ export function orderSubtitle(o: Order): string {
   return o.addressLabel || o.guestName || `${o.lines.length} ${o.lines.length === 1 ? "item" : "itens"}`;
 }
 
+/** "Lançado no estabelecimento": the waiter took this order at the table (it skipped Recebido). */
+export function InHouseTag({ order }: { order: Order }) {
+  if (!order.waiterName) return null;
+  return (
+    <span style={{ alignSelf: "flex-start", fontSize: 10.5, fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 999, padding: "2px 8px", color: "var(--sec)", border: "1px solid var(--sec)" }}>
+      Lançado no estabelecimento
+    </span>
+  );
+}
+
 /** What the kitchen must see under each line: the customer's choices ("Bem passado · Bacon extra") and note. */
 export function LineExtras({ line }: { line: CartLine }) {
   const options = line.selectedOptions.map((o) => o.label).join(" · ");

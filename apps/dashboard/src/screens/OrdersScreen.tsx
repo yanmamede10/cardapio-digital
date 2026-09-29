@@ -15,7 +15,7 @@ import {
 import { api } from "../lib/api";
 import { brl, minutesSince } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
-import { LineExtras } from "../components/OrderCard";
+import { InHouseTag, LineExtras } from "../components/OrderCard";
 
 const ALERT_MINUTES = 20;
 
@@ -345,7 +345,7 @@ function KanbanCardBody({
   const late = min >= ALERT_MINUTES;
   const mid = min >= ALERT_MINUTES * 0.55;
   const ref = o.mode === "table" ? `Mesa ${o.tableNumber}` : `Delivery ${o.code}`;
-  const sub = o.mode === "table" ? (o.guestName ? `Cliente: ${o.guestName}` : "Comanda aberta") : o.addressId ? "Endereço salvo" : "";
+  const sub = o.mode === "table" ? (o.waiterName ? `Garçom: ${o.waiterName}` : o.guestName ? `Cliente: ${o.guestName}` : "Comanda aberta") : o.addressId ? "Endereço salvo" : "";
 
   const style: CSSProperties = {
     background: "var(--surface)",
@@ -366,6 +366,7 @@ function KanbanCardBody({
         <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 19, lineHeight: 1, color: "var(--ink2)", marginTop: 1 }} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 13.5, letterSpacing: "-.01em" }}>{ref}</div>
+          <InHouseTag order={o} />
           <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
         </div>
         <span

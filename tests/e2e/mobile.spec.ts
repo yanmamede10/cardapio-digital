@@ -146,11 +146,14 @@ plain("garçom lança o pedido da mesa pelo celular: escolhe, revisa, envia; a C
   await expect(page).toHaveURL(/\/mesas\/8$/);
 
   const orders = await (await request.get("http://localhost:4200/api/restaurants/chapa27/orders", { headers: { Authorization: `Bearer ${token}` } })).json();
-  const mine = orders.filter((o: { tableNumber: number; closedAt?: string; status: string }) => o.tableNumber === 8 && o.status === "pending");
+  const mine = orders.filter((o: { tableNumber: number; waiterName: string | null; status: string }) => o.tableNumber === 8 && o.waiterName && o.status === "preparing"); // straight into production
   expect(mine.length).toBe(1);
   expect([mine[0].waiterName, mine[0].total, mine[0].lines[1].notes]).toEqual(["Diego Alves", 58.9, "sem cebola"]);
   await page.goto("/");
-  await expect(page.getByText("Diego Alves").first()).toBeVisible();
+  await page.getByRole("button", { name: /Preparando/ }).first().click();
+  const card = page.locator("article").filter({ hasText: "Mesa 08" }).filter({ hasText: "sem cebola" });
+  await expect(card).toContainText("Lançado no estabelecimento");
+  await expect(card).toContainText("Diego Alves");
 });
 
 test("a barra de abas fica sempre na tela, mesmo com a lista rolada até o fim", async ({ page }) => {
