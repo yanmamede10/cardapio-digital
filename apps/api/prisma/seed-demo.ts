@@ -46,8 +46,8 @@ const INSUMOS: [string, string, number, number][] = [
 ];
 
 const BEEF = { id: "ponto", label: "Ponto da carne", type: "single", hint: "escolha 1", options: ["Ao ponto", "Bem passado", "Mal passado"].map((label, i) => ({ id: `ponto-${i}`, label, priceDelta: 0 })) };
-// id "extra": the group the dashboard's "Organizar prato" edits.
-const EXTRAS = { id: "extra", label: "Adicionais", type: "multi", hint: "opcional", options: [["Bacon extra", 6], ["Cheddar extra", 4], ["Ovo", 3], ["Cebola caramelizada", 4]].map(([label, priceDelta], i) => ({ id: `extra-${i}`, label, priceDelta })) };
+// id "extra": the group the dashboard's "Organizar prato" edits. Each adicional takes its insumo from stock (name → id below).
+const EXTRAS = { id: "extra", label: "Adicionais", type: "multi", hint: "opcional", options: ([["Bacon extra", 6, "Bacon em fatias", 0.03], ["Cheddar extra", 4, "Queijo cheddar fatiado", 0.02], ["Ovo", 3, "Ovo", 1], ["Cebola caramelizada", 4, "Cebola roxa", 0.03]] as const).map(([label, priceDelta, stock, quantity], i) => ({ id: `extra-${i}`, label, priceDelta, stock, quantity })) };
 
 type Dish = { name: string; price: number; desc: string; recipe?: [string, number][]; own?: { cost: number; stock: number }; groups?: object[]; tag?: [string, string] };
 const MENU: Record<string, Dish[]> = {
@@ -171,7 +171,7 @@ async function main() {
           photoLabel: `foto · ${d.name.toLowerCase()}`,
           tag: d.tag?.[0] ?? null,
           tagIcon: d.tag?.[1] ?? null,
-          optionGroupsJson: JSON.stringify(d.groups ?? []),
+          optionGroupsJson: JSON.stringify(d.groups ?? [], (key, value) => (key === "stock" ? undefined : key === "options" ? value.map((o: { stock?: string }) => (o.stock ? { ...o, productId: insumo.get(o.stock) } : o)) : value)),
           scheduleLabel: "Almoço 11:30 – 15:00 · Jantar 18:00 – 23:30",
           sortOrder: sort++
         }

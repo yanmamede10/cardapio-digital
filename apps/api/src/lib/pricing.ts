@@ -35,7 +35,9 @@ export function priceLine(
         groupLabel: group.label,
         optionId: option.id,
         label: option.label,
-        priceDelta: option.priceDelta
+        priceDelta: option.priceDelta,
+        // What this option takes from stock, frozen with the sale (lib/stock.ts reads it when the comanda closes).
+        ...(option.productId ? { productId: option.productId, quantity: option.quantity } : {})
       });
     }
   }

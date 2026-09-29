@@ -30,6 +30,21 @@ function textFieldError(body: { name?: string; shortDescription?: string; longDe
   return null;
 }
 
+/** Adicionais: a name, a price and optionally the stock they take (an insumo or simple produto of this restaurant). */
+async function extrasError(restaurantId: string, extras: UpsertMenuItemRequest["extras"]): Promise<string | null> {
+  if (extras === undefined) return null;
+  if (!Array.isArray(extras) || extras.length > 30) return "extras must be a list of up to 30";
+  for (const e of extras) {
+    if (typeof e?.name !== "string" || !e.name.trim() || e.name.length > MAX_NAME_LENGTH) return `each extra needs a name (max ${MAX_NAME_LENGTH} characters)`;
+    if (typeof e.priceDelta !== "number" || !Number.isFinite(e.priceDelta)) return "extra price must be a number";
+    if (!e.productId) continue;
+    if (typeof e.quantity !== "number" || !Number.isFinite(e.quantity) || e.quantity <= 0) return `${e.name}: stock quantity must be positive`;
+    const p = await prisma.product.findUnique({ where: { id: e.productId } });
+    if (!p || p.restaurantId !== restaurantId || p.composed) return `${e.name}: unknown stock item (use an insumo or a produto without ficha técnica)`;
+  }
+  return null;
+}
+
 function optionGroupsJsonFor(extras: UpsertMenuItemRequest["extras"]): string {
   if (!extras || extras.length === 0) return "[]";
   return JSON.stringify([
@@ -38,7 +53,7 @@ function optionGroupsJsonFor(extras: UpsertMenuItemRequest["extras"]): string {
       label: "Adicionais",
       type: "multi",
       hint: "opcional",
-      options: extras.map((e, i) => ({ id: `extra-${i}`, label: e.name, priceDelta: e.priceDelta }))
+      options: extras.map((e, i) => ({ id: `extra-${i}`, label: e.name.trim(), priceDelta: e.priceDelta, ...(e.productId ? { productId: e.productId, quantity: e.quantity } : {}) }))
     }
   ]);
 }
@@ -60,7 +75,7 @@ async function itemsFor(restaurantId: string) {
 
 menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
   const body = req.body as UpsertMenuItemRequest;
-  const fieldError = textFieldError(body);
+  const fieldError = textFieldError(body) ?? (await extrasError(req.params.id, body.extras));
   if (fieldError) return res.status(400).json({ error: fieldError });
   const category = await prisma.menuCategory.findUnique({ where: { id: body.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(400).json({ error: "unknown category" });
@@ -102,7 +117,7 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
 
 menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<UpsertMenuItemRequest> & { soldOut?: boolean };
-  const fieldError = textFieldError(body);
+  const fieldError = textFieldError(body) ?? (await extrasError(req.params.id, body.extras));
   if (fieldError) return res.status(400).json({ error: fieldError });
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });

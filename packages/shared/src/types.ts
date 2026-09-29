@@ -28,7 +28,13 @@ export interface MenuCategory {
   sortOrder: number;
 }
 
-export interface MenuItemOption {
+/** An option may consume stock: productId (an insumo or a simple produto) × quantity per unit sold (e.g. Bacon extra = 0,03 kg of bacon). */
+export interface OptionStock {
+  productId?: string | null;
+  quantity?: number;
+}
+
+export interface MenuItemOption extends OptionStock {
   id: string;
   label: string;
   priceDelta: number;
@@ -165,7 +171,7 @@ export interface UpsertMenuItemRequest {
   longDescription?: string;
   price: number;
   scheduleLabel?: string;
-  extras?: { name: string; priceDelta: number }[];
+  extras?: ({ name: string; priceDelta: number } & OptionStock)[];
 }
 
 export interface Address {
@@ -183,7 +189,7 @@ export interface PaymentMethod {
   icon: string;
 }
 
-export interface CartLineSelectedOption {
+export interface CartLineSelectedOption extends OptionStock {
   groupId: string;
   groupLabel: string;
   optionId: string;

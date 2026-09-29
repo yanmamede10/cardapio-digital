@@ -84,7 +84,8 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
   // 6. Stock went down by the ficha técnica.
   const after = await stockOf();
   const used = (name: string) => Math.round(((before.stock.get(name) ?? 0) - (after.get(name) ?? 0)) * 1000) / 1000;
-  expect([used("Pão brioche"), used("Blend bovino 150 g"), used("Queijo cheddar fatiado"), used("Bacon em fatias"), used("Molho da casa"), used("Refrigerante lata 350 ml")]).toEqual([2, 2, 0.12, 0.08, 0.04, 1]);
+  // bacon: 2 × 0,04 of the ficha técnica + 2 × 0,03 of the "Bacon extra"
+  expect([used("Pão brioche"), used("Blend bovino 150 g"), used("Queijo cheddar fatiado"), used("Bacon em fatias"), used("Molho da casa"), used("Refrigerante lata 350 ml")]).toEqual([2, 2, 0.12, 0.14, 0.04, 1]);
 
   // 7. Contas a Receber has it, paid by card; Visão Geral's "today" counts it.
   const owners = await browser.newContext({ baseURL: "http://localhost:5274", viewport: { width: 1366, height: 820 }, timezoneId: "America/Sao_Paulo" });

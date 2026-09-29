@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { LEVEL, type MenuCategory, type MenuItem } from "@cardapio/shared";
+import { LEVEL, type MenuCategory, type MenuItem, type Product } from "@cardapio/shared";
 import {
   DndContext,
   DragOverlay,
@@ -25,6 +25,9 @@ import { LinkDishModal } from "../components/LinkDishModal";
 interface DraftExtra {
   name: string;
   price: string;
+  /** Stock this adicional takes per unit sold (Bacon extra → 0,03 kg of bacon); "" = none. */
+  productId: string;
+  qty: string;
 }
 
 /** Nova / renomear / excluir categoria (prompt + confirm), shared by the desktop and phone Cardápio. */
@@ -89,6 +92,7 @@ export default function MenuScreen() {
   const [activeCat, setActiveCat] = useState("Todas");
   const [drawer, setDrawer] = useState<Draft | null>(null);
   const [linking, setLinking] = useState(false);
+  const [stockItems, setStockItems] = useState<Product[]>([]); // what an adicional can take from stock
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -122,6 +126,10 @@ export default function MenuScreen() {
   const openLink = () => setLinking(true);
   const cats = categoryActions(notify, () => reload());
 
+  useEffect(() => {
+    if (canEdit) api.listProducts().then((p) => setStockItems(p.filter((x) => !x.composed))).catch(() => {});
+  }, [canEdit]);
+
   const openEdit = (m: MenuItem) =>
     setDrawer({
       id: m.id,
@@ -132,7 +140,8 @@ export default function MenuScreen() {
       categoryId: m.categoryId,
       lunch: "11:00 – 15:00",
       dinner: "18:00 – 23:00",
-      extras: m.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || [],
+      extras:
+        m.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ","), productId: o.productId ?? "", qty: o.quantity ? String(o.quantity).replace(".", ",") : "" })) || [],
       imageUrl: m.imageUrl
     });
 
@@ -142,7 +151,7 @@ export default function MenuScreen() {
       categoryId: drawer.categoryId,
       shortDescription: drawer.desc,
       scheduleLabel: `Almoço ${drawer.lunch} · Jantar ${drawer.dinner}`,
-      extras: drawer.extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0 }))
+      extras: drawer.extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0, ...(x.productId ? { productId: x.productId, quantity: Number(x.qty.replace(",", ".")) || 0 } : {}) }))
     };
     try {
       await api.updateItem(drawer.id, payload);
@@ -426,7 +435,7 @@ export default function MenuScreen() {
                   <div style={{ flex: 1 }} />
                   <button
                     type="button"
-                    onClick={() => setDrawer({ ...drawer, extras: [...drawer.extras, { name: "Novo adicional", price: "0,00" }] })}
+                    onClick={() => setDrawer({ ...drawer, extras: [...drawer.extras, { name: "Novo adicional", price: "0,00", productId: "", qty: "" }] })}
                     style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: 0, color: "var(--brandText)", font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}
                   >
                     <i className="fa-solid fa-plus" style={{ fontSize: 16, lineHeight: 1 }} />
@@ -450,6 +459,31 @@ export default function MenuScreen() {
                     <button type="button" title="Remover adicional" aria-label="Remover adicional" className="icon-btn" onClick={() => setDrawer({ ...drawer, extras: drawer.extras.filter((_, j) => j !== i) })}>
                       <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
                     </button>
+                    <select
+                      className="field"
+                      aria-label={`Baixa no estoque de ${x.name}`}
+                      style={{ gridColumn: x.productId ? "1" : "1 / -1", padding: "7px 10px", fontSize: 12.5 }}
+                      value={x.productId}
+                      onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, productId: e.target.value } : y)) })}
+                    >
+                      <option value="">Não baixa estoque</option>
+                      {stockItems.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          Baixa: {p.name} ({p.unit})
+                        </option>
+                      ))}
+                    </select>
+                    {x.productId && (
+                      <input
+                        className="field mono"
+                        inputMode="decimal"
+                        placeholder="Qtd."
+                        aria-label={`Quantidade de ${x.name} no estoque`}
+                        style={{ gridColumn: "2 / -1", padding: "7px 10px", fontSize: 12.5 }}
+                        value={x.qty}
+                        onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, qty: e.target.value.replace(/[^0-9.,]/g, "") } : y)) })}
+                      />
+                    )}
                   </div>
                 ))}
               </div>

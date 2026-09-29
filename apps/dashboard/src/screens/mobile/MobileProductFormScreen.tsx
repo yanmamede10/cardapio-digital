@@ -8,6 +8,9 @@ import { useMobileScreen } from "../../components/mobile/MobileLayout";
 interface Extra {
   name: string;
   price: string;
+  /** Stock link set on the desktop (Organizar prato) — carried through unchanged. */
+  productId?: string | null;
+  quantity?: number;
 }
 
 const SCHEDULES: { key: "Dia todo" | "Almoço" | "Jantar"; label: string; hint: string; text: string }[] = [
@@ -39,7 +42,7 @@ export default function MobileProductFormScreen() {
       setItem(found);
       setDesc(found.shortDescription);
       setCategoryId(found.categoryId);
-      setExtras(found.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ",") })) || []);
+      setExtras(found.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ","), productId: o.productId, quantity: o.quantity })) || []);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -60,7 +63,7 @@ export default function MobileProductFormScreen() {
       categoryId,
       shortDescription: desc,
       scheduleLabel: SCHEDULES.find((s) => s.key === schedule)!.text,
-      extras: extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0 }))
+      extras: extras.map((x) => ({ name: x.name, priceDelta: Number(x.price.replace(",", ".")) || 0, ...(x.productId ? { productId: x.productId, quantity: x.quantity } : {}) }))
     };
     try {
       await api.updateItem(item.id, payload);
