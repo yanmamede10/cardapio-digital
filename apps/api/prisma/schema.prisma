@@ -225,6 +225,8 @@ model Order {
   total           Float
   status          String
   round           Int       @default(1)
+  // Lançar pedido: the waiter who took it at the table (null = the customer ordered by QR, tablet or delivery).
+  waiterName      String?
   // Table orders: when their comanda was closed (paid). The open comanda = the table's orders with no closedAt.
   closedAt        DateTime?
   waiterCalledAt  DateTime?

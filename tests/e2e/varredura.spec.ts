@@ -6,7 +6,7 @@ import { ADMIN_KEY, expect, loginAs, test } from "./fixtures";
 // throws, or any API call it makes comes back with an error. VARREDURA_FOTOS=1 also saves a full-page screenshot of each
 // one in test-results/varredura, for the eye check (contrast, clipping) — off by default, it doubles the time.
 const PHOTOS = !!process.env.VARREDURA_FOTOS;
-const OPERACAO = ["/", "/mesas", "/cardapio"];
+const OPERACAO = ["/", "/mesas", "/mesas/12/pedido", "/cardapio"];
 const GESTAO = ["/atendimento", "/produtos", "/relatorios", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/financeiro"];
 const PHONE_EXTRA = ["/mais", "/mesas/12"];
 const ROLES: { user: string; screens: string[]; phoneOnly?: string[] }[] = [

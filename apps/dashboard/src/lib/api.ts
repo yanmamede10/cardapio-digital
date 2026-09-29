@@ -2,6 +2,7 @@ import type {
   AnalyticsPeriod,
   AnalyticsSummary,
   AppearanceState,
+  CartLineInput,
   Coupon,
   CreateCouponRequest,
   CreateFinanceEntryRequest,
@@ -223,6 +224,9 @@ export const api = {
     request<{ ok: true; closed: number; remaining: number }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/close`, { method: "POST", body: JSON.stringify(body) }),
   transferTable: (number: number, toNumber: number) =>
     request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/transfer`, { method: "POST", body: JSON.stringify({ toNumber }) }),
+  /** Lançar pedido: the waiter orders for the table (same kitchen and comanda as a QR order). */
+  launchOrder: (number: number, lines: CartLineInput[]) =>
+    request<Order>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/orders`, { method: "POST", body: JSON.stringify({ lines }) }),
   getTableQr: (number: number) => request<{ tableCode: string }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/qr`),
 
   // Waiter calls

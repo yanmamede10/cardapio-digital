@@ -186,11 +186,11 @@ export default function MobileTableDetailScreen() {
             <i className="fa-solid fa-chair" style={{ fontSize: 22 }} />
           </div>
           <div style={{ fontSize: 14.5, fontWeight: 600 }}>Mesa livre</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)", textWrap: "pretty" }}>Nenhuma comanda aberta. Abra pelo QR code da mesa ou lance um pedido manualmente.</div>
+          <div style={{ fontSize: 12.5, color: "var(--ink3)", textWrap: "pretty" }}>Nenhuma comanda aberta. Lance o pedido aqui ou peça para o cliente escanear o QR code da mesa.</div>
           <div style={{ display: "flex", gap: 9, flexWrap: "wrap", justifyContent: "center" }}>
-            <button type="button" onClick={() => notify("Peça para o cliente escanear o QR code da mesa para abrir a comanda")} style={{ minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, padding: "0 18px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+            <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, padding: "0 18px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
               <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
-              Abrir comanda
+              Lançar pedido
             </button>
             <button type="button" onClick={showQr} style={{ minHeight: 46, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 11, padding: "0 16px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
               <i className="fa-solid fa-qrcode" style={{ fontSize: 13 }} />
@@ -276,6 +276,10 @@ export default function MobileTableDetailScreen() {
               Imprimir
             </button>
           </div>
+          <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ ...ACTION_BTN, minHeight: 52, fontSize: 14 }}>
+            <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
+            Lançar pedido
+          </button>
           <button
             type="button"
             onClick={() => setPayOpen(true)}

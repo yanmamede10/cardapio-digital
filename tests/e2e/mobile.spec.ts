@@ -1,4 +1,5 @@
-import { R, SEED_MODULES, burgerKit, dayLabel, expect, setModules, test, uid } from "./fixtures";
+import { test as plain } from "@playwright/test";
+import { R, SEED_MODULES, burgerKit, dayLabel, expect, loginAs, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -119,6 +120,37 @@ test("Sair da conta volta para a tela de login", async ({ page }) => {
   await page.goto("/mais");
   await page.getByRole("button", { name: "Sair da conta" }).click();
   await expect(page.locator("input[type=email]")).toBeVisible();
+});
+
+plain("garçom lança o pedido da mesa pelo celular: escolhe, revisa, envia; a Central mostra com o nome dele", async ({ page, request }) => {
+  const { token } = await (await request.post("http://localhost:4200/api/auth/login", { data: { email: "garcom@chapa27.example", password: "senha123" } })).json();
+  await request.post("http://localhost:4200/api/restaurants/chapa27/tables/8/close", { headers: { Authorization: `Bearer ${token}` } });
+  await loginAs(page, request, "garcom@chapa27.example");
+  await page.goto("/mesas/8");
+  await page.getByRole("button", { name: /Lançar pedido/ }).first().click();
+  await expect(page).toHaveURL(/\/mesas\/8\/pedido$/);
+  await page.getByRole("button", { name: "Adicionar Refrigerante lata 350 ml" }).click();
+  await page.getByRole("button", { name: "Adicionar Refrigerante lata 350 ml" }).click();
+  await page.getByRole("button", { name: "Adicionar Cheddar & Bacon" }).click();
+  const sheet = page.getByRole("dialog", { name: "Cheddar & Bacon" });
+  await sheet.getByText("Bem passado", { exact: true }).click();
+  await sheet.getByText("Bacon extra", { exact: true }).click();
+  await sheet.getByPlaceholder("Ex.: sem cebola").fill("sem cebola");
+  await sheet.getByRole("button", { name: /Adicionar · R\$ 44,90/ }).click();
+  await expect(page.getByRole("button", { name: "Revisar e enviar" })).toBeInViewport(); // the total bar stays on screen
+  await page.getByRole("button", { name: "Revisar e enviar" }).click();
+  const review = page.getByRole("dialog", { name: "Revisar pedido" });
+  await expect(review).toContainText("R$ 58,90");
+  await review.getByRole("button", { name: "Enviar para a cozinha" }).dblclick(); // one order, not two
+  await expect(toast(page)).toContainText("Pedido da Mesa 08 enviado para a cozinha");
+  await expect(page).toHaveURL(/\/mesas\/8$/);
+
+  const orders = await (await request.get("http://localhost:4200/api/restaurants/chapa27/orders", { headers: { Authorization: `Bearer ${token}` } })).json();
+  const mine = orders.filter((o: { tableNumber: number; closedAt?: string; status: string }) => o.tableNumber === 8 && o.status === "pending");
+  expect(mine.length).toBe(1);
+  expect([mine[0].waiterName, mine[0].total, mine[0].lines[1].notes]).toEqual(["Diego Alves", 58.9, "sem cebola"]);
+  await page.goto("/");
+  await expect(page.getByText("Diego Alves").first()).toBeVisible();
 });
 
 test("a barra de abas fica sempre na tela, mesmo com a lista rolada até o fim", async ({ page }) => {

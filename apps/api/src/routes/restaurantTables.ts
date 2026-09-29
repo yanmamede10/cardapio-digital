@@ -1,11 +1,12 @@
 import { asyncRouter } from "../lib/router.js";
-import { PAYMENT_METHODS, type SalonGrid } from "@cardapio/shared";
+import { PAYMENT_METHODS, type CartLineInput, type SalonGrid } from "@cardapio/shared";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { hasModule, requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { buildComanda, openOrdersByTable, openOrdersForTable, servicePct, statusForTable } from "../lib/tables.js";
-import { serializeTable, serializeWaiterCall } from "../lib/serialize.js";
+import { serializeOrder, serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
+import { placeOrder } from "../lib/orders.js";
 
 export const restaurantTablesRouter = asyncRouter();
 // Applied per-route (not via router.use) because several routers share the
@@ -126,6 +127,18 @@ restaurantTablesRouter.get("/:id/tables/:number/comanda", ...staffGuard, async (
   if (!table) return res.status(404).json({ error: "table not found" });
   const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
   res.json(buildComanda(table, await openOrdersForTable(req.params.id, table.number), servicePct(restaurant)));
+});
+
+// Lançar pedido: the waiter orders for the table from the dashboard — same pricing, sold-out check and comanda as a
+// QR order, signed with the waiter's name for the kitchen. Only an existing table.
+restaurantTablesRouter.post("/:id/tables/:number/orders", ...staffGuard, async (req, res) => {
+  const table = await findTable(req.params.id, parseInt(req.params.number, 10));
+  if (!table) return res.status(404).json({ error: "table not found" });
+  const waiter = await prisma.staffMember.findUniqueOrThrow({ where: { id: req.staff!.staffId }, select: { name: true } });
+  const { lines } = req.body as { lines?: CartLineInput[] };
+  const placed = await placeOrder({ mode: "table", restaurantId: req.params.id, tableNumber: table.number, lines: lines ?? [] }, `garcom-${req.staff!.staffId}`, waiter.name);
+  if ("error" in placed) return res.status(placed.status).json({ error: placed.error });
+  res.status(201).json(serializeOrder(placed.order));
 });
 
 restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (req, res) => {

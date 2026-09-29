@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { PaymentMode, RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
 import {
   DndContext,
@@ -37,7 +38,9 @@ export default function TablesScreen() {
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [gridSize, setGridSize] = useState(9);
   const [editing, setEditing] = useState(false);
-  const [selected, setSelected] = useState<number | null>(null);
+  const navigate = useNavigate();
+  // Back from Lançar pedido: the same table stays selected.
+  const [selected, setSelected] = useState<number | null>((useLocation().state as { select?: number } | null)?.select ?? null);
   const [comanda, setComanda] = useState<TableComanda | null>(null);
   const [splitMode, setSplitMode] = useState<"pessoa" | "item" | null>(null);
   const [people, setPeople] = useState(2);
@@ -366,6 +369,10 @@ export default function TablesScreen() {
           </div>
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
+          <button type="button" className="btn btn-outline" disabled={!selT} onClick={() => selT && navigate(`/mesas/${selT.number}/pedido`)}>
+            <i className="fa-solid fa-plus" style={{ fontSize: 14, lineHeight: 1 }} />
+            Lançar pedido
+          </button>
           <button
             type="button"
             className="btn btn-primary"

@@ -12,6 +12,7 @@ import ProductsScreen from "./screens/ProductsScreen";
 import AccountsScreen from "./screens/AccountsScreen";
 import FiscalScreen from "./screens/FiscalScreen";
 import FinanceOverviewScreen from "./screens/FinanceOverviewScreen";
+import LaunchOrderScreen from "./screens/LaunchOrderScreen";
 import { homePath } from "./lib/modules";
 
 export default function DesktopApp() {
@@ -22,6 +23,7 @@ export default function DesktopApp() {
         <Route path="/pedidos" element={<Navigate to="/" replace />} />
         <Route path="/cardapio" element={<MenuScreen />} />
         <Route path="/mesas" element={<TablesScreen />} />
+        <Route path="/mesas/:number/pedido" element={<LaunchOrderScreen />} />
         <Route path="/promocoes" element={<PromotionsScreen />} />
         <Route path="/atendimento" element={<SupportScreen />} />
         <Route path="/relatorios" element={<ReportsScreen />} />
