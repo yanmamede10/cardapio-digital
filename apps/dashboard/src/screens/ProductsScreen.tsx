@@ -316,6 +316,10 @@ export default function ProductsScreen() {
             notify(`${saved.name} ${draft.id ? "atualizado" : "cadastrado"} no Catálogo`);
             reload();
           }}
+          onAdjusted={(p) => {
+            notify(`Estoque de ${p.name}: ${qty(p.stock)} ${p.unit}`);
+            reload();
+          }}
           onError={notify}
         />
       )}
@@ -323,20 +327,39 @@ export default function ProductsScreen() {
   );
 }
 
+const ADJUST_HINT = { in: "Chegou mercadoria sem nota", out: "Perda, quebra ou consumo interno", count: "Contei o estoque: fica exatamente esta quantidade" } as const;
+
 export function ProductForm({
   draft,
   setDraft,
   products,
   onSaved,
+  onAdjusted,
   onError
 }: {
   draft: Draft;
   setDraft: (d: Draft | null) => void;
   products: Product[];
   onSaved: (p: Product) => void;
+  /** After an Ajustar estoque (the form stays open, the list refreshes). */
+  onAdjusted: (p: Product) => void;
   onError: (msg: string) => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const [adj, setAdj] = useState({ kind: "in" as keyof typeof ADJUST_HINT, qty: "", reason: "" });
+  const current = draft.id ? products.find((p) => p.id === draft.id) : undefined;
+  const adjust = async () => {
+    if (!current || !adj.qty) return;
+    setSaving(true);
+    try {
+      onAdjusted(await api.adjustStock(current.id, adj.kind, num(adj.qty), adj.reason.trim()));
+      setAdj({ ...adj, qty: "", reason: "" });
+    } catch (err) {
+      onError(err instanceof ApiError && err.status === 400 ? "Informe uma quantidade válida" : err instanceof ApiError ? err.message : "Não foi possível ajustar o estoque");
+    } finally {
+      setSaving(false);
+    }
+  };
   const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
   const isProduto = draft.type === "produto";
   const composed = isProduto && draft.composed;
@@ -463,6 +486,34 @@ export function ProductForm({
           </div>
         )}
       </div>
+
+      {current && !current.composed && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 16, border: "1px solid var(--line)", background: "var(--surface2)" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>Ajustar estoque</div>
+            <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+              Atual: <span className="mono" style={{ fontWeight: 600, color: current.stock < 0 ? "var(--alert)" : "var(--ink)" }}>{qty(current.stock)} {current.unit}</span>
+            </div>
+          </div>
+          <Segmented
+            value={adj.kind}
+            onChange={(kind) => setAdj({ ...adj, kind })}
+            options={[
+              { value: "in", label: "Entrada" },
+              { value: "out", label: "Saída" },
+              { value: "count", label: "Contagem" }
+            ]}
+          />
+          <div style={{ fontSize: 12, color: "var(--ink3)" }}>{ADJUST_HINT[adj.kind]}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 10 }}>
+            <input className="field mono" inputMode="decimal" placeholder={`Qtd. (${current.unit})`} aria-label="Quantidade do ajuste" value={adj.qty} onChange={(e) => setAdj({ ...adj, qty: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ background: "var(--surface)" }} />
+            <input className="field" maxLength={80} placeholder="Motivo (opcional)" aria-label="Motivo do ajuste" value={adj.reason} onChange={(e) => setAdj({ ...adj, reason: e.target.value })} style={{ background: "var(--surface)" }} />
+          </div>
+          <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start" }} disabled={saving || !adj.qty} onClick={adjust}>
+            Registrar {adj.kind === "count" ? "contagem" : adj.kind === "in" ? "entrada" : "saída"}
+          </button>
+        </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 600 }}>Tributação</div>

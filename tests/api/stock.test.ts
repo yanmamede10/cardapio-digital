@@ -135,3 +135,32 @@ test("nome de insumo com acento é aceito; acima de 80 caracteres, não", async 
   assert.match(ok.body.name, /açúcar ç/);
   assert.equal((await call("POST", `${P}/products`, { token, body: product({ name: "x".repeat(81) }) })).status, 400);
 });
+
+describe("ajuste manual de estoque", () => {
+  const adjust = (body: object, t = token) => call("POST", `${P}/stock-movements/adjust`, { token: t, body });
+
+  test("entrada, saída e contagem: o estoque muda e cada ajuste fica em Movimentações", async () => {
+    const p = (await call("POST", `${P}/products`, { token, body: product({ name: `Farinha ${uid()}`, unit: "kg", cost: 5 }) })).body;
+    assert.equal((await adjust({ productId: p.id, kind: "in", quantity: 10.5, reason: "Compra sem nota" })).body.stock, 10.5);
+    assert.equal((await adjust({ productId: p.id, kind: "out", quantity: 0.25, reason: "Perda" })).body.stock, 10.25);
+    assert.equal((await adjust({ productId: p.id, kind: "count", quantity: 9 })).body.stock, 9, "contagem define o estoque");
+    assert.equal((await adjust({ productId: p.id, kind: "count", quantity: 9 })).body.stock, 9, "contagem igual não gera movimento");
+    const moves = (await call("GET", `${P}/stock-movements`, { token })).body.filter((m: { productName: string }) => m.productName === p.name);
+    assert.deepEqual(moves.map((m: { kind: string; quantity: number; source: string }) => [m.kind, m.quantity, m.source]).reverse(), [
+      ["in", 10.5, "Entrada manual: Compra sem nota"],
+      ["out", 0.25, "Saída manual: Perda"],
+      ["out", 1.25, "Contagem de estoque"]
+    ]);
+  });
+
+  test("valida tipo, quantidade, produto com ficha técnica, outro restaurante e papel", async () => {
+    const { burger, pao } = await burgerKit();
+    for (const bad of [{ kind: "x", quantity: 1 }, { kind: "in", quantity: 0 }, { kind: "out", quantity: -1 }, { kind: "in", quantity: "3" }]) {
+      assert.equal((await adjust({ productId: pao.id, ...bad })).status, 400, JSON.stringify(bad));
+    }
+    assert.equal((await adjust({ productId: burger.id, kind: "in", quantity: 1 })).status, 400, "composto não tem estoque próprio");
+    assert.equal((await adjust({ productId: "nao-existe", kind: "in", quantity: 1 })).status, 404);
+    assert.equal((await call("POST", "/api/restaurants/napoli/stock-movements/adjust", { token, body: { productId: pao.id, kind: "in", quantity: 1 } })).status, 403);
+    assert.equal((await adjust({ productId: pao.id, kind: "in", quantity: 1 }, await login("paula@fogoeno.com.br"))).status, 403, "garçom");
+  });
+});

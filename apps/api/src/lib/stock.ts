@@ -2,7 +2,7 @@ import { prisma } from "../db.js";
 
 type ProductRecipe = { id: string; composed: boolean; components: { componentId: string; quantity: number }[] };
 
-const round3 = (n: number) => Math.round(n * 1000) / 1000;
+export const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
 /**
  * Stock to take out per product for the sold lines: a composed product consumes its ficha técnica,

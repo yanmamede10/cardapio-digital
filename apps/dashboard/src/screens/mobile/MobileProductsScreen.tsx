@@ -228,6 +228,10 @@ export default function MobileProductsScreen() {
             notify(`${saved.name} ${draft.id ? "atualizado" : "cadastrado"} no Catálogo`);
             reload();
           }}
+          onAdjusted={(p) => {
+            notify(`Estoque de ${p.name}: ${qty(p.stock)} ${p.unit}`);
+            reload();
+          }}
           onError={notify}
         />
       )}

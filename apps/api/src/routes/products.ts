@@ -3,6 +3,7 @@ import { LEVEL, PRODUCT_UNITS, type UpsertProductRequest, type XmlImportRequest 
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMovement, serializeProduct } from "../lib/serialize.js";
+import { round3 } from "../lib/stock.js";
 
 export const productsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
@@ -114,6 +115,31 @@ productsRouter.get("/:id/stock-movements", ...staffGuard, async (req, res) => {
     include: { product: true }
   });
   res.json(movements.map(serializeMovement));
+});
+
+// Ajuste manual: stock that arrives without an NF-e, losses, and the physical count (which sets the stock and logs the
+// difference). Composed products have no stock of their own.
+const ADJUST_SOURCE = { in: "Entrada manual", out: "Saída manual", count: "Contagem de estoque" } as const;
+productsRouter.post("/:id/stock-movements/adjust", ...staffGuard, async (req, res) => {
+  const { productId, kind, quantity, reason } = req.body as { productId?: string; kind?: keyof typeof ADJUST_SOURCE; quantity?: unknown; reason?: unknown };
+  if (!kind || !(kind in ADJUST_SOURCE)) return res.status(400).json({ error: "kind must be in, out or count" });
+  if (typeof quantity !== "number" || !Number.isFinite(quantity) || quantity < 0 || (kind !== "count" && quantity === 0) || quantity > 1e6) {
+    return res.status(400).json({ error: "quantity must be a positive number (zero only for a count)" });
+  }
+  if (reason !== undefined && (typeof reason !== "string" || reason.length > MAX_NAME_LENGTH)) return res.status(400).json({ error: `reason must be at most ${MAX_NAME_LENGTH} characters` });
+  const product = productId ? await prisma.product.findUnique({ where: { id: productId } }) : null;
+  if (!product || product.restaurantId !== req.params.id) return res.status(404).json({ error: "product not found" });
+  if (product.composed) return res.status(400).json({ error: "produto com ficha técnica não tem estoque próprio: ajuste os itens da composição" });
+
+  const delta = round3(kind === "count" ? quantity - product.stock : kind === "in" ? quantity : -quantity);
+  const source = [ADJUST_SOURCE[kind], typeof reason === "string" && reason.trim()].filter(Boolean).join(": ");
+  if (delta !== 0) {
+    await prisma.$transaction([
+      prisma.product.update({ where: { id: product.id }, data: kind === "count" ? { stock: quantity } : { stock: { increment: delta } } }),
+      prisma.stockMovement.create({ data: { restaurantId: req.params.id, productId: product.id, kind: delta > 0 ? "in" : "out", quantity: Math.abs(delta), source } })
+    ]);
+  }
+  res.json(serializeProduct(await loadProduct(product.id)));
 });
 
 // NF-e uCom → catalog unit. ponytail: no conversion (a "CX" of 12 enters as 1 un) — map per supplier if it bites.

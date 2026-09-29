@@ -436,3 +436,17 @@ plain("Cardápio: criar, renomear e excluir categoria; categoria nova aparece va
   await page.getByRole("button", { name: "Excluir categoria Sobremesas" }).click();
   await expect(page.locator(".toast-bubble")).toContainText("mova ou remova os pratos");
 });
+
+plain("Produtos: contagem de estoque define o estoque e aparece em Movimentações", async ({ page, request }) => {
+  await loginAs(page, request, "gerente@chapa27.example");
+  await page.goto("/produtos");
+  await page.getByRole("button", { name: /Água com gás 500 ml/ }).click();
+  await page.getByRole("button", { name: "Contagem" }).click();
+  await page.getByLabel("Quantidade do ajuste").fill("24");
+  await page.getByLabel("Motivo do ajuste").fill("Inventário de sábado");
+  await page.getByRole("button", { name: "Registrar contagem" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("Estoque de Água com gás 500 ml: 24 un");
+  await page.getByRole("button", { name: "Cancelar" }).click();
+  await page.getByRole("button", { name: "Movimentações" }).click();
+  await expect(page.getByText("Contagem de estoque: Inventário de sábado").first()).toBeVisible();
+});
