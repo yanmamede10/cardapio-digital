@@ -107,7 +107,9 @@ export function MobileLayout() {
   const ctx: MobileOutletContext = { ...live, calls: openCalls, notify, setHeader };
 
   return (
-    <div style={{ minHeight: "100dvh", width: "100%", display: "flex", flexDirection: "column", background: "var(--bg)", color: "var(--ink)" }}>
+    // Exactly the screen: only <main> scrolls, so the tab bar and the screens' sticky bars stay put (with minHeight the page
+    // grew with the content and the tabs ended up below a long list).
+    <div style={{ height: "100dvh", width: "100%", display: "flex", flexDirection: "column", background: "var(--bg)", color: "var(--ink)" }}>
       <div style={{ position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         <header
           style={{

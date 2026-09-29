@@ -120,3 +120,11 @@ test("Sair da conta volta para a tela de login", async ({ page }) => {
   await page.getByRole("button", { name: "Sair da conta" }).click();
   await expect(page.locator("input[type=email]")).toBeVisible();
 });
+
+test("a barra de abas fica sempre na tela, mesmo com a lista rolada até o fim", async ({ page }) => {
+  for (const path of ["/", "/cardapio", "/mesas"]) {
+    await page.goto(path);
+    await page.locator("main").evaluate((m) => (m.scrollTop = m.scrollHeight));
+    await expect(page.getByRole("button", { name: "Mais" }).last()).toBeInViewport();
+  }
+});
