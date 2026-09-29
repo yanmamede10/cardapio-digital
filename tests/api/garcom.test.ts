@@ -55,3 +55,21 @@ test("com Mesas desligado o garçom não lança", async () => {
     await setModules(SEED_MODULES, D);
   }
 });
+
+test("pedido pelo QR desligado: o QR e o pedido do cliente na mesa são recusados; o garçom e o delivery seguem", async () => {
+  const setQr = (qrOrdering: unknown) => call("PATCH", `${P}/payment-mode`, { token: tokens.dono, body: { qrOrdering } });
+  assert.equal((await setQr("não")).status, 400);
+  try {
+    assert.equal((await setQr(false)).body.qrOrdering, false);
+    assert.equal((await call("GET", "/api/tables/chapa27.3")).status, 403);
+    const customer = await call("POST", "/api/orders", { session: "qr-off", body: { mode: "table", restaurantId: D, tableNumber: 3, lines: [line("Kids")] } });
+    assert.equal(customer.status, 403);
+    assert.match(customer.body.error, /garçom/);
+    assert.equal((await launch(3, [line("Kids")])).status, 201, "o garçom lança normalmente");
+    assert.equal((await call("POST", "/api/orders", { session: "qr-off", body: { mode: "delivery", restaurantId: D, lines: [line("Kids")] } })).status, 201, "delivery não depende da opção");
+  } finally {
+    await setQr(true);
+  }
+  assert.equal((await call("GET", "/api/tables/chapa27.3")).status, 200);
+  await call("POST", `${P}/tables/3/close`, { token: tokens.garcom });
+});

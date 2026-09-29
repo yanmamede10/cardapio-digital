@@ -50,6 +50,8 @@ model Restaurant {
   paymentMode       String   @default("maquininha_propria")
   // Table comandas add a 10% service — optional per restaurant (Configurações → Financeiro).
   serviceCharge     Boolean  @default(true)
+  // Customers order through the table's QR (or a fixed tablet). Off: only the waiter launches table orders (Lançar pedido).
+  qrOrdering        Boolean  @default(true)
 
   // Aparência — customer-facing menu page skin. "draft*" is what the dashboard
   // edits; the plain fields below are what's actually published and served by

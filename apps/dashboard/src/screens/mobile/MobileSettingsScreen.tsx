@@ -20,7 +20,8 @@ export default function MobileSettingsScreen() {
       label: "Restaurante",
       items: [
         { label: "Perfil do restaurante", sub: "Nome, logo, capa e descrição", icon: "fa-store", go: () => navigate("/config/perfil") },
-        { label: "Horários de funcionamento", sub: "Por dia da semana", icon: "fa-clock", go: () => navigate("/config/horarios") }
+        { label: "Horários de funcionamento", sub: "Por dia da semana", icon: "fa-clock", go: () => navigate("/config/horarios") },
+        { label: "Salão", sub: "Pedidos pelo QR da mesa e serviço de 10%", icon: "fa-chair", go: () => navigate("/config/salao") }
       ]
     },
     {

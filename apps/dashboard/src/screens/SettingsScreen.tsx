@@ -10,8 +10,9 @@ import { Field } from "../components/SlideOver";
 import AppearanceTab from "./SettingsAppearanceTab";
 import PaymentSubaccountTab from "./SettingsFinanceTab";
 import WhatsAppTab from "./SettingsWhatsAppTab";
+import SettingsSalonTab from "./SettingsSalonTab";
 
-type Tab = "profile" | "appearance" | "hours" | "staff" | "finance" | "fiscal" | "whatsapp";
+type Tab = "profile" | "appearance" | "hours" | "salon" | "staff" | "finance" | "fiscal" | "whatsapp";
 
 const WEEKDAY_LABEL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 const EMPTY_MEMBER = { id: null as string | null, name: "", email: "", role: "waiter" as StaffRole, password: "" };
@@ -110,6 +111,7 @@ export default function SettingsScreen() {
           { value: "profile", label: "Perfil" },
           { value: "appearance", label: "Aparência" },
           { value: "hours", label: "Horários" },
+          { value: "salon", label: "Salão" },
           { value: "staff", label: "Equipe & Permissões" },
           { value: "finance", label: "Financeiro" },
           { value: "fiscal", label: "Fiscal" },
@@ -136,6 +138,7 @@ export default function SettingsScreen() {
 
       {tab === "appearance" && <AppearanceTab restaurantName={profile.name} />}
 
+      {tab === "salon" && <SettingsSalonTab />}
       {tab === "finance" && <PaymentSubaccountTab />}
 
       {tab === "whatsapp" && <WhatsAppTab />}

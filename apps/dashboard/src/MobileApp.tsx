@@ -23,6 +23,7 @@ import MobileAccountsScreen from "./screens/mobile/MobileAccountsScreen";
 import MobileFiscalEmissionScreen from "./screens/mobile/MobileFiscalEmissionScreen";
 import { MobileWhatsAppScreen } from "./screens/SettingsWhatsAppTab";
 import { MobileLaunchOrderScreen } from "./screens/LaunchOrderScreen";
+import { MobileSalonScreen } from "./screens/SettingsSalonTab";
 import { homePath } from "./lib/modules";
 
 export default function MobileApp() {
@@ -53,6 +54,7 @@ export default function MobileApp() {
         <Route path="/config/equipe" element={<MobileTeamScreen />} />
         <Route path="/config/fiscal" element={<MobileFiscalScreen />} />
         <Route path="/config/whatsapp" element={<MobileWhatsAppScreen />} />
+        <Route path="/config/salao" element={<MobileSalonScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

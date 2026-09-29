@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 import { useApp } from "../context/AppContext";
 
 export default function TableEntryScreen() {
@@ -19,8 +19,9 @@ export default function TableEntryScreen() {
         enterTableMode(res.restaurantId, res.tableNumber);
         navigate(`/r/${res.restaurantId}/menu`, { replace: true });
       })
-      .catch(() => {
-        if (!cancelled) setError("Mesa não encontrada. Confira o código do QR ou chame um atendente.");
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof ApiError && err.status === 403 ? "Neste restaurante os pedidos são feitos pelo garçom. É só chamar um atendente." : "Mesa não encontrada. Confira o código do QR ou chame um atendente.");
       });
     return () => {
       cancelled = true;

@@ -44,29 +44,10 @@ export default function PaymentSubaccountTab() {
   const [doc, setDoc] = useState<DocState>(emptyDoc);
   const docInput = useRef<HTMLInputElement>(null);
   const [paymentMode, setPaymentModeValue] = useState<PaymentMode>("maquininha_propria");
-  const [serviceCharge, setServiceCharge] = useState<boolean | null>(null);
 
   useEffect(() => {
-    api
-      .getPaymentMode()
-      .then((r) => {
-        setPaymentModeValue(r.paymentMode);
-        setServiceCharge(r.serviceCharge);
-      })
-      .catch(() => {});
+    api.getPaymentMode().then((r) => setPaymentModeValue(r.paymentMode)).catch(() => {});
   }, []);
-
-  const toggleService = async () => {
-    const next = !serviceCharge;
-    setServiceCharge(next);
-    try {
-      await api.setPaymentMode({ serviceCharge: next });
-      notify(next ? "As comandas das mesas passam a somar 10% de serviço" : "As comandas das mesas deixam de somar serviço");
-    } catch {
-      setServiceCharge(!next);
-      notify("Não foi possível salvar — tente de novo");
-    }
-  };
 
   const changePaymentMode = async (mode: PaymentMode) => {
     const previous = paymentMode;
@@ -118,28 +99,6 @@ export default function PaymentSubaccountTab() {
           ]}
         />
       </section>
-
-      {serviceCharge !== null && (
-        <section className="card" style={{ padding: 22 }}>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={serviceCharge}
-            onClick={toggleService}
-            style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)" }}
-          >
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontWeight: 600, fontSize: 14 }}>Cobrar 10% de serviço nas mesas</span>
-              <span style={{ display: "block", fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>
-                {serviceCharge ? "Ligado: a comanda soma 10% sobre os itens, e esse total é o que entra em Contas a Receber." : "Desligado: a comanda cobra só os itens."}
-              </span>
-            </span>
-            <span className="toggle-track" style={{ background: serviceCharge ? "var(--ok)" : "var(--line2)" }}>
-              <span className="toggle-knob" style={{ left: serviceCharge ? 16 : 2 }} />
-            </span>
-          </button>
-        </section>
-      )}
 
       {paymentMode !== "sistema" && (
         <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "flex-start" }}>

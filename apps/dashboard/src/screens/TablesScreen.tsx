@@ -50,6 +50,7 @@ export default function TablesScreen() {
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ table: RestaurantTable; x: number; y: number } | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("maquininha_propria");
+  const [qrOrdering, setQrOrdering] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -161,7 +162,13 @@ export default function TablesScreen() {
   }, []);
 
   useEffect(() => {
-    api.getPaymentMode().then((r) => setPaymentMode(r.paymentMode)).catch(() => {});
+    api
+      .getPaymentMode()
+      .then((r) => {
+        setPaymentMode(r.paymentMode);
+        setQrOrdering(r.qrOrdering);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -432,10 +439,12 @@ export default function TablesScreen() {
             </div>
           )}
           <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={showQr}>
-              <i className="fa-solid fa-qrcode" style={{ fontSize: 16, lineHeight: 1 }} />
-              QR code
-            </button>
+            {qrOrdering && (
+              <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={showQr}>
+                <i className="fa-solid fa-qrcode" style={{ fontSize: 16, lineHeight: 1 }} />
+                QR code
+              </button>
+            )}
             <select value={transferTo} onChange={(e) => setTransferTo(e.target.value ? Number(e.target.value) : "")} className="field" style={{ flex: 1, padding: "9px 10px", fontSize: 12.5 }}>
               <option value="">Transferir p/…</option>
               {freeTables.map((t) => (

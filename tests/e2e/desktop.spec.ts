@@ -395,10 +395,10 @@ plain("cabeçalho mostra o nome do restaurante; Atribuir a mim põe o nome de qu
   expect((await (await assigned).json()).assignee).toBe("Bruno Castro");
 });
 
-plain("serviço de 10% desligado em Configurações some da comanda do Chapa 27", async ({ page, request }) => {
+plain("serviço de 10% desligado em Configurações → Salão some da comanda do Chapa 27", async ({ page, request }) => {
   await loginAs(page, request, "dono@chapa27.example");
   await page.goto("/config");
-  await page.locator("main").getByRole("button", { name: "Financeiro", exact: true }).click();
+  await page.locator("main").getByRole("button", { name: "Salão", exact: true }).click();
   const toggle = page.getByRole("switch", { name: /Cobrar 10% de serviço/ });
   await expect(toggle).toHaveAttribute("aria-checked", "true");
   await toggle.click();
@@ -412,7 +412,7 @@ plain("serviço de 10% desligado em Configurações some da comanda do Chapa 27"
     await expect(page.locator("aside.card")).not.toContainText("Serviço");
   } finally {
     await page.goto("/config");
-    await page.locator("main").getByRole("button", { name: "Financeiro", exact: true }).click();
+    await page.locator("main").getByRole("button", { name: "Salão", exact: true }).click();
     await page.getByRole("switch", { name: /Cobrar 10% de serviço/ }).click();
     await expect(page.getByRole("switch", { name: /Cobrar 10% de serviço/ })).toHaveAttribute("aria-checked", "true");
   }
@@ -449,4 +449,29 @@ plain("Produtos: contagem de estoque define o estoque e aparece em Movimentaçõ
   await page.getByRole("button", { name: "Cancelar" }).click();
   await page.getByRole("button", { name: "Movimentações" }).click();
   await expect(page.getByText("Contagem de estoque: Inventário de sábado").first()).toBeVisible();
+});
+
+plain("Configurações → Salão: sem pedido pelo QR, o Mesas esconde o QR e o QR impresso manda chamar o garçom", async ({ page, browser, request }) => {
+  await loginAs(page, request, "dono@chapa27.example");
+  await page.goto("/config");
+  await page.locator("main").getByRole("button", { name: "Salão", exact: true }).click();
+  const qr = page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ });
+  await expect(qr).toHaveAttribute("aria-checked", "true");
+  await qr.click();
+  await expect(qr).toHaveAttribute("aria-checked", "false");
+  try {
+    await page.goto("/mesas");
+    await page.getByRole("button", { name: /^03$/ }).first().click();
+    await expect(page.getByRole("button", { name: "Lançar pedido" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "QR code" })).toHaveCount(0);
+    const guest = await browser.newPage();
+    await guest.goto("http://localhost:5273/t/chapa27.3");
+    await expect(guest.getByText("Neste restaurante os pedidos são feitos pelo garçom")).toBeVisible();
+    await guest.close();
+  } finally {
+    await page.goto("/config");
+    await page.locator("main").getByRole("button", { name: "Salão", exact: true }).click();
+    await page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ }).click();
+    await expect(page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ })).toHaveAttribute("aria-checked", "true");
+  }
 });

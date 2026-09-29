@@ -341,10 +341,10 @@ export const api = {
   getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
   updateFiscal: (payload: Partial<FiscalInfo>) =>
     request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) }),
-  /** How the table pays and whether its comanda adds the 10% service. */
-  getPaymentMode: () => request<{ paymentMode: PaymentMode; serviceCharge: boolean }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`),
-  setPaymentMode: (payload: { paymentMode?: PaymentMode; serviceCharge?: boolean }) =>
-    request<{ paymentMode: PaymentMode; serviceCharge: boolean }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`, { method: "PATCH", body: JSON.stringify(payload) }),
+  /** How the salon works: payment at the table, the 10% service, and whether customers order by QR. */
+  getPaymentMode: () => request<{ paymentMode: PaymentMode; serviceCharge: boolean; qrOrdering: boolean }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`),
+  setPaymentMode: (payload: { paymentMode?: PaymentMode; serviceCharge?: boolean; qrOrdering?: boolean }) =>
+    request<{ paymentMode: PaymentMode; serviceCharge: boolean; qrOrdering: boolean }>(`/api/restaurants/${RESTAURANT_ID}/payment-mode`, { method: "PATCH", body: JSON.stringify(payload) }),
 
   // Appearance
   getAppearanceDraft: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`),

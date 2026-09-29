@@ -13,8 +13,10 @@ tablesRouter.get("/:tableCode", async (req, res) => {
   if (dot < 1 || !Number.isInteger(tableNumber)) return res.status(404).json({ error: "table not found" });
   const table = await prisma.restaurantTable.findUnique({
     where: { restaurantId_number: { restaurantId, number: tableNumber } },
-    select: { restaurant: { select: { status: true } } }
+    select: { restaurant: { select: { status: true, qrOrdering: true } } }
   });
   if (table?.restaurant.status !== "ativo") return res.status(404).json({ error: "table not found" });
+  // The restaurant takes table orders through its waiters only (Configurações → Salão): the customer app says so.
+  if (!table.restaurant.qrOrdering) return res.status(403).json({ error: "qr ordering is off" });
   res.json({ restaurantId, tableNumber });
 });

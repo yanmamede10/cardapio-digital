@@ -10,7 +10,7 @@ const OPERACAO = ["/", "/mesas", "/mesas/12/pedido", "/cardapio"];
 const GESTAO = ["/atendimento", "/produtos", "/relatorios", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/financeiro"];
 const PHONE_EXTRA = ["/mais", "/mesas/12"];
 const ROLES: { user: string; screens: string[]; phoneOnly?: string[] }[] = [
-  { user: "dono", screens: [...OPERACAO, ...GESTAO, "/config"], phoneOnly: [...PHONE_EXTRA, "/config/perfil", "/config/horarios", "/config/equipe", "/config/fiscal", "/config/whatsapp"] },
+  { user: "dono", screens: [...OPERACAO, ...GESTAO, "/config"], phoneOnly: [...PHONE_EXTRA, "/config/perfil", "/config/horarios", "/config/salao", "/config/equipe", "/config/fiscal", "/config/whatsapp"] },
   { user: "gerente", screens: [...OPERACAO, ...GESTAO], phoneOnly: PHONE_EXTRA },
   { user: "garcom", screens: [...OPERACAO, "/atendimento"], phoneOnly: PHONE_EXTRA },
   { user: "cozinha", screens: OPERACAO, phoneOnly: PHONE_EXTRA }

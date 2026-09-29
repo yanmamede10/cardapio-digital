@@ -162,18 +162,18 @@ settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
 settingsRouter.get("/:id/payment-mode", requireStaff, requireOwnRestaurant, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
-  res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge });
+  res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge, qrOrdering: r.qrOrdering });
 });
 
-// Configurações → Financeiro: how the table pays and whether its comanda adds the 10% service. Only the fields sent change.
+// How the salon works: payment at the table (Configurações → Financeiro), the 10% service and ordering by QR
+// (Configurações → Salão). Only the fields sent change.
 settingsRouter.patch("/:id/payment-mode", ...staffGuard, async (req, res) => {
-  const { paymentMode, serviceCharge } = req.body as { paymentMode?: PaymentMode; serviceCharge?: unknown };
-  if ((paymentMode === undefined && serviceCharge === undefined) || (paymentMode !== undefined && !PAYMENT_MODES.includes(paymentMode))) {
-    return res.status(400).json({ error: `paymentMode must be one of ${PAYMENT_MODES.join(", ")}` });
-  }
-  if (serviceCharge !== undefined && typeof serviceCharge !== "boolean") return res.status(400).json({ error: "serviceCharge must be true or false" });
+  const { paymentMode, serviceCharge, qrOrdering } = req.body as { paymentMode?: PaymentMode; serviceCharge?: unknown; qrOrdering?: unknown };
+  if (paymentMode === undefined && serviceCharge === undefined && qrOrdering === undefined) return res.status(400).json({ error: "nothing to change" });
+  if (paymentMode !== undefined && !PAYMENT_MODES.includes(paymentMode)) return res.status(400).json({ error: `paymentMode must be one of ${PAYMENT_MODES.join(", ")}` });
+  if ([serviceCharge, qrOrdering].some((v) => v !== undefined && typeof v !== "boolean")) return res.status(400).json({ error: "serviceCharge and qrOrdering must be true or false" });
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });
-  const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { paymentMode, serviceCharge } });
-  res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge });
+  const r = await prisma.restaurant.update({ where: { id: req.params.id }, data: { paymentMode, serviceCharge: serviceCharge as boolean | undefined, qrOrdering: qrOrdering as boolean | undefined } });
+  res.json({ paymentMode: r.paymentMode as PaymentMode, serviceCharge: r.serviceCharge, qrOrdering: r.qrOrdering });
 });
