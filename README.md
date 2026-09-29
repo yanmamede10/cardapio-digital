@@ -60,7 +60,7 @@ Logins do seed (senha `senha123`), um por papel:
 | paula@fogoeno.com.br | Funcionário (garçom) |
 | igor@fogoeno.com.br | Funcionário (cozinha) |
 
-**Garçom:** em **Mesas → mesa → Lançar pedido** (celular, tablet ou desktop) o garçom faz o pedido pela mesa, sem o cliente usar o QR: toca nos pratos, confirma as opções, revisa e envia. O pedido vai para a mesma Central e a mesma comanda de um pedido pelo QR, com o nome de quem lançou no card da cozinha.
+**Garçom:** em **Mesas → mesa → Lançar pedido** (celular, tablet ou desktop) o garçom faz o pedido pela mesa, sem o cliente usar o QR: toca nos pratos, confirma as opções, revisa e envia. O pedido entra direto em **Preparando** na Central (ninguém precisa aceitar), com a tag "Lançado no estabelecimento" e o nome de quem lançou, e soma na mesma comanda de um pedido pelo QR. Em **Configurações → Salão** o Dono escolhe se os clientes também pedem pelo QR da mesa (desligado: só os garçons lançam, o Mesas não mostra o QR e um QR antigo manda chamar o atendente) e se a comanda soma 10% de serviço.
 
 **Cardápio e estoque:** categorias são criadas, renomeadas e excluídas (só vazias) no próprio Cardápio; em **Produtos → item → Ajustar estoque** entram estoque inicial, entradas sem nota, perdas e a contagem; em **Organizar prato**, cada adicional pode baixar um insumo (ex.: Bacon extra → 0,03 kg de bacon).
 

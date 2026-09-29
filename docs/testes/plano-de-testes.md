@@ -63,6 +63,7 @@ Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR c
 | Minha Fatura | ✔ | ✔ | — | — |
 | Configurações (menu) | ✔ | — | — | — |
 | Configurações → Equipe & Permissões, WhatsApp (conectar) | ✔ | — | — | — |
+| Configurações → Salão (pedido pelo QR, serviço 10%) | ✔ | — | — | — |
 | Emissão Fiscal (módulo desligado no Chapa 27) | — | — | — | — |
 | Super Admin (`/admin`) | 🔑 | 🔑 | 🔑 | 🔑 |
 
@@ -87,7 +88,7 @@ Todas as células são cobertas pela varredura automática (`e2e:varredura`: abr
 | Contas a Pagar | `/contas-a-pagar` | Dono, Adm | A+M | A+M | A+M |
 | Contas a Receber | `/contas-a-receber` | Dono, Adm | A+M | A+M | A+M |
 | Minha Fatura | `/financeiro` | Dono, Adm | A+M | A+M | A+M |
-| Configurações | `/config` (+ subtelas no celular) | Dono | A+M | A+M | A+M |
+| Configurações (inclui Salão) | `/config` (+ subtelas no celular, `/config/salao`) | Dono | A+M | A+M | A+M |
 | Super Admin: lista, detalhe, mensalidades | `/admin…` | chave | A+M | A+M | A+M |
 | Cardápio do cliente (QR/tablet) | `apps/web` `/t/:código`, `/r/:id/menu` | cliente | A+M | A+M | A+M |
 
@@ -160,6 +161,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | QR-16 | Rodadas da mesma mesa | cliente | Dois pedidos seguidos no mesmo aparelho | Rodada 1 e 2; ambos na mesma comanda | api:salao | ✅ |
 | QR-17 | Duas pessoas na mesma mesa | clientes | Dois celulares na Mesa 5 pedem juntos | Os dois pedidos na mesma comanda | api:salao | ✅ |
 | QR-18 | API fora do ar | cliente | Parar a API e enviar | "Não foi possível conectar ao servidor"; carrinho mantido | M | ✅ corrigido (B19) |
+| QR-21 | QR impresso com o pedido pelo QR desligado | cliente | Abrir `/t/chapa27.3` com a opção desligada | "Neste restaurante os pedidos são feitos pelo garçom. É só chamar um atendente." | api:garcom, e2e:desktop | ✅ |
 | QR-19 | Tema claro/escuro e cor da marca | cliente | Alternar tema | Legível nos dois; botões na cor da marca | M | ✅ M |
 | QR-20 | Erro ao confirmar aparece na revisão | cliente | Item esgota enquanto o cliente revisa; confirmar | Aviso "… está esgotado"; carrinho mantido | e2e:fluxo | ✅ corrigido (B19) |
 
@@ -167,8 +169,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 | ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
-| GAR-01 | Lançar pelo celular | Garçom | Mesas → Mesa 8 (livre) → Lançar pedido → 2× Refrigerante lata, Cheddar & Bacon (Bem passado + Bacon extra, "sem cebola") → Revisar e enviar | R$ 58,90; aviso "Pedido da Mesa 08 enviado"; volta para a mesa | e2e:mobile | ✅ |
-| GAR-02 | Aparece na Central com o nome de quem lançou | Cozinha | Após GAR-01 | Card "Mesa 08" com "Diego Alves", opções e observação; entra na comanda | api:garcom, e2e:mobile | ✅ |
+| GAR-01 | Lançar pelo celular | Garçom | Mesas → Mesa 8 (livre) → Lançar pedido → 2× Refrigerante lata, Cheddar & Bacon (Bem passado + Bacon extra, "sem cebola") → Revisar e enviar | R$ 58,90; aviso "Pedido da Mesa 08 enviado"; volta para a mesa; o pedido já entra em Preparando (não precisa aceitar) | e2e:mobile, api:garcom | ✅ |
+| GAR-02 | Aparece na Central com o nome de quem lançou | Cozinha | Após GAR-01 | Card "Mesa 08" em Preparando com a tag "Lançado no estabelecimento", "Diego Alves", opções e observação; entra na comanda | api:garcom, e2e:mobile | ✅ |
 | GAR-03 | Item com opções abre a escolha com o padrão marcado | Garçom | Tocar num lanche | Folha com "Ponto da carne" já em "Ao ponto"; um toque em Adicionar basta | e2e:mobile | ✅ |
 | GAR-04 | Item sem opções soma direto | Garçom | Tocar 2× em Refrigerante | Contador 2 no item; total atualizado | e2e:mobile | ✅ |
 | GAR-05 | Mesmas regras do pedido pelo QR | Garçom | Item esgotado, carrinho vazio, observação de 301 caracteres, mesa que não existe, sem login | 400/400/400/404/401 | api:garcom | ✅ |
@@ -176,6 +178,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | GAR-07 | Rodadas | Garçom | Segundo pedido na mesma mesa | Rodada 2; os dois na comanda | api:garcom | ✅ |
 | GAR-08 | Mesas desligado | Garçom | Super Admin desliga Mesas | 403 | api:garcom | ✅ |
 | GAR-09 | Tablet e desktop | Garçom | Mesas → selecionar mesa → Lançar pedido | Grade de pratos; barra de total fixa; volta com a mesa selecionada | e2e:varredura, M | ✅ M |
+| GAR-11 | Só os garçons pedem (QR desligado) | Dono | Configurações → Salão → desligar "Clientes pedem pelo QR da mesa" | Mesas sem o botão QR code; o garçom lança normalmente; pedido do cliente na mesa → 403; delivery não muda | api:garcom, e2e:desktop | ✅ |
 | GAR-10 | Barra de total sempre visível | Garçom | Rolar a lista até o fim (celular) | "Revisar e enviar" continua na tela | e2e:mobile | ✅ |
 
 ### 4.5 Central de Pedidos (PED)
@@ -317,7 +320,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | CFG-02 | Horários | Dono | Domingo fechado | Salva | M | ✅ M (seed: segunda fechada) |
 | CFG-03 | Equipe: adicionar/editar | Dono | Novo garçom, e-mail repetido, senha curta | Salva; 409; aviso | e2e:desktop, api:perm | ✅ |
 | CFG-04 | Financeiro: forma de recebimento | Dono | Maquininha própria / PIX via sistema | Salva e muda o fechamento | M | ✅ M |
-| CFG-05 | Financeiro: serviço 10% | Dono | Ligar/desligar | Comanda e recebível acompanham | api:salao, e2e:desktop | ✅ (decisão: novo) |
+| CFG-05 | Salão: serviço 10% | Dono | Configurações → Salão (desktop e celular) → ligar/desligar | Comanda e recebível acompanham | api:salao, e2e:desktop | ✅ (decisão: novo) |
 | CFG-06 | Fiscal | Dono | Regime inválido | 400 | M | ✅ M |
 | CFG-07 | Aparência | Dono | Cor, prévia, publicar | Cliente vê a cor publicada | M | ✅ M |
 
@@ -420,7 +423,6 @@ P2 (registrados, não corrigidos):
 | P2-11 | O cliente não vê os 10% de serviço no resumo do pedido. |
 | P2-12 | Estoque em kg/L acumula resíduo de ponto flutuante (exibido com 3 casas). |
 | P2-13 | Atendimento recarrega todos os tickets com todas as mensagens a cada 6 s (cresce com o volume de WhatsApp). |
-| P2-14 | A chave do serviço de 10% só existe no desktop (Configurações do celular não tem Financeiro). |
 | P2-15 | Chamar garçom duas vezes gera dois chamados. |
 
-As lacunas de produto listadas em 27/09 (categorias, ajuste manual de estoque, garçom lançar pedido, adicionais com estoque) foram implementadas em 29/09 (casos GAR, CAR-09 a CAR-14, EST-13, EST-14). P2-05 deixou de existir: "Abrir comanda" virou "Lançar pedido".
+As lacunas de produto listadas em 27/09 (categorias, ajuste manual de estoque, garçom lançar pedido, adicionais com estoque) foram implementadas em 29/09 (casos GAR, CAR-09 a CAR-14, EST-13, EST-14). P2-05 deixou de existir: "Abrir comanda" virou "Lançar pedido". Depois, por decisão do Dono do produto: o pedido lançado pelo garçom entra direto em Preparando com a tag "Lançado no estabelecimento", e o pedido pelo QR virou opção em Configurações → Salão (junto com o serviço de 10%, que assim chega também ao celular — P2-14 resolvido).
