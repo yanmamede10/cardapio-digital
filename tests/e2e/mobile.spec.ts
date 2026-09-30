@@ -29,6 +29,7 @@ test("fechar a conta no celular pede a forma de pagamento, baixa a ficha técnic
   const { pao, blend, item } = await burgerKit(api);
   const { number: table, code } = await newTable(api);
   const order = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableCode: code, lines: [{ itemId: item.id, quantity: 3, notes: "", selectedOptions: [] }] });
+  await api("POST", `/api/orders/${order.id}/accept`); // the table was free: accepting opens it
 
   await page.goto(`/mesas/${table}`);
   await page.getByRole("button", { name: /Fechar conta/ }).click();
@@ -148,6 +149,8 @@ plain("garçom lança o pedido da mesa pelo celular: escolhe, revisa, envia; a C
   const orders = await (await request.get("http://localhost:4200/api/restaurants/chapa27/orders", { headers: { Authorization: `Bearer ${token}` } })).json();
   const mine = orders.filter((o: { tableNumber: number; waiterName: string | null; status: string }) => o.tableNumber === 8 && o.waiterName && o.status === "preparing"); // straight into production
   expect(mine.length).toBe(1);
+  const tables = await (await request.get("http://localhost:4200/api/restaurants/chapa27/tables", { headers: { Authorization: `Bearer ${token}` } })).json();
+  expect(tables.find((t: { number: number }) => t.number === 8).status).toBe("occupied"); // the waiter's order opens the table, no acceptance
   expect([mine[0].waiterName, mine[0].total, mine[0].lines[1].notes]).toEqual(["Diego Alves", 58.9, "sem cebola"]);
   await page.goto("/");
   await page.getByRole("button", { name: /Preparando/ }).first().click();

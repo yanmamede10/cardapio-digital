@@ -53,5 +53,6 @@ test("120 pedidos no mesmo dia: a Central recebe todos, o mapa e o turno respond
     assert.ok(r.status === 200 && r.ms < 1500, `${path}: ${r.status} ${r.ms.toFixed(0)} ms`);
   }
   assert.ok(orders.ms < 1500, `${orders.ms.toFixed(0)} ms`);
-  await batch(40, (i) => call("POST", `/api/restaurants/${FOGO}/tables/${tables[i].number}/close`, { token: owner })); // leave these tables free
+  // No table was opened (nobody accepted a first order), so all 120 are still awaiting: refuse them, fogo's Central stays clean.
+  await batch(120, (i) => call("POST", `/api/orders/${created[i].body.id}/reject`, { token: owner }));
 });

@@ -5,6 +5,7 @@ import { generateOrderCode } from "./codes.js";
 import { evaluateCoupon } from "./coupons.js";
 import { priceLine, round2 } from "./pricing.js";
 import { recipeOf } from "./stock.js";
+import { hasOpenComanda } from "./tables.js";
 
 const MAX_NOTES_LENGTH = 300;
 const MAX_GUEST_NAME_LENGTH = 120;
@@ -60,9 +61,14 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
   const discount = coupon.valid ? round2(subtotal * (coupon.discountPercent / 100)) : 0;
 
   let round = 1;
+  // Taken at the table by the waiter: no one needs to accept it, it goes straight into production.
+  let status = waiterName ? "preparing" : "pending";
   if (tableNumber !== null) {
-    // First order of a seating stamps openedAt ("aberta às"); the comanda itself is the table's orders with no closedAt.
-    await prisma.restaurantTable.updateMany({ where: { restaurantId: body.restaurantId, number: tableNumber, openedAt: null }, data: { openedAt: new Date() } });
+    // A customer's order at a free table (no comanda open) waits in the Central until someone accepts it: until then it
+    // doesn't open the table, take stock or count anywhere — a QR read by someone who isn't there opens nothing.
+    if (!waiterName && !(await hasOpenComanda(body.restaurantId, tableNumber))) status = "awaiting";
+    // Otherwise the first order of a seating stamps openedAt ("aberta às"); the comanda is the table's orders with no closedAt.
+    else await prisma.restaurantTable.updateMany({ where: { restaurantId: body.restaurantId, number: tableNumber, openedAt: null }, data: { openedAt: new Date() } });
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     round = 1 + (await prisma.order.count({ where: { mode: "table", restaurantId: body.restaurantId, tableNumber, guestSessionId, createdAt: { gte: startOfDay } } }));
@@ -85,8 +91,7 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
       deliveryFee,
       discount,
       total: round2(subtotal + deliveryFee - discount),
-      // Taken at the table by the waiter: no one needs to accept it, it goes straight into production.
-      status: waiterName ? "preparing" : "pending",
+      status,
       round,
       lines: { create: pricedLines }
     },

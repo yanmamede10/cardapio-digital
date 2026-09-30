@@ -48,6 +48,7 @@ function poll(everyMs, fn) {
   })();
 }
 const panels = [];
+const accepting = new Set(); // a free table's first order waits for the Central: the first one accepts it, as the kitchen would
 for (let c = 0; c < 4; c++) {
   const seen = new Map();
   seenBy.push(seen);
@@ -57,6 +58,11 @@ for (let c = 0; c < 4; c++) {
       const [orders] = await Promise.all([hit("Central: pedidos", `${P}/orders`, auth(token)), hit("Central: chamados", `${P}/waiter-calls`, auth(token)), hit("Central: turno", `${P}/shift-stats`, auth(token))]);
       const now = performance.now();
       for (const o of orders) if (posted.has(o.id) && !seen.has(o.id)) seen.set(o.id, now);
+      if (c === 0)
+        for (const o of orders.filter((o) => o.status === "awaiting" && posted.has(o.id) && !accepting.has(o.id))) {
+          accepting.add(o.id);
+          await hit("Aceitar (abre a mesa)", `/api/orders/${o.id}/accept`, { method: "POST", ...auth(token) }).catch((e) => errors.push(e.message));
+        }
     })
   );
 }

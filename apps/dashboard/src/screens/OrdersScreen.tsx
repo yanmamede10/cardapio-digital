@@ -15,14 +15,14 @@ import {
 import { api } from "../lib/api";
 import { brl, minutesSince } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
-import { InHouseTag, LineExtras } from "../components/OrderCard";
+import { AwaitingTag, InHouseTag, LineExtras } from "../components/OrderCard";
 
 const ALERT_MINUTES = 20;
 
 type Bucket = "pending" | "preparing" | "ready" | "completed";
 
 const BUCKET_DEFS: { key: Bucket; label: string; dot: string; statuses: OrderStatus[]; nextLabel: string | null }[] = [
-  { key: "pending", label: "Recebido", dot: "var(--sec)", statuses: ["pending"], nextLabel: "Preparar" },
+  { key: "pending", label: "Recebido", dot: "var(--sec)", statuses: ["awaiting", "pending"], nextLabel: "Preparar" },
   { key: "preparing", label: "Preparando", dot: "var(--warn)", statuses: ["preparing"], nextLabel: "Marcar pronto" },
   { key: "ready", label: "Pronto", dot: "var(--ok)", statuses: ["ready", "out_for_delivery"], nextLabel: "Entregar" },
   { key: "completed", label: "Entregue / Servido", dot: "var(--ink3)", statuses: ["delivered", "served"], nextLabel: null }
@@ -99,7 +99,7 @@ export default function OrdersScreen() {
     try {
       const updated = await api.acceptOrder(o.id);
       setOrders((prev) => prev.map((x) => (x.id === o.id ? updated : x)));
-      notify(`Pedido ${o.code} aceito`);
+      notify(o.status === "awaiting" ? `Mesa ${o.tableNumber} aberta · o pedido ${o.code} entrou em Recebido` : `Pedido ${o.code} aceito`);
     } catch {
       notify("Não foi possível aceitar o pedido");
     }
@@ -317,8 +317,11 @@ function KanbanCard({
   onAdvance: () => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: order.id });
+  // A free table's first order moves only by Aceitar/Recusar (accepting is what opens the table): no drag handlers on it.
+  // Not dnd-kit's `disabled`, which marks the whole card aria-disabled — its buttons included.
+  const drag = order.status === "awaiting" ? {} : { ...listeners, ...attributes };
   return (
-    <article ref={setNodeRef} {...listeners} {...attributes} style={{ opacity: isDragging ? 0.4 : 1, cursor: "grab" }}>
+    <article ref={setNodeRef} {...drag} style={{ opacity: isDragging ? 0.4 : 1, cursor: order.status === "awaiting" ? "default" : "grab" }}>
       <KanbanCardBody order={order} nextLabel={nextLabel} onAccept={() => onAccept(order)} onReject={() => onReject(order)} onAdvance={onAdvance} />
     </article>
   );
@@ -362,6 +365,7 @@ function KanbanCardBody({
 
   return (
     <div style={style}>
+      <AwaitingTag order={o} />
       <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
         <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 19, lineHeight: 1, color: "var(--ink2)", marginTop: 1 }} />
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -409,7 +413,7 @@ function KanbanCardBody({
           <i className="fa-solid fa-print" style={{ fontSize: 17, lineHeight: 1 }} />
         </button>
       </div>
-      {o.status === "pending" ? (
+      {o.status === "pending" || o.status === "awaiting" ? (
         <div style={{ display: "flex", gap: 7 }}>
           <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={onAccept}>
             Aceitar

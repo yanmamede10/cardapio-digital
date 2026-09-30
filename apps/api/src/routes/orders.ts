@@ -69,8 +69,15 @@ ordersRouter.post("/:id/accept", requireStaff, requireModule("pedidos"), async (
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
   // Conditional: of two devices accepting/refusing the same order at once, exactly one wins (the other gets 409).
-  const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "pending" }, data: { status: "preparing" } });
-  if (!count) return res.status(409).json({ error: "order is not pending" });
+  if (order.status === "awaiting") {
+    // A free table's first order: accepting opens the table, and the order joins it as any QR order does (Recebido).
+    const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "awaiting" }, data: { status: "pending" } });
+    if (!count) return res.status(409).json({ error: "order is not awaiting" });
+    await prisma.restaurantTable.updateMany({ where: { restaurantId: order.restaurantId, number: order.tableNumber!, openedAt: null }, data: { openedAt: new Date() } });
+  } else {
+    const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "pending" }, data: { status: "preparing" } });
+    if (!count) return res.status(409).json({ error: "order is not pending" });
+  }
   res.json(serializeOrder(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { lines: true } })));
 });
 
@@ -78,7 +85,8 @@ ordersRouter.post("/:id/reject", requireStaff, requireModule("pedidos"), async (
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
-  const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "pending" }, data: { status: "cancelled" } }); // see accept
+  // Refused: "Pedido não confirmado" for the customer; a free table's first order leaves the table as it was. See accept.
+  const { count } = await prisma.order.updateMany({ where: { id: order.id, status: { in: ["awaiting", "pending"] } }, data: { status: "cancelled" } });
   if (!count) return res.status(409).json({ error: "order is not pending" });
   res.json({ ok: true });
 });
@@ -89,6 +97,7 @@ ordersRouter.patch("/:id/stage", requireStaff, requireModule("pedidos"), async (
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  if (order.status === "awaiting") return res.status(409).json({ error: "Aceite o pedido antes: aceitar é o que abre a mesa." });
   // A delivery closes when delivered (table orders take stock on comanda close instead). The
   // conditional updateMany claims that transition once, so a double click can't take stock twice.
   const delivering =

@@ -42,7 +42,8 @@ function deltaPct(current: number, previous: number): number {
 
 async function ordersBetween(restaurantId: string, from: Date, to: Date): Promise<OrderWithLines[]> {
   return prisma.order.findMany({
-    where: { restaurantId, createdAt: { gte: from, lt: to } },
+    // A free table's first order still awaiting acceptance isn't a sale yet (nor a cancellation).
+    where: { restaurantId, createdAt: { gte: from, lt: to }, status: { not: "awaiting" } },
     include: { lines: true }
   });
 }

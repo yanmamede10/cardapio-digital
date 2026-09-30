@@ -55,7 +55,8 @@ export default function ReviewScreen() {
           selectedOptions: l.selectedOptions
         }))
       });
-      if (isMesa) registerTableOrder(order.total, order.id);
+      // A free table's first order counts in the table's total only once the restaurant accepts it (OrderStatusScreen).
+      if (isMesa && order.status !== "awaiting") registerTableOrder(order.total, order.id);
       clear();
       navigate(`/order/${order.id}`, { replace: true });
     } catch (err) {

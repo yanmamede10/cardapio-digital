@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, test } from "node:test";
-import { ALL_MODULES, R, SEED_MODULES, call, login, newTable, setModules, uid } from "./helpers.ts";
+import { ALL_MODULES, R, SEED_MODULES, accepted, call, login, newTable, setModules, uid } from "./helpers.ts";
 
 let owner: string;
 let waiter: string;
@@ -52,7 +52,7 @@ describe("emissão fiscal", () => {
     const { number: table, code } = await newTable(owner);
     const orders: { id: string; total: number }[] = [];
     for (let i = 0; i < count; i++) {
-      const order = (await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableCode: code, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
+      const order = (await accepted(await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableCode: code, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } }), owner)).body;
       await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
       orders.push(order);
     }

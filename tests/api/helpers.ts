@@ -34,6 +34,15 @@ export async function tableCode(restaurantId: string, number: number, token: str
   return (await call("GET", `/api/restaurants/${restaurantId}/tables/${number}/qr`, { token })).body.tableCode;
 }
 
+/** A free table's first customer order waits in the Central ("awaiting"): accepts it, as staff would, and returns the order
+ *  as it is now. Anything else comes back untouched. */
+export async function accepted<T extends { status: number; body: { id?: string; status?: string } }>(res: T, token: string): Promise<T> {
+  if (res.body?.status !== "awaiting") return res;
+  const ok = await call("POST", `/api/orders/${res.body.id}/accept`, { token });
+  if (ok.status !== 200) throw new Error(`accept failed: ${JSON.stringify(ok.body)}`);
+  return { ...res, body: ok.body };
+}
+
 /** A new table (the restaurant's next number) and its QR code. */
 export async function newTable(token: string, restaurantId = R) {
   const { number } = (await call("POST", `/api/restaurants/${restaurantId}/tables`, { token, body: { seats: 4 } })).body as { number: number };

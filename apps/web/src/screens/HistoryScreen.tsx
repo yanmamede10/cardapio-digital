@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { formatDate, formatMoney } from "../lib/format";
 
 const STATUS_LABEL: Record<Order["status"], string> = {
+  awaiting: "Aguardando confirmação",
   pending: "Recebido",
   preparing: "Preparando",
   ready: "Pronto para envio",

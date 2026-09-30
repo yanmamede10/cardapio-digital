@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
-import { ADMIN_KEY, SEED_MODULES, call, firstLogin, setModules, tableCode, uid } from "./helpers.ts";
+import { ADMIN_KEY, SEED_MODULES, accepted, call, firstLogin, setModules, tableCode, uid } from "./helpers.ts";
 
 // Salão of the demo hamburgueria (prisma/seed-demo.ts): QR → pedido → Central → comanda → fechamento.
 const D = "chapa27";
@@ -84,9 +84,10 @@ describe("QR da mesa", () => {
   });
 });
 
-/** A guest order at a table of the demo restaurant. */
-const order = (table: number, lines: { name: string; qty?: number; options?: string[]; notes?: string }[], session = crypto.randomUUID()) =>
-  call("POST", "/api/orders", {
+/** A guest order at a table of the demo restaurant. At a free table the first one waits for acceptance: these tests are about
+ *  the open comanda, so staff accept it (pass accept: false to see it waiting). */
+const order = async (table: number, lines: { name: string; qty?: number; options?: string[]; notes?: string }[], session = crypto.randomUUID(), { accept = true } = {}) => {
+  const res = await call("POST", "/api/orders", {
     session,
     body: {
       mode: "table",
@@ -103,6 +104,8 @@ const order = (table: number, lines: { name: string; qty?: number; options?: str
       })
     }
   });
+  return accept ? accepted(res, waiter) : res;
+};
 const comanda = async (table: number) => (await call("GET", `${P}/tables/${table}/comanda`, { token: waiter })).body;
 const close = (table: number, body?: object) => call("POST", `${P}/tables/${table}/close`, { token: waiter, body });
 const transfer = (from: number, to: number) => call("POST", `${P}/tables/${from}/transfer`, { token: waiter, body: { toNumber: to } });
@@ -326,4 +329,58 @@ test("repetir pedido não é mais rota da API (A-03): o app do cliente monta o c
   const o = (await order(30, [{ name: "Kids" }])).body;
   const res = await call("POST", `/api/orders/${o.id}/repeat`, { session: crypto.randomUUID() });
   assert.deepEqual([res.status, res.body.error], [404, `no route for POST /api/orders/${o.id}/repeat`]);
+});
+
+describe("primeiro pedido pelo QR numa mesa livre: aguarda aceite", () => {
+  const openedAt = async (n: number) => (await call("GET", `${P}/tables`, { token: waiter })).body.find((t: { number: number }) => t.number === n).openedAt;
+  const revenue = async () => (await call("GET", `${P}/analytics?period=today`, { token: owner })).body.kpis;
+  const statusFor = async (id: string, session: string) => (await call("GET", `/api/orders/${id}`, { session })).body.status;
+
+  test("mesa livre + aceitar: o pedido espera sem abrir a mesa nem gerar valor; aceitar abre a mesa e ele vira pedido de QR (Recebido)", async () => {
+    await fresh(23);
+    const before = await revenue();
+    const phone = crypto.randomUUID();
+    const o = (await order(23, [{ name: "Kids" }], phone, { accept: false })).body;
+    assert.equal(o.status, "awaiting");
+    assert.deepEqual([await tableStatus(23), await openedAt(23), (await comanda(23)).orderIds], ["free", null, []], "não abre a mesa, não entra na comanda");
+    assert.deepEqual(await revenue(), before, "relatórios não contam o pedido que espera");
+    assert.equal((await call("PATCH", `/api/orders/${o.id}/stage`, { token: kitchen, body: { stage: "preparing" } })).status, 409, "não pula o aceite");
+    assert.ok((await call("GET", `${P}/orders`, { token: kitchen })).body.some((x: { id: string; status: string }) => x.id === o.id && x.status === "awaiting"), "a Central vê o pedido esperando");
+
+    const ok = await call("POST", `/api/orders/${o.id}/accept`, { token: kitchen });
+    assert.deepEqual([ok.status, ok.body.status], [200, "pending"]);
+    assert.equal(await statusFor(o.id, phone), "pending");
+    assert.equal(await tableStatus(23), "occupied");
+    assert.ok(await openedAt(23), "aceitar abre a mesa");
+    assert.deepEqual((await comanda(23)).orderIds, [o.id]);
+    assert.equal((await call("POST", `/api/orders/${o.id}/accept`, { token: kitchen })).body.status, "preparing", "daí segue como qualquer pedido de QR");
+  });
+
+  test("mesa aberta: os pedidos seguintes do QR entram direto na comanda, sem esperar", async () => {
+    // Table 23 was opened by the previous test.
+    const next = (await order(23, [{ name: "Salada" }], crypto.randomUUID(), { accept: false })).body;
+    assert.equal(next.status, "pending");
+    assert.ok((await comanda(23)).orderIds.includes(next.id));
+    await close(23);
+  });
+
+  test("mesa livre + recusar: o pedido fica recusado, a mesa continua livre e nada entra na conta", async () => {
+    await fresh(24);
+    const phone = crypto.randomUUID();
+    const o = (await order(24, [{ name: "Kids" }], phone, { accept: false })).body;
+    assert.equal(o.status, "awaiting");
+    assert.equal((await call("POST", `/api/orders/${o.id}/reject`, { token: waiter })).status, 200);
+    assert.equal(await statusFor(o.id, phone), "cancelled", "o cliente vê que não foi confirmado");
+    assert.deepEqual([await tableStatus(24), await openedAt(24), (await comanda(24)).orderIds], ["free", null, []]);
+    assert.equal((await call("POST", `/api/orders/${o.id}/accept`, { token: kitchen })).status, 409, "recusado não se aceita depois");
+  });
+
+  test("pedido lançado pelo garçom numa mesa livre entra direto em Preparando e abre a mesa", async () => {
+    await fresh(24);
+    const res = await call("POST", `${P}/tables/24/orders`, { token: waiter, body: { lines: [{ itemId: item("Kids").id, quantity: 1, notes: "", selectedOptions: [] }] } });
+    assert.deepEqual([res.status, res.body.status], [201, "preparing"]);
+    assert.equal(await tableStatus(24), "occupied");
+    assert.deepEqual((await comanda(24)).orderIds, [res.body.id]);
+    await close(24);
+  });
 });

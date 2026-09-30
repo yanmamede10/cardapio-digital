@@ -10,8 +10,12 @@ export const servicePct = (r: { serviceCharge: boolean } | null) => (r?.serviceC
  *  freezes on each of its orders (Order.service, which Emissão Fiscal reads). */
 export const serviceFee = (o: Pick<Order, "mode" | "subtotal">, pct: number) => (o.mode === "table" ? round2(o.subtotal * (pct / 100)) : 0);
 
-/** A table's open comanda: its non-cancelled orders not closed yet (closing stamps closedAt on exactly the orders it charged). */
-const openWhere = (restaurantId: string) => ({ restaurantId, mode: "table", closedAt: null, status: { not: "cancelled" } });
+/** A table's open comanda: its orders not closed yet (closing stamps closedAt on exactly the orders it charged), minus the
+ *  refused ones and a free table's first orders still awaiting acceptance — those open nothing and are worth nothing yet. */
+const openWhere = (restaurantId: string) => ({ restaurantId, mode: "table", closedAt: null, status: { notIn: ["cancelled", "awaiting"] } });
+
+/** Whether the table has a comanda open (a free table's customer order has to be accepted first). */
+export const hasOpenComanda = async (restaurantId: string, number: number) => (await prisma.order.count({ where: { ...openWhere(restaurantId), tableNumber: number } })) > 0;
 
 export function openOrdersForTable(restaurantId: string, number: number): Promise<(Order & { lines: OrderLine[] })[]> {
   return prisma.order.findMany({ where: { ...openWhere(restaurantId), tableNumber: number }, include: { lines: true }, orderBy: { createdAt: "asc" } });

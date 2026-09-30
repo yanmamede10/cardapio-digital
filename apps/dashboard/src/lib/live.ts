@@ -79,7 +79,7 @@ export interface NotifItem {
 /** Turns shell-level live data into the notification-bell dropdown items, shared by both shells. */
 export function buildNotifs(data: Pick<LiveData, "orders" | "calls" | "tickets">): NotifItem[] {
   const notifs: NotifItem[] = [];
-  const pendingCount = data.orders.filter((o) => o.status === "pending").length;
+  const pendingCount = data.orders.filter((o) => o.status === "pending" || o.status === "awaiting").length;
   const openCalls = data.calls.filter((c) => !c.resolvedAt);
   const unreadTicketCount = data.tickets.reduce((total, t) => total + t.unreadCount, 0);
 

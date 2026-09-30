@@ -17,7 +17,7 @@ const STAGES: { status: OrderStatus; label: string; note: string; icon: string }
 export default function OrderStatusScreen() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
-  const { mode, tableNumber, restaurantId, tableSession, setWaiterCalled } = useApp();
+  const { mode, tableNumber, restaurantId, tableSession, setWaiterCalled, registerTableOrder } = useApp();
   const { showToast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
 
@@ -25,13 +25,17 @@ export default function OrderStatusScreen() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 
+    let wasAwaiting = false;
     const poll = () => {
       api.getOrder(orderId).then((o) => {
         if (cancelled) return;
+        // A free table's first order joins the table's total when the restaurant accepts it (a refused one never does).
+        if (wasAwaiting && o.status !== "awaiting" && o.status !== "cancelled") registerTableOrder(o.total, o.id);
+        wasAwaiting = o.status === "awaiting";
         setOrder(o);
-        if (o.mode === "delivery" && o.status !== "delivered") {
-          timer = setTimeout(poll, 3000);
-        }
+        // Delivery: until delivered. Table: while it waits for the restaurant, so the customer sees accepted or refused.
+        const waiting = o.mode === "delivery" ? o.status !== "delivered" && o.status !== "cancelled" : o.status === "awaiting" || o.status === "pending";
+        if (waiting) timer = setTimeout(poll, 3000);
       });
     };
     poll();
@@ -39,7 +43,7 @@ export default function OrderStatusScreen() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [orderId]);
+  }, [orderId, registerTableOrder]);
 
   if (!order) {
     return (
@@ -51,6 +55,9 @@ export default function OrderStatusScreen() {
 
   const isMesa = order.mode === "table";
   const currentIndex = STAGES.findIndex((s) => s.status === order.status);
+  const awaiting = isMesa && order.status === "awaiting";
+  const refused = isMesa && order.status === "cancelled";
+  const table = tableNumber ?? order.tableNumber ?? "";
 
   const callWaiter = async () => {
     setWaiterCalled(true);
@@ -65,16 +72,22 @@ export default function OrderStatusScreen() {
   return (
     <div className="screen">
       <div className="scroll no-scrollbar" style={{ padding: "calc(var(--pad) + 14px) var(--pad) 0" }}>
-        <div style={{ animation: "dcPop .45s cubic-bezier(.2,.8,.3,1) both", width: 74, height: 74, borderRadius: 999, background: "var(--pri)", color: "var(--priInk)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <i className={isMesa ? "fa-solid fa-kitchen-set" : "fa-solid fa-check"} style={{ fontSize: 30 }} />
+        <div style={{ animation: "dcPop .45s cubic-bezier(.2,.8,.3,1) both", width: 74, height: 74, borderRadius: 999, background: refused ? "var(--surf2)" : "var(--pri)", color: refused ? "var(--ink)" : "var(--priInk)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <i className={awaiting ? "fa-solid fa-hourglass-half" : refused ? "fa-solid fa-bell-concierge" : isMesa ? "fa-solid fa-kitchen-set" : "fa-solid fa-check"} style={{ fontSize: 30 }} aria-hidden="true" />
         </div>
-        <div style={{ marginTop: 18, font: "700 var(--t-xl) var(--font)", letterSpacing: "-.025em", lineHeight: 1.15 }}>
-          {isMesa ? "Pedido recebido pela cozinha" : "Pedido confirmado!"}
-        </div>
-        <div style={{ marginTop: 10, font: "400 var(--t-b) var(--font)", color: "var(--ink2)", lineHeight: 1.5 }}>
-          {isMesa
-            ? `A cozinha já começou a preparar. O garçom traz à Mesa ${tableNumber ?? order.tableNumber ?? ""} assim que estiver pronto.`
-            : "Acompanhe o preparo e a entrega por aqui — avisamos a cada etapa."}
+        <div role="status" aria-live="polite">
+          <div style={{ marginTop: 18, font: "700 var(--t-xl) var(--font)", letterSpacing: "-.025em", lineHeight: 1.15 }}>
+            {awaiting ? "Aguardando confirmação do restaurante" : refused ? "Pedido não confirmado. Chame o garçom." : isMesa ? "Pedido recebido pela cozinha" : "Pedido confirmado!"}
+          </div>
+          <div style={{ marginTop: 10, font: "400 var(--t-b) var(--font)", color: "var(--ink2)", lineHeight: 1.5 }}>
+            {awaiting
+              ? `O primeiro pedido da Mesa ${table} é confirmado pela equipe. Assim que confirmarem, ele vai para a cozinha.`
+              : refused
+              ? "O restaurante não confirmou este pedido e nada foi cobrado. Um garçom resolve com você na mesa."
+              : isMesa
+              ? `A cozinha já começou a preparar. O garçom traz à Mesa ${table} assim que estiver pronto.`
+              : "Acompanhe o preparo e a entrega por aqui — avisamos a cada etapa."}
+          </div>
         </div>
 
         <div className="card" style={{ marginTop: 18, padding: 18, display: "flex", gap: 18 }}>
@@ -125,7 +138,7 @@ export default function OrderStatusScreen() {
           </div>
         )}
 
-        {isMesa && (
+        {isMesa && !awaiting && !refused && (
           <div style={{ marginTop: 22, padding: 18, borderRadius: "var(--r-standard)", background: "var(--surf2)", border: "1px solid var(--line)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-b) var(--font)" }}>
               <i className="fa-solid fa-receipt" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Comanda da Mesa {tableNumber ?? order.tableNumber}

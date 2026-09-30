@@ -24,6 +24,19 @@ export function InHouseTag({ order }: { order: Order }) {
   );
 }
 
+/** A free table's first order from the QR or the tablet: nobody accepted it yet, so the table isn't open and nothing counts.
+ *  The table number stands out — whoever accepts should know which table is about to open. */
+export function AwaitingTag({ order }: { order: Order }) {
+  if (order.status !== "awaiting") return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, borderRadius: 10, padding: "7px 10px", border: "1px solid var(--warn)", background: "color-mix(in srgb, var(--warn) 12%, transparent)" }}>
+      <i className="fa-solid fa-hourglass-half" aria-hidden="true" style={{ fontSize: 14, color: "var(--warn)" }} />
+      <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: "var(--ink)" }}>Aguardando aceite · mesa livre</span>
+      <span className="mono" style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)" }}>Mesa {String(order.tableNumber ?? 0).padStart(2, "0")}</span>
+    </div>
+  );
+}
+
 /** What the kitchen must see under each line: the customer's choices ("Bem passado · Bacon extra") and note. */
 export function LineExtras({ line }: { line: CartLine }) {
   const options = line.selectedOptions.map((o) => o.label).join(" · ");

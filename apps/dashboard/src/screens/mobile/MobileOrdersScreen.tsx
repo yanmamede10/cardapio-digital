@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Order, OrderStatus, WaiterCall } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { brl, minutesSince } from "../../lib/format";
-import { InHouseTag, LineExtras, orderRef, orderSubtitle } from "../../components/OrderCard";
+import { AwaitingTag, InHouseTag, LineExtras, orderRef, orderSubtitle } from "../../components/OrderCard";
 import { nextStatusFor } from "../OrdersScreen";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
@@ -11,7 +11,7 @@ import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
 type Tab = "pending" | "preparing" | "ready" | "done";
 
 const TABS: { key: Tab; label: string; statuses: OrderStatus[] }[] = [
-  { key: "pending", label: "Recebido", statuses: ["pending"] },
+  { key: "pending", label: "Recebido", statuses: ["awaiting", "pending"] },
   { key: "preparing", label: "Preparando", statuses: ["preparing"] },
   { key: "ready", label: "Pronto", statuses: ["ready", "out_for_delivery"] },
   { key: "done", label: "Entregue", statuses: ["delivered", "served"] }
@@ -70,7 +70,7 @@ export default function MobileOrdersScreen() {
     try {
       const updated = await api.acceptOrder(o.id);
       setOrders((prev) => prev.map((x) => (x.id === o.id ? updated : x)));
-      notify(`Pedido ${o.code} aceito`);
+      notify(o.status === "awaiting" ? `Mesa ${o.tableNumber} aberta · o pedido ${o.code} entrou em Recebido` : `Pedido ${o.code} aceito`);
       refreshLive();
     } catch {
       notify("Não foi possível aceitar o pedido");
@@ -205,12 +205,13 @@ export default function MobileOrdersScreen() {
         {visible.map((o) => {
           const min = minutesSince(o.createdAt);
           const tone = timeTone(min);
-          const isNew = o.status === "pending";
+          const isNew = o.status === "pending" || o.status === "awaiting";
           const canAdvance = o.status === "preparing" || o.status === "ready" || o.status === "out_for_delivery";
           const isDone = o.status === "delivered" || o.status === "served";
           const nextLabel = o.status === "preparing" ? "Marcar como pronto" : "Marcar como entregue";
           return (
             <article key={o.id} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderLeft: `3px solid ${tone.accent}`, borderRadius: 14, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+              <AwaitingTag order={o} />
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <div style={{ width: 36, height: 36, flex: "0 0 36px", borderRadius: 10, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 15 }} />

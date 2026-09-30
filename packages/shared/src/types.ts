@@ -216,7 +216,10 @@ export interface CartLine extends CartLineInput {
 //   table:    ready -> served
 //   delivery: ready -> out_for_delivery -> delivered
 // `cancelled` is terminal from `pending` (staff rejected it before accepting).
+// `awaiting`: a customer's first order at a free table (QR or fixed tablet). It doesn't open the table, take stock or count
+// anywhere until someone accepts it (→ pending, and the table opens) or refuses it (→ cancelled).
 export type OrderStatus =
+  | "awaiting"
   | "pending"
   | "preparing"
   | "ready"
