@@ -453,7 +453,8 @@ export function ProductForm({
         </div>
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span className="field-label">Unidade de medida</span>
-          <select className="field" value={draft.unit} onChange={(e) => set({ unit: e.target.value })}>
+          {/* Once stock moved, the history and the fichas técnicas are in this unit: it can't change (the API refuses too). */}
+          <select className="field" value={draft.unit} disabled={!!current?.unitLocked} aria-describedby={current?.unitLocked ? "unit-locked" : undefined} onChange={(e) => set({ unit: e.target.value })}>
             {PRODUCT_UNITS.map((u) => (
               <option key={u} value={u}>
                 {u}
@@ -462,6 +463,11 @@ export function ProductForm({
           </select>
         </label>
       </div>
+      {current?.unitLocked && (
+        <div id="unit-locked" style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: -6 }}>
+          A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto.
+        </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 600 }}>Valores</div>

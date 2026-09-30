@@ -300,7 +300,7 @@ export function serializeCharge(c: BillingCharge): ApiBillingCharge {
   };
 }
 
-export function serializeProduct(p: Product & { components: (ProductComponent & { component: Product })[] }): ApiProduct {
+export function serializeProduct(p: Product & { components: (ProductComponent & { component: Product })[]; _count?: { movements: number } }): ApiProduct {
   const components = p.components.map((c) => ({
     componentId: c.componentId,
     name: c.component.name,
@@ -320,7 +320,8 @@ export function serializeProduct(p: Product & { components: (ProductComponent & 
     cst: p.cst,
     taxRate: p.taxRate,
     composed: p.composed,
-    components
+    components,
+    unitLocked: (p._count?.movements ?? 0) > 0
   };
 }
 

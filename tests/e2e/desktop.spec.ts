@@ -447,6 +447,9 @@ plain("Produtos: contagem de estoque define o estoque e aparece em Movimentaçõ
   await page.getByLabel("Motivo do ajuste").fill("Inventário de sábado");
   await page.getByRole("button", { name: "Registrar contagem" }).click();
   await expect(page.locator(".toast-bubble")).toContainText("Estoque de Água com gás 500 ml: 24 un");
+  // It moved: the unit is locked, and the form says why (A-1.3).
+  await expect(page.getByLabel("Unidade de medida")).toBeDisabled();
+  await expect(page.getByText("A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto.")).toBeVisible();
   await page.getByRole("button", { name: "Cancelar" }).click();
   await page.getByRole("button", { name: "Movimentações" }).click();
   await expect(page.getByText("Contagem de estoque: Inventário de sábado").first()).toBeVisible();

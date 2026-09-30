@@ -8,7 +8,9 @@ import { round3 } from "../lib/stock.js";
 export const productsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("produtos")];
-const withComponents = { components: { include: { component: true } } } as const;
+// _count.movements: a product with any stock movement has its unit locked (see PATCH).
+const withComponents = { components: { include: { component: true } }, _count: { select: { movements: true } } } as const;
+export const UNIT_LOCKED = "A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto.";
 const MAX_NAME_LENGTH = 80;
 const MAX_TAX_CODE_LENGTH = 20;
 
@@ -79,6 +81,11 @@ productsRouter.patch("/:id/products/:productId", ...staffGuard, async (req, res)
   const body = { ...(req.body as UpsertProductRequest), type: existing.type as UpsertProductRequest["type"] };
   const error = await productError(req.params.id, body, existing.id);
   if (error) return res.status(400).json({ error });
+  // The history (movements), the stock and the fichas técnicas are quantities in this unit: kg → g would re-read 0,15 kg as
+  // 0,15 g. Once anything moved, the unit stays; a new unit is a new product (A-01).
+  if (body.unit !== existing.unit && (await prisma.stockMovement.count({ where: { productId: existing.id } })) > 0) {
+    return res.status(409).json({ error: UNIT_LOCKED });
+  }
   if (body.composed && !existing.composed && (await prisma.productComponent.count({ where: { componentId: existing.id } })) > 0) {
     return res.status(409).json({ error: "este item é usado na composição de outro produto e não pode virar composto" });
   }

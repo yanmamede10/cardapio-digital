@@ -188,3 +188,18 @@ describe("ajuste manual de estoque", () => {
     assert.equal((await adjust({ productId: pao.id, kind: "in", quantity: 1 }, await login("paula@fogoeno.com.br"))).status, 403, "garçom");
   });
 });
+
+test("depois de qualquer movimentação a unidade não muda mais (A-01): 409 com a mensagem; antes muda, e o resto segue editável", async () => {
+  const p = (await call("POST", `${P}/products`, { token, body: product({ name: `Queijo ${uid()}`, unit: "kg", cost: 40 }) })).body;
+  assert.equal(p.unitLocked, false);
+  const edit = (over: object) => call("PATCH", `${P}/products/${p.id}`, { token, body: product({ name: p.name, cost: 40, ...over }) });
+  assert.equal((await edit({ unit: "g" })).status, 200, "sem movimentação ainda: pode");
+  await call("POST", `${P}/stock-movements/adjust`, { token, body: { productId: p.id, kind: "in", quantity: 500 } });
+
+  const refused = await edit({ unit: "kg" });
+  assert.deepEqual([refused.status, refused.body.error], [409, "A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto."]);
+  const same = await edit({ unit: "g", cost: 41 });
+  assert.deepEqual([same.status, same.body.cost, same.body.unitLocked], [200, 41, true], "o resto segue editável");
+  const listed = (await call("GET", `${P}/products`, { token })).body.find((x: { id: string }) => x.id === p.id);
+  assert.deepEqual([listed.unit, listed.unitLocked], ["g", true]);
+});

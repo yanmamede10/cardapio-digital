@@ -99,6 +99,8 @@ export interface Product {
   taxRate: number;
   composed: boolean;
   components: ProductComponentLine[];
+  /** It has stock movements: its unit can no longer change (a new unit is a new product). */
+  unitLocked?: boolean;
 }
 
 export interface UpsertProductRequest {
