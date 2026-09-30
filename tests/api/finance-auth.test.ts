@@ -52,7 +52,7 @@ describe("emissão fiscal", () => {
     const table = 100 + Math.floor(Math.random() * 800);
     const orders: { id: string; total: number }[] = [];
     for (let i = 0; i < count; i++) {
-      const order = (await call("POST", "/api/orders", { session: `f-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
+      const order = (await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
       await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
       orders.push(order);
     }

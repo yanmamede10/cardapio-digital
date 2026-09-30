@@ -18,7 +18,7 @@ test("cozinha e garçom marcam Esgotado/Disponível; o cliente não consegue ped
   const batata = await byName("Batata Frita");
   const soldOut = (who: string, v: unknown) => call("PATCH", `${P}/items/${batata.id}/sold-out`, { token: tokens[who], body: { soldOut: v } });
   assert.equal((await soldOut("cozinha", true)).body.soldOut, true);
-  const orderIt = () => call("POST", "/api/orders", { session: `s-${uid()}`, body: { mode: "table", restaurantId: D, tableNumber: 25, lines: [{ itemId: batata.id, quantity: 1, notes: "", selectedOptions: [] }] } });
+  const orderIt = () => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 25, lines: [{ itemId: batata.id, quantity: 1, notes: "", selectedOptions: [] }] } });
   const refused = await orderIt();
   assert.equal(refused.status, 400);
   assert.match(refused.body.error, /esgotado/);
@@ -47,7 +47,7 @@ test("Organizar prato mexe só nos adicionais: o Ponto da carne continua, e o ad
   assert.equal(after.optionGroups[0].options.length, 3);
   const cremoso = after.optionGroups[1].options.find((o) => o.label === "Cheddar cremoso")!;
   const order = await call("POST", "/api/orders", {
-    session: `s-${uid()}`,
+    session: crypto.randomUUID(),
     body: { mode: "table", restaurantId: D, tableNumber: 26, lines: [{ itemId: after.id, quantity: 1, notes: "", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: cremoso.id }] }] }
   });
   assert.equal(order.body.total, 37.9, "32,90 + 5,00");
@@ -95,7 +95,7 @@ test("adicional com ficha técnica: o Bacon extra baixa bacon ao fechar a conta;
 
   await call("POST", `${P2}/tables/12/close`, { token: tokens.garcom });
   const baconExtra = classico.optionGroups.find((g) => g.id === "extra")!.options.find((o) => o.label === "Bacon extra")!;
-  await call("POST", "/api/orders", { session: `s-${uid()}`, body: { mode: "table", restaurantId: D, tableNumber: 12, lines: [{ itemId: classico.id, quantity: 2, notes: "", selectedOptions: [{ groupId: "extra", optionId: baconExtra.id }] }] } });
+  await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 12, lines: [{ itemId: classico.id, quantity: 2, notes: "", selectedOptions: [{ groupId: "extra", optionId: baconExtra.id }] }] } });
   const before = bacon.stock;
   await call("POST", `${P2}/tables/12/close`, { token: tokens.garcom });
   const after = ((await call("GET", `${P2}/products`, { token: tokens.dono })).body as { id: string; stock: number }[]).find((p) => p.id === bacon.id)!.stock;

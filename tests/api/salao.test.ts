@@ -41,7 +41,7 @@ describe("QR da mesa", () => {
 });
 
 /** A guest order at a table of the demo restaurant. */
-const order = (table: number, lines: { name: string; qty?: number; options?: string[]; notes?: string }[], session = `s-${uid()}`) =>
+const order = (table: number, lines: { name: string; qty?: number; options?: string[]; notes?: string }[], session = crypto.randomUUID()) =>
   call("POST", "/api/orders", {
     session,
     body: {
@@ -198,7 +198,7 @@ describe("horário de pico", () => {
 });
 
 describe("pedido pelo QR: validações", () => {
-  const post = (body: object, session = `v-${uid()}`) => call("POST", "/api/orders", { session, body: { mode: "table", restaurantId: D, tableNumber: 30, ...body } });
+  const post = (body: object, session = crypto.randomUUID()) => call("POST", "/api/orders", { session, body: { mode: "table", restaurantId: D, tableNumber: 30, ...body } });
   const line = (name: string, over: object = {}) => ({ itemId: item(name).id, quantity: 1, notes: "", selectedOptions: [], ...over });
 
   test("observação de 300 e nome de 120 caracteres passam; um a mais, não; carrinho vazio e item de outro restaurante, não", async () => {
@@ -221,7 +221,7 @@ describe("pedido pelo QR: validações", () => {
 
   test("rodadas do mesmo aparelho, duas pessoas na mesma mesa e chamar garçom", async () => {
     await fresh(29);
-    const phone = `celular-${uid()}`;
+    const phone = crypto.randomUUID();
     const first = await order(29, [{ name: "Kids" }], phone);
     const second = await order(29, [{ name: "Chope Pilsen 300 ml" }], phone);
     const other = await order(29, [{ name: "Salada" }]); // another guest at the same table
@@ -265,6 +265,6 @@ test("aceitar e recusar o mesmo pedido ao mesmo tempo: só um vale (antes a cozi
 
 test("repetir pedido não é mais rota da API (A-03): o app do cliente monta o carrinho com o cardápio de hoje", async () => {
   const o = (await order(30, [{ name: "Kids" }])).body;
-  const res = await call("POST", `/api/orders/${o.id}/repeat`, { session: `r-${uid()}` });
+  const res = await call("POST", `/api/orders/${o.id}/repeat`, { session: crypto.randomUUID() });
   assert.deepEqual([res.status, res.body.error], [404, `no route for POST /api/orders/${o.id}/repeat`]);
 });

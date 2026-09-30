@@ -62,11 +62,11 @@ test("pedido pelo QR desligado: o QR e o pedido do cliente na mesa são recusado
   try {
     assert.equal((await setQr(false)).body.qrOrdering, false);
     assert.equal((await call("GET", "/api/tables/chapa27.3")).status, 403);
-    const customer = await call("POST", "/api/orders", { session: "qr-off", body: { mode: "table", restaurantId: D, tableNumber: 3, lines: [line("Kids")] } });
+    const customer = await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 3, lines: [line("Kids")] } });
     assert.equal(customer.status, 403);
     assert.match(customer.body.error, /garçom/);
     assert.equal((await launch(3, [line("Kids")])).status, 201, "o garçom lança normalmente");
-    assert.equal((await call("POST", "/api/orders", { session: "qr-off", body: { mode: "delivery", restaurantId: D, lines: [line("Kids")] } })).status, 201, "delivery não depende da opção");
+    assert.equal((await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "delivery", restaurantId: D, lines: [line("Kids")] } })).status, 201, "delivery não depende da opção");
   } finally {
     await setQr(true);
   }

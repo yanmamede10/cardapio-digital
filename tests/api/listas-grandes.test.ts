@@ -41,7 +41,7 @@ test("120 pedidos no mesmo dia: a Central recebe todos, o mapa e o turno respond
   const items = (await call("GET", `/api/restaurants/${FOGO}/items`)).body.filter((i: { soldOut: boolean }) => !i.soldOut);
   const before = (await call("GET", `/api/restaurants/${FOGO}/orders`, { token: owner })).body.length;
   const created = await batch(120, (i) =>
-    call("POST", "/api/orders", { session: `grande-${i}`, body: { mode: "table", restaurantId: FOGO, tableNumber: 900 + (i % 40), lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })
+    call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: FOGO, tableNumber: 900 + (i % 40), lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })
   );
   assert.ok(created.every((r) => r.status === 201), JSON.stringify(created.find((r) => r.status !== 201)?.body));
   const orders = await timed(`/api/restaurants/${FOGO}/orders`, owner);

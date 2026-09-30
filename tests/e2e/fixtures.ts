@@ -31,8 +31,9 @@ export const test = base.extend<{ token: string; api: Api; theme: "light" | "dar
 export { expect };
 
 function apiClient(request: APIRequestContext, token: string): Api {
+  const session = crypto.randomUUID(); // customer routes (POST /api/orders) need a device id; staff routes ignore it
   return async (method, path, body) => {
-    const res = await request.fetch(`${API}${path}`, { method, data: body, headers: { Authorization: `Bearer ${token}` } });
+    const res = await request.fetch(`${API}${path}`, { method, data: body, headers: { Authorization: `Bearer ${token}`, "X-Session-Id": session } });
     if (!res.ok()) throw new Error(`${method} ${path} → ${res.status()} ${await res.text()}`);
     return res.status() === 204 ? undefined : res.json();
   };

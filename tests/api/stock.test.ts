@@ -94,7 +94,7 @@ describe("baixa de estoque", () => {
   test("fechar comanda baixa os insumos da ficha técnica, uma vez só", async () => {
     const { pao, blend, burger, item } = await burgerKit();
     const table = 100 + Math.floor(Math.random() * 800);
-    const order = (await call("POST", "/api/orders", { session: `t-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 3, notes: "", selectedOptions: [] }] } })).body;
+    const order = (await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 3, notes: "", selectedOptions: [] }] } })).body;
 
     const comanda = (await call("GET", `${P}/tables/${table}/comanda`, { token })).body;
     assert.deepEqual(comanda.orderIds, [order.id], "o primeiro pedido abre a comanda e aparece nela");
@@ -113,7 +113,7 @@ describe("baixa de estoque", () => {
     const chope = (await call("POST", `${P}/products`, { token, body: product({ name: `Chope ${uid()}`, type: "produto", price: 16 }) })).body;
     const item = (await call("POST", `${P}/items`, { token, body: { productId: chope.id, categoryId: `${R}-cat-4`, name: "", price: 0, shortDescription: "" } })).body;
     const table = 100 + Math.floor(Math.random() * 800);
-    await call("POST", "/api/orders", { session: `t-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 4, notes: "", selectedOptions: [] }] } });
+    await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 4, notes: "", selectedOptions: [] }] } });
     await call("POST", `${P}/tables/${table}/close`, { token });
     assert.equal((await stockOf(chope.id)).stock, -4);
   });
@@ -121,7 +121,7 @@ describe("baixa de estoque", () => {
   test("ficha técnica mudou com a comanda aberta: a baixa segue a receita vendida; o pedido seguinte já usa a nova", async () => {
     const { pao, blend, burger, item } = await burgerKit();
     const table = 100 + Math.floor(Math.random() * 800);
-    const order = (qty: number) => call("POST", "/api/orders", { session: `t-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: qty, notes: "", selectedOptions: [] }] } });
+    const order = (qty: number) => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: qty, notes: "", selectedOptions: [] }] } });
     await order(2);
     // Mid-service the recipe changes: 0,18 kg of blend, no bread.
     const edit = await call("PATCH", `${P}/products/${burger.id}`, { token, body: product({ name: burger.name, type: "produto", price: 30, composed: true, components: [{ componentId: blend.id, quantity: 0.18 }] }) });
@@ -135,7 +135,7 @@ describe("baixa de estoque", () => {
   test("prato excluído do Cardápio com a comanda aberta: a baixa acontece mesmo assim", async () => {
     const { pao, blend, item } = await burgerKit();
     const table = 100 + Math.floor(Math.random() * 800);
-    await call("POST", "/api/orders", { session: `t-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] } });
+    await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] } });
     assert.equal((await call("DELETE", `${P}/items/${item.id}`, { token })).status, 204);
     await call("POST", `${P}/tables/${table}/close`, { token });
     assert.equal((await stockOf(pao.id)).stock, -1);
@@ -144,7 +144,7 @@ describe("baixa de estoque", () => {
 
   test("delivery baixa estoque ao ser entregue, uma vez só", async () => {
     const { pao, item } = await burgerKit();
-    const order = (await call("POST", "/api/orders", { session: `d-${uid()}`, body: { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 2, notes: "", selectedOptions: [] }] } })).body;
+    const order = (await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 2, notes: "", selectedOptions: [] }] } })).body;
     await Promise.all([
       call("PATCH", `/api/orders/${order.id}/stage`, { token, body: { stage: "delivered" } }),
       call("PATCH", `/api/orders/${order.id}/stage`, { token, body: { stage: "delivered" } })

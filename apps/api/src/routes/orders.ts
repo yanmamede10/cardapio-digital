@@ -11,13 +11,19 @@ const VALID_STAGES: OrderStatus[] = ["preparing", "ready", "out_for_delivery", "
 
 export const ordersRouter = asyncRouter();
 
-function sessionId(req: Request): string {
-  const raw = req.header("X-Session-Id");
-  return raw && raw.trim() ? raw.trim() : "anonymous";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** The customer app's device id (crypto.randomUUID, apps/web/src/lib/session.ts). Anything else — missing, or a shared
+ *  word like the old "anonymous" fallback — is no session: it reads no orders and places none (they could never be read back). */
+function sessionId(req: Request): string | null {
+  const raw = req.header("X-Session-Id")?.trim();
+  return raw && UUID.test(raw) ? raw : null;
 }
+const noSession = { error: "X-Session-Id ausente ou inválido" };
 
 ordersRouter.post("/", async (req, res) => {
-  const placed = await placeOrder(req.body as CreateOrderRequest, sessionId(req));
+  const session = sessionId(req);
+  if (!session) return res.status(400).json(noSession);
+  const placed = await placeOrder(req.body as CreateOrderRequest, session);
   if ("error" in placed) return res.status(placed.status).json({ error: placed.error });
   res.status(201).json(serializeOrder(placed.order));
 });
@@ -26,14 +32,16 @@ ordersRouter.post("/", async (req, res) => {
 // route today (dashboard reads orders via GET /api/restaurants/:id/orders, staff-guarded).
 // 404 rather than 403 on a mismatch so an outsider can't even confirm the id exists.
 ordersRouter.get("/:id", async (req, res) => {
-  const order = await prisma.order.findUnique({ where: { id: req.params.id }, include: { lines: true } });
-  if (!order || order.guestSessionId !== sessionId(req)) return res.status(404).json({ error: "order not found" });
+  const session = sessionId(req);
+  const order = session ? await prisma.order.findUnique({ where: { id: req.params.id }, include: { lines: true } }) : null;
+  if (!order || order.guestSessionId !== session) return res.status(404).json({ error: "order not found" });
   res.json(serializeOrder(order));
 });
 
 ordersRouter.get("/", async (req, res) => {
   const { mode } = req.query as { mode?: string };
   const guestSessionId = sessionId(req);
+  if (!guestSessionId) return res.status(400).json(noSession);
   const orders = await prisma.order.findMany({
     where: { guestSessionId, ...(mode ? { mode } : {}) },
     include: { lines: true },

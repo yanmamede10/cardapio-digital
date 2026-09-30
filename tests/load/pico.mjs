@@ -75,7 +75,7 @@ async function guest(table, round) {
     return { itemId: it.id, quantity: 1 + Math.floor(Math.random() * 2), notes: round === 0 ? "sem cebola" : "", selectedOptions: [] };
   });
   const sent = performance.now();
-  const order = await hit("Enviar pedido", "/api/orders", { method: "POST", headers: { "X-Session-Id": `carga-${table}` }, body: JSON.stringify({ mode: "table", restaurantId: R, tableNumber: table, guestName: `Mesa ${table}`, lines }) });
+  const order = await hit("Enviar pedido", "/api/orders", { method: "POST", headers: { "X-Session-Id": crypto.randomUUID() }, body: JSON.stringify({ mode: "table", restaurantId: R, tableNumber: table, guestName: `Mesa ${table}`, lines }) });
   posted.set(order.id, sent);
 }
 

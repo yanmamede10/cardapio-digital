@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { after, test } from "node:test";
 import { PrismaClient } from "@prisma/client";
+import { R, call } from "./helpers.ts";
 
 // Security checks that aren't about one screen. The test database is the one tests/run.mjs migrated.
 const db = new PrismaClient();
@@ -33,4 +34,21 @@ test("em produção a API não sobe sem JWT_SECRET de 32+ caracteres e CORS_ORIG
   assert.equal(ok.status, 0, ok.stderr);
   const dev = boot({});
   assert.equal(dev.status, 0, dev.stderr);
+});
+
+test("sem X-Session-Id válido nenhuma chamada devolve pedidos (nem a antiga sessão \"anonymous\")", async () => {
+  const mine = crypto.randomUUID();
+  const item = (await call("GET", `/api/restaurants/${R}/items`)).body.find((i: { soldOut: boolean }) => !i.soldOut);
+  const order = (await call("POST", "/api/orders", { session: mine, body: { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
+  assert.ok(order.id);
+  assert.ok((await call("GET", "/api/orders", { session: mine })).body.some((o: { id: string }) => o.id === order.id), "o próprio aparelho vê o pedido");
+
+  for (const session of [undefined, "", "anonymous", "   ", "1234"]) {
+    const label = JSON.stringify(session);
+    assert.equal((await call("GET", "/api/orders", { session })).status, 400, `lista com ${label}`);
+    assert.equal((await call("GET", `/api/orders/${order.id}`, { session })).status, 404, `pedido com ${label}`);
+    assert.equal((await call("POST", "/api/orders", { session, body: { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] } })).status, 400, `novo pedido com ${label}`);
+  }
+  const other = await call("GET", "/api/orders", { session: crypto.randomUUID() });
+  assert.deepEqual([other.status, other.body], [200, []], "outro aparelho não vê nada");
 });
