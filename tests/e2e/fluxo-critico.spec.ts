@@ -66,7 +66,8 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
   await expect(card).toContainText("R$ 96,80");
 
   // 4. The kitchen accepts it (opens the table: it becomes a QR order in Recebido), then moves it along as always.
-  await expect(card).toContainText("Aguardando aceite · mesa livre");
+  await expect(card).toContainText("Aguardando aceite");
+  await expect(card).toContainText("Mesa livre: aceitar abre a mesa");
   await card.getByRole("button", { name: "Aceitar" }).click();
   await expect(tablet.locator(".toast-bubble")).toContainText(`Mesa ${TABLE} aberta`);
   await expect(card).not.toContainText("Aguardando aceite");
@@ -205,5 +206,37 @@ test("mesa livre + recusar: o cliente vê \"Pedido não confirmado. Chame o gar�
   await expect(guest.getByText("Pedido não confirmado. Chame o garçom.")).toBeVisible({ timeout: 8_000 });
   await expect(guest.getByRole("button", { name: /Chamar garçom/ })).toBeVisible();
   expect(await tableStatus(request, owner, 24)).toBe("free");
+  await Promise.all([phone.close(), ctx.close()]);
+});
+
+test("fim do pedido pelo QR: só \"Comer aqui (Mesa N)\" e \"Para levar\", nada de delivery; o para levar chega em destaque à Central", async ({ browser, request }) => {
+  const owner = (await staff(request, "dono")).token;
+  await request.post(`${API}/api/restaurants/${D}/tables/25/close`, auth(owner));
+  const { tableCode } = await get(request, owner, "/tables/25/qr");
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const guest = await phone.newPage();
+  await guest.goto(`${WEB}/t/${tableCode}`);
+  await expect(guest).toHaveURL(new RegExp(`/r/${D}/menu`));
+  for (const deliveryScreen of ["/", "/history", "/qualquer-coisa"]) {
+    await guest.goto(`${WEB}${deliveryScreen}`);
+    await expect(guest).toHaveURL(new RegExp(`/r/${D}/menu$`)); // at a table the app is the table's menu
+  }
+
+  await guest.getByRole("button", { name: "Adicionar Polenta Frita ao pedido" }).first().click();
+  await guest.getByRole("button", { name: /Ver carrinho/ }).click();
+  await guest.getByRole("button", { name: /Enviar pedido para a cozinha/ }).click();
+  await expect(guest.getByRole("radio")).toHaveCount(2);
+  await expect(guest.getByRole("radio", { name: /Comer aqui \(Mesa 25\)/ })).toHaveAttribute("aria-checked", "true");
+  await expect(guest.locator("body")).not.toContainText(/entrega|delivery/i);
+  await guest.getByRole("radio", { name: /Para levar/ }).click();
+  await expect(guest.getByRole("radio", { name: /Para levar/ })).toHaveAttribute("aria-checked", "true");
+  await guest.getByRole("button", { name: /Confirmar e enviar para a cozinha/ }).click();
+  await expect(guest.getByText("Aguardando confirmação do restaurante")).toBeVisible(); // table 25 was free: 3.3's rule
+
+  const { ctx, tablet } = await kitchenTablet(browser, request);
+  const card = tablet.locator("article").filter({ hasText: "Mesa 25" }).filter({ hasText: "Para levar" });
+  await expect(card).toBeVisible({ timeout: 5_000 });
+  await expect(card).toContainText("Aguardando aceite");
+  await card.getByRole("button", { name: "Recusar" }).click();
   await Promise.all([phone.close(), ctx.close()]);
 });

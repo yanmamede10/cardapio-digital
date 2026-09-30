@@ -384,3 +384,28 @@ describe("primeiro pedido pelo QR numa mesa livre: aguarda aceite", () => {
     await close(24);
   });
 });
+
+test("\"Para levar\" pelo QR: fica na comanda da mesa e na base do serviço, marcado para a cozinha, e segue o aceite da mesa livre", async () => {
+  await fresh(22);
+  const kids = { itemId: item("Kids").id, quantity: 1, notes: "", selectedOptions: [] };
+  const post = (takeaway: unknown, mode = "table") => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode, restaurantId: D, tableCode: codes[22], takeaway, lines: [kids] } });
+
+  const first = (await post(true)).body;
+  assert.deepEqual([first.status, first.takeaway], ["awaiting", true], "mesa livre: o para levar também espera o aceite");
+  await call("POST", `/api/orders/${first.id}/accept`, { token: kitchen });
+  const second = (await post(true)).body;
+  const here = (await post(false)).body;
+  assert.deepEqual([second.status, second.takeaway, here.takeaway], ["pending", true, false]);
+
+  const c = await comanda(22);
+  assert.deepEqual([...c.orderIds].sort(), [first.id, second.id, here.id].sort(), "os dois para levar estão na comanda");
+  const tenPct = (n: number) => Math.round(n * 0.1 * 100) / 100;
+  assert.equal(c.service, Math.round([first, second, here].reduce((t, o) => t + tenPct(o.subtotal), 0) * 100) / 100, "e na base dos 10%");
+  const central = (await call("GET", `${P}/orders`, { token: kitchen })).body as { id: string; takeaway: boolean }[];
+  assert.deepEqual([first.id, second.id, here.id].map((id) => central.find((o) => o.id === id)!.takeaway), [true, true, false], "a Central vê a marca");
+
+  assert.equal((await post(true, "delivery")).body.takeaway, false, "delivery não tem \"para levar\"");
+  const byWaiter = await call("POST", `${P}/tables/22/orders`, { token: waiter, body: { lines: [kids], takeaway: true } });
+  assert.equal(byWaiter.body.takeaway, false, "nem o pedido lançado pelo garçom");
+  await close(22);
+});

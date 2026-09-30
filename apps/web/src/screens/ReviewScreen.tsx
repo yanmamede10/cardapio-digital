@@ -19,6 +19,8 @@ export default function ReviewScreen() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [restaurantFee, setRestaurantFee] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  // At the table the order ends with one of two choices: eat here or take away (still on the table's bill).
+  const [takeaway, setTakeaway] = useState(false);
 
   const isMesa = mode === "table";
 
@@ -44,6 +46,7 @@ export default function ReviewScreen() {
         mode,
         restaurantId,
         tableCode: isMesa ? tableCode ?? undefined : undefined,
+        takeaway: isMesa ? takeaway : undefined,
         guestName: isMesa ? guestName || undefined : undefined,
         addressId: isMesa ? undefined : addressId ?? undefined,
         paymentMethodId: isMesa ? undefined : paymentMethodId ?? undefined,
@@ -70,18 +73,43 @@ export default function ReviewScreen() {
     <div className="screen">
       <ScreenHeader title={isMesa ? "Revisar e enviar" : "Revisar pedido"} onBack={backTo} />
       <div className="scroll no-scrollbar" style={{ padding: "16px var(--pad) 0" }}>
-        <div className="card" style={{ padding: 18, display: "flex", gap: 12 }}>
-          <i className={isMesa ? "fa-solid fa-qrcode" : "fa-solid fa-location-dot"} style={{ fontSize: "var(--i-m)", color: "var(--acc)", marginTop: 2 }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="mono-label">{isMesa ? "mesa" : "entrega"}</div>
-            <div style={{ marginTop: 5, font: "600 var(--t-m) var(--font)" }}>
-              {isMesa ? `Mesa ${tableNumber ?? ""}` : `${selectedAddress?.label ?? ""} · 30–40 min`}
-            </div>
-            <div style={{ marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>
-              {isMesa ? (guestName ? `Comanda de ${guestName}` : "Pedido vai direto para a cozinha") : selectedAddress?.detail}
+        {isMesa ? (
+          <div role="radiogroup" aria-label="Como você vai querer o pedido" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { value: false, icon: "fa-solid fa-utensils", title: `Comer aqui (Mesa ${tableNumber ?? ""})`, note: guestName ? `Comanda de ${guestName}` : "Servido na mesa" },
+              { value: true, icon: "fa-solid fa-bag-shopping", title: "Para levar", note: "Embalado para viagem, na conta da mesa" }
+            ].map((o) => {
+              const on = takeaway === o.value;
+              return (
+                <button
+                  key={o.title}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setTakeaway(o.value)}
+                  className="card"
+                  style={{ minHeight: 64, padding: "16px 18px", display: "flex", alignItems: "center", gap: 12, textAlign: "left", cursor: "pointer", font: "inherit", color: "var(--ink)", border: on ? "2px solid var(--pri)" : "1px solid var(--line)" }}
+                >
+                  <i className={o.icon} aria-hidden="true" style={{ fontSize: "var(--i-m)", color: "var(--acc)" }} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", font: "600 var(--t-m) var(--font)" }}>{o.title}</span>
+                    <span style={{ display: "block", marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>{o.note}</span>
+                  </span>
+                  <i className={on ? "fa-solid fa-circle-check" : "fa-regular fa-circle"} aria-hidden="true" style={{ fontSize: 22, color: on ? "var(--pri)" : "var(--ink2)" }} />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="card" style={{ padding: 18, display: "flex", gap: 12 }}>
+            <i className="fa-solid fa-location-dot" style={{ fontSize: "var(--i-m)", color: "var(--acc)", marginTop: 2 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="mono-label">entrega</div>
+              <div style={{ marginTop: 5, font: "600 var(--t-m) var(--font)" }}>{`${selectedAddress?.label ?? ""} · 30–40 min`}</div>
+              <div style={{ marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>{selectedAddress?.detail}</div>
             </div>
           </div>
-        </div>
+        )}
 
         <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
           {lines.map((r) => {

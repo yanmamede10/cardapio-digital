@@ -251,6 +251,8 @@ export interface Order {
   // these on the kitchen kanban card; the customer app never reads them, so
   // they stay optional and any client must degrade gracefully without them.
   waiterName?: string | null;
+  /** "Para levar": a table order the customer takes away — on the comanda as any other, flagged for the kitchen. */
+  takeaway?: boolean;
   partySize?: number | null;
   addressLabel?: string | null;
 }
@@ -262,6 +264,8 @@ export interface CreateOrderRequest {
   tableCode?: string;
   /** Set by the API itself when a waiter launches the order for a table; a customer's number is never trusted. */
   tableNumber?: number;
+  /** QR/tablet orders only: "Para levar" instead of "Comer aqui". */
+  takeaway?: boolean;
   guestName?: string;
   addressId?: string;
   paymentMethodId?: string;

@@ -128,7 +128,8 @@ export function serializeOrder(order: Order & { lines: OrderLine[] }): ApiOrder 
     status: order.status as ApiOrder["status"],
     round: order.round,
     createdAt: order.createdAt.toISOString(),
-    waiterName: order.waiterName
+    waiterName: order.waiterName,
+    takeaway: order.takeaway
   };
 }
 

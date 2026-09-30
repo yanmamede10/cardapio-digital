@@ -233,6 +233,8 @@ model Order {
   closedAt        DateTime?
   // The service charged on this order, frozen when its comanda closes (0 until then, and for delivery).
   service         Float     @default(0)
+  // "Para levar" at the end of a QR/tablet order: still the table's (comanda, service), flagged for the Central and kitchen.
+  takeaway        Boolean   @default(false)
   waiterCalledAt  DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @default(now()) @updatedAt

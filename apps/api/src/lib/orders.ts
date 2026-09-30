@@ -84,6 +84,8 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
       guestName: body.guestName || null,
       guestSessionId,
       waiterName,
+      // "Para levar" exists only at the end of a customer's table order (QR or tablet).
+      takeaway: mode === "table" && !waiterName && body.takeaway === true,
       addressId: mode === "delivery" ? body.addressId ?? null : null,
       paymentMethodId: mode === "delivery" ? body.paymentMethodId ?? null : null,
       couponCode: coupon.valid ? body.couponCode ?? null : null,

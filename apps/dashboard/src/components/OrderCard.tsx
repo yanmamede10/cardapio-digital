@@ -9,6 +9,7 @@ export function orderSubtitle(o: Order): string {
     const parts = [o.waiterName || undefined, o.partySize ? `${o.partySize} pessoas` : undefined, o.guestName || undefined].filter(
       Boolean
     ) as string[];
+    if (o.status === "awaiting") return "Mesa livre: aceitar abre a mesa";
     return parts.length ? parts.join(" · ") : `Comanda aberta · rodada ${o.round}`;
   }
   return o.addressLabel || o.guestName || `${o.lines.length} ${o.lines.length === 1 ? "item" : "itens"}`;
@@ -29,11 +30,24 @@ export function InHouseTag({ order }: { order: Order }) {
 export function AwaitingTag({ order }: { order: Order }) {
   if (order.status !== "awaiting") return null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, borderRadius: 10, padding: "7px 10px", border: "1px solid var(--warn)", background: "color-mix(in srgb, var(--warn) 12%, transparent)" }}>
-      <i className="fa-solid fa-hourglass-half" aria-hidden="true" style={{ fontSize: 14, color: "var(--warn)" }} />
-      <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: "var(--ink)" }}>Aguardando aceite · mesa livre</span>
-      <span className="mono" style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)" }}>Mesa {String(order.tableNumber ?? 0).padStart(2, "0")}</span>
+    <div style={{ borderRadius: 10, padding: "8px 11px", border: "1px solid var(--warn)", background: "color-mix(in srgb, var(--warn) 12%, transparent)", color: "var(--ink)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 700 }}>
+        <i className="fa-solid fa-hourglass-half" aria-hidden="true" style={{ fontSize: 13, color: "var(--warn)" }} />
+        Aguardando aceite
+      </div>
+      <div className="mono" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.2 }}>Mesa {String(order.tableNumber ?? 0).padStart(2, "0")}</div>
     </div>
+  );
+}
+
+/** "Para levar": the kitchen packs it to go. It stays on the table's comanda like any other order. */
+export function TakeawayTag({ order }: { order: Order }) {
+  if (!order.takeaway) return null;
+  return (
+    <span style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 8, padding: "3px 9px", background: "var(--ink)", color: "var(--bg)" }}>
+      <i className="fa-solid fa-bag-shopping" aria-hidden="true" style={{ fontSize: 11 }} />
+      Para levar
+    </span>
   );
 }
 
