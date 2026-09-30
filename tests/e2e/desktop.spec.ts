@@ -460,6 +460,7 @@ plain("Configurações → Salão: sem pedido pelo QR, o Mesas esconde o QR e o 
   await expect(qr).toHaveAttribute("aria-checked", "true");
   await qr.click();
   await expect(qr).toHaveAttribute("aria-checked", "false");
+  await expect(toast(page)).toContainText("Pedidos da mesa só pelos garçons"); // saved: the switch flips before the API answers
   try {
     await page.goto("/mesas");
     await page.getByRole("button", { name: /^03$/ }).first().click();
@@ -474,6 +475,7 @@ plain("Configurações → Salão: sem pedido pelo QR, o Mesas esconde o QR e o 
     await page.locator("main").getByRole("button", { name: "Salão", exact: true }).click();
     await page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ }).click();
     await expect(page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ })).toHaveAttribute("aria-checked", "true");
+    await expect(toast(page)).toContainText("Clientes voltam a pedir pelo QR da mesa");
   }
 });
 

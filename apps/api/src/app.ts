@@ -19,6 +19,7 @@ import { settingsRouter } from "./routes/settings.js";
 import { supportRouter } from "./routes/support.js";
 import { tablesRouter } from "./routes/tables.js";
 import { whatsappRouter, whatsappWebhookRouter } from "./routes/whatsapp.js";
+import { rateLimit } from "./lib/rateLimit.js";
 
 // Day/month boundaries ("hoje", "mês corrente") are computed in server-local time. Vercel runs in UTC,
 // which would shift them 3h vs. a Brazilian dev machine, so pin the zone explicitly.
@@ -34,6 +35,8 @@ app.use(cors(origins?.length ? { origin: origins } : undefined));
 // its secret and then parses with its own limit (routes/whatsapp.ts), before the global parser below.
 app.use("/api/whatsapp/webhook", whatsappWebhookRouter);
 app.use(express.json());
+// Per staff member, per table, per IP ceiling (lib/rateLimit.ts). After the parser: an order's table is in its body.
+app.use(rateLimit);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

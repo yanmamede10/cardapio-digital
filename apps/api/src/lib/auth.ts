@@ -34,6 +34,17 @@ export function signStaffToken(payload: StaffTokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
 }
 
+/** The staff id in a valid, unexpired token, without touching the database (the rate limit's key); null otherwise. */
+export function staffIdOf(authorization: string | undefined): string | null {
+  const token = authorization?.startsWith("Bearer ") ? authorization.slice(7) : null;
+  if (!token) return null;
+  try {
+    return (jwt.verify(token, JWT_SECRET) as StaffTokenPayload).staffId ?? null;
+  } catch {
+    return null;
+  }
+}
+
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {

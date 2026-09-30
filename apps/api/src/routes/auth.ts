@@ -2,16 +2,22 @@ import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { serializeStaff } from "../lib/serialize.js";
 import { hashPassword, requireStaffWithProvisionalPassword, signStaffToken, verifyPassword } from "../lib/auth.js";
+import { passwordAttempt, passwordFailed, tooMany } from "../lib/rateLimit.js";
 import { MIN_PASSWORD_LENGTH, type StaffRole } from "@cardapio/shared";
 
 export const authRouter = asyncRouter();
 
 authRouter.post("/login", async (req, res) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password) return res.status(400).json({ error: "email and password are required" });
+  const { email, password } = req.body as { email?: unknown; password?: unknown };
+  if (typeof email !== "string" || typeof password !== "string" || !email || !password) return res.status(400).json({ error: "email and password are required" });
+  const account = email.trim().toLowerCase();
+  // 5 wrong passwords lock the account for the rest of 15 minutes, whoever tries next and from wherever (lib/rateLimit.ts).
+  const wait = passwordAttempt(req, account, true);
+  if (wait) return tooMany(res, wait);
 
-  const staff = await prisma.staffMember.findUnique({ where: { email: email.trim().toLowerCase() }, include: { restaurant: { select: { status: true } } } });
+  const staff = await prisma.staffMember.findUnique({ where: { email: account }, include: { restaurant: { select: { status: true } } } });
   if (!staff || !staff.passwordHash || !verifyPassword(password, staff.passwordHash)) {
+    passwordFailed(account);
     return res.status(401).json({ error: "invalid credentials" });
   }
   if (staff.restaurant.status !== "ativo") return res.status(403).json({ error: "restaurant is not active" });
@@ -31,8 +37,14 @@ authRouter.get("/me", requireStaffWithProvisionalPassword, async (req, res) => {
 authRouter.post("/password", requireStaffWithProvisionalPassword, async (req, res) => {
   const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
   const staff = await prisma.staffMember.findUniqueOrThrow({ where: { id: req.staff!.staffId } });
+  // The same account lock as the login: guessing the current password from an open session counts too.
+  const wait = passwordAttempt(req, staff.email, false);
+  if (wait) return tooMany(res, wait);
   // 400, not 401: a 401 would make the dashboard drop the session.
-  if (!currentPassword || !staff.passwordHash || !verifyPassword(currentPassword, staff.passwordHash)) return res.status(400).json({ error: "current password is wrong" });
+  if (typeof currentPassword !== "string" || !currentPassword || !staff.passwordHash || !verifyPassword(currentPassword, staff.passwordHash)) {
+    passwordFailed(staff.email);
+    return res.status(400).json({ error: "current password is wrong" });
+  }
   if (typeof newPassword !== "string" || newPassword.length < MIN_PASSWORD_LENGTH) return res.status(400).json({ error: `password must be at least ${MIN_PASSWORD_LENGTH} characters` });
   if (newPassword === currentPassword) return res.status(400).json({ error: "new password must differ from the current one" });
   await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(newPassword), mustChangePassword: false } });

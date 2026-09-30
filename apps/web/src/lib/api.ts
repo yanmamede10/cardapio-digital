@@ -10,7 +10,7 @@ import type {
   Restaurant,
   TableResolveResponse
 } from "@cardapio/shared";
-import { getSessionId } from "./session";
+import { getSessionId, getTableCode } from "./session";
 
 const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
 
@@ -23,6 +23,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const table = getTableCode();
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
@@ -30,6 +31,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       headers: {
         "Content-Type": "application/json",
         "X-Session-Id": getSessionId(),
+        ...(table ? { "X-Table-Code": table } : {}),
         ...(init?.headers || {})
       }
     });
