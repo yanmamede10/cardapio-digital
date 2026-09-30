@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { SupportTicket, TicketStatus } from "@cardapio/shared";
-import { api } from "../../lib/api";
+import { ApiError, api } from "../../lib/api";
 import { fmtMinutes, minutesSince, slaFg } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MediaButtons, MessageBody, WhatsAppIndicator, useWhatsAppStatus } from "../../components/WhatsApp";
@@ -65,8 +65,8 @@ export default function MobileChatScreen() {
     if (!ticket) return;
     try {
       setTicket(await api.sendTicketMedia(ticket.id, file, name));
-    } catch {
-      notify("Não foi possível enviar pelo WhatsApp");
+    } catch (err) {
+      notify(err instanceof ApiError && err.status === 413 ? err.message : "Não foi possível enviar pelo WhatsApp");
     }
   };
 

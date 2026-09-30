@@ -384,6 +384,11 @@ export interface SupportMessage {
   createdAt: string;
 }
 
+/** Largest photo or voice note through WhatsApp: what Atendimento may send, what the private bucket takes and, from it, the
+ *  webhook's body limit (apps/api/src/app.ts). */
+export const WHATSAPP_MEDIA_MAX_BYTES = 8 * 1024 * 1024;
+export const WHATSAPP_MEDIA_TOO_BIG = `Arquivo acima de ${WHATSAPP_MEDIA_MAX_BYTES / 1024 / 1024} MB. Envie uma imagem menor ou um áudio mais curto.`;
+
 export type WhatsAppState = "connected" | "connecting" | "disconnected";
 
 /** Configurações → WhatsApp and the Atendimento indicator. termsAcceptedAt null = the Dono never set it up. */

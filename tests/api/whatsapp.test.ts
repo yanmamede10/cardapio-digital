@@ -202,6 +202,19 @@ describe("WhatsApp (Evolution)", () => {
     assert.ok(process.env.STORAGE_PUBLIC_URL && !JSON.stringify(t).includes(process.env.STORAGE_PUBLIC_URL), "nada do bucket público");
   });
 
+  test("mídia acima de 8 MB pelo Atendimento: 413 com a mensagem para quem enviou; exatamente 8 MB passa", async () => {
+    const t = await ticketOf();
+    const send = (bytes: number) => {
+      const form = new FormData();
+      form.append("file", new Blob([new Uint8Array(bytes)], { type: "image/jpeg" }), "foto.jpg");
+      return fetch(`${process.env.API_URL ?? "http://localhost:4200"}${P()}/tickets/${t.id}/media`, { method: "POST", headers: { Authorization: `Bearer ${owner}` }, body: form });
+    };
+    const big = await send(8 * 1024 * 1024 + 1);
+    assert.equal(big.status, 413);
+    assert.equal((await big.json()).error, "Arquivo acima de 8 MB. Envie uma imagem menor ou um áudio mais curto.");
+    assert.equal((await send(8 * 1024 * 1024)).status, 201);
+  });
+
   test("desconectar remove a sessão no provedor", async () => {
     const res = await call("POST", `${P()}/whatsapp/disconnect`, { token: owner });
     assert.equal(res.body.state, "disconnected");

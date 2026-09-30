@@ -93,8 +93,8 @@ export default function SupportScreen() {
     try {
       const updated = await api.sendTicketMedia(selected.id, file, name);
       setTickets((prev) => prev.map((x) => (x.id === selected.id ? updated : x)));
-    } catch {
-      notify("Não foi possível enviar pelo WhatsApp");
+    } catch (err) {
+      notify(err instanceof ApiError && err.status === 413 ? err.message : "Não foi possível enviar pelo WhatsApp");
     }
   };
 

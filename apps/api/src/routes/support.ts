@@ -1,8 +1,8 @@
-import { type Response } from "express";
+import { type RequestHandler, type Response } from "express";
 import { asyncRouter } from "../lib/router.js";
 import multer from "multer";
 import type { SupportTicket } from "@prisma/client";
-import { SUPPORT_ROLES } from "@cardapio/shared";
+import { SUPPORT_ROLES, WHATSAPP_MEDIA_TOO_BIG } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeReview, serializeTicket } from "../lib/serialize.js";
@@ -15,7 +15,10 @@ export const supportRouter = asyncRouter();
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES), requireModule("atendimento")];
 const MAX_MESSAGE_LENGTH = 2000;
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: WHATSAPP_MEDIA_MAX_BYTES } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: WHATSAPP_MEDIA_MAX_BYTES } }).single("file");
+/** Over the limit, multer's error would be a bare 500: whoever sent it from Atendimento must read why. */
+const mediaUpload: RequestHandler = (req, res, next) =>
+  upload(req, res, (err) => (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE" ? res.status(413).json({ error: WHATSAPP_MEDIA_TOO_BIG }) : next(err)));
 
 /** Sends through the WhatsApp provider. On failure it answers the request (503/502) and returns null: nothing is recorded as sent.
  *  Once it went out, the contact's pending messages get read receipts. */
@@ -112,7 +115,7 @@ supportRouter.post("/:id/tickets/:ticketId/messages", ...staffGuard, async (req,
 });
 
 // Image (upload) or voice note (recorded in the browser) — WhatsApp conversations only.
-supportRouter.post("/:id/tickets/:ticketId/media", ...staffGuard, upload.single("file"), async (req, res) => {
+supportRouter.post("/:id/tickets/:ticketId/media", ...staffGuard, mediaUpload, async (req, res) => {
   const existing = await prisma.supportTicket.findUnique({ where: { id: req.params.ticketId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "ticket not found" });
   if (existing.channel !== "whatsapp" || !existing.contactPhone) return res.status(400).json({ error: "media replies are only for WhatsApp conversations" });

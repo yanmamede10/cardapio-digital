@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { SupportMessage, TicketChannel, WhatsAppState, WhatsAppStatus } from "@cardapio/shared";
+import { WHATSAPP_MEDIA_MAX_BYTES, WHATSAPP_MEDIA_TOO_BIG, type SupportMessage, type TicketChannel, type WhatsAppState, type WhatsAppStatus } from "@cardapio/shared";
 import { api, getSession } from "../lib/api";
 
 export const CHANNEL_ICON: Record<TicketChannel, string> = { table: "fa-solid fa-chair", delivery: "fa-solid fa-motorcycle", whatsapp: "fa-brands fa-whatsapp" };
@@ -93,6 +93,8 @@ export function MediaButtons({ onSend, onError }: { onSend: (file: Blob, name: s
   useEffect(() => () => recorder.current?.stream.getTracks().forEach((t) => t.stop()), []);
 
   const send = (file: Blob, name: string) => {
+    // Checked here too, so a big file never crosses the connection just to be refused.
+    if (file.size > WHATSAPP_MEDIA_MAX_BYTES) return onError(WHATSAPP_MEDIA_TOO_BIG);
     setBusy(true);
     onSend(file, name).finally(() => setBusy(false));
   };
