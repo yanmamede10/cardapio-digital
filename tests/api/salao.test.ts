@@ -22,6 +22,31 @@ before(async () => {
 });
 
 describe("QR da mesa", () => {
+  test("Gerar novo QR: só Dono e Administrador; o código antigo para de valer na hora, para abrir e para pedir", async () => {
+    const gerente = await staff("gerente");
+    const old = codes[21];
+    const regen = (token: string, table = 21) => call("POST", `${P}/tables/${table}/qr`, { token });
+    assert.equal((await regen(waiter)).status, 403, "garçom");
+    assert.equal((await regen(kitchen)).status, 403, "cozinha");
+    assert.equal((await regen(owner, 99)).status, 404, "mesa que não existe");
+
+    const byManager = await regen(gerente);
+    assert.equal(byManager.status, 200);
+    const fresh = byManager.body.tableCode as string;
+    assert.match(fresh, /^[A-Za-z0-9_-]{43}$/);
+    assert.notEqual(fresh, old);
+    assert.equal((await call("GET", `/api/tables/${old}`)).status, 404, "a folha impressa antes não abre mais o cardápio");
+    const kids = { itemId: item("Kids").id, quantity: 1, notes: "", selectedOptions: [] };
+    assert.equal((await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableCode: old, lines: [kids] } })).status, 404, "nem pede");
+    assert.deepEqual((await call("GET", `/api/tables/${fresh}`)).body, { restaurantId: D, tableNumber: 21 });
+    assert.equal((await call("GET", `${P}/tables/21/qr`, { token: waiter })).body.tableCode, fresh, "o QR da mesa agora é o novo");
+
+    const byOwner = await regen(owner);
+    assert.equal(byOwner.status, 200);
+    assert.notEqual(byOwner.body.tableCode, fresh);
+    codes[21] = byOwner.body.tableCode;
+  });
+
   test("cada mesa tem o seu código, aleatório (base64url de 43 caracteres), que abre o restaurante dela", async () => {
     const all = Object.values(codes);
     assert.ok(all.every((c) => /^[A-Za-z0-9_-]{43}$/.test(c)), all.find((c) => !/^[A-Za-z0-9_-]{43}$/.test(c)));

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { encode } from "uqr";
 import type { RestaurantTable } from "@cardapio/shared";
-import { api } from "../lib/api";
+import { api, getSession } from "../lib/api";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { useMobileScreen } from "../components/mobile/MobileLayout";
 
@@ -66,6 +66,19 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
   const ready = shown.filter((t) => codes[t.number]);
   const cards = ready.map((t) => <QrCard key={t.id} restaurant={restaurant} table={t.number} code={codes[t.number]} />);
 
+  // Dono and Administrador only (the API refuses the others).
+  const canRegenerate = getSession()?.role === "owner" || getSession()?.role === "manager";
+  const regenerate = async (n: number) => {
+    if (!window.confirm(`Gerar um QR novo para a Mesa ${pad(n)}? As folhas impressas desta mesa deixarão de funcionar.`)) return;
+    try {
+      const { tableCode } = await api.regenerateTableQr(n);
+      setCodes((c) => ({ ...c, [n]: tableCode }));
+      notify(`QR novo da Mesa ${pad(n)} gerado. Imprima a folha nova: a antiga já não abre o cardápio.`);
+    } catch {
+      notify("Não foi possível gerar o QR novo");
+    }
+  };
+
   const copyLink = async (n: number) => {
     const url = tableLink(codes[n]);
     try {
@@ -104,6 +117,12 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
           <button type="button" className="btn btn-outline" onClick={() => copyLink(only)}>
             <i className="fa-solid fa-link" aria-hidden="true" style={{ fontSize: 14 }} />
             Copiar link
+          </button>
+        )}
+        {only != null && codes[only] && canRegenerate && (
+          <button type="button" className="btn btn-outline" style={{ color: "var(--alert)" }} onClick={() => regenerate(only)}>
+            <i className="fa-solid fa-rotate" aria-hidden="true" style={{ fontSize: 14 }} />
+            Gerar novo QR
           </button>
         )}
         <button type="button" className="btn btn-primary" disabled={!ready.length} onClick={() => window.print()}>

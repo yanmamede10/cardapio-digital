@@ -1,8 +1,8 @@
 import { asyncRouter } from "../lib/router.js";
-import { PAYMENT_METHODS, type CartLineInput, type SalonGrid } from "@cardapio/shared";
+import { LEVEL, PAYMENT_METHODS, type CartLineInput, type SalonGrid } from "@cardapio/shared";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
-import { hasModule, requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
+import { hasModule, requireMinRole, requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
 import { buildComanda, openOrdersByTable, openOrdersForTable, serviceFee, servicePct, statusForTable } from "../lib/tables.js";
 import { serializeOrder, serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
@@ -213,6 +213,15 @@ restaurantTablesRouter.get("/:id/tables/:number/qr", ...staffGuard, async (req, 
   const table = await findTable(req.params.id, number);
   if (!table) return res.status(404).json({ error: "table not found" });
   res.json({ tableCode: table.qrCode }); // resolved back by GET /api/tables/:tableCode
+});
+
+// "Gerar novo QR" (Dono and Administrador): the table gets a new random code (the column's default) and the old one stops
+// resolving at once — the sheets printed with it included.
+restaurantTablesRouter.post("/:id/tables/:number/qr", ...staffGuard, requireMinRole(LEVEL.ADMINISTRADOR), async (req, res) => {
+  const table = await findTable(req.params.id, parseInt(req.params.number, 10));
+  if (!table) return res.status(404).json({ error: "table not found" });
+  const [row] = await prisma.$queryRaw<{ qrCode: string }[]>`UPDATE "RestaurantTable" SET "qrCode" = DEFAULT WHERE "id" = ${table.id} RETURNING "qrCode"`;
+  res.json({ tableCode: row.qrCode });
 });
 
 restaurantTablesRouter.get("/:id/waiter-calls", ...staffGuard, async (req, res) => {

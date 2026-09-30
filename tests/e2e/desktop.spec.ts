@@ -508,3 +508,39 @@ plain("Mesas → Imprimir QR: uma folha por mesa com o restaurante, a mesa e o Q
   await page.getByRole("button", { name: "Copiar link" }).click();
   await expect(page.locator(".toast-bubble")).toContainText(url);
 });
+
+plain("Gerar novo QR: pede confirmação, troca o QR na tela e o link antigo deixa de abrir o cardápio; o garçom não vê o botão", async ({ page, request, browser }) => {
+  await loginAs(page, request, "dono@chapa27.example");
+  const token = await staffToken(request, "dono@chapa27.example");
+  const oldUrl = await tableUrl(request, token, "chapa27", 22);
+  await page.goto("/mesas/qr?mesa=22");
+  const sheet = page.locator(".qr-preview .qr-card");
+  await expect(sheet.locator("svg path")).toHaveAttribute("d", qrPath(oldUrl));
+
+  page.once("dialog", (d) => d.dismiss()); // "Cancelar" changes nothing
+  await page.getByRole("button", { name: "Gerar novo QR" }).click();
+  expect(await tableUrl(request, token, "chapa27", 22)).toBe(oldUrl);
+
+  let asked = "";
+  page.once("dialog", (d) => ((asked = d.message()), d.accept()));
+  await page.getByRole("button", { name: "Gerar novo QR" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText("QR novo da Mesa 22 gerado");
+  expect(asked).toContain("As folhas impressas desta mesa deixarão de funcionar");
+  const newUrl = await tableUrl(request, token, "chapa27", 22);
+  expect(newUrl).not.toBe(oldUrl);
+  await expect(sheet.locator("svg path")).toHaveAttribute("d", qrPath(newUrl));
+
+  const guest = await browser.newPage();
+  await guest.goto(oldUrl);
+  await expect(guest.getByText("Mesa não encontrada")).toBeVisible();
+  await guest.goto(newUrl);
+  await expect(guest).toHaveURL(/\/r\/chapa27\/menu/);
+  await guest.close();
+
+  const waiter = await browser.newPage();
+  await loginAs(waiter, request, "garcom@chapa27.example");
+  await waiter.goto("http://localhost:5274/mesas/qr?mesa=22");
+  await expect(waiter.locator(".qr-preview .qr-card")).toHaveCount(1);
+  await expect(waiter.getByRole("button", { name: "Gerar novo QR" })).toHaveCount(0);
+  await waiter.close();
+});

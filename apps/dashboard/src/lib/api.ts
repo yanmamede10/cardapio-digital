@@ -228,6 +228,8 @@ export const api = {
   launchOrder: (number: number, lines: CartLineInput[]) =>
     request<Order>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/orders`, { method: "POST", body: JSON.stringify({ lines }) }),
   getTableQr: (number: number) => request<{ tableCode: string }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/qr`),
+  /** A new QR code for the table: the old one (and every sheet printed with it) stops working. Dono and Administrador. */
+  regenerateTableQr: (number: number) => request<{ tableCode: string }>(`/api/restaurants/${RESTAURANT_ID}/tables/${number}/qr`, { method: "POST" }),
 
   // Waiter calls
   listWaiterCalls: () => request<WaiterCall[]>(`/api/restaurants/${RESTAURANT_ID}/waiter-calls`),
