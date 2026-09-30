@@ -269,3 +269,24 @@ textarea.field-mobile {
   .central-side { width: auto; flex: none; flex-direction: row; align-items: flex-start; position: static; }
   .central-side > * { flex: 1; min-width: 0; }
 }
+
+/* Mesas → QR das mesas. The sheet is paper-like on screen too (white, black ink), whatever the theme: it's a preview of
+   what goes on the table. On paper only .qr-print (a copy of the cards straight under <body>) is printed: A4, two per row. */
+.qr-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.qr-print { display: none; }
+.qr-card { background: #fff; color: #1a1a1a; border: 1px solid #d0d0d0; border-radius: 18px; padding: 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.qr-card-restaurant { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #3a3a3a; }
+.qr-card-table { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.qr-card-hint { font-size: 15px; font-weight: 500; }
+.qr-svg { width: 100%; max-width: 220px; height: auto; display: block; }
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body > :not(.qr-print) { display: none !important; }
+  html, body { background: #fff !important; }
+  .qr-print { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8mm; }
+  .qr-card { break-inside: avoid; height: 128mm; justify-content: center; gap: 5mm; border-radius: 6mm; border: 0.4mm solid #000; }
+  .qr-card-restaurant { font-size: 11pt; }
+  .qr-card-table { font-size: 30pt; }
+  .qr-card-hint { font-size: 14pt; }
+  .qr-svg { max-width: 70mm; }
+}

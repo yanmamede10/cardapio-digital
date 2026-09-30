@@ -30,6 +30,7 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
   await page.goto("/mesas");
   await page.getByRole("button", { name: /^12$/ }).first().click();
   await page.getByRole("button", { name: "QR code" }).click();
+  await page.getByRole("button", { name: "Copiar link" }).click();
   await expect(page.locator(".toast-bubble")).toContainText(`/t/${tableCode}`);
 
   // 2. The customer (a phone) orders through it.

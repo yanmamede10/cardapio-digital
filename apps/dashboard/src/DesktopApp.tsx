@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import OrdersScreen from "./screens/OrdersScreen";
 import MenuScreen from "./screens/MenuScreen";
 import TablesScreen from "./screens/TablesScreen";
+import TablesQrScreen from "./screens/TablesQrScreen";
 import PromotionsScreen from "./screens/PromotionsScreen";
 import SupportScreen from "./screens/SupportScreen";
 import ReportsScreen from "./screens/ReportsScreen";
@@ -23,6 +24,7 @@ export default function DesktopApp() {
         <Route path="/pedidos" element={<Navigate to="/" replace />} />
         <Route path="/cardapio" element={<MenuScreen />} />
         <Route path="/mesas" element={<TablesScreen />} />
+        <Route path="/mesas/qr" element={<TablesQrScreen />} />
         <Route path="/mesas/:number/pedido" element={<LaunchOrderScreen />} />
         <Route path="/promocoes" element={<PromotionsScreen />} />
         <Route path="/atendimento" element={<SupportScreen />} />

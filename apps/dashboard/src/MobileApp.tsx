@@ -3,6 +3,7 @@ import { MobileLayout } from "./components/mobile/MobileLayout";
 import MobileOrdersScreen from "./screens/mobile/MobileOrdersScreen";
 import MobileTablesScreen from "./screens/mobile/MobileTablesScreen";
 import MobileTableDetailScreen from "./screens/mobile/MobileTableDetailScreen";
+import { MobileTablesQrScreen } from "./screens/TablesQrScreen";
 import MobileMenuScreen from "./screens/mobile/MobileMenuScreen";
 import MobileProductFormScreen from "./screens/mobile/MobileProductFormScreen";
 import MobileMoreScreen from "./screens/mobile/MobileMoreScreen";
@@ -32,6 +33,7 @@ export default function MobileApp() {
       <Route element={<MobileLayout />}>
         <Route path="/" element={homePath() === "/" ? <MobileOrdersScreen /> : <Navigate to={homePath()} replace />} />
         <Route path="/mesas" element={<MobileTablesScreen />} />
+        <Route path="/mesas/qr" element={<MobileTablesQrScreen />} />
         <Route path="/mesas/:number" element={<MobileTableDetailScreen />} />
         <Route path="/mesas/:number/pedido" element={<MobileLaunchOrderScreen />} />
         <Route path="/cardapio" element={<MobileMenuScreen />} />

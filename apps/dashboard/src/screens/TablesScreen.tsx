@@ -204,21 +204,7 @@ export default function TablesScreen() {
     }
   };
 
-  const showQr = async () => {
-    if (selected == null) return;
-    try {
-      const { tableCode } = await api.getTableQr(selected);
-      const url = `${(import.meta.env.VITE_CUSTOMER_APP_URL as string) || "http://localhost:5173"}/t/${tableCode}`;
-      try {
-        await navigator.clipboard.writeText(url);
-        notify(`Link copiado: ${url}`);
-      } catch {
-        notify(`Link da Mesa: ${url}`);
-      }
-    } catch {
-      notify("Não foi possível gerar o QR code");
-    }
-  };
+  const showQr = () => selected != null && navigate(`/mesas/qr?mesa=${selected}`);
 
   const newTable = async () => {
     try {
@@ -275,6 +261,12 @@ export default function TablesScreen() {
               </div>
             ))}
           </div>
+          {qrOrdering && (
+            <button type="button" className="btn btn-outline" onClick={() => navigate("/mesas/qr")}>
+              <i className="fa-solid fa-print" aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }} />
+              Imprimir QR
+            </button>
+          )}
           <button
             type="button"
             className={editing ? "btn btn-primary" : "btn btn-outline"}

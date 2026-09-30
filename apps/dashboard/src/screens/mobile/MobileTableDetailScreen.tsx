@@ -86,20 +86,7 @@ export default function MobileTableDetailScreen() {
     }
   };
 
-  const showQr = async () => {
-    try {
-      const { tableCode } = await api.getTableQr(num);
-      const url = `${(import.meta.env.VITE_CUSTOMER_APP_URL as string) || "http://localhost:5173"}/t/${tableCode}`;
-      try {
-        await navigator.clipboard.writeText(url);
-        notify("Link da mesa copiado");
-      } catch {
-        notify(`Link da Mesa: ${url}`);
-      }
-    } catch {
-      notify("Não foi possível gerar o QR code");
-    }
-  };
+  const showQr = () => navigate(`/mesas/qr?mesa=${num}`);
 
   const doTransfer = async (toNumber: number) => {
     setTransferOpen(false);

@@ -1,4 +1,5 @@
 import { test as plain } from "@playwright/test";
+import { encode } from "uqr";
 import { R, SEED_MODULES, adminApi, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, loginFreshOwner, newRestaurant, newTable, setModules, staffToken, tableUrl, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
@@ -474,4 +475,36 @@ plain("Configurações → Salão: sem pedido pelo QR, o Mesas esconde o QR e o 
     await page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ }).click();
     await expect(page.getByRole("switch", { name: /Clientes pedem pelo QR da mesa/ })).toHaveAttribute("aria-checked", "true");
   }
+});
+
+/** The SVG path TablesQrScreen draws for a text: the QR must encode exactly the table's link. */
+const qrPath = (text: string) => encode(text, { ecc: "M", border: 4 }).data.flatMap((row, y) => row.flatMap((dark, x) => (dark ? [`M${x} ${y}h1v1h-1z`] : []))).join("");
+
+plain("Mesas → Imprimir QR: uma folha por mesa com o restaurante, a mesa e o QR do link dela; no papel (A4) só as folhas", async ({ page, request }) => {
+  await loginAs(page, request, "dono@chapa27.example");
+  await page.goto("/mesas");
+  await page.getByRole("button", { name: "Imprimir QR" }).click();
+  await expect(page).toHaveURL(/\/mesas\/qr$/);
+  const sheets = page.locator(".qr-preview .qr-card");
+  await expect(sheets).toHaveCount(30);
+  const twelve = sheets.filter({ hasText: "Mesa 12" });
+  await expect(twelve).toContainText("Chapa 27 Burgers");
+  await expect(twelve).toContainText("Aponte a câmera para pedir");
+  const url = await tableUrl(request, await staffToken(request, "dono@chapa27.example"), "chapa27", 12);
+  expect(await twelve.locator("svg path").getAttribute("d")).toBe(qrPath(url));
+
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator("#root")).toBeHidden();
+  await expect(page.locator(".qr-print .qr-card")).toHaveCount(30);
+  await page.pdf({ path: "test-results/qr-mesas.pdf", format: "A4" }); // for the eye check: 2 per row, 4 per page
+  await page.emulateMedia({ media: "screen" });
+
+  // One table, from its own button on the map; the link can be copied.
+  await page.goto("/mesas");
+  await page.getByRole("button", { name: /^12$/ }).first().click();
+  await page.getByRole("button", { name: "QR code" }).click();
+  await expect(page).toHaveURL(/\/mesas\/qr\?mesa=12$/);
+  await expect(sheets).toHaveCount(1);
+  await page.getByRole("button", { name: "Copiar link" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText(url);
 });
