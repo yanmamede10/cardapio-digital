@@ -77,6 +77,5 @@ export const api = {
     request<Order>("/api/orders", { method: "POST", body: JSON.stringify(payload) }),
   getOrder: (id: string) => request<Order>(`/api/orders/${id}`),
   listOrders: (mode?: string) => request<Order[]>(`/api/orders${mode ? `?mode=${mode}` : ""}`),
-  callWaiter: (orderId: string) => request<{ ok: true }>(`/api/orders/${orderId}/call-waiter`, { method: "POST" }),
-  repeatOrder: (orderId: string) => request<Order>(`/api/orders/${orderId}/repeat`, { method: "POST" })
+  callWaiter: (orderId: string) => request<{ ok: true }>(`/api/orders/${orderId}/call-waiter`, { method: "POST" })
 };

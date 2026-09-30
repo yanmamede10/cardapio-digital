@@ -3,9 +3,7 @@ import { asyncRouter } from "../lib/router.js";
 import type { CreateOrderRequest, OrderStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireStaff } from "../lib/auth.js";
-import { generateOrderCode } from "../lib/codes.js";
 import { placeOrder } from "../lib/orders.js";
-import { priceLine, round2 } from "../lib/pricing.js";
 import { serializeOrder } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
 
@@ -54,69 +52,6 @@ ordersRouter.post("/:id/call-waiter", async (req, res) => {
     });
   }
   res.json({ ok: true });
-});
-
-ordersRouter.post("/:id/repeat", async (req, res) => {
-  const original = await prisma.order.findUnique({ where: { id: req.params.id }, include: { lines: true } });
-  if (!original) return res.status(404).json({ error: "order not found" });
-  const guestSessionId = sessionId(req);
-
-  const pricedLines: {
-    itemId: string;
-    name: string;
-    unitPrice: number;
-    quantity: number;
-    notes: string;
-    selectedOptionsJson: string;
-  }[] = [];
-
-  for (const line of original.lines) {
-    const item = await prisma.menuItem.findUnique({ where: { id: line.itemId } });
-    if (!item || item.soldOut) continue;
-    const options = JSON.parse(line.selectedOptionsJson) as { groupId: string; optionId: string }[];
-    const { unitPrice, selectedOptions } = priceLine(item, options);
-    pricedLines.push({
-      itemId: item.id,
-      name: item.name,
-      unitPrice,
-      quantity: line.quantity,
-      notes: line.notes,
-      selectedOptionsJson: JSON.stringify(selectedOptions)
-    });
-  }
-  if (pricedLines.length === 0) {
-    return res.status(400).json({ error: "nenhum item deste pedido está disponível agora" });
-  }
-
-  const restaurant = await prisma.restaurant.findUnique({ where: { id: original.restaurantId } });
-  const subtotal = round2(pricedLines.reduce((t, l) => t + l.unitPrice * l.quantity, 0));
-  const deliveryFee = original.mode === "delivery" ? restaurant?.deliveryFee ?? 0 : 0;
-  const total = round2(subtotal + deliveryFee);
-
-  const order = await prisma.order.create({
-    data: {
-      code: generateOrderCode(),
-      mode: original.mode,
-      restaurantId: original.restaurantId,
-      restaurantName: original.restaurantName,
-      tableNumber: original.tableNumber,
-      guestName: original.guestName,
-      guestSessionId,
-      addressId: original.addressId,
-      paymentMethodId: original.paymentMethodId,
-      couponCode: null,
-      subtotal,
-      deliveryFee,
-      discount: 0,
-      total,
-      status: "pending",
-      round: 1,
-      lines: { create: pricedLines }
-    },
-    include: { lines: true }
-  });
-
-  res.status(201).json(serializeOrder(order));
 });
 
 ordersRouter.post("/:id/accept", requireStaff, requireModule("pedidos"), async (req, res) => {

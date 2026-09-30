@@ -262,3 +262,9 @@ test("aceitar e recusar o mesmo pedido ao mesmo tempo: só um vale (antes a cozi
   const status = (await call("GET", `${P}/orders`, { token: owner })).body.find((x: { id: string }) => x.id === o.id).status;
   assert.equal((await comanda(26)).orderIds.includes(o.id), status !== "cancelled", "na comanda se e só se não foi recusado");
 });
+
+test("repetir pedido não é mais rota da API (A-03): o app do cliente monta o carrinho com o cardápio de hoje", async () => {
+  const o = (await order(30, [{ name: "Kids" }])).body;
+  const res = await call("POST", `/api/orders/${o.id}/repeat`, { session: `r-${uid()}` });
+  assert.deepEqual([res.status, res.body.error], [404, `no route for POST /api/orders/${o.id}/repeat`]);
+});
