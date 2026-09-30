@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { after, test } from "node:test";
 import { PrismaClient } from "@prisma/client";
-import { R, call } from "./helpers.ts";
+import { R, call, login } from "./helpers.ts";
 
 // Security checks that aren't about one screen. The test database is the one tests/run.mjs migrated.
 const db = new PrismaClient();
@@ -51,4 +51,34 @@ test("sem X-Session-Id válido nenhuma chamada devolve pedidos (nem a antiga ses
   }
   const other = await call("GET", "/api/orders", { session: crypto.randomUUID() });
   assert.deepEqual([other.status, other.body], [200, []], "outro aparelho não vê nada");
+});
+
+test("logo, capa e foto do prato: só PNG, JPEG ou WebP, reconhecidos pelos primeiros bytes (nome e tipo informados não valem)", async () => {
+  const token = await login();
+  const P = `/api/restaurants/${R}`;
+  const itemId = (await call("GET", `${P}/items`)).body[0].id;
+  const send = (path: string, bytes: Buffer, type: string, name: string, kind?: string) => {
+    const form = new FormData();
+    if (kind) form.append("kind", kind);
+    form.append("file", new Blob([bytes], { type }), name);
+    return fetch(`${process.env.API_URL ?? "http://localhost:4200"}${path}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+  };
+  const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg"><script>alert(document.cookie)</script></svg>`);
+  const html = Buffer.from("<html><script>alert(1)</script></html>");
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(24)]);
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(24)]);
+  const webp = Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBPVP8 "), Buffer.alloc(16)]);
+
+  for (const [bytes, type, name] of [[svg, "image/svg+xml", "logo.svg"], [svg, "image/png", "logo.png"], [html, "image/jpeg", "foto.jpg"]] as const) {
+    for (const kind of ["logo", "cover"]) {
+      const res = await send(`${P}/appearance/upload`, bytes, type, name, kind);
+      assert.deepEqual([res.status, (await res.json()).error], [400, "Envie uma imagem PNG, JPEG ou WebP."], `${kind} ${name} ${type}`);
+    }
+    assert.equal((await send(`${P}/items/${itemId}/image`, bytes, type, name)).status, 400, `prato ${name} ${type}`);
+  }
+  // Real images pass the check even when the browser names them wrong; with no bucket in the tests the upload itself is a 503.
+  for (const bytes of [png, jpeg, webp]) {
+    assert.equal((await send(`${P}/appearance/upload`, bytes, "application/octet-stream", "sem-extensao", "logo")).status, 503);
+    assert.equal((await send(`${P}/items/${itemId}/image`, bytes, "text/plain", "foto.txt")).status, 503);
+  }
 });

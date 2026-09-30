@@ -5,7 +5,7 @@ import { LEVEL, type MenuItemOptionGroup, type UpsertMenuItemRequest } from "@ca
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem } from "../lib/serialize.js";
-import { uploadPublicFile } from "../lib/storage.js";
+import { NOT_AN_IMAGE, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const menuManagementRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
@@ -13,7 +13,6 @@ export const menuManagementRouter = asyncRouter();
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("cardapio")];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
-const IMAGE_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_NAME_LENGTH = 80;
 const MAX_SHORT_DESCRIPTION_LENGTH = 200;
@@ -167,13 +166,13 @@ menuManagementRouter.post("/:id/items/:itemId/image", ...staffGuard, upload.sing
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
   if (!req.file) return res.status(400).json({ error: "file is required" });
 
-  const extension = IMAGE_TYPES[req.file.mimetype];
-  if (!extension) return res.status(400).json({ error: `unsupported file type: ${req.file.mimetype}` });
+  const image = imageKind(req.file.buffer);
+  if (!image) return res.status(400).json({ error: NOT_AN_IMAGE });
   if (req.file.size > MAX_IMAGE_BYTES) return res.status(400).json({ error: `file too large — limit is ${Math.round(MAX_IMAGE_BYTES / 1024 / 1024)} MB` });
 
   let url: string;
   try {
-    url = await uploadPublicFile({ buffer: req.file.buffer, contentType: req.file.mimetype, folder: `restaurants/${req.params.id}/products`, extension });
+    url = await uploadPublicFile({ buffer: req.file.buffer, contentType: image.contentType, folder: `restaurants/${req.params.id}/products`, extension: image.extension });
   } catch (err) {
     console.error(err);
     return res.status(503).json({ error: "storage is not configured" });

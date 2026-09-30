@@ -4,7 +4,7 @@ import { LEVEL, type MenuTemplateId } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeAppearanceState, serializePublicAppearance } from "../lib/serialize.js";
-import { uploadPublicFile } from "../lib/storage.js";
+import { NOT_AN_IMAGE, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const appearanceRouter = asyncRouter();
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
@@ -13,8 +13,6 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 *
 const TEMPLATES: MenuTemplateId[] = ["classico", "moderno", "minimalista", "vibrante", "editorial", "galeria"];
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const MAX_COVER_PHOTOS = 6;
-const LOGO_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/svg+xml": "svg" };
-const COVER_TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const MAX_COVER_BYTES = 8 * 1024 * 1024;
 
@@ -78,9 +76,8 @@ appearanceRouter.post("/:id/appearance/upload", ...staffGuard, upload.single("fi
   if (kind !== "logo" && kind !== "cover") return res.status(400).json({ error: "kind must be 'logo' or 'cover'" });
   if (!req.file) return res.status(400).json({ error: "file is required" });
 
-  const types = kind === "logo" ? LOGO_TYPES : COVER_TYPES;
-  const extension = types[req.file.mimetype];
-  if (!extension) return res.status(400).json({ error: `unsupported file type for ${kind}: ${req.file.mimetype}` });
+  const image = imageKind(req.file.buffer);
+  if (!image) return res.status(400).json({ error: NOT_AN_IMAGE });
   const maxBytes = kind === "logo" ? MAX_LOGO_BYTES : MAX_COVER_BYTES;
   if (req.file.size > maxBytes) return res.status(400).json({ error: `file too large — limit is ${Math.round(maxBytes / 1024 / 1024)} MB` });
 
@@ -91,7 +88,7 @@ appearanceRouter.post("/:id/appearance/upload", ...staffGuard, upload.single("fi
 
   let url: string;
   try {
-    url = await uploadPublicFile({ buffer: req.file.buffer, contentType: req.file.mimetype, folder: `restaurants/${req.params.id}/appearance`, extension });
+    url = await uploadPublicFile({ buffer: req.file.buffer, contentType: image.contentType, folder: `restaurants/${req.params.id}/appearance`, extension: image.extension });
   } catch (err) {
     console.error(err);
     return res.status(503).json({ error: "storage is not configured" });

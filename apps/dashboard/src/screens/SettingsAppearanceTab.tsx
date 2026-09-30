@@ -403,7 +403,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
       <section className="card" style={{ padding: 24, display: "grid", gridTemplateColumns: "minmax(0,210px) minmax(0,1fr)", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 13, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>Logo</div>
-          <input ref={logoInput} type="file" accept="image/png,image/svg+xml,image/jpeg" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && onLogoFile(e.target.files[0])} />
+          <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && onLogoFile(e.target.files[0])} />
           {!logoUpload && !logoError && !draft.logoUrl && (
             <button type="button" onClick={() => logoInput.current?.click()} className="tap" style={{ width: 124, height: 124, borderRadius: 26, border: "1.5px dashed var(--line2)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: 21, lineHeight: 1 }} />
@@ -442,7 +442,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               </div>
             </div>
           )}
-          <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>PNG ou SVG quadrado, até 2 MB. Fundo transparente fica melhor.</div>
+          <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>PNG, JPEG ou WebP quadrado, até 2 MB. PNG com fundo transparente fica melhor.</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 13, minWidth: 0 }}>

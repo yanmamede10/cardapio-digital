@@ -41,6 +41,18 @@ async function put(bucket: string | undefined, params: { buffer: Buffer; content
   return key;
 }
 
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/** PNG, JPEG or WebP, told by the file's first bytes — never by its name or the Content-Type the browser sent. Anything else
+ *  (an SVG, which can carry script, or HTML named .png) is null: the public bucket only ever serves plain images. */
+export function imageKind(b: Buffer): { extension: string; contentType: string } | null {
+  if (b.subarray(0, 8).equals(PNG_SIGNATURE)) return { extension: "png", contentType: "image/png" };
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { extension: "jpg", contentType: "image/jpeg" };
+  if (b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") return { extension: "webp", contentType: "image/webp" };
+  return null;
+}
+export const NOT_AN_IMAGE = "Envie uma imagem PNG, JPEG ou WebP.";
+
 /** Uploads a file to the configured public bucket and returns its public URL. */
 export async function uploadPublicFile(params: { buffer: Buffer; contentType: string; folder: string; extension: string }): Promise<string> {
   if (!PUBLIC_URL) throw new Error("object storage is not configured — set STORAGE_PUBLIC_URL");
