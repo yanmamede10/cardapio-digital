@@ -224,12 +224,27 @@ describe("pedido pelo QR: validações", () => {
     const phone = crypto.randomUUID();
     const first = await order(29, [{ name: "Kids" }], phone);
     const second = await order(29, [{ name: "Chope Pilsen 300 ml" }], phone);
-    const other = await order(29, [{ name: "Salada" }]); // another guest at the same table
+    const otherPhone = crypto.randomUUID();
+    const other = await order(29, [{ name: "Salada" }], otherPhone); // another guest at the same table
     assert.deepEqual([first.body.round, second.body.round, other.body.round], [1, 2, 1]);
     assert.deepEqual((await comanda(29)).orderIds.sort(), [first.body.id, second.body.id, other.body.id].sort());
-    await call("POST", `/api/orders/${other.body.id}/call-waiter`);
+    assert.equal((await call("POST", `/api/orders/${other.body.id}/call-waiter`, { session: otherPhone })).status, 200);
     const calls = (await call("GET", `${P}/waiter-calls`, { token: waiter })).body;
     assert.ok(calls.some((c: { tableNumber: number }) => c.tableNumber === 29));
+  });
+
+  test("chamar o garçom por um pedido: só o aparelho que fez o pedido; qualquer outro recebe 404 e ninguém é chamado", async () => {
+    await fresh(29);
+    const phone = crypto.randomUUID();
+    const o = (await order(29, [{ name: "Kids" }], phone)).body;
+    const callsAt29 = async () => ((await call("GET", `${P}/waiter-calls`, { token: waiter })).body as { tableNumber: number }[]).filter((c) => c.tableNumber === 29).length;
+    const before = await callsAt29();
+    for (const session of [undefined, crypto.randomUUID(), "anonymous"]) {
+      assert.equal((await call("POST", `/api/orders/${o.id}/call-waiter`, { session })).status, 404, JSON.stringify(session));
+    }
+    assert.equal(await callsAt29(), before, "nenhum chamado criado por quem não fez o pedido");
+    assert.equal((await call("POST", `/api/orders/${o.id}/call-waiter`, { session: phone })).status, 200);
+    assert.equal(await callsAt29(), before + 1);
   });
 
   test("status da mesa: livre → ocupada → aguardando pagamento → livre; pedido recusado sai da comanda", async () => {

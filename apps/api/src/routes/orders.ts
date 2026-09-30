@@ -50,9 +50,11 @@ ordersRouter.get("/", async (req, res) => {
   res.json(orders.map(serializeOrder));
 });
 
+// Only the device that placed the order calls the waiter for it (same 404 as GET /:id): an order id alone doesn't page a table.
 ordersRouter.post("/:id/call-waiter", async (req, res) => {
-  const order = await prisma.order.findUnique({ where: { id: req.params.id } });
-  if (!order) return res.status(404).json({ error: "order not found" });
+  const session = sessionId(req);
+  const order = session ? await prisma.order.findUnique({ where: { id: req.params.id } }) : null;
+  if (!order || order.guestSessionId !== session) return res.status(404).json({ error: "order not found" });
   await prisma.order.update({ where: { id: order.id }, data: { waiterCalledAt: new Date() } });
   if (order.mode === "table" && order.tableNumber) {
     await prisma.waiterCall.create({
