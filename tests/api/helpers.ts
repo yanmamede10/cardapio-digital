@@ -29,6 +29,17 @@ export async function call(method: string, path: string, { token, body, session,
 /** Unique suffix so reruns and parallel files never collide on names or table numbers. */
 export const uid = () => Math.random().toString(36).slice(2, 7);
 
+/** A table's QR code (what /t/<code> carries — a customer orders with it), read as staff. */
+export async function tableCode(restaurantId: string, number: number, token: string): Promise<string> {
+  return (await call("GET", `/api/restaurants/${restaurantId}/tables/${number}/qr`, { token })).body.tableCode;
+}
+
+/** A new table (the restaurant's next number) and its QR code. */
+export async function newTable(token: string, restaurantId = R) {
+  const { number } = (await call("POST", `/api/restaurants/${restaurantId}/tables`, { token, body: { seats: 4 } })).body as { number: number };
+  return { number, code: await tableCode(restaurantId, number, token) };
+}
+
 export const product = (over: Record<string, unknown>) => ({ type: "insumo", unit: "un", price: 0, cost: 0, ncm: "", cst: "", taxRate: 0, composed: false, components: [], ...over });
 
 export const ADMIN_KEY = process.env.SUPER_ADMIN_KEY ?? "test-admin-key"; // set by tests/run.mjs

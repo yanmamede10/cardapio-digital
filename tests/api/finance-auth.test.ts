@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, test } from "node:test";
-import { ALL_MODULES, R, SEED_MODULES, call, login, setModules, uid } from "./helpers.ts";
+import { ALL_MODULES, R, SEED_MODULES, call, login, newTable, setModules, uid } from "./helpers.ts";
 
 let owner: string;
 let waiter: string;
@@ -49,10 +49,10 @@ describe("emissão fiscal", () => {
   /** `count` served orders at a fresh table, the comanda the waiter sees, and closing exactly that comanda (→ its code). */
   async function servedTable(count = 1) {
     const items = ((await call("GET", `${P}/items`, { token: owner })).body as { id: string; soldOut: boolean }[]).filter((i) => !i.soldOut);
-    const table = 100 + Math.floor(Math.random() * 800);
+    const { number: table, code } = await newTable(owner);
     const orders: { id: string; total: number }[] = [];
     for (let i = 0; i < count; i++) {
-      const order = (await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
+      const order = (await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: R, tableCode: code, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
       await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
       orders.push(order);
     }

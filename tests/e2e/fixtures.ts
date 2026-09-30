@@ -41,6 +41,23 @@ function apiClient(request: APIRequestContext, token: string): Api {
 
 export const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
+/** A new table at fogo (its next number) and the code of its QR, which a customer orders with. */
+export async function newTable(api: Api) {
+  const { number } = await api<{ number: number }>("POST", `/api/restaurants/${R}/tables`, { seats: 4 });
+  const { tableCode } = await api<{ tableCode: string }>("GET", `/api/restaurants/${R}/tables/${number}/qr`);
+  return { number, code: tableCode };
+}
+
+/** The customer app's URL for a table (/t/<its QR code>), read with that restaurant's staff token. */
+export async function tableUrl(request: APIRequestContext, token: string, restaurantId: string, number: number) {
+  const { tableCode } = await (await request.get(`${API}/api/restaurants/${restaurantId}/tables/${number}/qr`, { headers: { Authorization: `Bearer ${token}` } })).json();
+  return `http://localhost:5273/t/${tableCode}`;
+}
+
+/** A seeded staff member's token (password senha123). */
+export const staffToken = async (request: APIRequestContext, email: string) =>
+  (await (await request.post(`${API}/api/auth/login`, { data: { email, password: "senha123" } })).json()).token as string;
+
 /** Pão + Blend insumos and a Burger composed of them, linked to the Cardápio. */
 export async function burgerKit(api: Api) {
   const s = uid();

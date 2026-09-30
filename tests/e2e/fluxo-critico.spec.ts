@@ -23,17 +23,19 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
   const stockOf = async () => new Map(((await get(request, owner, "/products")) as { name: string; stock: number }[]).map((p) => [p.name, p.stock]));
   const before = { stock: await stockOf(), shift: await get(request, owner, "/shift-stats"), today: (await get(request, owner, "/analytics?period=today")).kpis };
 
-  // 1. The waiter copies the table's QR link.
+  // 1. The waiter copies the table's QR link: the table's own random code, not its number.
+  const { tableCode } = await get(request, owner, `/tables/${TABLE}/qr`);
+  expect(tableCode).toMatch(/^[A-Za-z0-9_-]{43}$/);
   await asStaff(page, request, "garcom");
   await page.goto("/mesas");
   await page.getByRole("button", { name: /^12$/ }).first().click();
   await page.getByRole("button", { name: "QR code" }).click();
-  await expect(page.locator(".toast-bubble")).toContainText(`/t/${D}.${TABLE}`);
+  await expect(page.locator(".toast-bubble")).toContainText(`/t/${tableCode}`);
 
   // 2. The customer (a phone) orders through it.
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const guest = await phone.newPage();
-  await guest.goto(`${WEB}/t/${D}.${TABLE}`);
+  await guest.goto(`${WEB}/t/${tableCode}`);
   await expect(guest).toHaveURL(new RegExp(`/r/${D}/menu`));
   await guest.getByText("Cheddar & Bacon", { exact: true }).first().click();
   await guest.getByText("Bem passado", { exact: true }).click();
@@ -113,13 +115,14 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
 
 test("cliente vê o aviso quando o item esgota enquanto revisa o pedido (antes a revisão não mostrava erro nenhum)", async ({ browser, request }) => {
   const kitchen = (await staff(request, "cozinha")).token;
+  const { tableCode } = await get(request, kitchen, "/tables/29/qr");
   const items = await (await request.get(`${API}/api/restaurants/${D}/items`)).json();
   const polenta = items.find((i: { name: string }) => i.name === "Polenta Frita");
   const soldOut = (v: boolean) => request.patch(`${API}/api/restaurants/${D}/items/${polenta.id}/sold-out`, { data: { soldOut: v }, headers: { Authorization: `Bearer ${kitchen}` } });
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const guest = await phone.newPage();
   try {
-    await guest.goto(`${WEB}/t/${D}.29`);
+    await guest.goto(`${WEB}/t/${tableCode}`);
     await guest.getByRole("button", { name: "Adicionar Polenta Frita ao pedido" }).first().click();
     await guest.getByRole("button", { name: /Ver carrinho/ }).click();
     await guest.getByRole("button", { name: /Enviar pedido para a cozinha/ }).click();

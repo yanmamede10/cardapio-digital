@@ -1,24 +1,26 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
-import { call, uid } from "./helpers.ts";
+import { call, tableCode, uid } from "./helpers.ts";
 
 // Cardápio of the demo hamburgueria (prisma/seed-demo.ts).
 const D = "chapa27";
 const P = `/api/restaurants/${D}`;
 type Item = { id: string; name: string; price: number; soldOut: boolean; shortDescription: string; optionGroups: { id: string; label: string; options: { id: string; label: string; priceDelta: number; productId?: string; quantity?: number }[] }[] };
 const tokens: Record<string, string> = {};
+const codes: Record<number, string> = {}; // QR codes of the tables these tests order at
 const items = async () => (await call("GET", `${P}/items`)).body as Item[];
 const byName = async (n: string) => (await items()).find((i) => i.name === n)!;
 
 before(async () => {
   for (const u of ["dono", "gerente", "garcom", "cozinha"]) tokens[u] = (await call("POST", "/api/auth/login", { body: { email: `${u}@chapa27.example`, password: "senha123" } })).body.token;
+  for (const n of [12, 25, 26]) codes[n] = await tableCode(D, n, tokens.garcom);
 });
 
 test("cozinha e garçom marcam Esgotado/Disponível; o cliente não consegue pedir o esgotado", async () => {
   const batata = await byName("Batata Frita");
   const soldOut = (who: string, v: unknown) => call("PATCH", `${P}/items/${batata.id}/sold-out`, { token: tokens[who], body: { soldOut: v } });
   assert.equal((await soldOut("cozinha", true)).body.soldOut, true);
-  const orderIt = () => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 25, lines: [{ itemId: batata.id, quantity: 1, notes: "", selectedOptions: [] }] } });
+  const orderIt = () => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableCode: codes[25], lines: [{ itemId: batata.id, quantity: 1, notes: "", selectedOptions: [] }] } });
   const refused = await orderIt();
   assert.equal(refused.status, 400);
   assert.match(refused.body.error, /esgotado/);
@@ -48,7 +50,7 @@ test("Organizar prato mexe só nos adicionais: o Ponto da carne continua, e o ad
   const cremoso = after.optionGroups[1].options.find((o) => o.label === "Cheddar cremoso")!;
   const order = await call("POST", "/api/orders", {
     session: crypto.randomUUID(),
-    body: { mode: "table", restaurantId: D, tableNumber: 26, lines: [{ itemId: after.id, quantity: 1, notes: "", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: cremoso.id }] }] }
+    body: { mode: "table", restaurantId: D, tableCode: codes[26], lines: [{ itemId: after.id, quantity: 1, notes: "", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: cremoso.id }] }] }
   });
   assert.equal(order.body.total, 37.9, "32,90 + 5,00");
   assert.deepEqual(order.body.lines[0].selectedOptions.map((o: { label: string }) => o.label), ["Bem passado", "Cheddar cremoso"]);
@@ -95,7 +97,7 @@ test("adicional com ficha técnica: o Bacon extra baixa bacon ao fechar a conta;
 
   await call("POST", `${P2}/tables/12/close`, { token: tokens.garcom });
   const baconExtra = classico.optionGroups.find((g) => g.id === "extra")!.options.find((o) => o.label === "Bacon extra")!;
-  await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 12, lines: [{ itemId: classico.id, quantity: 2, notes: "", selectedOptions: [{ groupId: "extra", optionId: baconExtra.id }] }] } });
+  await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableCode: codes[12], lines: [{ itemId: classico.id, quantity: 2, notes: "", selectedOptions: [{ groupId: "extra", optionId: baconExtra.id }] }] } });
   const before = bacon.stock;
   await call("POST", `${P2}/tables/12/close`, { token: tokens.garcom });
   const after = ((await call("GET", `${P2}/products`, { token: tokens.dono })).body as { id: string; stock: number }[]).find((p) => p.id === bacon.id)!.stock;

@@ -179,7 +179,9 @@ async function main() {
     }
   }
 
-  // Salão: 30 tables on an 11×11 map, 6 per row on every other row/column.
+  // Salão: 30 tables on an 11×11 map, 6 per row on every other row/column. Each gets its own random QR code from the database
+  // (RestaurantTable.qrCode's default): nothing to generate here, and every install of the demo has codes of its own.
+  // Print them in Mesas → Imprimir QR.
   await prisma.restaurantTable.createMany({
     data: Array.from({ length: 30 }, (_, i) => ({ restaurantId: R, number: i + 1, seats: [2, 4, 4, 6][i % 4], gridRow: Math.floor(i / 6) * 2, gridCol: (i % 6) * 2 }))
   });

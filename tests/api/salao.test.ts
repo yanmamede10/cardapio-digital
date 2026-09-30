@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
-import { ADMIN_KEY, SEED_MODULES, call, firstLogin, setModules, uid } from "./helpers.ts";
+import { ADMIN_KEY, SEED_MODULES, call, firstLogin, setModules, tableCode, uid } from "./helpers.ts";
 
 // Salão of the demo hamburgueria (prisma/seed-demo.ts): QR → pedido → Central → comanda → fechamento.
 const D = "chapa27";
@@ -12,16 +12,33 @@ let items: { id: string; name: string; price: number; optionGroups: { id: string
 const item = (name: string) => items.find((i) => i.name === name)!;
 const staff = async (u: string) => (await call("POST", "/api/auth/login", { body: { email: `${u}@chapa27.example`, password: "senha123" } })).body.token as string;
 
+/** QR codes of the demo's 30 tables: a customer orders with the code, never with the number. */
+const codes: Record<number, string> = {};
+
 before(async () => {
   [owner, waiter, kitchen] = await Promise.all([staff("dono"), staff("garcom"), staff("cozinha")]);
   items = (await call("GET", `${P}/items`)).body;
+  for (let n = 1; n <= 30; n++) codes[n] = await tableCode(D, n, waiter);
 });
 
 describe("QR da mesa", () => {
-  test("o QR de uma mesa abre o restaurante dela, não outro", async () => {
-    const { tableCode } = (await call("GET", `${P}/tables/12/qr`, { token: waiter })).body;
-    assert.equal(tableCode, "chapa27.12");
-    assert.deepEqual((await call("GET", `/api/tables/${tableCode}`)).body, { restaurantId: D, tableNumber: 12 });
+  test("cada mesa tem o seu código, aleatório (base64url de 43 caracteres), que abre o restaurante dela", async () => {
+    const all = Object.values(codes);
+    assert.ok(all.every((c) => /^[A-Za-z0-9_-]{43}$/.test(c)), all.find((c) => !/^[A-Za-z0-9_-]{43}$/.test(c)));
+    assert.equal(new Set(all).size, 30, "30 mesas, 30 códigos diferentes");
+    assert.deepEqual((await call("GET", `/api/tables/${codes[12]}`)).body, { restaurantId: D, tableNumber: 12 });
+  });
+
+  test("o número da mesa não vale mais como código, nem para abrir o cardápio nem para pedir", async () => {
+    for (const guess of ["chapa27.12", "12", codes[12].slice(0, 42), codes[12].toLowerCase()]) {
+      if (guess === codes[12]) continue;
+      assert.equal((await call("GET", `/api/tables/${encodeURIComponent(guess)}`)).status, 404, guess);
+    }
+    const line = { itemId: item("Kids").id, quantity: 1, notes: "", selectedOptions: [] };
+    const byNumber = await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 12, lines: [line] } });
+    assert.deepEqual([byNumber.status, byNumber.body.error], [404, "Mesa não encontrada. Leia o QR da mesa de novo ou chame um atendente."]);
+    const otherRestaurant = await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: "fogo", tableCode: codes[12], lines: [line] } });
+    assert.equal(otherRestaurant.status, 404, "código de uma mesa do Chapa 27 num pedido de outro restaurante");
   });
 
   test("mesa que não existe, restaurante inexistente ou inativo, código sem restaurante → 404", async () => {
@@ -33,10 +50,12 @@ describe("QR da mesa", () => {
     const r = (await call("POST", "/api/admin/restaurants", { token: ADMIN_KEY, body: { name: `QR ${uid()}`, cnpj: String(Date.now()).slice(-12) + "31", ownerName: "Dona QR", ownerEmail: email } })).body;
     const status = (s: string) => call("PATCH", `/api/admin/restaurants/${r.id}/status`, { token: ADMIN_KEY, body: { status: s } });
     await status("ativo");
-    await call("POST", `/api/restaurants/${r.id}/tables`, { token: await firstLogin(email, r.ownerPassword), body: { seats: 2 } });
-    assert.equal((await call("GET", `/api/tables/${r.id}.1`)).status, 200);
+    const dono = await firstLogin(email, r.ownerPassword);
+    await call("POST", `/api/restaurants/${r.id}/tables`, { token: dono, body: { seats: 2 } });
+    const code = await tableCode(r.id, 1, dono);
+    assert.equal((await call("GET", `/api/tables/${code}`)).status, 200);
     await status("inativo");
-    assert.equal((await call("GET", `/api/tables/${r.id}.1`)).status, 404, "restaurante inativo");
+    assert.equal((await call("GET", `/api/tables/${code}`)).status, 404, "restaurante inativo");
   });
 });
 
@@ -47,7 +66,7 @@ const order = (table: number, lines: { name: string; qty?: number; options?: str
     body: {
       mode: "table",
       restaurantId: D,
-      tableNumber: table,
+      tableCode: codes[table],
       guestName: "Cliente",
       lines: lines.map((l) => {
         const it = item(l.name);
@@ -198,7 +217,7 @@ describe("horário de pico", () => {
 });
 
 describe("pedido pelo QR: validações", () => {
-  const post = (body: object, session = crypto.randomUUID()) => call("POST", "/api/orders", { session, body: { mode: "table", restaurantId: D, tableNumber: 30, ...body } });
+  const post = (body: object, session = crypto.randomUUID()) => call("POST", "/api/orders", { session, body: { mode: "table", restaurantId: D, tableCode: codes[30], ...body } });
   const line = (name: string, over: object = {}) => ({ itemId: item(name).id, quantity: 1, notes: "", selectedOptions: [], ...over });
 
   test("observação de 300 e nome de 120 caracteres passam; um a mais, não; carrinho vazio e item de outro restaurante, não", async () => {

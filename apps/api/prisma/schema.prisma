@@ -268,6 +268,9 @@ model RestaurantTable {
   openedAt     DateTime?
   gridRow      Int?
   gridCol      Int?
+  // What the table's QR (and its fixed tablet) carries: /t/<qrCode>. 244 random bits from the database (migration
+  // 9g_table_qr_code), base64url — the only way a customer orders for this table. "Gerar novo QR" sets it back to DEFAULT.
+  qrCode       String    @unique @default(dbgenerated("translate(encode(decode(replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''), 'hex'), 'base64'), '+/=', '-_')"))
 
   @@unique([restaurantId, number])
 }

@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, SEED_MODULES, adminApi, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, loginFreshOwner, newRestaurant, setModules, test, uid } from "./fixtures";
+import { R, SEED_MODULES, adminApi, asSuperAdmin, burgerKit, dayLabel, expect, isoDay, loginAs, loginFreshOwner, newRestaurant, newTable, setModules, staffToken, tableUrl, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -326,10 +326,10 @@ plain("sessão encerrada no meio do uso (restaurante desativado, token vencido) 
 test("Central: card mostra opções e observação; pedido recusado sai do quadro; sem conexão aparece o aviso", async ({ page, api }) => {
   const items = await api("GET", `/api/restaurants/${R}/items`);
   const burger = items.find((i: { id: string }) => i.id === `${R}-burger`);
-  const table = 100 + Math.floor(Math.random() * 800);
+  const [{ number: table, code }, other] = [await newTable(api), await newTable(api)];
   const lines = [{ itemId: burger.id, quantity: 1, notes: "sem cebola, pão bem tostado", selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }, { groupId: "extra", optionId: "extra-0" }] }];
-  await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableNumber: table, lines });
-  const refused = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableNumber: table + 1, lines: [{ ...lines[0], notes: "recusado" }] });
+  await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableCode: code, lines });
+  const refused = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableCode: other.code, lines: [{ ...lines[0], notes: "recusado" }] });
   await api("POST", `/api/orders/${refused.id}/reject`);
 
   await page.goto("/");
@@ -465,7 +465,7 @@ plain("Configurações → Salão: sem pedido pelo QR, o Mesas esconde o QR e o 
     await expect(page.getByRole("button", { name: "Lançar pedido" })).toBeVisible();
     await expect(page.getByRole("button", { name: "QR code" })).toHaveCount(0);
     const guest = await browser.newPage();
-    await guest.goto("http://localhost:5273/t/chapa27.3");
+    await guest.goto(await tableUrl(request, await staffToken(request, "garcom@chapa27.example"), "chapa27", 3));
     await expect(guest.getByText("Neste restaurante os pedidos são feitos pelo garçom")).toBeVisible();
     await guest.close();
   } finally {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
-import { SEED_MODULES, call, setModules } from "./helpers.ts";
+import { SEED_MODULES, call, setModules, tableCode } from "./helpers.ts";
 
 // Lançar pedido: the waiter orders for the table from the dashboard, without the customer's phone.
 const D = "chapa27";
@@ -59,10 +59,11 @@ test("com Mesas desligado o garçom não lança", async () => {
 test("pedido pelo QR desligado: o QR e o pedido do cliente na mesa são recusados; o garçom e o delivery seguem", async () => {
   const setQr = (qrOrdering: unknown) => call("PATCH", `${P}/payment-mode`, { token: tokens.dono, body: { qrOrdering } });
   assert.equal((await setQr("não")).status, 400);
+  const code = await tableCode(D, 3, tokens.garcom);
   try {
     assert.equal((await setQr(false)).body.qrOrdering, false);
-    assert.equal((await call("GET", "/api/tables/chapa27.3")).status, 403);
-    const customer = await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableNumber: 3, lines: [line("Kids")] } });
+    assert.equal((await call("GET", `/api/tables/${code}`)).status, 403);
+    const customer = await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: D, tableCode: code, lines: [line("Kids")] } });
     assert.equal(customer.status, 403);
     assert.match(customer.body.error, /garçom/);
     assert.equal((await launch(3, [line("Kids")])).status, 201, "o garçom lança normalmente");
@@ -70,6 +71,6 @@ test("pedido pelo QR desligado: o QR e o pedido do cliente na mesa são recusado
   } finally {
     await setQr(true);
   }
-  assert.equal((await call("GET", "/api/tables/chapa27.3")).status, 200);
+  assert.equal((await call("GET", `/api/tables/${code}`)).status, 200);
   await call("POST", `${P}/tables/3/close`, { token: tokens.garcom });
 });

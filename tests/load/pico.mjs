@@ -28,6 +28,9 @@ const login = async (u) => (await hit("login", "/api/auth/login", { method: "POS
 const [kitchen, waiter] = [await login("cozinha"), await login("garcom")];
 const auth = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
 const P = `/api/restaurants/${R}`;
+// A customer orders with the table's QR code (a number typed on a phone isn't accepted).
+const codes = {};
+for (let t = 1; t <= TABLES; t++) codes[t] = (await hit("QR da mesa", `${P}/tables/${t}/qr`, auth(waiter))).tableCode;
 
 // ---- painéis
 let running = true;
@@ -75,7 +78,7 @@ async function guest(table, round) {
     return { itemId: it.id, quantity: 1 + Math.floor(Math.random() * 2), notes: round === 0 ? "sem cebola" : "", selectedOptions: [] };
   });
   const sent = performance.now();
-  const order = await hit("Enviar pedido", "/api/orders", { method: "POST", headers: { "X-Session-Id": crypto.randomUUID() }, body: JSON.stringify({ mode: "table", restaurantId: R, tableNumber: table, guestName: `Mesa ${table}`, lines }) });
+  const order = await hit("Enviar pedido", "/api/orders", { method: "POST", headers: { "X-Session-Id": crypto.randomUUID() }, body: JSON.stringify({ mode: "table", restaurantId: R, tableCode: codes[table], guestName: `Mesa ${table}`, lines }) });
   posted.set(order.id, sent);
 }
 

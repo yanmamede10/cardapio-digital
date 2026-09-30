@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { ADMIN_KEY, expect, loginAs, test } from "./fixtures";
+import { ADMIN_KEY, expect, loginAs, staffToken, tableUrl, test } from "./fixtures";
 
 // UI-01 (docs/testes/plano-de-testes.md): every screen in scope, with every role that sees it, on the three screen
 // sizes (Playwright projects desktop/tablet/mobile) and in both themes. A screen fails when the page scrolls sideways,
@@ -50,7 +50,7 @@ for (const theme of ["light", "dark"] as const) {
       });
     }
 
-    test("login, Super Admin e cardápio do cliente", async ({ page, browser }, info) => {
+    test("login, Super Admin e cardápio do cliente", async ({ page, browser, request }, info) => {
       const shot = (name: string) => `${info.project.name}-${theme}-${name}`;
       const problems: string[] = [];
       await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session")); // runs after the fixture's: logged out
@@ -60,7 +60,7 @@ for (const theme of ["light", "dark"] as const) {
 
       const guest = await browser.newContext({ viewport: page.viewportSize()!, colorScheme: theme, isMobile: info.project.name === "mobile", hasTouch: info.project.name !== "desktop" });
       const g = await guest.newPage();
-      problems.push(...(await check(g, "cliente: QR da mesa", shot("cliente-menu"), "http://localhost:5273/t/chapa27.3")));
+      problems.push(...(await check(g, "cliente: QR da mesa", shot("cliente-menu"), await tableUrl(request, await staffToken(request, "garcom@chapa27.example"), "chapa27", 3))));
       await g.getByText("Cheddar & Bacon", { exact: true }).first().click();
       await expect(g.getByRole("button", { name: /Adicionar ao carrinho/ })).toBeVisible();
       const overflow = await g.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

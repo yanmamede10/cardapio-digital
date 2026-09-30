@@ -1,5 +1,5 @@
 import { test as plain } from "@playwright/test";
-import { R, SEED_MODULES, burgerKit, dayLabel, expect, loginAs, setModules, test, uid } from "./fixtures";
+import { R, SEED_MODULES, burgerKit, dayLabel, expect, loginAs, newTable, setModules, test, uid } from "./fixtures";
 
 const toast = (page: import("@playwright/test").Page) => page.locator(".toast-bubble");
 
@@ -27,8 +27,8 @@ test("módulo desligado some da barra de abas", async ({ page, request }) => {
 
 test("fechar a conta no celular pede a forma de pagamento, baixa a ficha técnica e lança em Contas a Receber", async ({ page, api }) => {
   const { pao, blend, item } = await burgerKit(api);
-  const table = 100 + Math.floor(Math.random() * 800);
-  const order = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 3, notes: "", selectedOptions: [] }] });
+  const { number: table, code } = await newTable(api);
+  const order = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableCode: code, lines: [{ itemId: item.id, quantity: 3, notes: "", selectedOptions: [] }] });
 
   await page.goto(`/mesas/${table}`);
   await page.getByRole("button", { name: /Fechar conta/ }).click();

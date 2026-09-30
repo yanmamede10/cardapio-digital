@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
-import { ADMIN_KEY, R as FOGO, call, firstLogin, login, product, uid } from "./helpers.ts";
+import { ADMIN_KEY, R as FOGO, call, firstLogin, login, newTable, product, uid } from "./helpers.ts";
 
 // Big lists: 150 products and 150 bills on a restaurant of their own, 120 orders in one day at "fogo" (a new restaurant
 // has no categories, so no dishes to order). Every list still answers whole, fast, and the sums still add up.
@@ -39,9 +39,11 @@ test("150 produtos e 150 lançamentos: listas inteiras, rápidas, e a soma dos c
 test("120 pedidos no mesmo dia: a Central recebe todos, o mapa e o turno respondem rápido", async () => {
   const owner = await login();
   const items = (await call("GET", `/api/restaurants/${FOGO}/items`)).body.filter((i: { soldOut: boolean }) => !i.soldOut);
+  const tables: { number: number; code: string }[] = [];
+  for (let i = 0; i < 40; i++) tables.push(await newTable(owner, FOGO));
   const before = (await call("GET", `/api/restaurants/${FOGO}/orders`, { token: owner })).body.length;
   const created = await batch(120, (i) =>
-    call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: FOGO, tableNumber: 900 + (i % 40), lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })
+    call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: FOGO, tableCode: tables[i % 40].code, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })
   );
   assert.ok(created.every((r) => r.status === 201), JSON.stringify(created.find((r) => r.status !== 201)?.body));
   const orders = await timed(`/api/restaurants/${FOGO}/orders`, owner);
@@ -51,5 +53,5 @@ test("120 pedidos no mesmo dia: a Central recebe todos, o mapa e o turno respond
     assert.ok(r.status === 200 && r.ms < 1500, `${path}: ${r.status} ${r.ms.toFixed(0)} ms`);
   }
   assert.ok(orders.ms < 1500, `${orders.ms.toFixed(0)} ms`);
-  await batch(40, (i) => call("POST", `/api/restaurants/${FOGO}/tables/${900 + i}/close`, { token: owner })); // leave fogo's salon as it was
+  await batch(40, (i) => call("POST", `/api/restaurants/${FOGO}/tables/${tables[i].number}/close`, { token: owner })); // leave these tables free
 });

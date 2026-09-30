@@ -11,7 +11,7 @@ import { formatMoney } from "../lib/format";
 export default function ReviewScreen() {
   const navigate = useNavigate();
   const {
-    mode, tableNumber, guestName, restaurantId, addressId, paymentMethodId, couponCode, discountPercent,
+    mode, tableNumber, tableCode, guestName, restaurantId, addressId, paymentMethodId, couponCode, discountPercent,
     registerTableOrder
   } = useApp();
   const { lines, subtotal, count, clear } = useCart();
@@ -43,7 +43,7 @@ export default function ReviewScreen() {
       const order = await api.createOrder({
         mode,
         restaurantId,
-        tableNumber: isMesa ? tableNumber ?? undefined : undefined,
+        tableCode: isMesa ? tableCode ?? undefined : undefined,
         guestName: isMesa ? guestName || undefined : undefined,
         addressId: isMesa ? undefined : addressId ?? undefined,
         paymentMethodId: isMesa ? undefined : paymentMethodId ?? undefined,

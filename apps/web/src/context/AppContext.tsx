@@ -13,6 +13,8 @@ interface TableSession {
 interface AppState {
   mode: OrderMode;
   tableNumber: number | null;
+  /** The code of the table's QR (or fixed tablet): what a table order is placed with. */
+  tableCode: string | null;
   restaurantId: string | null;
   guestName: string;
   theme: Theme;
@@ -24,7 +26,7 @@ interface AppState {
 }
 
 interface AppContextValue extends AppState {
-  enterTableMode: (restaurantId: string, tableNumber: number) => void;
+  enterTableMode: (restaurantId: string, tableNumber: number, tableCode: string) => void;
   setActiveRestaurant: (restaurantId: string) => void;
   setGuestName: (name: string) => void;
   toggleTheme: () => void;
@@ -43,6 +45,7 @@ function loadInitialState(): AppState {
   const base: AppState = {
     mode: "delivery",
     tableNumber: null,
+    tableCode: null,
     restaurantId: null,
     guestName: "",
     theme: (localStorage.getItem(THEME_KEY) as Theme | null) ||
@@ -74,15 +77,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.theme]);
 
   useEffect(() => {
-    const { mode, tableNumber, restaurantId, guestName, tableSession, addressId, paymentMethodId } = state;
+    const { mode, tableNumber, tableCode, restaurantId, guestName, tableSession, addressId, paymentMethodId } = state;
     sessionStorage.setItem(
       SESSION_STATE_KEY,
-      JSON.stringify({ mode, tableNumber, restaurantId, guestName, tableSession, addressId, paymentMethodId })
+      JSON.stringify({ mode, tableNumber, tableCode, restaurantId, guestName, tableSession, addressId, paymentMethodId })
     );
   }, [state]);
 
-  const enterTableMode = useCallback((restaurantId: string, tableNumber: number) => {
-    setState((s) => ({ ...s, mode: "table", restaurantId, tableNumber }));
+  const enterTableMode = useCallback((restaurantId: string, tableNumber: number, tableCode: string) => {
+    setState((s) => ({ ...s, mode: "table", restaurantId, tableNumber, tableCode }));
   }, []);
 
   const setActiveRestaurant = useCallback((restaurantId: string) => {

@@ -3,20 +3,15 @@ import { prisma } from "../db.js";
 
 export const tablesRouter = asyncRouter();
 
-// A table's QR encodes "<restaurantId>.<number>" (restaurant ids are [a-z0-9-], so the last "." splits them).
-// Only an existing table of an active restaurant resolves — anything else is "mesa não encontrada".
+// A table's QR carries its own random code (RestaurantTable.qrCode). Only a current code of an active restaurant resolves —
+// anything else (an old code after "Gerar novo QR", a guess) is "mesa não encontrada".
 tablesRouter.get("/:tableCode", async (req, res) => {
-  const code = req.params.tableCode;
-  const dot = code.lastIndexOf(".");
-  const restaurantId = code.slice(0, dot);
-  const tableNumber = Number(code.slice(dot + 1));
-  if (dot < 1 || !Number.isInteger(tableNumber)) return res.status(404).json({ error: "table not found" });
   const table = await prisma.restaurantTable.findUnique({
-    where: { restaurantId_number: { restaurantId, number: tableNumber } },
-    select: { restaurant: { select: { status: true, qrOrdering: true } } }
+    where: { qrCode: req.params.tableCode },
+    select: { restaurantId: true, number: true, restaurant: { select: { status: true, qrOrdering: true } } }
   });
   if (table?.restaurant.status !== "ativo") return res.status(404).json({ error: "table not found" });
   // The restaurant takes table orders through its waiters only (Configurações → Salão): the customer app says so.
   if (!table.restaurant.qrOrdering) return res.status(403).json({ error: "qr ordering is off" });
-  res.json({ restaurantId, tableNumber });
+  res.json({ restaurantId: table.restaurantId, tableNumber: table.number });
 });

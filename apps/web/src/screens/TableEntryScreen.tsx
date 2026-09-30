@@ -16,7 +16,7 @@ export default function TableEntryScreen() {
       .resolveTable(tableCode)
       .then((res) => {
         if (cancelled) return;
-        enterTableMode(res.restaurantId, res.tableNumber);
+        enterTableMode(res.restaurantId, res.tableNumber, tableCode);
         navigate(`/r/${res.restaurantId}/menu`, { replace: true });
       })
       .catch((err) => {

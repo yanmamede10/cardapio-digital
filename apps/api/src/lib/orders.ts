@@ -24,6 +24,14 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
 
   const mode = body.mode === "delivery" ? "delivery" : "table";
   if (mode === "table" && !waiterName && !restaurant.qrOrdering) return { status: 403, error: "Neste restaurante os pedidos da mesa são feitos pelo garçom." };
+  let tableNumber: number | null = null;
+  if (mode === "table" && waiterName) tableNumber = body.tableNumber ?? null; // the route already found the table
+  else if (mode === "table") {
+    // A customer orders for the table whose QR (or fixed tablet) they hold — its random code, never a number anyone could type.
+    const table = body.tableCode ? await prisma.restaurantTable.findUnique({ where: { qrCode: body.tableCode } }) : null;
+    if (!table || table.restaurantId !== restaurant.id || restaurant.status !== "ativo") return { status: 404, error: "Mesa não encontrada. Leia o QR da mesa de novo ou chame um atendente." };
+    tableNumber = table.number;
+  }
   const pricedLines: { itemId: string; name: string; unitPrice: number; quantity: number; notes: string; selectedOptionsJson: string; stockJson: string }[] = [];
   try {
     for (const line of body.lines) {
@@ -52,19 +60,12 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
   const discount = coupon.valid ? round2(subtotal * (coupon.discountPercent / 100)) : 0;
 
   let round = 1;
-  if (mode === "table" && body.tableNumber) {
+  if (tableNumber !== null) {
     // First order of a seating stamps openedAt ("aberta às"); the comanda itself is the table's orders with no closedAt.
-    const where = { restaurantId: body.restaurantId, number: body.tableNumber };
-    const { count } = await prisma.restaurantTable.updateMany({ where: { ...where, openedAt: null }, data: { openedAt: new Date() } });
-    if (!count && !(await prisma.restaurantTable.findUnique({ where: { restaurantId_number: where } }))) {
-      // Unknown number (not from a QR): the table is created. Two first orders at once → the loser finds it created.
-      await prisma.restaurantTable.create({ data: { ...where, seats: 4, openedAt: new Date() } }).catch((err) => {
-        if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002")) throw err;
-      });
-    }
+    await prisma.restaurantTable.updateMany({ where: { restaurantId: body.restaurantId, number: tableNumber, openedAt: null }, data: { openedAt: new Date() } });
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    round = 1 + (await prisma.order.count({ where: { mode: "table", restaurantId: body.restaurantId, tableNumber: body.tableNumber, guestSessionId, createdAt: { gte: startOfDay } } }));
+    round = 1 + (await prisma.order.count({ where: { mode: "table", restaurantId: body.restaurantId, tableNumber, guestSessionId, createdAt: { gte: startOfDay } } }));
   }
 
   const order = await prisma.order.create({
@@ -73,7 +74,7 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
       mode,
       restaurantId: body.restaurantId,
       restaurantName: restaurant.name,
-      tableNumber: mode === "table" ? body.tableNumber ?? null : null,
+      tableNumber,
       guestName: body.guestName || null,
       guestSessionId,
       waiterName,

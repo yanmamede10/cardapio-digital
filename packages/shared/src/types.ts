@@ -255,6 +255,9 @@ export interface Order {
 export interface CreateOrderRequest {
   mode: OrderMode;
   restaurantId: string;
+  /** A customer's table order: the code of the table's QR (or fixed tablet), which identifies restaurant and table. */
+  tableCode?: string;
+  /** Set by the API itself when a waiter launches the order for a table; a customer's number is never trusted. */
   tableNumber?: number;
   guestName?: string;
   addressId?: string;
