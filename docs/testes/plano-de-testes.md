@@ -239,6 +239,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | EST-11 | Editar preço no catálogo | Adm | Clássico 32,90 → 33,90 | Cardápio mostra o preço novo | api:estoque | ✅ |
 | EST-13 | Entrada, saída e contagem manual | Adm | Produto → Ajustar estoque: Entrada 10,5; Saída 0,25 (perda); Contagem 9 | Estoque 10,5 → 10,25 → 9; três movimentos com o motivo | api:estoque, e2e:desktop | ✅ |
 | EST-14 | Validações do ajuste | Adm, Garçom | Tipo inválido, quantidade 0 ou negativa, produto com ficha técnica, outro restaurante, garçom | 400 / 400 / 400 / 403 / 403 | api:estoque | ✅ |
+| EST-15 | Ficha técnica muda com a comanda aberta | Adm | 2 lanches vendidos; receita passa a 0,18 kg de blend, sem pão; +1 lanche; fechar | Pão −2; blend −0,48 (0,15 × 2 + 0,18): cada venda baixa a receita com que foi vendida | api:estoque | ✅ corrigido (B23) |
+| EST-16 | Prato excluído do Cardápio com a comanda aberta | Adm | Vender 1, excluir o prato, fechar | A baixa acontece (pão −1, blend −0,15) | api:estoque | ✅ corrigido (B23) |
 | EST-12 | Lista grande | Adm | 150 produtos | Tela abre e filtra | api:grandes, M | ✅ + M (0,6 s) |
 
 ### 4.8 Cardápio no painel (CAR)
@@ -277,6 +279,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | FIN-11 | Comanda vira recebível | Garçom | Fechar Mesa 9 no Cartão | Contas a Receber: "Mesa 09 · …", Pago, Cartão, Vendas salão | api:salao, e2e:fluxo | ✅ (decisão: novo) |
 | FIN-12 | Lista grande | Adm | 150 lançamentos | Tela abre; totais certos | api:grandes | ✅ + M |
 | FIN-13 | Celular | Adm | Lançar e quitar pela folha | Mesmo resultado do desktop | e2e:mobile | ✅ |
+| FIN-14 | Serviço desligado do começo ao fim | Dono | Salão sem serviço; fechar uma mesa | Emissão Fiscal e Contas a Receber com o valor da comanda, sem os 10% | api:financeiro | ✅ |
+| FIN-15 | Mudar o serviço depois do fechamento | Dono | Fechar com serviço e desligar; fechar sem e religar | A nota e o recebível ficam com o que foi cobrado (ex.: 98,89 continua 98,89, não 89,90) | api:financeiro | ✅ corrigido (B22) |
 
 ### 4.10 Visão Geral e DRE (VG)
 
@@ -404,6 +408,23 @@ Bugs corrigidos (P0 = quebra fluxo da demo, perde dado ou erra dinheiro/estoque;
 | B20 | P1 | Dois aparelhos aceitando/recusando o mesmo pedido: os dois "venciam" (cozinha preparava pedido cancelado, fora da conta). |
 
 **29/09:** implementadas as quatro decisões em aberto (Lançar pedido para o garçom, categorias, ajuste manual de estoque, adicionais com estoque) e corrigido B21 (P1): no celular, a barra de abas ficava depois do conteúdo — numa lista longa o garçom precisava rolar até o fim para trocar de aba.
+
+**29/09 — valores gravados × cadastro atual:** procurados os lugares onde um valor de dinheiro ou estoque já registrado era refeito com a configuração ou o cadastro de hoje. Dois erravam o número e foram corrigidos, com teste que falha no código antigo:
+
+| ID | Gravidade | O que acontecia |
+| --- | --- | --- |
+| B22 | P0 | A fila da Emissão Fiscal recalculava o serviço com a chave de hoje: comanda fechada com 10% e serviço desligado depois aparecia sem os 10% (98,89 cobrados → 89,90 na nota), e o contrário. Agora o fechamento grava o serviço cobrado em cada pedido (migração `9d_order_service`, que preenche as comandas antigas com o valor que a fila já mostrava). |
+| B23 | P0 | A baixa de estoque no fechamento lia a ficha técnica e o vínculo do Cardápio do momento do fechamento: receita mudada com a comanda aberta baixava a receita nova, e prato excluído do Cardápio não baixava nada. Agora cada linha grava, no pedido, o que uma unidade tira do estoque (migração `9e_line_stock`; linhas antigas seguem como antes). |
+
+Conferidos e certos: preço, nome e adicionais na linha do pedido (gravados no pedido); taxa de entrega e desconto (gravados); comanda aberta (usa a chave de hoje de propósito, é o que vai ser cobrado); valor do recebível (gravado no fechamento); Visão Geral e DRE (somam os lançamentos gravados; o CMV é a categoria "Insumos e bebidas" de Contas a Pagar); Relatórios e turno (somam o total gravado dos pedidos, só itens, sem serviço, por definição); mensalidade (valor gravado ao gerar o mês); ajuste de estoque, contagem e custo médio do XML (usam o saldo e o custo do momento, que é a regra). O custo de um composto no Catálogo é sempre o de hoje, porque é cadastro: nenhuma baixa grava custo, então não há custo antigo refeito.
+
+Achados, não corrigidos (precisam de decisão ou estão fora do escopo):
+
+| ID | O que acontece |
+| --- | --- |
+| A-01 | Movimentações mostram a quantidade com a unidade atual do produto: trocar kg → g relê o histórico, o saldo e as fichas técnicas na unidade nova (0,15 kg vira "0,15 g"). Decidir: travar a unidade depois do primeiro movimento, ou converter. |
+| A-02 | "Pedir de novo" (delivery, app do cliente) põe no carrinho o preço do pedido antigo; o servidor cobra o preço de hoje, então o total mostrado antes de confirmar pode diferir do cobrado. |
+| A-03 | A rota `POST /api/orders/:id/repeat` não é usada por nenhum app e cria pedido sem passar pelas regras do pedido: ignora "Clientes pedem pelo QR da mesa" desligado e não abre a mesa. Dá para apagar. |
 
 Mudanças de produto decididas: comanda fechada vira recebível pago; serviço de 10% opcional por restaurante; excluir lançamento; sessão de 24 h; Esgotado para qualquer papel.
 
