@@ -83,7 +83,9 @@ export default function ReportsScreen() {
       </div>
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <StatTile icon="fa-sack-dollar" label="Faturamento" value={brl(kpis.revenue)} deltaPct={kpis.revenueDeltaPct} />
+        <StatTile icon="fa-sack-dollar" label="Vendas de produtos" value={brl(kpis.revenue)} deltaPct={kpis.revenueDeltaPct} />
+        <StatTile icon="fa-bell-concierge" label="Serviço das mesas" value={brl(kpis.service)} />
+        <StatTile icon="fa-equals" label="Total cobrado" value={brl(kpis.total)} />
         <StatTile icon="fa-receipt" label="Ticket médio" value={brl(kpis.avgTicket)} deltaPct={kpis.avgTicketDeltaPct} />
         <StatTile icon="fa-list-check" label="Pedidos" value={String(kpis.orderCount)} deltaPct={kpis.orderCountDeltaPct} />
         <StatTile icon="fa-triangle-exclamation" label="Cancelamentos" value={`${kpis.cancellationRatePct}%`} deltaPct={kpis.cancellationsDeltaPct} />

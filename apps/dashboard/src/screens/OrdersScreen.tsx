@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import type { Order, OrderStatus, WaiterCall } from "@cardapio/shared";
+import type { Order, OrderStatus, ShiftStats, WaiterCall } from "@cardapio/shared";
 import {
   DndContext,
   DragOverlay,
@@ -51,7 +51,7 @@ export default function OrdersScreen() {
   const { notify } = useDashboardState();
   const [orders, setOrders] = useState<Order[]>([]);
   const [calls, setCalls] = useState<WaiterCall[]>([]);
-  const [shift, setShift] = useState<{ closedOrders: number; avgTicket: number; avgPrepMinutes: number; shiftRevenue: number } | null>(null);
+  const [shift, setShift] = useState<ShiftStats | null>(null);
   const [filter, setFilter] = useState<"todos" | "table" | "delivery">("todos");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
@@ -257,7 +257,10 @@ export default function OrdersScreen() {
               { label: "Pedidos fechados", value: String(shift?.closedOrders ?? "—") },
               { label: "Ticket médio", value: shift ? brl(shift.avgTicket) : "—" },
               { label: "Tempo médio de preparo", value: shift ? `${shift.avgPrepMinutes} min` : "—" },
-              { label: "Faturamento do turno", value: shift ? brl(shift.shiftRevenue) : "—" }
+              // The service on its own line, as frozen at each close; the total is what was charged (= Contas a Receber).
+              { label: "Vendas de produtos", value: shift ? brl(shift.shiftRevenue) : "—" },
+              { label: "Serviço das mesas", value: shift ? brl(shift.shiftService) : "—" },
+              { label: "Total do turno", value: shift ? brl(shift.shiftTotal) : "—" }
             ].map((s) => (
               <div key={s.label} style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                 <div style={{ fontSize: 12.5, color: "var(--ink2)", flex: 1, minWidth: 0 }}>{s.label}</div>

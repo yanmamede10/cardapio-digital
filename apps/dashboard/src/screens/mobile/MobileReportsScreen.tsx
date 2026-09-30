@@ -85,7 +85,7 @@ export default function MobileReportsScreen() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: 12, display: "flex", flexDirection: "column", gap: 5 }}>
             <div className="mono" style={{ fontSize: 9.5, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
-              Faturamento
+              Vendas de produtos
             </div>
             <div className="mono" style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-.03em" }}>
               {brl(kpis.revenue)}
@@ -120,6 +120,20 @@ export default function MobileReportsScreen() {
             <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{reviewCount} avaliações</div>
           </div>
         </div>
+
+        {/* The table service apart from the products; products + service = what was charged (Contas a Receber). */}
+        <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 6 }}>
+          {[
+            { label: "Vendas de produtos", value: kpis.revenue },
+            { label: "Serviço das mesas", value: kpis.service },
+            { label: "Total cobrado", value: kpis.total, strong: true }
+          ].map((r) => (
+            <div key={r.label} style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 13, fontWeight: r.strong ? 600 : 400, color: r.strong ? "var(--ink)" : "var(--ink2)", paddingTop: r.strong ? 6 : 0, borderTop: r.strong ? "1px solid var(--line)" : undefined }}>
+              <span style={{ flex: 1 }}>{r.label}</span>
+              <span className="mono" style={{ fontWeight: 600, color: "var(--ink)" }}>{brl(r.value)}</span>
+            </div>
+          ))}
+        </section>
 
         <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

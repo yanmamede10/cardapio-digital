@@ -81,6 +81,29 @@ describe("emissão fiscal", () => {
     assert.deepEqual(seen.filter((r) => r.total !== final.get(r.id)), [], "pedido visto fechado antes de o serviço ser gravado");
   });
 
+  test("relatórios e turno: o serviço numa linha à parte, lido do fechamento; produtos + serviço = Contas a Receber do dia", async () => {
+    const today = new Date().toLocaleDateString("sv-SE");
+    const kpis = async () => (await call("GET", `${P}/analytics?period=today`, { token: owner })).body.kpis;
+    const shift = async () => (await call("GET", `${P}/shift-stats`, { token: owner })).body;
+    const received = async () => ((await call("GET", `${P}/finance-entries?kind=receivable`, { token: owner })).body as { dueDate: string; amount: number }[]).filter((e) => e.dueDate === today).reduce((t, e) => t + e.amount, 0);
+    const before = { k: await kpis(), s: await shift(), r: await received() };
+    const t = await servedTable(3);
+    await t.close();
+    try {
+      await setService(false); // changing the setting afterwards must not change what was charged
+      const after = { k: await kpis(), s: await shift(), r: await received() };
+      const d = (a: number, b: number) => Math.round((a - b) * 100) / 100;
+      assert.ok(t.comanda.service > 0);
+      assert.equal(d(after.r, before.r), t.comanda.total, "o recebível da comanda");
+      assert.deepEqual([d(after.k.revenue, before.k.revenue), d(after.k.service, before.k.service)], [t.comanda.subtotal, t.comanda.service], "Relatórios: produtos e serviço separados");
+      assert.equal(d(after.k.total, before.k.total), d(after.r, before.r), "Relatórios: total = Contas a Receber");
+      assert.deepEqual([d(after.s.shiftRevenue, before.s.shiftRevenue), d(after.s.shiftService, before.s.shiftService)], [t.comanda.subtotal, t.comanda.service], "turno: produtos e serviço separados");
+      assert.equal(d(after.s.shiftTotal, before.s.shiftTotal), d(after.r, before.r), "turno: total = Contas a Receber");
+    } finally {
+      await setService(true);
+    }
+  });
+
   test("lista a comanda só depois de fechada, pelo valor cobrado (com serviço)", async () => {
     const t = await servedTable();
     assert.equal(await row(t.order.id), undefined, "servido mas com a mesa aberta ainda não é elegível");

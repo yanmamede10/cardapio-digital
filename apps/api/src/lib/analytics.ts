@@ -51,10 +51,15 @@ async function ordersBetween(restaurantId: string, from: Date, to: Date): Promis
 function kpisFor(orders: OrderWithLines[]): AnalyticsKpis {
   const live = orders.filter((o) => o.status !== "cancelled");
   const revenue = round2(live.reduce((t, o) => t + o.total, 0));
+  // The table service apart from the products: what was frozen on each order when its comanda closed (Order.service),
+  // never today's setting. Products + service = what was charged, the same as Contas a Receber.
+  const service = round2(live.reduce((t, o) => t + o.service, 0));
   const orderCount = live.length;
   const cancellations = orders.filter((o) => o.status === "cancelled").length;
   return {
     revenue,
+    service,
+    total: round2(revenue + service),
     revenueDeltaPct: 0,
     avgTicket: orderCount ? round2(revenue / orderCount) : 0,
     avgTicketDeltaPct: 0,
@@ -184,9 +189,10 @@ export async function buildShiftStats(restaurantId: string) {
   });
   const closedOrders = orders.length;
   const shiftRevenue = round2(orders.reduce((t, o) => t + o.total, 0));
+  const shiftService = round2(orders.reduce((t, o) => t + o.service, 0)); // frozen at the close, as in the reports
   const avgTicket = closedOrders ? round2(shiftRevenue / closedOrders) : 0;
   const avgPrepMinutes = closedOrders
     ? Math.round(orders.reduce((t, o) => t + (o.updatedAt.getTime() - o.createdAt.getTime()) / 60000, 0) / closedOrders)
     : 0;
-  return { closedOrders, avgTicket, avgPrepMinutes, shiftRevenue };
+  return { closedOrders, avgTicket, avgPrepMinutes, shiftRevenue, shiftService, shiftTotal: round2(shiftRevenue + shiftService) };
 }

@@ -114,8 +114,14 @@ test("QR da mesa → pedido com opções → Central → cozinha → fechamento 
   expect(Math.round((shift.shiftRevenue - before.shift.shiftRevenue) * 100) / 100).toBe(96.8);
   expect(shift.closedOrders - before.shift.closedOrders).toBe(1);
   expect(Math.round((kpis.revenue - before.today.revenue) * 100) / 100).toBe(96.8);
+  // A-4.3: the 10% on its own line (frozen at the close), and products + service = the receivable (106,48).
+  const delta = (x: number, y: number) => Math.round((x - y) * 100) / 100;
+  expect([delta(shift.shiftService, before.shift.shiftService), delta(shift.shiftTotal, before.shift.shiftTotal)]).toEqual([9.68, 106.48]);
+  expect([delta(kpis.service, before.today.service), delta(kpis.total, before.today.total)]).toEqual([9.68, 106.48]);
   await office.goto("/relatorios");
   await expect(office.getByText(brl(kpis.revenue)).first()).toBeVisible();
+  await expect(office.getByText("Serviço das mesas")).toBeVisible();
+  await expect(office.getByText(brl(kpis.total)).first()).toBeVisible();
   await owners.close();
 });
 

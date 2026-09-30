@@ -581,7 +581,12 @@ export interface FinanceSummary {
 export type AnalyticsPeriod = "today" | "week" | "month" | "custom";
 
 export interface AnalyticsKpis {
+  /** Products sold (the orders' totals), without the table service. */
   revenue: number;
+  /** The table service, as frozen on each order when its comanda closed (Order.service). */
+  service: number;
+  /** revenue + service: what was charged — the same as Contas a Receber for the period. */
+  total: number;
   revenueDeltaPct: number;
   avgTicket: number;
   avgTicketDeltaPct: number;
@@ -635,5 +640,9 @@ export interface ShiftStats {
   closedOrders: number;
   avgTicket: number;
   avgPrepMinutes: number;
+  /** Products, without the service. */
   shiftRevenue: number;
+  /** The table service frozen at each close. */
+  shiftService: number;
+  shiftTotal: number;
 }
