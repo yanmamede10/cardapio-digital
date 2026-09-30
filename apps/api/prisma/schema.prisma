@@ -250,6 +250,9 @@ model OrderLine {
   quantity            Int
   notes               String
   selectedOptionsJson String
+  // What one unit takes from stock ({productId: quantity}), frozen when ordered: closing the comanda later takes this,
+  // even if the ficha técnica changed or the dish left the Cardápio. null = ordered before it existed (reads today's).
+  stockJson           String?
 }
 
 // ---------------------------------------------------------------------------

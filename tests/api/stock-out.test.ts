@@ -23,6 +23,12 @@ test("stockOut: composto consome a ficha técnica, simples consome a si mesmo, i
   assert.equal(out.size, 3);
 });
 
+test("stockOut: a receita gravada na linha vale mais que a ficha técnica de hoje; linha antiga (sem receita) lê a de hoje", () => {
+  const products = new Map([["burger", { id: "burger", composed: true, components: [{ componentId: "blend", quantity: 0.18 }] }]]);
+  const out = stockOut([{ productId: "burger", quantity: 2, recipe: { pao: 1, blend: 0.15 } }, { productId: "burger", quantity: 1 }, { productId: null, quantity: 1, recipe: { chope: 1 } }], products);
+  assert.deepEqual(Object.fromEntries(out), { pao: 2, blend: 0.48, chope: 1 });
+});
+
 test("stockOut: adicional com estoque soma a quantidade dele × a quantidade da linha", () => {
   const products = new Map([["burger", { id: "burger", composed: true, components: [{ componentId: "pao", quantity: 1 }] }]]);
   const out = stockOut([{ productId: "burger", quantity: 2, options: [{ productId: "bacon", quantity: 0.03 }, { productId: null }, {}] }], products);

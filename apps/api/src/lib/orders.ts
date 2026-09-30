@@ -4,6 +4,7 @@ import { prisma } from "../db.js";
 import { generateOrderCode } from "./codes.js";
 import { evaluateCoupon } from "./coupons.js";
 import { priceLine, round2 } from "./pricing.js";
+import { recipeOf } from "./stock.js";
 
 const MAX_NOTES_LENGTH = 300;
 const MAX_GUEST_NAME_LENGTH = 120;
@@ -23,10 +24,10 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
 
   const mode = body.mode === "delivery" ? "delivery" : "table";
   if (mode === "table" && !waiterName && !restaurant.qrOrdering) return { status: 403, error: "Neste restaurante os pedidos da mesa são feitos pelo garçom." };
-  const pricedLines: { itemId: string; name: string; unitPrice: number; quantity: number; notes: string; selectedOptionsJson: string }[] = [];
+  const pricedLines: { itemId: string; name: string; unitPrice: number; quantity: number; notes: string; selectedOptionsJson: string; stockJson: string }[] = [];
   try {
     for (const line of body.lines) {
-      const item = await prisma.menuItem.findUnique({ where: { id: line.itemId } });
+      const item = await prisma.menuItem.findUnique({ where: { id: line.itemId }, include: { product: { include: { components: true } } } });
       if (!item || item.restaurantId !== body.restaurantId) return { status: 400, error: `unknown item ${line.itemId}` };
       if (item.soldOut) return { status: 400, error: `${item.name} está esgotado` };
       const { unitPrice, selectedOptions } = priceLine(item, (line.selectedOptions || []).map((o) => ({ groupId: o.groupId, optionId: o.optionId })));
@@ -36,7 +37,9 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
         unitPrice,
         quantity: Math.max(1, Math.floor(line.quantity || 1)),
         notes: line.notes || "",
-        selectedOptionsJson: JSON.stringify(selectedOptions)
+        selectedOptionsJson: JSON.stringify(selectedOptions),
+        // The ficha técnica as sold: closing the comanda takes this even if the recipe changes or the dish leaves the Cardápio.
+        stockJson: JSON.stringify(recipeOf(item.product?.restaurantId === body.restaurantId ? item.product : null))
       });
     }
   } catch (err) {

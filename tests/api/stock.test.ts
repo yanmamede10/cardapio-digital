@@ -118,6 +118,30 @@ describe("baixa de estoque", () => {
     assert.equal((await stockOf(chope.id)).stock, -4);
   });
 
+  test("ficha técnica mudou com a comanda aberta: a baixa segue a receita vendida; o pedido seguinte já usa a nova", async () => {
+    const { pao, blend, burger, item } = await burgerKit();
+    const table = 100 + Math.floor(Math.random() * 800);
+    const order = (qty: number) => call("POST", "/api/orders", { session: `t-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: qty, notes: "", selectedOptions: [] }] } });
+    await order(2);
+    // Mid-service the recipe changes: 0,18 kg of blend, no bread.
+    const edit = await call("PATCH", `${P}/products/${burger.id}`, { token, body: product({ name: burger.name, type: "produto", price: 30, composed: true, components: [{ componentId: blend.id, quantity: 0.18 }] }) });
+    assert.equal(edit.status, 200);
+    await order(1);
+    await call("POST", `${P}/tables/${table}/close`, { token });
+    assert.equal((await stockOf(pao.id)).stock, -2, "o pão dos 2 vendidos antes da mudança; o 3º não leva pão");
+    assert.equal((await stockOf(blend.id)).stock, -0.48, "0,15 × 2 + 0,18 × 1");
+  });
+
+  test("prato excluído do Cardápio com a comanda aberta: a baixa acontece mesmo assim", async () => {
+    const { pao, blend, item } = await burgerKit();
+    const table = 100 + Math.floor(Math.random() * 800);
+    await call("POST", "/api/orders", { session: `t-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] } });
+    assert.equal((await call("DELETE", `${P}/items/${item.id}`, { token })).status, 204);
+    await call("POST", `${P}/tables/${table}/close`, { token });
+    assert.equal((await stockOf(pao.id)).stock, -1);
+    assert.equal((await stockOf(blend.id)).stock, -0.15);
+  });
+
   test("delivery baixa estoque ao ser entregue, uma vez só", async () => {
     const { pao, item } = await burgerKit();
     const order = (await call("POST", "/api/orders", { session: `d-${uid()}`, body: { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 2, notes: "", selectedOptions: [] }] } })).body;
