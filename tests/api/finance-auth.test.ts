@@ -46,16 +46,40 @@ describe("emissão fiscal", () => {
   const row = async (id: string) => (await call("GET", `${P}/closed-orders`, { token: owner })).body.find((o: { id: string }) => o.id === id);
   const receivable = async (table: number, code: string) =>
     (await call("GET", `${P}/finance-entries?kind=receivable`, { token: owner })).body.find((e: { description: string }) => e.description === `Mesa ${table} · comanda ${code}`)?.amount;
-  /** One served order at a fresh table, the comanda the waiter sees, and closing exactly that comanda (→ its code). */
-  async function servedTable() {
-    const items = (await call("GET", `${P}/items`, { token: owner })).body;
+  /** `count` served orders at a fresh table, the comanda the waiter sees, and closing exactly that comanda (→ its code). */
+  async function servedTable(count = 1) {
+    const items = ((await call("GET", `${P}/items`, { token: owner })).body as { id: string; soldOut: boolean }[]).filter((i) => !i.soldOut);
     const table = 100 + Math.floor(Math.random() * 800);
-    const order = (await call("POST", "/api/orders", { session: `f-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[0].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
-    await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
+    const orders: { id: string; total: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const order = (await call("POST", "/api/orders", { session: `f-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[i % items.length].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
+      await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
+      orders.push(order);
+    }
     const comanda = (await call("GET", `${P}/tables/${table}/comanda`, { token: owner })).body;
     const close = async (): Promise<string> => (await call("POST", `${P}/tables/${table}/close`, { token: owner, body: { orderIds: comanda.orderIds } })).body.code;
-    return { table, order, comanda, close };
+    return { table, order: orders[0], orders, comanda, close };
   }
+
+  test("o fechamento e o serviço são gravados juntos: a fila nunca vê a comanda fechada com serviço 0", async () => {
+    const t = await servedTable(20);
+    const ids = new Set(t.orders.map((o) => o.id));
+    const rows = async () => ((await call("GET", `${P}/closed-orders`, { token: owner })).body as { id: string; total: number }[]).filter((r) => ids.has(r.id));
+    // Two readers poll the queue while the comanda closes: whatever they catch must already be the final value.
+    let closing = true;
+    const seen: { id: string; total: number }[] = [];
+    const watch = async () => {
+      while (closing) seen.push(...(await rows()));
+    };
+    const watchers = [watch(), watch()];
+    await t.close();
+    closing = false;
+    await Promise.all(watchers);
+    const final = new Map((await rows()).map((r) => [r.id, r.total]));
+    assert.equal(final.size, 20);
+    assert.equal(Math.round([...final.values()].reduce((a, b) => a + b, 0) * 100) / 100, t.comanda.total, "a nota soma o que a comanda cobrou");
+    assert.deepEqual(seen.filter((r) => r.total !== final.get(r.id)), [], "pedido visto fechado antes de o serviço ser gravado");
+  });
 
   test("lista a comanda só depois de fechada, pelo valor cobrado (com serviço)", async () => {
     const t = await servedTable();

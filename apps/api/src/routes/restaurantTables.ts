@@ -152,16 +152,16 @@ restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (r
   const pct = servicePct(await prisma.restaurant.findUnique({ where: { id: req.params.id } }));
   const open = await openOrdersForTable(req.params.id, table.number);
   const target = Array.isArray(orderIds) ? open.filter((o) => orderIds.includes(o.id)) : open;
-  // Claims each order once (closedAt IS NULL), so two waiters/double clicks never charge or take stock twice.
+  // Claims each order once (closedAt IS NULL), so two waiters/double clicks never charge or take stock twice. The same UPDATE
+  // freezes the service charged on each order (Emissão Fiscal reads it), so no order is ever closed with its service unwritten.
+  // Raw: updatedAt (when it was served, read by the turno) doesn't move.
+  const fees = target.map((o) => Prisma.sql`WHEN ${o.id} THEN ${serviceFee(o, pct)}::double precision`);
   const claimed = target.length
-    ? await prisma.$queryRaw<{ id: string }[]>`UPDATE "Order" SET "closedAt" = NOW() WHERE "id" IN (${Prisma.join(target.map((o) => o.id))}) AND "closedAt" IS NULL RETURNING "id"`
+    ? await prisma.$queryRaw<{ id: string }[]>`UPDATE "Order" SET "closedAt" = NOW(), "service" = CASE "id" ${Prisma.join(fees, " ")} END WHERE "id" IN (${Prisma.join(target.map((o) => o.id))}) AND "closedAt" IS NULL RETURNING "id"`
     : [];
   const closed = target.filter((o) => claimed.some((c) => c.id === o.id));
   if (closed.length) {
     await prisma.order.updateMany({ where: { id: { in: closed.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
-    // The service charged stays on each order, so Emissão Fiscal shows it even after the setting changes.
-    // Raw, like the claim: updatedAt (when it was served, read by the turno) doesn't move.
-    await prisma.$transaction(closed.map((o) => prisma.$executeRaw`UPDATE "Order" SET "service" = ${serviceFee(o, pct)} WHERE "id" = ${o.id}`));
     await takeStockForOrders(req.params.id, closed, `Fechamento de comanda ${closed[0].code}`);
     // What was charged at the table enters Contas a Receber as paid (only when the restaurant has that module).
     if (hasModule(req, "receber")) {
