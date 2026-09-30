@@ -14,6 +14,7 @@ const MAX_EMAIL_LENGTH = 254;
 const MAX_RESTAURANT_NAME_LENGTH = 80;
 const MAX_CUISINE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_HOURS_LENGTH = 40; // free text, e.g. "11:30 – 15:00"; "" = closed at that meal
 const TAX_REGIMES: TaxRegime[] = ["mei", "simples_nacional", "lucro_presumido", "lucro_real", "lucro_arbitrado"];
 const PAYMENT_MODES: PaymentMode[] = ["sistema", "maquininha_propria"];
 
@@ -60,7 +61,12 @@ settingsRouter.get("/:id/hours", ...staffGuard, async (req, res) => {
 
 settingsRouter.patch("/:id/hours", ...staffGuard, async (req, res) => {
   const { rows } = req.body as { rows?: OperatingHoursRow[] };
-  if (!Array.isArray(rows)) return res.status(400).json({ error: "rows is required" });
+  const okRow = (r: OperatingHoursRow) =>
+    !!r && Number.isInteger(r.weekday) && r.weekday >= 0 && r.weekday <= 6 && typeof r.isOpen === "boolean" &&
+    [r.lunch, r.dinner].every((t) => typeof t === "string" && t.length <= MAX_HOURS_LENGTH);
+  if (!Array.isArray(rows) || rows.length > 7 || !rows.every(okRow) || new Set(rows.map((r) => r.weekday)).size !== rows.length) {
+    return res.status(400).json({ error: `rows: up to 7 distinct weekdays (0-6), lunch and dinner up to ${MAX_HOURS_LENGTH} characters, isOpen true or false` });
+  }
   await prisma.$transaction(
     rows.map((row) =>
       prisma.operatingHour.upsert({

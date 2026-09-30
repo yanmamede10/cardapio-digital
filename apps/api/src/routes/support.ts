@@ -2,7 +2,7 @@ import { type RequestHandler, type Response } from "express";
 import { asyncRouter } from "../lib/router.js";
 import multer from "multer";
 import type { SupportTicket } from "@prisma/client";
-import { SUPPORT_ROLES, WHATSAPP_MEDIA_TOO_BIG } from "@cardapio/shared";
+import { SUPPORT_ROLES, WHATSAPP_MEDIA_TOO_BIG, type TicketStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { serializeReview, serializeTicket } from "../lib/serialize.js";
@@ -15,6 +15,8 @@ export const supportRouter = asyncRouter();
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireRole(...SUPPORT_ROLES), requireModule("atendimento")];
 const MAX_MESSAGE_LENGTH = 2000;
+const TICKET_STATUSES: TicketStatus[] = ["new", "in_progress", "resolved"];
+const MAX_ASSIGNEE_LENGTH = 120; // a staff member's name
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: WHATSAPP_MEDIA_MAX_BYTES } }).single("file");
 /** Over the limit, multer's error would be a bare 500: whoever sent it from Atendimento must read why. */
 const mediaUpload: RequestHandler = (req, res, next) =>
@@ -80,14 +82,19 @@ supportRouter.get("/:id/tickets", ...staffGuard, async (req, res) => {
 });
 
 supportRouter.patch("/:id/tickets/:ticketId", ...staffGuard, async (req, res) => {
-  const { assignee, status } = req.body as { assignee?: string; status?: string };
+  const { assignee, status } = req.body as { assignee?: unknown; status?: unknown };
+  if (status !== undefined && !TICKET_STATUSES.includes(status as TicketStatus)) return res.status(400).json({ error: `status must be one of ${TICKET_STATUSES.join(", ")}` });
+  // null or "" = nobody
+  if (assignee !== undefined && assignee !== null && (typeof assignee !== "string" || assignee.length > MAX_ASSIGNEE_LENGTH)) {
+    return res.status(400).json({ error: `assignee must be a name of up to ${MAX_ASSIGNEE_LENGTH} characters` });
+  }
   const existing = await prisma.supportTicket.findUnique({ where: { id: req.params.ticketId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "ticket not found" });
   const ticket = await prisma.supportTicket.update({
     where: { id: req.params.ticketId },
     data: {
-      ...(assignee !== undefined ? { assignee } : {}),
-      ...(status !== undefined ? { status } : {}),
+      ...(assignee !== undefined ? { assignee: (assignee as string | null)?.trim() || null } : {}),
+      ...(status !== undefined ? { status: status as TicketStatus } : {}),
       lastActivityAt: new Date()
     },
     include: { messages: { orderBy: { createdAt: "asc" } } }
