@@ -3,7 +3,7 @@ import { PAYMENT_METHODS, type CartLineInput, type SalonGrid } from "@cardapio/s
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { hasModule, requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
-import { buildComanda, openOrdersByTable, openOrdersForTable, servicePct, statusForTable } from "../lib/tables.js";
+import { buildComanda, openOrdersByTable, openOrdersForTable, serviceFee, servicePct, statusForTable } from "../lib/tables.js";
 import { serializeOrder, serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
 import { placeOrder } from "../lib/orders.js";
@@ -149,6 +149,7 @@ restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (r
   if (paymentMethod !== undefined && !(PAYMENT_METHODS as readonly unknown[]).includes(paymentMethod)) {
     return res.status(400).json({ error: `paymentMethod must be one of ${PAYMENT_METHODS.join(", ")}` });
   }
+  const pct = servicePct(await prisma.restaurant.findUnique({ where: { id: req.params.id } }));
   const open = await openOrdersForTable(req.params.id, table.number);
   const target = Array.isArray(orderIds) ? open.filter((o) => orderIds.includes(o.id)) : open;
   // Claims each order once (closedAt IS NULL), so two waiters/double clicks never charge or take stock twice.
@@ -158,11 +159,13 @@ restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (r
   const closed = target.filter((o) => claimed.some((c) => c.id === o.id));
   if (closed.length) {
     await prisma.order.updateMany({ where: { id: { in: closed.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
+    // The service charged stays on each order, so Emissão Fiscal shows it even after the setting changes.
+    // Raw, like the claim: updatedAt (when it was served, read by the turno) doesn't move.
+    await prisma.$transaction(closed.map((o) => prisma.$executeRaw`UPDATE "Order" SET "service" = ${serviceFee(o, pct)} WHERE "id" = ${o.id}`));
     await takeStockForOrders(req.params.id, closed, `Fechamento de comanda ${closed[0].code}`);
     // What was charged at the table enters Contas a Receber as paid (only when the restaurant has that module).
     if (hasModule(req, "receber")) {
-      const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
-      const bill = buildComanda(table, closed, servicePct(restaurant));
+      const bill = buildComanda(table, closed, pct);
       const today = new Date().toLocaleDateString("sv-SE");
       await prisma.financeEntry.create({
         data: {

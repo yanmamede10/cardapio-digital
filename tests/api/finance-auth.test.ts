@@ -42,18 +42,60 @@ describe("emissão fiscal", () => {
   before(() => setModules(ALL_MODULES)); // the seeded demo restaurant has it off
   after(() => setModules(SEED_MODULES));
 
-  test("lista a comanda só depois de fechada, pelo valor cobrado (com serviço)", async () => {
+  const setService = (serviceCharge: boolean) => call("PATCH", `${P}/payment-mode`, { token: owner, body: { serviceCharge } });
+  const row = async (id: string) => (await call("GET", `${P}/closed-orders`, { token: owner })).body.find((o: { id: string }) => o.id === id);
+  const receivable = async (table: number, code: string) =>
+    (await call("GET", `${P}/finance-entries?kind=receivable`, { token: owner })).body.find((e: { description: string }) => e.description === `Mesa ${table} · comanda ${code}`)?.amount;
+  /** One served order at a fresh table, the comanda the waiter sees, and closing exactly that comanda (→ its code). */
+  async function servedTable() {
     const items = (await call("GET", `${P}/items`, { token: owner })).body;
     const table = 100 + Math.floor(Math.random() * 800);
     const order = (await call("POST", "/api/orders", { session: `f-${uid()}`, body: { mode: "table", restaurantId: R, tableNumber: table, lines: [{ itemId: items[0].id, quantity: 1, notes: "", selectedOptions: [] }] } })).body;
     await call("PATCH", `/api/orders/${order.id}/stage`, { token: owner, body: { stage: "served" } });
     const comanda = (await call("GET", `${P}/tables/${table}/comanda`, { token: owner })).body;
-    const row = async () => (await call("GET", `${P}/closed-orders`, { token: owner })).body.find((o: { id: string }) => o.id === order.id);
+    const close = async (): Promise<string> => (await call("POST", `${P}/tables/${table}/close`, { token: owner, body: { orderIds: comanda.orderIds } })).body.code;
+    return { table, order, comanda, close };
+  }
 
-    assert.equal(await row(), undefined, "servido mas com a mesa aberta ainda não é elegível");
-    await call("POST", `${P}/tables/${table}/close`, { token: owner });
-    assert.ok(comanda.service > 0);
-    assert.equal((await row())?.total, comanda.total, "nota = pedido + serviço, o mesmo valor cobrado na comanda");
+  test("lista a comanda só depois de fechada, pelo valor cobrado (com serviço)", async () => {
+    const t = await servedTable();
+    assert.equal(await row(t.order.id), undefined, "servido mas com a mesa aberta ainda não é elegível");
+    await t.close();
+    assert.ok(t.comanda.service > 0);
+    assert.equal((await row(t.order.id))?.total, t.comanda.total, "nota = pedido + serviço, o mesmo valor cobrado na comanda");
+  });
+
+  test("serviço desligado do começo ao fim: a nota tem o valor da comanda, sem os 10%", async () => {
+    try {
+      await setService(false);
+      const t = await servedTable();
+      assert.deepEqual([t.comanda.service, t.comanda.total], [0, t.order.total]);
+      await t.close();
+      assert.equal((await row(t.order.id))?.total, t.comanda.total);
+    } finally {
+      await setService(true);
+    }
+  });
+
+  test("mudar a chave depois do fechamento não muda a nota: vale o que foi cobrado, igual ao Contas a Receber", async () => {
+    try {
+      const on = await servedTable();
+      const onCode = await on.close();
+      assert.ok(on.comanda.service > 0);
+      await setService(false);
+      assert.equal((await row(on.order.id))?.total, on.comanda.total, "fechada com serviço: continua com serviço depois de desligar");
+
+      const off = await servedTable();
+      const offCode = await off.close();
+      assert.equal(off.comanda.service, 0);
+      await setService(true);
+      assert.equal((await row(off.order.id))?.total, off.comanda.total, "fechada sem serviço: continua sem depois de religar");
+
+      assert.equal(await receivable(on.table, onCode), on.comanda.total);
+      assert.equal(await receivable(off.table, offCode), off.comanda.total);
+    } finally {
+      await setService(true);
+    }
   });
 });
 

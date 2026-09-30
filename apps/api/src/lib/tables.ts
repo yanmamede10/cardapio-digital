@@ -6,8 +6,8 @@ import { round2 } from "./pricing.js";
 /** The table's service: 10% when the restaurant charges it (Restaurant.serviceCharge), else 0. */
 export const servicePct = (r: { serviceCharge: boolean } | null) => (r?.serviceCharge === false ? 0 : 10);
 
-/** Service charged on one order (table only). Per order, so the comanda's service is exactly the sum
- *  of what the Emissão Fiscal queue adds to each of its orders. ponytail: reads today's setting, not the one when it was charged. */
+/** Service on one order (table only). Per order, so the comanda's service is exactly the sum of what closing
+ *  freezes on each of its orders (Order.service, which Emissão Fiscal reads). */
 export const serviceFee = (o: Pick<Order, "mode" | "subtotal">, pct: number) => (o.mode === "table" ? round2(o.subtotal * (pct / 100)) : 0);
 
 /** A table's open comanda: its non-cancelled orders not closed yet (closing stamps closedAt on exactly the orders it charged). */

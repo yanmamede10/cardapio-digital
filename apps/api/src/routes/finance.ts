@@ -4,7 +4,6 @@ import { prisma } from "../db.js";
 import { hasModule, requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { round2 } from "../lib/pricing.js";
 import { serializeFinanceEntry, serializeOrder } from "../lib/serialize.js";
-import { serviceFee, servicePct } from "../lib/tables.js";
 
 export const financeRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the "/api/restaurants" mount point.
@@ -76,7 +75,7 @@ financeRouter.delete("/:id/finance-entries/:entryId", ...staffGuard, async (req,
 
 /** Emissão Fiscal queue: finished orders — delivered deliveries and table orders whose comanda is
  *  already closed (a served order at a still-open table isn't billable yet). `total` is what was
- *  charged: table orders include their share of the comanda's service. */
+ *  charged: table orders include the service frozen on them when the comanda closed. */
 financeRouter.get("/:id/closed-orders", ...staffGuard, requireModule("fiscal"), async (req, res) => {
   // ponytail: newest 500, add paging when a restaurant outgrows it
   const orders = await prisma.order.findMany({
@@ -85,6 +84,5 @@ financeRouter.get("/:id/closed-orders", ...staffGuard, requireModule("fiscal"), 
     orderBy: { createdAt: "desc" },
     take: 500
   });
-  const pct = servicePct(await prisma.restaurant.findUnique({ where: { id: req.params.id } }));
-  res.json(orders.map((o) => ({ ...serializeOrder(o), total: round2(o.total + serviceFee(o, pct)) })));
+  res.json(orders.map((o) => ({ ...serializeOrder(o), total: round2(o.total + o.service) })));
 });
