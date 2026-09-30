@@ -549,3 +549,28 @@ plain("Gerar novo QR: pede confirmação, troca o QR na tela e o link antigo dei
   await expect(waiter.getByRole("button", { name: "Gerar novo QR" })).toHaveCount(0);
   await waiter.close();
 });
+
+test("Pedir de novo: o carrinho vem com o preço e a disponibilidade de hoje e diz o que ficou de fora", async ({ api, request, browser }) => {
+  const kept = await burgerKit(api); // R$ 30,00 when ordered
+  const gone = await burgerKit(api);
+  const session = crypto.randomUUID();
+  const lines = [kept, gone].map((k) => ({ itemId: k.item.id, quantity: 2, notes: "", selectedOptions: [] }));
+  expect((await request.post("http://localhost:4200/api/orders", { data: { mode: "delivery", restaurantId: R, lines }, headers: { "X-Session-Id": session } })).status()).toBe(201);
+  await api("PATCH", `/api/restaurants/${R}/items/${kept.item.id}`, { price: 34.5 });
+  await api("PATCH", `/api/restaurants/${R}/items/${gone.item.id}/sold-out`, { soldOut: true });
+  try {
+    const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await phone.addInitScript((s) => localStorage.setItem("cardapio.sessionId", s), session);
+    const guest = await phone.newPage();
+    await guest.goto("http://localhost:5273/history");
+    await guest.getByRole("button", { name: /Pedir de novo/ }).first().click();
+    await expect(guest).toHaveURL(/\/cart$/);
+    await expect(guest.getByRole("status").filter({ hasText: "Ficaram de fora" })).toContainText(`Ficaram de fora por não estarem disponíveis hoje: ${gone.burger.name}.`);
+    await expect(guest.getByText(kept.burger.name, { exact: true })).toBeVisible();
+    await expect(guest.getByText("R$ 69,00").first()).toBeVisible(); // 2 × 34,50 today, not 2 × 30,00
+    await expect(guest.getByText(gone.burger.name, { exact: true })).toHaveCount(0);
+    await phone.close();
+  } finally {
+    await api("PATCH", `/api/restaurants/${R}/items/${gone.item.id}/sold-out`, { soldOut: false });
+  }
+});

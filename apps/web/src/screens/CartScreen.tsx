@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { QtyStepper } from "../components/QtyStepper";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { useApp } from "../context/AppContext";
@@ -13,6 +13,8 @@ export default function CartScreen() {
   const { lines, subtotal, count, incQty, decQty, removeLine, setNotes } = useCart();
   const { showToast } = useToast();
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  // "Pedir de novo" (HistoryScreen): the dishes of the old order that aren't available today.
+  const leftOut = ((useLocation().state as { leftOut?: string[] } | null)?.leftOut ?? []);
 
   const isMesa = mode === "table";
   const goMenu = () => navigate(restaurantId ? `/r/${restaurantId}/menu` : "/");
@@ -26,6 +28,14 @@ export default function CartScreen() {
         meta={isMesa ? `Mesa ${tableNumber ?? ""}` : `${count} itens`}
       />
       <div className="scroll no-scrollbar" style={{ padding: "16px var(--pad) 0" }}>
+        {leftOut.length > 0 && (
+          <div role="status" className="card" style={{ marginBottom: 12, padding: "14px 16px", display: "flex", gap: 12, alignItems: "flex-start", border: "1px solid var(--line)" }}>
+            <i className="fa-solid fa-circle-info" aria-hidden="true" style={{ fontSize: "var(--i-m)", color: "var(--acc)", marginTop: 2 }} />
+            <div style={{ font: "400 var(--t-s) var(--font)", lineHeight: 1.5 }}>
+              <strong style={{ fontWeight: 600 }}>Ficaram de fora</strong> por não estarem disponíveis hoje: {leftOut.join(", ")}.
+            </div>
+          </div>
+        )}
         {!hasItems && (
           <div style={{ padding: "44px 8px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 16 }}>
             <div style={{ width: 104, height: 104, borderRadius: 999, background: "var(--surf2)", border: "1px dashed var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>

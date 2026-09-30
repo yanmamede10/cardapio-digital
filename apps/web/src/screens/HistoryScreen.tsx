@@ -1,7 +1,8 @@
-import type { Order } from "@cardapio/shared";
+import type { CartLineSelectedOption, Order } from "@cardapio/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
+import { useApp } from "../context/AppContext";
 import { cartLineKey, useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
@@ -21,6 +22,7 @@ const STATUS_LABEL: Record<Order["status"], string> = {
 export default function HistoryScreen() {
   const navigate = useNavigate();
   const { replaceAll } = useCart();
+  const { setActiveRestaurant } = useApp();
   const { showToast } = useToast();
   const [orders, setOrders] = useState<Order[] | null>(null);
 
@@ -28,20 +30,35 @@ export default function HistoryScreen() {
     api.listOrders("delivery").then(setOrders);
   }, []);
 
-  const repeat = (order: Order) => {
-    replaceAll(
-      order.lines.map((l) => ({
-        key: cartLineKey(l.itemId, l.selectedOptions, l.notes),
-        itemId: l.itemId,
-        name: l.name,
-        unitPrice: l.unitPrice,
-        quantity: l.quantity,
-        notes: l.notes,
-        selectedOptions: l.selectedOptions
-      }))
-    );
-    showToast(`Itens do pedido ${order.code} no carrinho`, "fa-solid fa-rotate-right");
-    navigate("/cart");
+  /** Rebuilds the cart from today's menu: the same dishes and choices at today's prices. A dish that left the menu, is
+   *  sold out or whose choice no longer exists stays out, and the cart says which (the old order's prices are never reused). */
+  const repeat = async (order: Order) => {
+    let items;
+    try {
+      items = await api.getItems(order.restaurantId);
+    } catch {
+      return showToast("Não foi possível carregar o cardápio de hoje", "fa-solid fa-triangle-exclamation");
+    }
+    const leftOut: string[] = [];
+    const lines = order.lines.flatMap((l) => {
+      const item = items.find((i) => i.id === l.itemId && !i.soldOut);
+      const options = (item ? l.selectedOptions : []).map((o) => {
+        const group = item!.optionGroups.find((g) => g.id === o.groupId);
+        const opt = group?.options.find((x) => x.id === o.optionId);
+        return group && opt ? { groupId: group.id, groupLabel: group.label, optionId: opt.id, label: opt.label, priceDelta: opt.priceDelta } : null;
+      });
+      if (!item || options.includes(null)) {
+        leftOut.push(l.name);
+        return [];
+      }
+      const selectedOptions = options as CartLineSelectedOption[];
+      const unitPrice = Math.round((item.price + selectedOptions.reduce((t, o) => t + o.priceDelta, 0)) * 100) / 100;
+      return [{ key: cartLineKey(item.id, selectedOptions, l.notes), itemId: item.id, name: item.name, unitPrice, quantity: l.quantity, notes: l.notes, selectedOptions }];
+    });
+    setActiveRestaurant(order.restaurantId);
+    replaceAll(lines);
+    if (lines.length) showToast(`Itens do pedido ${order.code} no carrinho, com os preços de hoje`, "fa-solid fa-rotate-right");
+    navigate("/cart", { state: { leftOut } });
   };
 
   return (
