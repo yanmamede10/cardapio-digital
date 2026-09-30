@@ -106,6 +106,28 @@ describe("WhatsApp (Evolution)", () => {
     assert.equal(await ticketOf(), undefined);
   });
 
+  test("sem o segredo, a recusa vem antes de ler o corpo; com o segredo, corpo acima de 8 MB em base64 + 1 MB → 413", async () => {
+    const API = process.env.API_URL ?? "http://localhost:4200";
+    // Announces 50 MB and sends a few bytes: the 401 must come back while the body is still "on its way".
+    const early = await new Promise<number | "esperou o corpo">((resolve) => {
+      const req = http.request(`${API}/api/whatsapp/webhook`, { method: "POST", headers: { "Content-Type": "application/json", "Content-Length": String(50 * 1024 * 1024) } }, (res) => {
+        res.resume();
+        resolve(res.statusCode!);
+        req.destroy();
+      });
+      req.on("error", () => {}); // the socket we tear down after the answer
+      req.write('{"event":"messages.upsert","data":"');
+      setTimeout(() => (resolve("esperou o corpo"), req.destroy()), 5000);
+    });
+    assert.equal(early, 401);
+
+    const limit = Math.ceil((8 * 1024 * 1024) / 3) * 4 + 1024 * 1024;
+    const over = await fetch(`${API}/api/whatsapp/webhook`, { method: "POST", headers: { "Content-Type": "application/json", ...SECRET }, body: JSON.stringify({ event: "messages.upsert", pad: "x".repeat(limit) }) });
+    assert.equal(over.status, 413);
+    const under = await hook({ ...upsert(text("")), pad: "x".repeat(limit - 2048) });
+    assert.equal(under.status, 200, "logo abaixo do limite passa");
+  });
+
   test("mensagem recebida vira ticket WhatsApp no restaurante certo; reentrega não duplica; receber nunca envia nada nem marca como lida", async () => {
     const msg = text("Oi, vocês abrem hoje?");
     firstId = msg.key.id;

@@ -1,6 +1,7 @@
+import express from "express";
 import { asyncRouter } from "../lib/router.js";
 import { Prisma } from "@prisma/client";
-import { LEVEL, SUPPORT_ROLES, type WhatsAppStatus } from "@cardapio/shared";
+import { LEVEL, SUPPORT_ROLES, WHATSAPP_MEDIA_MAX_BYTES, type WhatsAppStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireMinRole, requireModule, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { storeWhatsAppMedia } from "../lib/storage.js";
@@ -57,11 +58,17 @@ whatsappRouter.post("/:id/whatsapp/disconnect", ...ownerGuard, async (req, res) 
   res.json(await statusOf(req.params.id));
 });
 
-// Provider → API. Authenticated by the provider's own check (a shared secret header for Evolution); receiving never sends anything.
+// Provider → API. Authenticated by the provider's own check (a shared secret header for Evolution) before a single byte of the
+// body is read, so a stranger can't make the API buffer anything. Receiving never sends anything.
 export const whatsappWebhookRouter = asyncRouter();
+/** Evolution posts received media as base64 inside the JSON: the largest media we keep (8 MB) in base64 (4 bytes per 3),
+ *  plus 1 MB for the rest of the message (caption, thumbnail, keys). Bigger media gets 413 and never reaches the ticket. */
+export const WEBHOOK_BODY_LIMIT = Math.ceil(WHATSAPP_MEDIA_MAX_BYTES / 3) * 4 + 1024 * 1024;
+
+whatsappWebhookRouter.use((req, res, next) => (whatsapp.verifyWebhook((name) => req.header(name)) ? next() : res.status(401).json({ error: "invalid webhook secret" })));
+whatsappWebhookRouter.use(express.json({ limit: WEBHOOK_BODY_LIMIT }));
 
 whatsappWebhookRouter.post("/", async (req, res, next) => {
-  if (!whatsapp.verifyWebhook((name) => req.header(name))) return res.status(401).json({ error: "invalid webhook secret" });
   try {
     for (const m of whatsapp.parseWebhook(req.body)) await receive(m);
     res.json({ ok: true });

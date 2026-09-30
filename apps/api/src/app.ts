@@ -29,9 +29,9 @@ const app = express();
 // Unset → open to any origin, which keeps local dev and the Capacitor Android builds working.
 const origins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
 app.use(cors(origins?.length ? { origin: origins } : undefined));
-// Evolution posts received media as base64 inside the JSON, far past express.json()'s 100kb default — so this one route
-// gets its own parser first (the global one below then skips the already-parsed body).
-app.use("/api/whatsapp/webhook", express.json({ limit: "25mb" }), whatsappWebhookRouter);
+// Evolution posts received media as base64 inside the JSON, far past express.json()'s 100kb default: this one route checks
+// its secret and then parses with its own limit (routes/whatsapp.ts), before the global parser below.
+app.use("/api/whatsapp/webhook", whatsappWebhookRouter);
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
@@ -61,6 +61,9 @@ app.use((req, res) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // The body parser's own errors (malformed JSON 400, body over the limit 413) keep their status.
+  const status = (err as { status?: number }).status;
+  if (status && status >= 400 && status < 500) return res.status(status).json({ error: (err as Error).message });
   console.error(err);
   res.status(500).json({ error: "internal error" });
 });
