@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FiscalInfo, OperatingHoursRow, RestaurantProfile, StaffMember, StaffRole, TaxRegime } from "@cardapio/shared";
-import { ROLE_LABEL, TAX_REGIME_LABEL } from "@cardapio/shared";
+import { MIN_PASSWORD_LENGTH, ROLE_LABEL, TAX_REGIME_LABEL } from "@cardapio/shared";
 import { ApiError, api, getSession } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { moduleOn } from "../lib/modules";
@@ -78,7 +78,8 @@ export default function SettingsScreen() {
   // One form for both: id null = adding (password required), id set = editing (password optional, resets it).
   const saveMember = async () => {
     const { id, name, email, role, password } = member;
-    if (!name.trim() || !email.trim() || (!id && password.length < 6)) return notify(id ? "Preencha nome e e-mail" : "Preencha nome, e-mail e uma senha de 6+ caracteres");
+    if (!name.trim() || !email.trim()) return notify("Preencha nome e e-mail");
+    if ((!id || password) && password.length < MIN_PASSWORD_LENGTH) return notify(`A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`);
     try {
       const saved = id ? await api.updateStaff(id, { name, email, role, ...(password ? { password } : {}) }) : await api.inviteStaff({ name, email, role, password });
       setStaff((prev) => (id ? prev.map((s) => (s.id === id ? saved : s)) : [...prev, saved]));
@@ -227,7 +228,7 @@ export default function SettingsScreen() {
                 </select>
               </Field>
               <Field label={member.id ? "Nova senha (opcional)" : "Senha inicial"}>
-                <input className="field" type="password" autoComplete="new-password" value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} placeholder="Mínimo 6 caracteres" />
+                <input className="field" type="password" autoComplete="new-password" value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`} />
               </Field>
             </div>
             <div style={{ display: "flex", gap: 10 }}>

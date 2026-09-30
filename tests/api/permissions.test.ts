@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
-import { R, call, login, uid } from "./helpers.ts";
+import { ADMIN_KEY, R, call, login, uid } from "./helpers.ts";
 
 const P = `/api/restaurants/${R}`;
 let owner: string;
@@ -50,7 +50,7 @@ describe("Equipe & Permissões", () => {
   });
 
   test("valida papel, e-mail repetido, o próprio papel e membro de outro restaurante", async () => {
-    const base = { name: "Y", email: `y-${uid()}@t.com`, password: "123456" };
+    const base = { name: "Y", email: `y-${uid()}@t.com`, password: "12345678" };
     for (const role of ["superuser", "toString", undefined]) {
       assert.equal((await call("POST", `${P}/staff`, { token: owner, body: { ...base, role } })).status, 400, String(role));
     }
@@ -61,4 +61,25 @@ describe("Equipe & Permissões", () => {
     assert.equal((await call("PATCH", `${P}/staff/${me.id}`, { token: owner, body: { role: "waiter" } })).status, 400, "Dono não se rebaixa");
     assert.equal((await call("PATCH", `${P}/staff/nao-existe`, { token: owner, body: { name: "Z" } })).status, 404);
   });
+});
+
+test("senha de pelo menos 8 caracteres no cadastro, na troca pelo Dono e na troca pela própria pessoa; o reset gera uma provisória de 12", async () => {
+  const email = `senha-${uid()}@t.com`;
+  const create = (password: unknown) => call("POST", `${P}/staff`, { token: owner, body: { name: "Senha", email, role: "waiter", password } });
+  assert.equal((await create("1234567")).status, 400, "7 caracteres");
+  assert.equal((await create(12345678)).status, 400, "número em vez de texto");
+  const created = await create("12345678");
+  assert.equal(created.status, 201);
+
+  const setByOwner = (password: string) => call("PATCH", `${P}/staff/${created.body.id}`, { token: owner, body: { password } });
+  assert.equal((await setByOwner("abcdefg")).status, 400);
+  assert.equal((await setByOwner("abcdefgh")).status, 200);
+
+  const token = (await call("POST", "/api/auth/login", { body: { email, password: "abcdefgh" } })).body.token;
+  const change = (newPassword: string) => call("POST", "/api/auth/password", { token, body: { currentPassword: "abcdefgh", newPassword } });
+  assert.equal((await change("1234567")).status, 400);
+  assert.equal((await change("12345678")).status, 200);
+
+  const reset = await call("POST", `/api/admin/restaurants/${R}/staff/${created.body.id}/reset-password`, { token: ADMIN_KEY });
+  assert.equal(reset.body.password.length, 12);
 });

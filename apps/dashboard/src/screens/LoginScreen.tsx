@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MIN_PASSWORD_LENGTH } from "@cardapio/shared";
 import { ApiError, changePassword, login, logout } from "../lib/api";
 import { Field } from "../components/SlideOver";
 
@@ -134,7 +135,7 @@ export function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
       const msg = err instanceof ApiError ? err.message : "";
       setError(
         msg.includes("current password") ? "A senha provisória não confere."
-        : msg.includes("at least") ? "A senha nova precisa ter pelo menos 6 caracteres."
+        : msg.includes("at least") ? `A senha nova precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`
         : msg.includes("differ") ? "A senha nova precisa ser diferente da provisória."
         : "Não foi possível trocar a senha. Tente novamente."
       );
@@ -152,7 +153,7 @@ export function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
           <input className="field" type="password" autoComplete="current-password" required autoFocus value={current} onChange={(e) => setCurrent(e.target.value)} />
         </Field>
         <Field label="Nova senha">
-          <input className="field" type="password" autoComplete="new-password" required minLength={6} value={next} onChange={(e) => setNext(e.target.value)} />
+          <input className="field" type="password" autoComplete="new-password" required minLength={MIN_PASSWORD_LENGTH} value={next} onChange={(e) => setNext(e.target.value)} />
         </Field>
         <Field label="Repita a nova senha">
           <input className="field" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />

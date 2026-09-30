@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { StaffMember, StaffRole } from "@cardapio/shared";
-import { ROLE_LABEL } from "@cardapio/shared";
+import { MIN_PASSWORD_LENGTH, ROLE_LABEL } from "@cardapio/shared";
 import { ApiError, api, getSession } from "../../lib/api";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { LEVELS_HINT } from "../SettingsScreen";
@@ -23,7 +23,8 @@ export default function MobileTeamScreen() {
   // id null = adding (password required), id set = editing (password optional, resets it).
   const save = async () => {
     const { id, name, email, role, password } = member;
-    if (!name.trim() || !email.trim() || (!id && password.length < 6)) return notify(id ? "Preencha nome e e-mail" : "Preencha nome, e-mail e uma senha de 6+ caracteres");
+    if (!name.trim() || !email.trim()) return notify("Preencha nome e e-mail");
+    if ((!id || password) && password.length < MIN_PASSWORD_LENGTH) return notify(`A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`);
     try {
       const saved = id ? await api.updateStaff(id, { name, email, role, ...(password ? { password } : {}) }) : await api.inviteStaff({ name, email, role, password });
       setStaff((prev) => (id ? prev.map((s) => (s.id === id ? saved : s)) : [...prev, saved]));
@@ -80,7 +81,7 @@ export default function MobileTeamScreen() {
               </option>
             ))}
           </select>
-          <input value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} placeholder={member.id ? "Nova senha (opcional)" : "Senha inicial (mín. 6)"} type="password" autoComplete="new-password" className="field-mobile" />
+          <input value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} placeholder={member.id ? `Nova senha (opcional, mín. ${MIN_PASSWORD_LENGTH})` : `Senha inicial (mín. ${MIN_PASSWORD_LENGTH})`} type="password" autoComplete="new-password" className="field-mobile" />
           <button type="button" onClick={save} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600 }}>
             {member.id ? "Salvar alterações" : "Adicionar"}
           </button>

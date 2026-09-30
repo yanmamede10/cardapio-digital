@@ -426,6 +426,9 @@ export interface Review {
 
 export type StaffRole = "owner" | "manager" | "waiter" | "kitchen";
 
+/** Every password a person picks (Equipe & Permissões, the first-login change). Provisional ones from the super admin are 12. */
+export const MIN_PASSWORD_LENGTH = 8;
+
 /** Fixed 3-level hierarchy (no per-person exceptions — see docs/adr/0005). waiter/kitchen are job labels, both Funcionário. */
 export const LEVEL = { FUNCIONARIO: 1, ADMINISTRADOR: 2, DONO: 3 } as const;
 export const ROLE_LEVEL: Record<StaffRole, number> = { owner: LEVEL.DONO, manager: LEVEL.ADMINISTRADOR, waiter: LEVEL.FUNCIONARIO, kitchen: LEVEL.FUNCIONARIO };

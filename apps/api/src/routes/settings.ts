@@ -1,5 +1,5 @@
 import { asyncRouter } from "../lib/router.js";
-import { LEVEL, ROLE_LEVEL, type FiscalInfo, type OperatingHoursRow, type PaymentMode, type RestaurantProfile, type StaffRole, type TaxRegime } from "@cardapio/shared";
+import { LEVEL, MIN_PASSWORD_LENGTH, ROLE_LEVEL, type FiscalInfo, type OperatingHoursRow, type PaymentMode, type RestaurantProfile, type StaffRole, type TaxRegime } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { hashPassword, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
@@ -11,7 +11,6 @@ export const settingsRouter = asyncRouter();
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
-const MIN_PASSWORD_LENGTH = 6;
 const MAX_RESTAURANT_NAME_LENGTH = 80;
 const MAX_CUISINE_LENGTH = 60;
 const MAX_DESCRIPTION_LENGTH = 500;
@@ -85,7 +84,7 @@ function staffError(b: StaffBody, partial: boolean): string | null {
   if (b.name !== undefined && (!b.name.trim() || b.name.length > MAX_NAME_LENGTH)) return `name must be 1-${MAX_NAME_LENGTH} characters`;
   if (b.email !== undefined && (!b.email.includes("@") || b.email.length > MAX_EMAIL_LENGTH)) return `email must be valid and at most ${MAX_EMAIL_LENGTH} characters`;
   if (b.role !== undefined && !Object.hasOwn(ROLE_LEVEL, b.role)) return `role must be one of ${Object.keys(ROLE_LEVEL).join(", ")}`;
-  if (b.password !== undefined && b.password.length < MIN_PASSWORD_LENGTH) return `password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  if (b.password !== undefined && (typeof b.password !== "string" || b.password.length < MIN_PASSWORD_LENGTH)) return `password must be at least ${MIN_PASSWORD_LENGTH} characters`;
   return null;
 }
 
