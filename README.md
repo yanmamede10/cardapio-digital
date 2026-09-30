@@ -118,12 +118,13 @@ Cada app tem um `.env.example`. Copie para `.env` no mesmo diretório.
 | `DATABASE_URL` | sim | Postgres usado em runtime (em produção, a string *pooled*/PgBouncer do Supabase). |
 | `DIRECT_URL` | sim | Postgres direto, usado por migrações e seed. |
 | `PORT` | não | Porta da API (padrão 4000; o exemplo usa 4100, que é o que os fronts esperam). |
-| `JWT_SECRET` | em produção | Assina os tokens de staff. Sem ela em produção, a API não sobe. Em dev há um valor inseguro de fallback. |
+| `NODE_ENV` | em produção | `production` no servidor de verdade: a API só sobe com `JWT_SECRET` (32+ caracteres) e `CORS_ORIGINS` definidas, e diz qual falta. |
+| `JWT_SECRET` | em produção | Assina os tokens de staff. Em produção, pelo menos 32 caracteres (`openssl rand -base64 48`). Em dev, vazia usa um valor inseguro de fallback. |
 | `SUPER_ADMIN_KEY` | para usar /admin | Chave única do painel de plataforma. |
 | `EVOLUTION_API_URL`, `EVOLUTION_API_KEY` | para WhatsApp (dev) | Onde está a Evolution e a chave dela (`AUTHENTICATION_API_KEY` do `docker-compose.yml`). |
 | `WHATSAPP_WEBHOOK_URL` | para WhatsApp (dev) | URL que a Evolution chama ao receber mensagem — a API vista de dentro do Docker (`http://host.docker.internal:4100/api/whatsapp/webhook`). |
 | `WHATSAPP_WEBHOOK_SECRET` | para WhatsApp (dev) | Segredo que a Evolution manda no cabeçalho `x-webhook-secret`; webhook sem ele recebe 401. Faltando qualquer uma das quatro, conectar e enviar respondem 503. |
-| `CORS_ORIGINS` | não | Origens liberadas, separadas por vírgula. Sem ela, qualquer origem é aceita (dev/Android). |
+| `CORS_ORIGINS` | em produção | Origens liberadas (URLs do painel e do cardápio), separadas por vírgula. Sem ela, em dev qualquer origem é aceita (dev/Android); em produção a API não sobe. |
 | `APP_TZ` | não | Fuso usado para "hoje"/"mês" (padrão `America/Sao_Paulo`). |
 | `STORAGE_S3_ENDPOINT`, `STORAGE_S3_REGION`, `STORAGE_S3_ACCESS_KEY_ID`, `STORAGE_S3_SECRET_ACCESS_KEY`, `STORAGE_S3_BUCKET`, `STORAGE_PUBLIC_URL` | para upload | Supabase Storage via API S3 (logo, capa, fotos). Sem elas, os uploads respondem 503. |
 | `STORAGE_S3_WHATSAPP_BUCKET` | para mídia do WhatsApp | Bucket privado (mesmas credenciais S3 acima); lido só por URL assinada. |
