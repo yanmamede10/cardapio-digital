@@ -40,8 +40,10 @@ cp apps/api/.env.example apps/api/.env      # já aponta para esse Postgres
 npm run db:generate --workspace apps/api    # Prisma Client
 npm run db:deploy   --workspace apps/api    # aplica as migrações (e cria o bucket privado do WhatsApp, se configurado)
 npm run db:seed     --workspace apps/api    # dados de exemplo (restaurante "fogo" com equipe) — APAGA o banco antes
-npm run dev:api                             # http://localhost:4100
+npm run dev:api                             # http://localhost:4100 (só nesta máquina: escuta em 127.0.0.1)
 ```
+
+A API escuta em `127.0.0.1` por padrão: só a própria máquina chega nela (em produção, o túnel da Cloudflare roda nela). Para abrir no celular pela rede local em dev, rode com `HOST=0.0.0.0`.
 
 Não há `dotenv` no código: o `apps/api/.env` é carregado pelo próprio Prisma Client quando ele é importado, e isso vale para todas as variáveis do arquivo.
 
@@ -76,23 +78,25 @@ Logins do seed (senha `senha123`), um por papel:
 npm run dev:web                             # http://localhost:5173
 ```
 
-### WhatsApp no Atendimento (só desenvolvimento)
+### WhatsApp no Atendimento
 
-Conexão **não oficial** via [Evolution API](https://github.com/evolution-foundation/evolution-api) (Baileys), rodando no Docker da sua máquina. Não vai para a Vercel nesta fase — a troca pela Cloud API oficial da Meta é uma segunda implementação de `WhatsAppProvider` (`apps/api/src/lib/whatsapp.ts`), sem mexer em tickets, rotas ou telas.
+Conexão **não oficial** via [Evolution API](https://github.com/evolution-foundation/evolution-api) (Baileys), rodando no Docker da mesma máquina da API. Não vai para a Vercel — a troca pela Cloud API oficial da Meta é uma segunda implementação de `WhatsAppProvider` (`apps/api/src/lib/whatsapp.ts`), sem mexer em tickets, rotas ou telas.
 
 ```sh
-docker compose up -d                        # Evolution v2.3.7 em http://localhost:8085 (+ o Postgres interno dela)
-# em apps/api/.env: as 4 variáveis de WhatsApp do .env.example, com WHATSAPP_WEBHOOK_SECRET preenchido (openssl rand -hex 32)
+# em apps/api/.env: as 4 variáveis de WhatsApp do .env.example, com EVOLUTION_API_KEY e WHATSAPP_WEBHOOK_SECRET preenchidas (openssl rand -hex 32)
+docker compose --env-file apps/api/.env up -d   # Evolution v2.3.7 em http://localhost:8085, só nesta máquina (+ o Postgres interno dela)
 npm run dev:api
 ```
 
+A chave da Evolution vem do próprio `apps/api/.env` (por isso o `--env-file`): sem `EVOLUTION_API_KEY`, o compose não sobe. A porta 8085 é publicada só em `127.0.0.1`: nada da rede local ou do túnel chega na Evolution.
+
 Depois, no dashboard, entre como Dono → **Configurações → WhatsApp**: aceite o aviso de risco (fica registrado quem e quando), escaneie o QR com o celular do restaurante e as conversas passam a chegar em **Atendimento**, canal WhatsApp. Um ticket por contato; o que o celular do restaurante envia (resposta manual ou a saudação automática do WhatsApp Business) também aparece na conversa. O sistema só envia o que alguém digita no Atendimento — nunca mensagem automática. Uma resposta enviada pelo Atendimento marca como lidas ("visto") as mensagens pendentes daquele contato; receber ou só abrir a conversa não marca. Mídia recebida e enviada vai para um bucket **privado** do Supabase Storage (`STORAGE_S3_WHATSAPP_BUCKET`, criado pelo `db:deploy`), separado do bucket público das fotos do cardápio: a API guarda só a chave do arquivo e, a cada leitura de ticket (só para quem acessa o Atendimento daquele restaurante), entrega uma URL assinada que vale de 30 a 60 min. Sem Storage, texto funciona e a mídia recebida vira um aviso "veja no celular".
 
-`docker compose down` para; `down -v` apaga também as sessões do WhatsApp.
+`docker compose --env-file apps/api/.env down` para; `down -v` apaga também as sessões do WhatsApp.
 
 ### Android
 
-`npm run build:android --workspace apps/dashboard` (ou `apps/web`) gera o build com `.env.android`, que aponta a API para `10.0.2.2:4100` (o localhost da máquina visto de dentro do emulador), e sincroniza com o projeto Capacitor. `npm run android:open` abre no Android Studio.
+`npm run build:android --workspace apps/dashboard` (ou `apps/web`) gera o build com `.env.android`, que aponta a API para `10.0.2.2:4100` (o localhost da máquina visto de dentro do emulador, que alcança a API mesmo presa em `127.0.0.1`), e sincroniza com o projeto Capacitor. Num aparelho físico pela rede local, suba a API com `HOST=0.0.0.0`. `npm run android:open` abre no Android Studio.
 
 ## Testes
 
@@ -118,10 +122,11 @@ Cada app tem um `.env.example`. Copie para `.env` no mesmo diretório.
 | `DATABASE_URL` | sim | Postgres usado em runtime (em produção, a string *pooled*/PgBouncer do Supabase). |
 | `DIRECT_URL` | sim | Postgres direto, usado por migrações e seed. |
 | `PORT` | não | Porta da API (padrão 4000; o exemplo usa 4100, que é o que os fronts esperam). |
+| `HOST` | não | Interface em que a API escuta (padrão `127.0.0.1`, só a máquina e o túnel). `0.0.0.0` para testar pelo celular na rede local. |
 | `NODE_ENV` | em produção | `production` no servidor de verdade: a API só sobe com `JWT_SECRET` (32+ caracteres) e `CORS_ORIGINS` definidas, e diz qual falta. |
 | `JWT_SECRET` | em produção | Assina os tokens de staff. Em produção, pelo menos 32 caracteres (`openssl rand -base64 48`). Em dev, vazia usa um valor inseguro de fallback. |
 | `SUPER_ADMIN_KEY` | para usar /admin | Chave única do painel de plataforma. |
-| `EVOLUTION_API_URL`, `EVOLUTION_API_KEY` | para WhatsApp (dev) | Onde está a Evolution e a chave dela (`AUTHENTICATION_API_KEY` do `docker-compose.yml`). |
+| `EVOLUTION_API_URL`, `EVOLUTION_API_KEY` | para WhatsApp | Onde está a Evolution e a chave dela. O `docker-compose.yml` lê a mesma `EVOLUTION_API_KEY` (`--env-file apps/api/.env`) e não sobe sem ela. |
 | `WHATSAPP_WEBHOOK_URL` | para WhatsApp (dev) | URL que a Evolution chama ao receber mensagem — a API vista de dentro do Docker (`http://host.docker.internal:4100/api/whatsapp/webhook`). |
 | `WHATSAPP_WEBHOOK_SECRET` | para WhatsApp (dev) | Segredo que a Evolution manda no cabeçalho `x-webhook-secret`; webhook sem ele recebe 401. Faltando qualquer uma das quatro, conectar e enviar respondem 503. |
 | `CORS_ORIGINS` | em produção | Origens liberadas (URLs do painel e do cardápio), separadas por vírgula. Sem ela, em dev qualquer origem é aceita (dev/Android); em produção a API não sobe. |

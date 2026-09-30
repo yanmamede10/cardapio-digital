@@ -1,6 +1,7 @@
-# Dev only — WhatsApp for Atendimento via Evolution API (unofficial, Baileys). Never deployed (the API on Vercel has no Evolution).
-#   docker compose up -d          → http://localhost:8085 (manager UI at /manager)
-#   docker compose down           → stops; `down -v` also wipes the WhatsApp sessions and Evolution's own database
+# WhatsApp for Atendimento via Evolution API (unofficial, Baileys), on the machine that runs the API. Never on Vercel.
+#   docker compose --env-file apps/api/.env up -d   → http://localhost:8085 (manager UI at /manager), this machine only
+#   docker compose --env-file apps/api/.env down    → stops; `down -v` also wipes the WhatsApp sessions and Evolution's own database
+# --env-file: the key comes from the API's own .env (EVOLUTION_API_KEY), so both always agree; without it compose refuses to start.
 # The app's Postgres stays the one from the README; this Postgres is Evolution's internal store only.
 name: cardapio-evolution # explicit, so it never mixes with another compose project named after the folder
 services:
@@ -8,13 +9,13 @@ services:
     image: evoapicloud/evolution-api:v2.3.7
     restart: unless-stopped
     depends_on: [evolution-db]
-    ports: ["8085:8080"] # 8085 on the host: 8080 is a common dev port
+    # Loopback only: the API (same machine) is its only client; nothing on the LAN or behind the tunnel reaches it.
+    ports: ["127.0.0.1:8085:8080"] # 8085 on the host: 8080 is a common dev port
     # Lets Evolution reach the API running on the host (WHATSAPP_WEBHOOK_URL=http://host.docker.internal:4100/...), Linux included.
     extra_hosts: ["host.docker.internal:host-gateway"]
     environment:
       SERVER_URL: http://localhost:8085
-      # Must match EVOLUTION_API_KEY in apps/api/.env.
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-dev-evolution-key}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:?set EVOLUTION_API_KEY in apps/api/.env (openssl rand -hex 32) and run docker compose --env-file apps/api/.env up -d}
       DATABASE_PROVIDER: postgresql
       DATABASE_CONNECTION_URI: postgresql://evolution:evolution@evolution-db:5432/evolution?schema=evolution_api
       DATABASE_CONNECTION_CLIENT_NAME: cardapio_dev
