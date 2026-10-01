@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { ADMIN_KEY, call } from "./helpers.ts";
 
@@ -38,4 +39,13 @@ test("seed de demonstração: hamburgueria com cardápio, ficha técnica, estoqu
   const admin = (await call("GET", `/api/admin/restaurants/${D}`, { token: ADMIN_KEY })).body;
   assert.equal(admin.modules.includes("fiscal"), false, "Emissão Fiscal desligada");
   assert.deepEqual([admin.status, admin.planPrice, admin.planDueDay], ["ativo", 299.9, 10]);
+});
+
+test("o seed de dev (apaga tudo, senha123) se recusa a rodar com NODE_ENV=production, e o banco fica como estava", async () => {
+  const before = (await call("GET", `/api/restaurants/${D}/items`)).body.length;
+  // JWT_SECRET: in production the API's auth module refuses to load without one, before seed.ts gets to say anything.
+  const r = spawnSync(process.execPath, ["--import", "tsx", "prisma/seed.ts"], { cwd: "apps/api", env: { ...process.env, NODE_ENV: "production", JWT_SECRET: "x".repeat(32) }, encoding: "utf8", timeout: 60_000 });
+  assert.equal(r.status, 1, r.stdout);
+  assert.ok(r.stderr.includes("Recusado: o seed de dev (prisma/seed.ts) apaga o banco"), r.stderr);
+  assert.equal((await call("GET", `/api/restaurants/${D}/items`)).body.length, before, "o Chapa 27 continua lá (o seed de dev o apagaria)");
 });

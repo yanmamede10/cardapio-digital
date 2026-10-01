@@ -5,6 +5,13 @@ import { PrismaClient } from "@prisma/client";
 import { PLAN_MODULES } from "@cardapio/shared";
 import { hashPassword } from "../src/lib/auth.js";
 
+// Wipes the whole database and creates logins with senha123: never in production (the VM's API image has NODE_ENV=production;
+// its seed is seed-demo.ts, via deploy/deploy.sh seed-demo).
+if (process.env.NODE_ENV === "production") {
+  console.error("Recusado: o seed de dev (prisma/seed.ts) apaga o banco e cria logins com senha123. Em produção, use o seed de demonstração: deploy/deploy.sh seed-demo.");
+  process.exit(1);
+}
+
 const prisma = new PrismaClient();
 // Dev-only default password for seeded staff logins — never used outside local seeding.
 const DEV_STAFF_PASSWORD_HASH = hashPassword("senha123");
