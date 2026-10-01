@@ -42,7 +42,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -415,7 +415,10 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | SEG-03 | API e Evolution só na máquina | — | API sem `HOST`; `docker compose config` sem e com `EVOLUTION_API_KEY` | A API escuta em 127.0.0.1: a própria máquina conecta, o IP da rede local não; sem a chave o compose não monta; com ela, a porta 8085 só em 127.0.0.1 | api:seguranca | ✅ (automático desde o C-8; roda no CI) |
 | SEG-04 | Casa cheia no mesmo IP | — | 40 mesas × 7 aparelhos × 25 req + 70 pedidos + 10 aparelhos da equipe × 57 req, do mesmo IP | Nenhum 429 | api:limites | ✅ (novo, A-2.11) |
 | SEG-05 | Uma mesa acima do limite | — | 901 req/min de uma mesa; 41 pedidos em 5 min de uma mesa | 429 com `Retry-After` e mensagem; outra mesa do mesmo IP segue | api:limites | ✅ (novo) |
-| SEG-06 | IP real só pelo túnel | — | `CF-Connecting-IP` numa conexão local e numa da rede | Local: vale o cabeçalho; da rede: vale o endereço da conexão | api:limites | ✅ (novo) |
+| SEG-06 | IP real só do proxy confiável (dev) | — | Sem `TRUSTED_PROXY`: `CF-Connecting-IP` numa conexão local e numa da rede | Local: vale o cabeçalho; da rede: vale o endereço da conexão | api:limites | ✅ (D-4: antes "só pelo túnel") |
+| SEG-12 | IP real só do Caddy (VM) | — | Uma segunda API com `TRUSTED_PROXY` = o endereço de rede local desta máquina; 51 logins com IPs forjados diferentes pelo "proxy" e direto no loopback | Pelo proxy: cada IP do cabeçalho conta por si (51 × 401); direto: o cabeçalho é ignorado (50 × 401 + 1 × 429). Na pilha de produção, o Caddy sobrescreve o cabeçalho (seção 7, Rodada D) | api:limites | ✅ (novo, D-4) |
+| SEG-13 | Compose de produção fechado | — | `docker compose -f deploy/docker-compose.prod.yml config` | Só o Caddy publica portas (80 e 443); `TRUSTED_PROXY` = o endereço fixo do Caddy; healthcheck na API; tudo `unless-stopped`; imagens e `FROM` com versão fixa | api:seguranca | ✅ (novo, D-1) |
+| SEG-14 | Seed de dev recusado em produção | — | `prisma/seed.ts` com `NODE_ENV=production`; `deploy/deploy.sh seed` | Sai com 1 e "Recusado", e o banco fica como estava | api:seed, M | ✅ (novo, D-6) |
 | SEG-07 | Chamar garçom por pedido alheio | — | `call-waiter` sem sessão, com outra ou com "anonymous" | 404 e nenhum chamado | api:salao | ✅ (novo, A-2.5) |
 | SEG-09 | Limites sem `CF-Connecting-IP` | — | Da própria máquina, sem o cabeçalho: 901 req de uma mesa; 41 pedidos de uma mesa; 601 req de um funcionário (o `npm test` usa 3.001, porque sobe o limite para 3.000); 6 senhas erradas | Sem limite por IP, mas 429 na 901ª da mesa, no 41º pedido, na requisição acima do limite do funcionário e a conta bloqueada (nem a senha certa entra) | api:limites | ✅ corrigido (C-2: antes, nada disso valia sem o cabeçalho) |
 | SEG-10 | Buckets do Storage iguais em todo projeto | — | `npm run db:deploy` no Supabase de testes; `storage.buckets`; gravar SVG, MP3 e PNG no `cardapio` pelo S3 | `cardapio` público, 8 MB, só PNG/JPEG/WebP (antes aceitava SVG e áudio); `whatsapp-media` privado, 8 MB, imagens e áudios; SVG e MP3 recusados (415), PNG aceito | M (hospedado) | ✅ M (C-6, 01/10) |
@@ -633,3 +636,45 @@ Do processo da API (Node 22.18 + o Prisma Client da API, nesta máquina) até o 
 De onde vem a diferença: não é o pooler, é o `pgbouncer=true` do Prisma (sem cache de *prepared statements*, cada consulta vira várias idas e voltas). O modo sessão **com** `pgbouncer=true` mede 109,5 ms; o modo transação **sem** ele, 21,6 ms. Mas atrás de um pooler em modo transação o Prisma pede essa opção (comandos preparados não sobrevivem à troca de conexão), então lá o custo é esse.
 
 **Recomendação:** a API roda como um processo só, sempre ligado, no PC do restaurante (ADR 0009) — não é serverless, então não precisa do modo transação. Use em `DATABASE_URL` a **conexão direta** (19 ms) se a rede do restaurante tiver IPv6, ou o **pooler em modo sessão, porta 5432** (21–23 ms, funciona em IPv4) — é a recomendação do próprio Supabase para servidores persistentes. Os dois sem `pgbouncer=true` e com `connection_limit` explícito (ex.: `&connection_limit=10`): o padrão do Prisma nesta máquina seria 2 × 16 threads + 1 = 33 conexões, o que pode passar do tamanho do pool do modo sessão (Database → Settings no Supabase). Efeito esperado: cada ida ao banco cai de ~100 ms para ~20 ms; o `POST /api/orders` no Supabase (1,06 s com 16–19 comandos, PERF-02) cairia para ~0,3–0,4 s (estimativa: 16–19 × 20 ms). Não foi aplicado: a troca é de configuração do ambiente e precisa ser medida de novo com `npm run carga -- supabase`.
+
+### Rodada D (01/10/2026): a pilha de produção nesta máquina (D-8) e a restauração do backup (D-7)
+
+**Como:** um clone deste repositório num diretório de rascunho fez o papel da VM: `deploy/.env` com `CADDY_TLS=internal`, `PUBLIC_IP=127.0.0.1` e, no lugar do Supabase, um Postgres 17.11 descartável. Tudo pelo `deploy/deploy.sh` e pelo `deploy/docker-compose.prod.yml` commitados; Docker Desktop 29.7.2 (Windows 11). No fim, `down -v`: nenhum contêiner, volume ou rede do projeto `cardapio` ficou, e nada escuta na 80 e na 443.
+
+| Verificação | Resultado |
+| --- | --- |
+| `docker compose config`: quem publica portas | só `caddy`: 80→80/tcp e 443→443/tcp; `api`, `evolution`, `evolution-db` e `backup`: nenhuma (também no teste automático, SEG-13) |
+| Primeiro `deploy/deploy.sh` (banco vazio) | 18 migrações aplicadas num contêiner avulso, API `healthy`, "No ar: ba554ff …". A primeira tentativa achou um erro: o contêiner da API pegou o `172.30.0.2` do Caddy (corrigido no commit "D-1: fix", `ip_range` na metade de cima da subnet) |
+| API pelo Caddy em HTTPS | `https://127.0.0.1/api/health` → `{"ok":true}` (200), certificado conferido contra a raiz interna do Caddy (`verify=0`); servido sem SNI, SAN `IP Address:127.0.0.1` |
+| HTTP → HTTPS | `http://127.0.0.1/api/health` → 308, `Location: https://127.0.0.1/api/health` |
+| Webhook da Evolution pela rede interna (de dentro do contêiner da Evolution para `http://api:4100/api/whatsapp/webhook`) | com o segredo: 200 `{"ok":true}`; sem: 401; segredo errado: 401 |
+| Evolution sem acesso de fora | nenhuma porta publicada (`docker port` vazio); o endereço dela na rede do Compose (`172.30.0.131:8080`) não responde do host (timeout); de dentro da rede responde ("Welcome to the Evolution API … 2.3.7"); `/`, `/manager` e `/instance/fetchInstances` pelo Caddy caem na API (404 "no route"). Nesta máquina a 8080 do host já é de outro projeto (`delivery-menu-1`, um nginx), então "a 8080 não responde" não se aplica aqui; na VM ela fica fechada |
+| `CF-Connecting-IP` forjado | 51 logins, cada um com um IP forjado diferente: pelo Caddy, 50 × 401 + 1 × 429 (o Caddy sobrescreveu, todos contaram para o mesmo IP); direto na API, do contêiner da Evolution (não confiável), 50 × 401 + 1 × 429 |
+| Volumes depois de `docker compose up -d --build --force-recreate` (os 5 contêineres recriados) | mesmo certificado (SHA-256 `2E:15:26:02:DA:4E:F3:23…`, emitido 21:06:14 UTC), a instância `prova-persistencia` da Evolution (no `evolution_db`, tabela `Instance`; a sessão do WhatsApp fica na tabela `Session` do mesmo banco), o arquivo de marcação em `evolution_instances` e o backup do dia |
+| Volumes depois de reiniciar o Docker (`docker desktop restart`, no lugar de reiniciar a VM) | os 5 contêineres voltaram sozinhos (`unless-stopped`, nenhum comando de compose), API `healthy`, os mesmos certificado, instância, marcação e backup |
+| Rollback | numa cópia "origin" de rascunho, uma versão nova simulada (`/api/health` com `"versao":"simulada"`): `deploy.sh` → `{"ok":true,"versao":"simulada"}`; `deploy.sh ba554ff` → `{"ok":true}`, sem `db:deploy`, HEAD destacado; `deploy.sh` de novo → a versão nova, na `master` |
+| Seeds | `deploy.sh seed-demo` sem senha: recusa; com `SEED_DEMO_PASSWORD`: Chapa 27 criado (30 itens, 31 insumos, 30 mesas), login do dono com essa senha pelo Caddy; de novo: "já existe — nada foi alterado"; `deploy.sh seed`: "Recusado"; `npm run db:seed` dentro do contêiner de produção: "Recusado" (exit 1) |
+| Serviço `backup` | ao subir (depois das 04:00), gravou `cardapio-2026-10-01.dump` (56 KB) do banco local; recriado, não gravou de novo |
+| Imagem de produção no Supabase de testes, pelo pooler em modo **sessão** com `connection_limit=10` (o `DATABASE_URL` do `deploy/.env.example`) | só leitura: 30 itens do Chapa 27; `SELECT 1` de dentro do contêiner p50 20,9 ms, p95 21,5 ms (o C-4 mediu 21–23 ms) |
+| Imagem `linux/arm64` (`docker buildx build --platform linux/arm64`, 2 min 31 s, emulada) | engine `linux-arm64-openssl-3.0.x`; aplicou as 18 migrações num Postgres 17 e consultou com `process.arch = arm64` |
+
+**Restauração do backup (D-7).** `pg_dump` 17.11 do projeto Supabase de testes com as opções do serviço `backup` (`--format=custom --schema=public --no-owner --no-privileges`): 128 KB em 2,7 s. Restaurado num Postgres 17.11 descartável, uma vez com `pg_restore` direto e outra com o comando do README (`docker compose … run --rm backup pg_restore --schema=public --no-owner --no-privileges --exit-on-error …`): exit 0 nas duas, RLS ligado em 21 de 21 tabelas. Sem `--schema=public`, o `pg_restore` para em `CREATE SCHEMA public` ("already exists"), por isso a opção.
+
+| Tabela | Supabase antes do dump | Supabase depois | Restaurado |
+| --- | --- | --- | --- |
+| `Order` | 428 | 428 | 428 |
+| `OrderLine` | 717 | 717 | 717 |
+| `StockMovement` | 942 | 942 | 942 |
+| `Product` | 133 | 133 | 133 |
+| `FinanceEntry` | 107 | 107 | 107 |
+| `MenuItem` | 102 | 102 | 102 |
+| `ProductComponent` | 77 | 77 | 77 |
+| `RestaurantTable` | 40 | 40 | 40 |
+| `MenuCategory` | 34 | 34 | 34 |
+| `_prisma_migrations` | 18 | 18 | 18 |
+| `OperatingHour` | 14 | 14 | 14 |
+| `StaffMember` | 8 | 8 | 8 |
+| `Restaurant` | 7 | 7 | 7 |
+| as outras 8 (`Address` 2, `BillingCharge` 3, `Coupon` 4, `PaymentMethod` 4, `Review` 5, `SupportMessage` 6, `SupportTicket` 3, `WaiterCall` 1) | iguais | iguais | iguais |
+
+**O que esta máquina não prova:** o certificado do Let's Encrypt para o IP (precisa de um IP público com as portas 80 e 443 abertas: só na VM; a configuração passa no `caddy validate` e o `caddy adapt` mostra o emissor `acme` com o perfil `shortlived`); o IP real do visitante chegando ao Caddy (no Docker Desktop toda conexão do host chega pelo gateway; num Linux com Docker, a publicação de porta preserva o IP de origem em IPv4); a reinicialização de uma VM de verdade (aqui, o Docker reiniciou; na VM é o `systemctl enable docker` que traz tudo de volta).
