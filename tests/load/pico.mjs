@@ -168,7 +168,7 @@ function watch(cmd, args, parse) {
 }
 function apiPid() {
   const port = new URL(API).port;
-  if (process.platform === "win32") return execSync("netstat -ano -p TCP").toString().split("\n").find((l) => l.includes(`:${port} `) && l.includes("LISTENING"))?.trim().split(/\s+/).pop();
+  if (process.platform === "win32") return execSync("netstat -ano").toString().split("\n").find((l) => l.includes(`:${port} `) && l.includes("LISTENING"))?.trim().split(/\s+/).pop();
   return execSync(`lsof -tiTCP:${port} -sTCP:LISTEN`).toString().trim().split("\n")[0];
 }
 const MB = { B: 1 / 2 ** 20, KiB: 1 / 1024, MiB: 1, GiB: 1024 };

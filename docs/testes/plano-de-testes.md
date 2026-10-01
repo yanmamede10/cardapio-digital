@@ -5,7 +5,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 ## 1. Como usar este arquivo
 
-**Automático:** `npm test` roda tudo (API + telas) num Postgres descartável. `npm run test:carga` roda o teste de horário de pico. A coluna **Auto** de cada caso diz onde ele está na suíte:
+**Automático:** `npm test` roda tudo (API + telas) num Postgres descartável. `npm run carga` roda a casa cheia (cenário em `tests/load/cenario.mjs`) num Postgres descartável e `npm run carga -- supabase`, no banco do `apps/api/.env` (o projeto Supabase de testes); nenhum dos dois entra no `npm test` nem no CI. A coluna **Auto** de cada caso diz onde ele está na suíte:
 
 | Sigla | Arquivo |
 | --- | --- |
@@ -26,7 +26,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
-| `carga` | `tests/load/pico.mjs` |
+| `carga` | `tests/load/pico.mjs` (casa cheia), `tests/load/cardapio.mjs` (Lighthouse), `tests/load/painel.spec.ts` (pedido → Central nas telas) |
 | **M** | manual (roteiro abaixo) |
 
 **Manual:** rode o seed de demonstração num banco local (`npm run db:seed:demo --workspace apps/api`), suba API, dashboard e cardápio (README), e siga os passos. Logins do Chapa 27, todos com a senha do seed:

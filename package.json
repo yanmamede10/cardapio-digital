@@ -13,10 +13,11 @@
     "test": "node tests/run.mjs",
     "test:api": "node tests/run.mjs api",
     "test:e2e": "node tests/run.mjs e2e",
-    "test:carga": "node tests/run.mjs carga"
+    "carga": "node tests/run.mjs carga"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.63.0"
+    "@playwright/test": "^1.63.0",
+    "lighthouse": "^12.8.2"
   }
 }
