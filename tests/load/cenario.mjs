@@ -25,6 +25,8 @@ export default {
 
   mesaMedida: 30, // a mesa do teste do painel (painel.spec.ts): a carga não pede nela, para ela estar livre a cada execução
   execucoes: 20,
-  metas: { cardapioS: 2, painelS: 5 },
+  // cardapioS: a API do cardápio montado, p95; lcpS: o cardápio no Lighthouse em modo celular (decisão de 01/10: 2,5 s);
+  // painelS: pedido → Central, p95.
+  metas: { cardapioS: 2, lcpS: 2.5, painelS: 5 },
   evolution: "cardapio-evolution-evolution-1" // o contêiner (docker-compose.yml) cujo consumo é medido junto com o da API
 };

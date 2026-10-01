@@ -7,6 +7,7 @@ import { CartProvider } from "./context/CartContext";
 import { ToastProvider } from "./context/ToastContext";
 import "./styles/tokens.css";
 import "./styles/base.css";
+import "./styles/icons.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
