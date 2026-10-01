@@ -5,7 +5,7 @@ import { call, login, newTable, tableCode } from "./helpers.ts";
 
 // Rate limits (apps/api/src/lib/rateLimit.ts). The API trusts CF-Connecting-IP on loopback (the Cloudflare tunnel), so these
 // tests pose as visitors from documentation IPs (RFC 5737). Every other test file calls from this machine without the
-// header, and no limit applies to that — only the account lock after wrong passwords does.
+// header: no per-IP limit applies to that, the staff member's, the table's and the account's do (last test here).
 const D = "chapa27";
 const from = (ip: string, headers: Record<string, string> = {}) => ({ "CF-Connecting-IP": ip, ...headers });
 const kids = { quantity: 1, notes: "", selectedOptions: [] as unknown[] };
@@ -104,4 +104,25 @@ test("teto de tentativas de login por IP: a 51ª em 15 minutos espera, mesmo em 
   const statuses = await burst(LIMITS.LOGIN_ATTEMPTS_PER_IP_PER_15_MINUTES + 1, (i) => call("POST", "/api/auth/login", { headers: from(IP), body: { email: `ninguem-${i}@t.com`, password: "qualquer-1" } }));
   assert.equal(statuses.filter((s) => s === 401).length, LIMITS.LOGIN_ATTEMPTS_PER_IP_PER_15_MINUTES);
   assert.equal(statuses.filter((s) => s === 429).length, 1);
+});
+
+test("sem CF-Connecting-IP (a própria máquina) não há limite por IP, mas valem o da mesa, o dos pedidos da mesa, o do funcionário e o bloqueio da conta", async () => {
+  const [a, b] = [await newTable(owner), await newTable(owner)];
+  const poll = await burst(LIMITS.TABLE_PER_MINUTE + 1, () => call("GET", "/api/health", { headers: { "X-Table-Code": a.code } }));
+  assert.deepEqual([poll.filter((s) => s === 200).length, poll.filter((s) => s === 429).length], [LIMITS.TABLE_PER_MINUTE, 1], "mesa");
+
+  const order = () => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "table", restaurantId: "fogo", tableCode: b.code, lines: [{ itemId, ...kids }] } });
+  const placed = await burst(LIMITS.TABLE_ORDERS_PER_5_MINUTES + 1, order);
+  assert.deepEqual([placed.filter((s) => s === 201).length, placed.filter((s) => s === 429).length], [LIMITS.TABLE_ORDERS_PER_5_MINUTES, 1], "pedidos da mesa");
+  await refuseOrdersAt([a, b]);
+
+  // A staff member of their own: the limit holds every device of that login, and no other test logs in as them.
+  const email = `limite-${crypto.randomUUID().slice(0, 8)}@t.com`;
+  assert.equal((await call("POST", "/api/restaurants/fogo/staff", { token: owner, body: { name: "Limite", email, role: "waiter", password: "senha-certa-1" } })).status, 201);
+  const staff = (await call("POST", "/api/auth/login", { body: { email, password: "senha-certa-1" } })).body.token as string;
+  const central = await burst(LIMITS.STAFF_PER_MINUTE + 1, () => call("GET", "/api/health", { token: staff }));
+  assert.deepEqual([central.filter((s) => s === 200).length, central.filter((s) => s === 429).length], [LIMITS.STAFF_PER_MINUTE, 1], "funcionário");
+
+  for (let i = 1; i <= LIMITS.ACCOUNT_FAILURES_PER_15_MINUTES; i++) assert.equal((await call("POST", "/api/auth/login", { body: { email, password: `errada-${i}` } })).status, 401, `erro ${i}`);
+  assert.equal((await call("POST", "/api/auth/login", { body: { email, password: "senha-certa-1" } })).status, 429, "conta bloqueada, nem a senha certa entra");
 });

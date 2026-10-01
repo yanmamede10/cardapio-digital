@@ -12,8 +12,9 @@ const MINUTE = 60_000;
  * customer app — order status every 3 s + menu availability every 12 s + opening dishes ≈ 30/min per phone.
  */
 export const LIMITS = {
-  /** A logged-in staff member, all their devices together: ~10 devices on the Central with the same login. */
-  STAFF_PER_MINUTE: 600,
+  /** A logged-in staff member, all their devices together: ~10 devices on the Central with the same login. `npm test` raises
+   *  it (env STAFF_PER_MINUTE): the suites act as a few logins from this machine, far faster than people. */
+  STAFF_PER_MINUTE: Number(process.env.STAFF_PER_MINUTE) || 600,
   /** A table (every phone that read its QR, plus its fixed tablet): a group of 30 phones at full polling. */
   TABLE_PER_MINUTE: 900,
   /** Orders sent from one table in 5 minutes: a group of 20 ordering together, twice. */
@@ -57,7 +58,8 @@ const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
  * The client's IP. Behind the Cloudflare tunnel every request reaches the API from this machine (cloudflared), with the
  * visitor's IP in CF-Connecting-IP, which Cloudflare's edge sets itself. So that header is believed only on a loopback
  * connection; from anywhere else the socket's address counts and the header is ignored. A loopback request without it is
- * this machine itself (Evolution, someone on the PC, the tests): null — no rate limit applies to it.
+ * this machine itself (Evolution, someone on the PC, the tests): null — no per-IP limit applies to it; the staff member's,
+ * the table's and the account's still do.
  */
 export function clientIp(req: Pick<Request, "header"> & { socket: { remoteAddress?: string } }): string | null {
   const peer = req.socket.remoteAddress ?? "";
@@ -73,13 +75,12 @@ export function tooMany(res: Response, seconds: number) {
 /** Mounted after the body parser (an order's table is in its body) and before every route. */
 export function rateLimit(req: Request, res: Response, next: NextFunction) {
   const ip = clientIp(req);
-  if (ip === null) return next();
   const staff = staffIdOf(req.header("Authorization"));
   const bodyTable = typeof req.body?.tableCode === "string" ? (req.body.tableCode as string) : null;
   const table = staff ? null : bodyTable ?? req.header("X-Table-Code") ?? null;
   const ordering = req.method === "POST" && req.path === "/api/orders" && bodyTable !== null;
   const wait = Math.max(
-    hit(`ip:${ip}`, LIMITS.IP_PER_MINUTE, MINUTE),
+    ip ? hit(`ip:${ip}`, LIMITS.IP_PER_MINUTE, MINUTE) : 0,
     staff ? hit(`staff:${staff}`, LIMITS.STAFF_PER_MINUTE, MINUTE) : 0,
     table ? hit(`table:${table}`, LIMITS.TABLE_PER_MINUTE, MINUTE) : 0,
     ordering ? hit(`table-orders:${bodyTable}`, LIMITS.TABLE_ORDERS_PER_5_MINUTES, 5 * MINUTE) : 0

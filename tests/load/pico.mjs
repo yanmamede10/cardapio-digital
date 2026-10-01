@@ -18,7 +18,7 @@ const P = `/api/restaurants/${C.restaurante}`;
 const POLL = { central: 4000, menuLateral: 15000, cardapio: 12000, status: 3000 };
 // The API's limits, read from its source so a 429 is shown against the number that is really there.
 const LIMITS = Object.fromEntries(
-  [...readFileSync(new URL("../../apps/api/src/lib/rateLimit.ts", import.meta.url), "utf8").matchAll(/^\s+([A-Z0-9_]+): ([\d_]+),?$/gm)].map(([, k, v]) => [k, Number(v.replaceAll("_", ""))])
+  [...readFileSync(new URL("../../apps/api/src/lib/rateLimit.ts", import.meta.url), "utf8").matchAll(/^\s+([A-Z0-9_]+): (?:Number\(process\.env\.\w+\) \|\| )?([\d_]+),?$/gm)].map(([, k, v]) => [k, Number(v.replaceAll("_", ""))])
 );
 // Rate-limit key → [limit, window in s]. Same keys as rateLimit(): the IP; the staff member or else the table; a table's orders.
 const RULES = { ip: ["IP_PER_MINUTE", 60], equipe: ["STAFF_PER_MINUTE", 60], mesa: ["TABLE_PER_MINUTE", 60], pedidos: ["TABLE_ORDERS_PER_5_MINUTES", 300], logins: ["LOGIN_ATTEMPTS_PER_IP_PER_15_MINUTES", 900] };

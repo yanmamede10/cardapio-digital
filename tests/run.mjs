@@ -14,6 +14,9 @@ const only = process.argv[2]; // "api" | "e2e" | "carga" (casa cheia) | undefine
 const supabase = only === "carga" && process.argv[3] === "supabase";
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
 const env = { ...process.env, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SEED_DEMO_PASSWORD: "senha123" };
+// The suites call as a few logins from this machine, far faster than people: 3000/min per staff member instead of 600
+// (apps/api/src/lib/rateLimit.ts; tests/api/limites.test.ts reads the same number). The load test keeps the real one.
+if (only !== "carga") env.STAFF_PER_MINUTE = "3000";
 if (!supabase) {
   Object.assign(env, { DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, SUPER_ADMIN_KEY: "test-admin-key" });
   // WhatsApp: the API talks to a fake Evolution that tests/api/whatsapp.test.ts serves on :4299 — no real Evolution needed.
