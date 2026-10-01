@@ -1,0 +1,15 @@
+# Build context of apps/api/Dockerfile (the repo root): the API, packages/shared and the workspaces' package.json files.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+.git
+apps/api/prisma/dev.db*
+apps/dashboard/*
+!apps/dashboard/package.json
+apps/web/*
+!apps/web/package.json
+deploy
+docs
+tests
+test-results
