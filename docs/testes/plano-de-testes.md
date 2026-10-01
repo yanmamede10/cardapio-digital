@@ -21,6 +21,8 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `api:grandes` | `tests/api/listas-grandes.test.ts` |
 | `api:robustez` | `tests/api/robustez.test.ts` |
 | `api:garcom` | `tests/api/garcom.test.ts` |
+| `api:seguranca` | `tests/api/seguranca.test.ts` |
+| `api:limites` | `tests/api/limites.test.ts` (rate limiting) |
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
@@ -36,9 +38,9 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | Funcionário · Garçom | `garcom@chapa27.example` |
 | Funcionário · Cozinha | `cozinha@chapa27.example` |
 
-Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** copia o link `…/t/chapa27.<número>`.
+Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026 e, para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque, 29/09/2026 (seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -111,6 +113,9 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | AUT-09 | Duplo clique em Entrar | qualquer | Clicar duas vezes rápido | Um único login; botão desabilitado enquanto entra | M | ✅ M |
 | AUT-10 | API fora do ar no login | — | Parar a API e tentar entrar | "Não foi possível conectar ao servidor" | M | ✅ M |
 | AUT-11 | Sair | qualquer | Celular: Mais → Sair; desktop: menu → Sair | Volta ao login; o token some do aparelho | M | ✅ corrigido (B10) |
+| AUT-12 | 5 senhas erradas bloqueiam a conta | — | 5 tentativas erradas de um IP; a 6ª de outro IP; depois a senha certa | 401 ×5; 429 "Muitas tentativas… Tente de novo em N min" na 6ª e na certa, venha de onde vier; outra conta entra normalmente | api:limites | ✅ (novo) |
+| AUT-13 | Teto de tentativas de login por IP | — | 51 tentativas em 15 min do mesmo IP (contas diferentes) | A 51ª recebe 429 | api:limites | ✅ (novo) |
+| AUT-14 | Senha de pelo menos 8 caracteres | Dono, qualquer | Cadastro na Equipe, troca pelo Dono, troca da própria senha com 7 caracteres | 400 e aviso "pelo menos 8 caracteres"; com 8, salva; o reset gera provisória de 12 | api:perm, M | ✅ (novo; era 6) |
 
 ### 4.2 Troca obrigatória de senha (SEN)
 
@@ -118,7 +123,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | --- | --- | --- | --- | --- | --- | --- |
 | SEN-01 | Primeiro login com senha provisória | Dono novo | Super Admin cadastra; ativa; Dono entra com a provisória | Só aparece "Crie sua senha" | api:admin, e2e:desktop | ✅ + M |
 | SEN-02 | Provisória errada na troca | Dono novo | Senha provisória diferente | "A senha provisória não confere" | api:admin | ✅ |
-| SEN-03 | Nova senha curta ou igual | Dono novo | `123`; ou igual à provisória | Mensagens de 6 caracteres / "precisa ser diferente" | api:admin | ✅ |
+| SEN-03 | Nova senha curta ou igual | Dono novo | `123`; ou igual à provisória | Mensagens de 8 caracteres / "precisa ser diferente" | api:admin, api:perm | ✅ |
 | SEN-04 | Repetição diferente | Dono novo | Nova ≠ repetida | "As duas senhas novas não são iguais" | M | ✅ M |
 | SEN-05 | Até trocar, nada mais funciona | Dono novo | Chamar qualquer rota com o token | 403 "password change required" | api:admin | ✅ |
 | SEN-06 | Reset derruba sessão aberta | Garçom | Super Admin reseta a senha com o garçom logado | Próximo request 403 → só a troca | api:admin | ✅ |
@@ -144,8 +149,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | QR-01 | QR abre o restaurante certo | cliente | Link da Mesa 12 do Chapa 27 | Cardápio do Chapa 27, modo mesa, Mesa 12 | api:salao, e2e:fluxo | ✅ corrigido (B01) |
-| QR-02 | QR de mesa que não existe | cliente | `/t/chapa27.99` | "Mesa não encontrada" | api:salao | ✅ |
-| QR-03 | QR de restaurante inativo ou inexistente | cliente | `/t/naoexiste.1` | "Mesa não encontrada" | api:salao | ✅ |
+| QR-02 | QR de mesa que não existe | cliente | `/t/chapa27.99`, `/t/12`, código cortado ou em minúsculas | "Mesa não encontrada" | api:salao | ✅ |
+| QR-03 | QR de restaurante inativo ou inexistente | cliente | Código de uma mesa de restaurante inativo | "Mesa não encontrada" | api:salao | ✅ |
 | QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens em até 2 s | carga | ✅ p95 0,39–0,53 s |
 | QR-05 | Item com opções obrigatórias | cliente | Cheddar & Bacon: ponto "Bem passado" + Bacon extra | Preço 38,90 + 6,00 = 44,90 | api:salao, e2e:fluxo | ✅ |
 | QR-06 | Observação com acento e emoji | cliente | "sem cebola, pão bem tostado 🍔" | Chega igual na Central | e2e:fluxo | ✅ |
@@ -161,9 +166,19 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | QR-16 | Rodadas da mesma mesa | cliente | Dois pedidos seguidos no mesmo aparelho | Rodada 1 e 2; ambos na mesma comanda | api:salao | ✅ |
 | QR-17 | Duas pessoas na mesma mesa | clientes | Dois celulares na Mesa 5 pedem juntos | Os dois pedidos na mesma comanda | api:salao | ✅ |
 | QR-18 | API fora do ar | cliente | Parar a API e enviar | "Não foi possível conectar ao servidor"; carrinho mantido | M | ✅ corrigido (B19) |
-| QR-21 | QR impresso com o pedido pelo QR desligado | cliente | Abrir `/t/chapa27.3` com a opção desligada | "Neste restaurante os pedidos são feitos pelo garçom. É só chamar um atendente." | api:garcom, e2e:desktop | ✅ |
+| QR-21 | QR impresso com o pedido pelo QR desligado | cliente | Abrir o QR da Mesa 3 com a opção desligada | "Neste restaurante os pedidos são feitos pelo garçom. É só chamar um atendente." | api:garcom, e2e:desktop | ✅ |
 | QR-19 | Tema claro/escuro e cor da marca | cliente | Alternar tema | Legível nos dois; botões na cor da marca | M | ✅ M |
 | QR-20 | Erro ao confirmar aparece na revisão | cliente | Item esgota enquanto o cliente revisa; confirmar | Aviso "… está esgotado"; carrinho mantido | e2e:fluxo | ✅ corrigido (B19) |
+| QR-22 | Cada mesa tem o próprio código aleatório | Garçom | Mesas → QR code das 30 mesas | 30 códigos diferentes, 43 caracteres base64url, cada um abre a sua mesa | api:salao, e2e:fluxo | ✅ (novo, A-3.1) |
+| QR-23 | Pedir pelo número da mesa não vale | — | POST de pedido com `tableNumber` e sem código; código de mesa de outro restaurante | 404 "Mesa não encontrada. Leia o QR da mesa de novo…" | api:salao | ✅ (novo) |
+| QR-24 | Mesa livre: o primeiro pedido espera o aceite | cliente + Cozinha | Mesa 23 livre; cliente pede pelo QR | Cliente vê "Aguardando confirmação do restaurante"; a mesa continua Livre; nada na comanda nem nos relatórios; na Central, "Aguardando aceite" com "Mesa 23" grande | api:salao, e2e:fluxo | ✅ (novo, A-3.3) |
+| QR-25 | Aceitar abre a mesa | Cozinha | Aceitar o pedido da QR-24 | Mesa Ocupada; o pedido vai para Recebido; o cliente passa a ver "Pedido recebido pela cozinha" em até 3 s | api:salao, e2e:fluxo | ✅ (novo) |
+| QR-26 | Recusar o primeiro pedido | Garçom | Mesa 24 livre; cliente pede; Recusar | Cliente vê "Pedido não confirmado. Chame o garçom."; a mesa continua Livre; o pedido não pode ser aceito depois | api:salao, e2e:fluxo | ✅ (novo) |
+| QR-27 | Mesa aberta: o pedido entra direto | cliente | Segundo pedido na Mesa 23 depois do aceite | Entra em Recebido, na comanda, sem esperar | api:salao, e2e:fluxo | ✅ (novo) |
+| QR-28 | Fim do pedido: Comer aqui ou Para levar | cliente | Revisão do pedido na mesa | Só "Comer aqui (Mesa N)" (marcado) e "Para levar"; nenhuma menção a entrega | e2e:fluxo | ✅ (novo, A-3.4) |
+| QR-29 | Para levar entra na conta da mesa | cliente + Cozinha | Pedir "Para levar" | Card com "PARA LEVAR" em destaque; entra na comanda e na base do serviço; segue a regra da mesa livre | api:salao, e2e:fluxo | ✅ (novo) |
+| QR-30 | Delivery não aparece na mesa | cliente | Na mesa, abrir `/`, `/history` ou um caminho qualquer | Volta para o cardápio da mesa | e2e:fluxo | ✅ (novo) |
+| QR-31 | Sessão do aparelho | — | Listar pedidos sem `X-Session-Id`, com "anonymous" ou com outro aparelho | 400 / 400 / lista vazia; o pedido de um aparelho só é lido e só chama o garçom por ele | api:seguranca, api:salao | ✅ (novo) |
 
 ### 4.4b Lançar pedido: o garçom faz o pedido pela mesa (GAR)
 
@@ -198,6 +213,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | PED-11 | API fora do ar | Cozinha | Derrubar a rede com a Central aberta | Aviso "Sem conexão"; os cards continuam na tela; volta sozinho | e2e:desktop | ✅ corrigido (B12) |
 | PED-12 | Lista grande | Cozinha | 120 pedidos no dia | Central abre e rola sem travar | api:grandes, M | ✅ + M |
 | PED-13 | Tablet em paisagem | Cozinha | 1280×800 | 4 colunas utilizáveis; botões com área de toque | e2e:varredura, M | ✅ corrigido (B18) |
+| PED-15 | Pedido aguardando aceite | Cozinha | Primeiro pedido de mesa livre na Central (desktop e celular) | Em Recebido, com "Aguardando aceite" e "Mesa N" em destaque; não arrasta para outra coluna; a API recusa mudar a etapa antes do aceite (409) | api:salao, e2e:fluxo | ✅ (novo) |
+| PED-16 | Duas etapas no primeiro pedido | Cozinha | Aceitar (abre a mesa) e depois Aceitar de novo (Preparando) | Fluxo do pedido: aguardando → Recebido → Preparando | e2e:fluxo | ✅ (novo; ver A-3.3 na seção 6) |
 | PED-14 | Aceitar e recusar o mesmo pedido juntos | Cozinha + Garçom | Um aceita enquanto o outro recusa | Só um vale; o outro recebe "não foi possível"; o pedido está na comanda se e só se não foi recusado | api:salao | ✅ corrigido (B20) |
 
 ### 4.6 Mesas: mapa, comanda, fechamento e transferência (MES)
@@ -216,7 +233,10 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | MES-10 | Transferir para mesa livre | Garçom | Mesa 7 → Mesa 8 | Itens na 8; 7 livre; nada da comanda anterior da Mesa 8 volta | api:salao | ✅ corrigido (B02) |
 | MES-11 | Transferir e fechar ao mesmo tempo | 2 Garçons | Um transfere 7→8 enquanto outro fecha a 7 | Nenhum pedido é cobrado duas vezes nem some | api:salao | ✅ corrigido (B02) |
 | MES-12 | Divisão por pessoa/item | Garçom | Dividir por 3 | Valores somam o total (centavo no último) | M | ✅ M |
-| MES-13 | QR code da mesa | Garçom | QR code | Copia o link `…/t/chapa27.<n>` | e2e:fluxo | ✅ |
+| MES-13 | QR code da mesa | Garçom | Mesa → QR code → Copiar link | Folha da mesa; o link `…/t/<código>` é copiado | e2e:fluxo, e2e:desktop | ✅ |
+| MES-18 | Imprimir QR de todas as mesas | Dono | Mesas → Imprimir QR → Imprimir | 30 folhas (restaurante, "Mesa N", QR, "Aponte a câmera para pedir"); no papel, só as folhas, A4 com duas por linha | e2e:desktop | ✅ (novo, A-3.5) |
+| MES-19 | Gerar novo QR | Dono, Adm | Mesa → QR code → Gerar novo QR → confirmar | Pede confirmação ("As folhas impressas desta mesa deixarão de funcionar"); o QR na tela muda; o link antigo mostra "Mesa não encontrada"; garçom e cozinha não veem o botão (API 403) | api:salao, e2e:desktop | ✅ (novo, A-3.2) |
+| MES-20 | Fechamento grava serviço junto | Garçom | Fechar comanda de 20 pedidos enquanto a Emissão Fiscal é consultada | A fila nunca mostra a comanda fechada sem o serviço | api:financeiro | ✅ corrigido (A-1.1) |
 | MES-14 | Editar ambiente | Adm | Grade 13×13, nova mesa, arrastar, renomear, excluir | Posições salvas; mesa aberta não pode ser renomeada/excluída (409) | M | ✅ M |
 | MES-15 | Fechar conta no celular | Garçom | Mesa → Fechar conta | Pede a forma de pagamento antes de fechar; lançamento em Contas a Receber | e2e:mobile | ✅ corrigido (B15) |
 | MES-16 | Mesa sem pedidos | Garçom | Fechar conta em mesa livre | Botão desabilitado | M | ✅ M |
@@ -241,6 +261,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | EST-14 | Validações do ajuste | Adm, Garçom | Tipo inválido, quantidade 0 ou negativa, produto com ficha técnica, outro restaurante, garçom | 400 / 400 / 400 / 403 / 403 | api:estoque | ✅ |
 | EST-15 | Ficha técnica muda com a comanda aberta | Adm | 2 lanches vendidos; receita passa a 0,18 kg de blend, sem pão; +1 lanche; fechar | Pão −2; blend −0,48 (0,15 × 2 + 0,18): cada venda baixa a receita com que foi vendida | api:estoque | ✅ corrigido (B23) |
 | EST-16 | Prato excluído do Cardápio com a comanda aberta | Adm | Vender 1, excluir o prato, fechar | A baixa acontece (pão −1, blend −0,15) | api:estoque | ✅ corrigido (B23) |
+| EST-17 | Unidade travada depois de movimentar | Adm | Produto em kg com uma entrada; trocar para g | API 409 "A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto."; na tela o campo fica desabilitado com esse texto; sem movimentação, a troca é livre | api:estoque, e2e:desktop | ✅ corrigido (A-01) |
 | EST-12 | Lista grande | Adm | 150 produtos | Tela abre e filtra | api:grandes, M | ✅ + M (0,6 s) |
 
 ### 4.8 Cardápio no painel (CAR)
@@ -299,6 +320,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | REL-01 | Hoje/7 dias/Mês | Adm | Trocar o período | KPIs, gráfico, mais e menos vendidos, mapa de calor | M | ✅ M |
 | REL-02 | Números batem com as comandas | Adm | Fluxo crítico | Faturamento de hoje = soma dos pedidos (sem serviço); pedidos recusados não entram | e2e:fluxo, api:salao | ✅ |
 | REL-03 | Sem dados | Adm | Restaurante novo | Zeros, sem erro | M | ✅ M |
+| REL-04 | Serviço numa linha à parte | Adm | Fechar uma comanda com serviço; depois desligar o serviço | Relatórios e Turno de hoje: "Vendas de produtos", "Serviço das mesas" (o gravado no fechamento, não a configuração de hoje) e total = Contas a Receber do dia | api:financeiro, e2e:fluxo | ✅ (novo, A-4.3) |
 
 ### 4.12 Atendimento e WhatsApp (ATD)
 
@@ -315,6 +337,9 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | ATD-09 | Desconectado | Garçom | Sessão cai | Faixa vermelha "WhatsApp desconectado" | M | ✅ M |
 | ATD-10 | Isolamento | Dono de outro restaurante | Ler/responder ticket alheio | 404/403 | api:zap | ✅ |
 | ATD-11 | Números reais | Dono | Ambiente hospedado com Evolution | Receber, responder, foto, áudio | M (hospedado) | ⏳ hospedado |
+| ATD-12 | Mídia acima de 8 MB | Garçom | Enviar foto de 8 MB + 1 byte | "Arquivo acima de 8 MB. Envie uma imagem menor ou um áudio mais curto." (antes de subir e, se chegar, 413 da API); 8 MB exatos saem | api:zap | ✅ (novo, A-4.1) |
+| ATD-13 | Webhook sem o segredo | — | POST no webhook sem `x-webhook-secret`, anunciando 50 MB | 401 antes de ler o corpo; com o segredo, corpo acima de 8 MB em base64 + 1 MB → 413 | api:zap | ✅ (novo, A-2.2) |
+| ATD-14 | Status e responsável do ticket inválidos | — | status "fechado", responsável numérico ou com 121 caracteres | 400; nada muda | api:robustez | ✅ (novo, A-2.9) |
 
 ### 4.13 Configurações (CFG)
 
@@ -322,6 +347,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | --- | --- | --- | --- | --- | --- | --- |
 | CFG-01 | Perfil | Dono | Nome e descrição com acento | Salva; cabeçalho mostra o nome do restaurante | e2e:desktop | ✅ corrigido (B13) M |
 | CFG-02 | Horários | Dono | Domingo fechado | Salva | M | ✅ M (seed: segunda fechada) |
+| CFG-08 | Horários inválidos | — | Dia 7, dia repetido, texto de 41 caracteres, `isOpen: "sim"`, 8 linhas | 400; nada muda | api:robustez | ✅ (novo, A-2.9) |
+| CFG-09 | Logo e fotos só PNG, JPEG ou WebP | Dono | SVG (com o tipo certo ou disfarçado de PNG), HTML com nome .jpg | "Envie uma imagem PNG, JPEG ou WebP."; imagem de verdade passa mesmo com tipo errado informado | api:seguranca | ✅ (novo, A-2.8) |
 | CFG-03 | Equipe: adicionar/editar | Dono | Novo garçom, e-mail repetido, senha curta | Salva; 409; aviso | e2e:desktop, api:perm | ✅ |
 | CFG-04 | Financeiro: forma de recebimento | Dono | Maquininha própria / PIX via sistema | Salva e muda o fechamento | M | ✅ M |
 | CFG-05 | Salão: serviço 10% | Dono | Configurações → Salão (desktop e celular) → ligar/desligar | Comanda e recebível acompanham | api:salao, e2e:desktop | ✅ (decisão: novo) |
@@ -365,7 +392,21 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | UI-03 | Textos longos | Nome de prato com 80 caracteres, descrição de conta com 120 | Corta com reticências, não quebra o layout | M | ✅ M |
 | UI-04 | Central inteira no tablet e no desktop | Central com a cozinha em 1280×800 e com o Dono em 1366×820 | As 4 colunas cabem na tela; chamados e turno viram uma faixa acima | e2e:varredura | ✅ corrigido (B18) |
 | UI-05 | Barra de abas sempre na tela (celular) | Rolar Central, Cardápio e Mesas até o fim | Abas continuam visíveis (antes ficavam depois do conteúdo) | e2e:mobile | ✅ corrigido (B21) |
+| UX-03 | Acessibilidade de todas as telas | Seção 3, com axe-core e a medida dos alvos | Nenhuma violação WCAG 2.1 A/AA (contraste 4,5:1 e 3:1, nome em botões, links e campos) e nenhum alvo de toque menor que 44 × 44 | e2e:varredura | ✅ corrigido (A-4.2): 639 → 0, detalhes na seção 6 |
 | ROB-01 | Requisição malformada não derruba a API | PATCH de prato com preço "abc" (Administrador) | Erro só nessa requisição; a API segue respondendo | api:robustez | ✅ corrigido (B05) |
+
+### 4.18 Segurança e limites (SEG)
+
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
+| --- | --- | --- | --- | --- | --- | --- |
+| SEG-01 | RLS em todas as tabelas | — | `pg_tables` do schema public | `rowsecurity = true` em todas (a API, dona das tabelas, segue funcionando) | api:seguranca | ✅ (novo, A-2.1) |
+| SEG-02 | Produção sem configuração obrigatória | — | `NODE_ENV=production` sem `JWT_SECRET` de 32+ ou sem `CORS_ORIGINS` | A API não sobe e diz o que falta; com os dois, sobe; fora de produção, como antes | api:seguranca | ✅ (novo, A-2.3) |
+| SEG-03 | API e Evolution só na máquina | — | API em 127.0.0.1; `docker compose config` | A rede local não chega na API; a Evolution (no Docker) chega; a porta 8085 só em 127.0.0.1; sem `EVOLUTION_API_KEY` o compose não sobe | M | ✅ M (30/09) |
+| SEG-04 | Casa cheia no mesmo IP | — | 40 mesas × 7 aparelhos × 25 req + 70 pedidos + 10 aparelhos da equipe × 57 req, do mesmo IP | Nenhum 429 | api:limites | ✅ (novo, A-2.11) |
+| SEG-05 | Uma mesa acima do limite | — | 901 req/min de uma mesa; 41 pedidos em 5 min de uma mesa | 429 com `Retry-After` e mensagem; outra mesa do mesmo IP segue | api:limites | ✅ (novo) |
+| SEG-06 | IP real só pelo túnel | — | `CF-Connecting-IP` numa conexão local e numa da rede | Local: vale o cabeçalho; da rede: vale o endereço da conexão | api:limites | ✅ (novo) |
+| SEG-07 | Chamar garçom por pedido alheio | — | `call-waiter` sem sessão, com outra ou com "anonymous" | 404 e nenhum chamado | api:salao | ✅ (novo, A-2.5) |
+| SEG-08 | Pedir pelo QR com a opção desligada | cliente | Pedido anônimo de mesa com Configurações → Salão sem QR | 403 "os pedidos da mesa são feitos pelo garçom"; o garçom lança; delivery não muda | api:garcom | ✅ (A-2.12, já existia) |
 
 ## 5. Só com aparelho na mão
 
@@ -447,3 +488,28 @@ P2 (registrados, não corrigidos):
 | P2-15 | Chamar garçom duas vezes gera dois chamados. |
 
 As lacunas de produto listadas em 27/09 (categorias, ajuste manual de estoque, garçom lançar pedido, adicionais com estoque) foram implementadas em 29/09 (casos GAR, CAR-09 a CAR-14, EST-13, EST-14). P2-05 deixou de existir: "Abrir comanda" virou "Lançar pedido". Depois, por decisão do Dono do produto: o pedido lançado pelo garçom entra direto em Preparando com a tag "Lançado no estabelecimento", e o pedido pelo QR virou opção em Configurações → Salão (junto com o serviço de 10%, que assim chega também ao celular — P2-14 resolvido).
+
+**30/09 — rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais).** Um commit por item (`A-x.y` no início da mensagem). Casos novos: AUT-12 a AUT-14, QR-22 a QR-31, PED-15, PED-16, MES-18 a MES-20, EST-17, REL-04, ATD-12 a ATD-14, CFG-08, CFG-09, UX-03 e a seção 4.18 (SEG).
+
+| Item | O que mudou | Casos |
+| --- | --- | --- |
+| A-1.1 | Fechar comanda grava `closedAt` e o serviço no mesmo UPDATE | MES-20 |
+| A-1.3 | Unidade travada depois da primeira movimentação (resolve A-01) | EST-17 |
+| A-1.4 | "Pedir de novo" com o preço e a disponibilidade de hoje (resolve A-02) | e2e:desktop |
+| A-1.5 | Rota `POST /api/orders/:id/repeat` apagada (resolve A-03) | api:salao |
+| A-2.x | RLS, webhook, produção, rede, sessão, senha 8, imagens, validação, limites | SEG-01 a SEG-08, AUT-12 a AUT-14, ATD-13, ATD-14, CFG-08, CFG-09, QR-31 |
+| A-3.x | QR com código aleatório, gerar novo QR, aceite do primeiro pedido, Comer aqui/Para levar, impressão em A4 | QR-22 a QR-30, PED-15, PED-16, MES-18, MES-19 |
+| A-4.1 | Mídia do WhatsApp com 8 MB na API, no bucket e no Atendimento | ATD-12 |
+| A-4.2 | Acessibilidade (UX-03) na varredura | UX-03 |
+| A-4.3 | Serviço numa linha à parte nos Relatórios e no turno | REL-04 |
+
+**UX-03, varredura de acessibilidade (axe-core + alvos de 44 × 44), desktop e celular, temas claro e escuro, todas as telas da varredura (painel com os 4 papéis, Super Admin, login e o app do cliente na mesa e no delivery).** Primeira passada: 639 ocorrências (a mesma falha repetida em telas, tamanhos e temas). Encontrado e corrigido:
+
+- **Alvos menores que 44 × 44:** linhas do menu lateral (204×38), cabeçalho do grupo (239×40), campos (~40 px), botões de ícone do cabeçalho do celular (38×38: voltar, notificações, conta), controles segmentados, chips e abas (30–40 px), botões de texto ("Remover", "Observações", "Pedir de novo"), links do Super Admin (15–21 px), interruptores de 48×28. Correção: regra global nos dois apps (botões, campos, selects, interruptores, abas e links com pelo menos 44 × 44, acima de estilos inline menores); interruptor do celular com área de toque de 52×44.
+- **Contraste abaixo de 4,5:1:** texto terciário `--ink3` (2,96:1 no claro, 3,27:1 no escuro), `--warn` como texto (3,31:1), a cor secundária como texto (2,2:1: papel no cabeçalho, "Lançado no estabelecimento", estrelas), no escuro `--alert` (3,81:1) e `--neutral` (2,70:1); no app do cliente, `--good` (3,33:1 e 4,30:1). Correção: tokens ajustados na mesma matiz até 4,6:1 em todas as superfícies, e `--secText` para a cor secundária usada como texto.
+- **Sem nome acessível:** botões do cabeçalho do celular, botão de tema na aba Mais, interruptores de horário/disponibilidade/cupom (agora `role="switch"` com rótulo), selects do Mesas (tamanho da grade, transferir), campos do login (rótulos ligados por `for`).
+- **Teclado:** regiões com rolagem sem foco (gráficos dos Relatórios, DRE, o `main` do celular, as faixas horizontais do app do cliente) e cards clicáveis sem teclado (destaques e restaurantes do app do cliente, agora `role="link"` com Enter).
+
+- **Só com dados (na suíte completa, depois dos outros testes):** cartões da Central marcados como botão pelo arraste e com botões dentro (agora `role="group"`, com nome); o contador dos filtros da Central com opacidade 0,75; cartões de restaurante fechado no app do cliente com opacidade 0,62 (agora só a capa fica cinza); o selo "Pendente" da Minha Fatura a 4,49:1 sobre o próprio fundo tingido (`--warn` claro passou a #775214).
+
+Segunda passada: 154 (restavam estilos inline com altura menor e a cor secundária); terceira: **0 violações e 0 alvos pequenos** com as telas vazias; os quatro casos acima apareceram com os dados dos outros testes e foram corrigidos na sequência. A varredura roda a checagem só no desktop e no celular (o tablet segue com as checagens de layout). Limite conhecido: a varredura abre as telas (rotas); diálogos e gavetas que só abrem com um clique (cadastro de produto, lançar pedido, fechar conta) passam pelas mesmas regras globais de tamanho e pelos mesmos tokens, mas não pelo axe.
