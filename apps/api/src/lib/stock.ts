@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 
 type ProductRecipe = { id: string; composed: boolean; components: { componentId: string; quantity: number }[] };
@@ -51,12 +52,16 @@ export async function takeStockForOrders(
     })),
     new Map(products.map((p) => [p.id, p]))
   );
-  // Rows locked in id order, as in the XML import: two comandas closing at once over the same insumos (pão, blend…)
-  // used to lock them in opposite orders and deadlock — the loser's stock and receivable were lost.
-  await prisma.$transaction(
-    [...out].sort(([a], [b]) => a.localeCompare(b)).flatMap(([productId, quantity]) => [
-      prisma.product.update({ where: { id: productId }, data: { stock: { decrement: quantity } } }),
-      prisma.stockMovement.create({ data: { restaurantId, productId, kind: "out", quantity, source } })
-    ])
-  );
+  if (out.size === 0) return;
+  // One statement: the shared insumos' rows (pão, blend…) stay locked for one round trip, not one UPDATE + INSERT per
+  // insumo — 29 comandas closing at once used to queue behind those locks for seconds. Locked in id order first, as in the
+  // XML import: two closes over the same insumos used to lock them in opposite orders and deadlock (the loser's stock and
+  // receivable were lost).
+  const values = Prisma.join([...out].map(([id, quantity]) => Prisma.sql`(${id}, ${quantity}::double precision)`));
+  await prisma.$executeRaw`
+    WITH "out"("id", "quantity") AS (VALUES ${values}),
+    "locked" AS MATERIALIZED (SELECT "id" FROM "Product" WHERE "id" IN (SELECT "id" FROM "out") ORDER BY "id" FOR UPDATE),
+    "taken" AS (UPDATE "Product" p SET "stock" = p."stock" - o."quantity" FROM "out" o JOIN "locked" l ON l."id" = o."id" WHERE p."id" = o."id")
+    INSERT INTO "StockMovement" ("id", "restaurantId", "productId", "kind", "quantity", "source")
+    SELECT gen_random_uuid()::text, ${restaurantId}, "id", 'out', "quantity", ${source} FROM "out"`;
 }
