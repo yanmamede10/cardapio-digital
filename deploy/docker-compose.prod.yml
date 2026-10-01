@@ -30,6 +30,8 @@ services:
     env_file: .env
     # Wiring of this stack, not settings: they win over deploy/.env.
     environment:
+      HOST: 0.0.0.0
+      PORT: "4100"
       TRUSTED_PROXY: 172.30.0.2
       EVOLUTION_API_URL: http://evolution:8080
       WHATSAPP_WEBHOOK_URL: http://api:4100/api/whatsapp/webhook
