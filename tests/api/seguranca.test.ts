@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { connect } from "node:net";
+import { networkInterfaces } from "node:os";
 import { after, test } from "node:test";
 import { PrismaClient } from "@prisma/client";
 import { R, call, login } from "./helpers.ts";
@@ -34,6 +36,37 @@ test("em produção a API não sobe sem JWT_SECRET de 32+ caracteres e CORS_ORIG
   assert.equal(ok.status, 0, ok.stderr);
   const dev = boot({});
   assert.equal(dev.status, 0, dev.stderr);
+});
+
+test("sem HOST a API escuta só em 127.0.0.1: a própria máquina (e o túnel) conecta, o endereço da rede local não", async () => {
+  const env = { ...process.env, PORT: "4298" };
+  delete env.HOST;
+  const api = spawn(process.execPath, ["--import", "tsx", "apps/api/src/index.ts"], { env });
+  try {
+    const listening = await new Promise<string>((ok, fail) => {
+      api.stdout.on("data", (b) => String(b).includes("listening") && ok(String(b).trim()));
+      api.on("exit", (code) => fail(new Error(`a API saiu com ${code}`)));
+    });
+    assert.match(listening, /listening on http:\/\/127\.0\.0\.1:4298$/);
+    const reaches = (host: string) => new Promise<boolean>((ok) => { const s = connect(4298, host).on("connect", () => (s.destroy(), ok(true))).on("error", () => ok(false)); });
+    assert.equal(await reaches("127.0.0.1"), true);
+    const lan = Object.values(networkInterfaces()).flat().find((a) => a?.family === "IPv4" && !a.internal)?.address;
+    if (lan) assert.equal(await reaches(lan), false, `${lan}:4298, pela rede local`);
+  } finally {
+    api.kill();
+  }
+});
+
+test("docker compose não monta a Evolution sem EVOLUTION_API_KEY; com ela, a porta 8085 fica só em 127.0.0.1", () => {
+  const env = { ...process.env };
+  delete env.EVOLUTION_API_KEY; // tests/run.mjs sets one for the fake Evolution
+  const config = (key?: string) => spawnSync("docker", ["compose", "-f", "docker-compose.yml", "config"], { env: key ? { ...env, EVOLUTION_API_KEY: key } : env, encoding: "utf8" });
+  const without = config();
+  assert.notEqual(without.status, 0);
+  assert.match(without.stderr, /required variable EVOLUTION_API_KEY is missing a value: set EVOLUTION_API_KEY in apps\/api\/\.env/);
+  const withKey = config("k".repeat(64));
+  assert.equal(withKey.status, 0, withKey.stderr);
+  assert.match(withKey.stdout, /host_ip: 127\.0\.0\.1\s+target: 8080\s+published: "8085"/);
 });
 
 test("sem X-Session-Id válido nenhuma chamada devolve pedidos (nem a antiga sessão \"anonymous\")", async () => {
