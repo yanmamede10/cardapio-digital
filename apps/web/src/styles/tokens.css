@@ -9,7 +9,7 @@
   --priInk: #fff7ec;
   --acc: var(--pri);
   --line: rgba(36, 22, 15, 0.14);
-  --good: #3f8f5b;
+  --good: #34754b; /* UX-03: 4.6:1 as text (was #3f8f5b) */
 
   /* Vibrante template: light mode fills the whole page with the brand color;
      dark mode instead shows the brand as a solid header panel over a near-black page. */
@@ -64,6 +64,7 @@
   --pri: #732009;
   --priInk: #fcf7d3;
   --acc: #938172;
+  --good: #499563; /* 4.6:1 on the dark surfaces */
   --line: rgba(147, 129, 114, 0.24);
 
   --glass: rgba(16, 18, 20, 0.72);

@@ -19,7 +19,7 @@ export function orderSubtitle(o: Order): string {
 export function InHouseTag({ order }: { order: Order }) {
   if (!order.waiterName) return null;
   return (
-    <span style={{ alignSelf: "flex-start", fontSize: 10.5, fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 999, padding: "2px 8px", color: "var(--sec)", border: "1px solid var(--sec)" }}>
+    <span style={{ alignSelf: "flex-start", fontSize: 10.5, fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 999, padding: "2px 8px", color: "var(--secText)", border: "1px solid var(--secText)" }}>
       Lançado no estabelecimento
     </span>
   );

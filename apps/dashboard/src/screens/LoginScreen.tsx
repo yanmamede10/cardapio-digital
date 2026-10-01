@@ -55,9 +55,11 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
         <h1 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--ink)" }}>Entrar</h1>
         <p style={{ margin: "0 0 20px", fontSize: 13, color: "var(--ink3)" }}>Acesse com seu e-mail cadastrado no restaurante.</p>
 
-        <label style={{ display: "block", fontSize: 13, color: "var(--ink2)", marginBottom: 6 }}>E-mail</label>
+        <label htmlFor="login-email" style={{ display: "block", fontSize: 13, color: "var(--ink2)", marginBottom: 6 }}>E-mail</label>
         <input
+          id="login-email"
           type="email"
+          autoComplete="username"
           required
           autoFocus
           value={email}
@@ -65,9 +67,11 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
           style={inputStyle}
         />
 
-        <label style={{ display: "block", fontSize: 13, color: "var(--ink2)", margin: "14px 0 6px" }}>Senha</label>
+        <label htmlFor="login-password" style={{ display: "block", fontSize: 13, color: "var(--ink2)", margin: "14px 0 6px" }}>Senha</label>
         <input
+          id="login-password"
           type="password"
+          autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}

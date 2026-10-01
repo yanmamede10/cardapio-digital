@@ -44,7 +44,7 @@ export default function MobileHoursScreen() {
             <div className="mono" style={{ flex: 1, fontSize: 12.5, color: row.isOpen ? "var(--ink2)" : "var(--ink3)" }}>
               {row.isOpen ? `${row.lunch} · ${row.dinner}` : "Fechado"}
             </div>
-            <MobileToggle on={row.isOpen} onClick={() => toggle(row)} />
+            <MobileToggle on={row.isOpen} onClick={() => toggle(row)} label={`Aberto ${WEEKDAY_LABEL[row.weekday]}`} />
           </div>
         ))}
       </section>

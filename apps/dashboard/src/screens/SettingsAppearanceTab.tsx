@@ -389,7 +389,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               </div>
             </label>
             {isCustomColor && (
-              <span className="pill" style={{ background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--sec)" }}>Cor fora da paleta</span>
+              <span className="pill" style={{ background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--secText)" }}>Cor fora da paleta</span>
             )}
           </div>
         </div>

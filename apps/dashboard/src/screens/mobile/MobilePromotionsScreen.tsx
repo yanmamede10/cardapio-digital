@@ -98,7 +98,7 @@ export default function MobilePromotionsScreen() {
               </span>
               {!expired && (
                 <div style={{ marginLeft: "auto" }}>
-                  <MobileToggle on={c.active} onClick={() => toggleActive(c)} title={c.active ? "Pausar cupom" : "Ativar cupom"} />
+                  <MobileToggle on={c.active} onClick={() => toggleActive(c)} title={c.active ? "Pausar cupom" : "Ativar cupom"} label={`Cupom ${c.code} ativo`} />
                 </div>
               )}
             </div>

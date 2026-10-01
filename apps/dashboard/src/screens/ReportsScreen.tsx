@@ -105,7 +105,7 @@ export default function ReportsScreen() {
             </span>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: period === "today" ? 6 : 10, height: 160, overflowX: "auto", paddingBottom: 4 }}>
+        <div tabIndex={0} role="group" aria-label="Gráfico de faturamento (role para os lados)" style={{ display: "flex", alignItems: "flex-end", gap: period === "today" ? 6 : 10, height: 160, overflowX: "auto", paddingBottom: 4 }}>
           {revenueSeries.map((p, i) => {
             const total = p.tableRevenue + p.deliveryRevenue;
             const h = Math.max(2, (total / maxRevenue) * 140);
@@ -166,7 +166,7 @@ export default function ReportsScreen() {
         </section>
       </div>
 
-      <section className="card" style={{ padding: 16, overflowX: "auto" }}>
+      <section className="card" tabIndex={0} aria-label="Mapa de calor dos pedidos por dia e hora" style={{ padding: 16, overflowX: "auto" }}>
         <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 12 }}>Horários de pico</div>
         <div style={{ display: "grid", gridTemplateColumns: "44px repeat(5, 1fr)", gap: 5, minWidth: 460 }}>
           <div />

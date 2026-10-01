@@ -8,15 +8,16 @@
   --line2: #CFC7A9;
   --ink: #1B1915;
   --ink2: #55524A;
-  --ink3: #87837A;
+  --ink3: #67645D; /* UX-03: 4.6:1 on every surface (it was #87837A, 3.0:1) */
   --brand: #732009;
   --brandText: #732009;
   --brandInk: #FCF7D3;
   --brandSoft: #F0E3D2;
   --sec: #CD8C52;
+  --secText: #855B35; /* sec as text: 4.6:1 on every surface (sec itself is 2.2:1) */
   --neutral: #626266;
   --ok: #3F6B4A;
-  --warn: #A5711C;
+  --warn: #775214; /* 4.6:1 as text, also on its own 18% tint (status pills); was #A5711C */
   --alert: #9E2A10;
 
   --glassBg: rgba(255, 253, 241, .72);
@@ -40,16 +41,17 @@
   --line2: #33373A;
   --ink: #F2EFE4;
   --ink2: #A9A59B;
-  --ink3: #726F69;
+  --ink3: #8B8984; /* 4.6:1 on every surface (was #726F69) */
   --brand: #732009;
   --brandText: #C9743F;
   --brandInk: #FCF7D3;
   --brandSoft: #1F1510;
-  --sec: #938172;
-  --neutral: #626266;
+  --sec: #968576;
+  --secText: #968576;
+  --neutral: #88888B;
   --ok: #6E9B78;
   --warn: #C79B4A;
-  --alert: #C7583A;
+  --alert: #CE6E54; /* 4.6:1 (was #C7583A); sec and neutral nudged for the same reason */
 
   --glassBg: rgba(13, 15, 16, .68);
   --glassBd: rgba(255, 255, 255, .08);

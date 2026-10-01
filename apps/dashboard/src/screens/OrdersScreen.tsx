@@ -174,7 +174,7 @@ export default function OrdersScreen() {
                 >
                   <i className={`fa-solid ${f.icon}`} style={{ fontSize: 17, lineHeight: 1 }} />
                   {f.label}
-                  <span className="mono" style={{ fontSize: 11, opacity: 0.75 }}>
+                  <span className="mono" style={{ fontSize: 11 }}>
                     {count}
                   </span>
                 </button>
@@ -323,8 +323,11 @@ function KanbanCard({
   // A free table's first order moves only by Aceitar/Recusar (accepting is what opens the table): no drag handlers on it.
   // Not dnd-kit's `disabled`, which marks the whole card aria-disabled — its buttons included.
   const drag = order.status === "awaiting" ? {} : { ...listeners, ...attributes };
+  // role="group" over dnd-kit's role="button": the card holds its own buttons (Aceitar, Recusar, the next step), and a button
+  // can't contain buttons. It still takes focus and the keyboard drag (space, arrows).
+  const ref = order.mode === "table" ? `Mesa ${order.tableNumber}` : `Delivery ${order.code}`;
   return (
-    <article ref={setNodeRef} {...drag} style={{ opacity: isDragging ? 0.4 : 1, cursor: order.status === "awaiting" ? "default" : "grab" }}>
+    <article ref={setNodeRef} {...drag} role="group" aria-label={`Pedido ${order.code}, ${ref}`} style={{ opacity: isDragging ? 0.4 : 1, cursor: order.status === "awaiting" ? "default" : "grab" }}>
       <KanbanCardBody order={order} nextLabel={nextLabel} onAccept={() => onAccept(order)} onReject={() => onReject(order)} onAdvance={onAdvance} />
     </article>
   );

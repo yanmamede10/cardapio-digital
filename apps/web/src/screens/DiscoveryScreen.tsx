@@ -121,7 +121,7 @@ export default function DiscoveryScreen() {
             </div>
           </div>
 
-          <div className="no-scrollbar" style={{ marginTop: 14, display: "flex", gap: 8, overflowX: "auto", padding: "0 var(--pad) 2px" }}>
+          <div className="no-scrollbar" role="group" aria-label="Tipos de cozinha" tabIndex={0} style={{ marginTop: 14, display: "flex", gap: 8, overflowX: "auto", padding: "0 var(--pad) 2px" }}>
             {CUISINES.map((c) => (
               <Pill key={c.label} icon={c.icon} active={cuisine === c.label} onClick={() => setCuisine(c.label)}>
                 {c.label}
@@ -129,11 +129,15 @@ export default function DiscoveryScreen() {
             ))}
           </div>
 
-          <div className="no-scrollbar" style={{ marginTop: 18, display: "flex", gap: 12, overflowX: "auto", padding: "0 var(--pad) 4px" }}>
+          <div className="no-scrollbar" role="group" aria-label="Destaques" tabIndex={0} style={{ marginTop: 18, display: "flex", gap: 12, overflowX: "auto", padding: "0 var(--pad) 4px" }}>
             {BANNERS.map((b, i) => (
               <div
                 key={b.restaurantId}
+                role="link"
+                tabIndex={0}
+                aria-label={`${b.title}: ${b.sub}`}
                 onClick={() => navigate(`/r/${b.restaurantId}/menu`)}
+                onKeyDown={(e) => e.key === "Enter" && navigate(`/r/${b.restaurantId}/menu`)}
                 style={{
                   position: "relative", flex: "none", width: "min(84vw, 300px)", height: 156, borderRadius: "var(--r-standard)", overflow: "hidden", cursor: "pointer",
                   backgroundColor: "var(--surf2)",
@@ -161,7 +165,7 @@ export default function DiscoveryScreen() {
             </div>
           </div>
 
-          <div className="no-scrollbar" style={{ marginTop: 10, display: "flex", gap: 8, overflowX: "auto", padding: "0 var(--pad) 2px" }}>
+          <div className="no-scrollbar" role="group" aria-label="Ordenar" tabIndex={0} style={{ marginTop: 10, display: "flex", gap: 8, overflowX: "auto", padding: "0 var(--pad) 2px" }}>
             {SORTS.map((s) => (
               <Pill key={s.id} icon={s.icon} active={sort === s.id} onClick={() => setSort(s.id)}>
                 {s.label}
@@ -173,11 +177,16 @@ export default function DiscoveryScreen() {
             {restaurants.map((r) => (
               <div
                 key={r.id}
+                role="link"
+                tabIndex={0}
+                aria-label={r.name}
                 onClick={() => openRestaurant(r)}
+                onKeyDown={(e) => e.key === "Enter" && openRestaurant(r)}
                 className="card"
-                style={{ overflow: "hidden", cursor: "pointer", opacity: r.isOpen ? 1 : 0.62 }}
+                style={{ overflow: "hidden", cursor: "pointer" }}
               >
-                <div className="photo-placeholder" style={{ position: "relative", height: "var(--cover)" }}>
+                {/* Closed: the cover goes gray (it used to fade the whole card, text included, below 4.5:1). */}
+                <div className="photo-placeholder" style={{ position: "relative", height: "var(--cover)", filter: r.isOpen ? undefined : "grayscale(1)" }}>
                   <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)" }}>{r.coverLabel}</span>
                   {r.isOpen && r.promoLabel && (
                     <div style={{ position: "absolute", top: 10, left: 10, display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 999, background: "var(--pri)", color: "var(--priInk)", font: "600 var(--t-xs) var(--font)" }}>

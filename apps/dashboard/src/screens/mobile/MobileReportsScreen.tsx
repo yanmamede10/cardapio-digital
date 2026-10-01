@@ -151,7 +151,7 @@ export default function MobileReportsScreen() {
               ))}
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, alignItems: "flex-end", height: 192 }}>
+          <div tabIndex={0} role="group" aria-label="Gráfico de faturamento (role para os lados)" style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, alignItems: "flex-end", height: 192 }}>
             {revenueSeries.map((p, i) => {
               const mesaPortion = chartChannel === "Delivery" ? 0 : p.tableRevenue;
               const deliveryPortion = chartChannel === "Mesa" ? 0 : p.deliveryRevenue;
@@ -237,7 +237,7 @@ export default function MobileReportsScreen() {
             <div key={r.id} style={{ padding: "12px 13px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 5 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, flex: 1, minWidth: 0 }}>{r.customerName}</span>
-                <span style={{ color: "var(--sec)", fontSize: 13, letterSpacing: ".06em" }}>{stars(r.rating)}</span>
+                <span style={{ color: "var(--secText)", fontSize: 13, letterSpacing: ".06em" }}>{stars(r.rating)}</span>
               </div>
               <div style={{ fontSize: 12.5, color: "var(--ink2)", textWrap: "pretty" }}>{r.text}</div>
               <div style={{ fontSize: 11, color: "var(--ink3)" }}>

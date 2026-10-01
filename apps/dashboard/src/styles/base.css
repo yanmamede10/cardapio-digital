@@ -241,7 +241,7 @@ textarea.field-mobile {
 .tap:active { transform: scale(.97); }
 
 /* Sidebar rows: hover only paints rows without an inline (active) background. */
-.nav-row { background: transparent; }
+.nav-row { background: transparent; min-height: 44px; }
 .nav-row:hover { background: var(--surface2); }
 
 /* Mobile shell: the desktop modals it reuses (lançamento, quitar, adicionar prato) open as bottom sheets,
@@ -290,3 +290,11 @@ textarea.field-mobile {
   .qr-card-hint { font-size: 14pt; }
   .qr-svg { max-width: 70mm; }
 }
+
+/* UX-03 (Apple HIG): nothing a finger acts on is smaller than 44 × 44 — buttons, fields, switches, tabs and the label of a
+   checkbox. Checked on every screen by tests/e2e/a11y.ts. */
+button, [role="button"], [role="switch"], [role="tab"], [role="radio"], select { min-width: 44px !important; min-height: 44px !important; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]), textarea { min-height: 44px !important; }
+/* !important: a few chips and tabs set a smaller minHeight inline. Links get a 44 px tall box too (Super Admin's lists). */
+a[href] { min-height: 44px; display: inline-flex; align-items: center; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 44px; display: inline-flex; align-items: center; }

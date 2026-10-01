@@ -145,7 +145,7 @@ export default function SupportScreen() {
         />
         {tab === "reviews" && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink2)" }}>
-            <span style={{ color: "var(--sec)" }}>{stars(reviewStats.avg)}</span>
+            <span style={{ color: "var(--secText)" }}>{stars(reviewStats.avg)}</span>
             <span className="mono">{reviewStats.avg.toFixed(1)}</span>
             <span style={{ color: "var(--ink3)" }}>· {reviewStats.count} avaliações</span>
           </div>
@@ -311,7 +311,7 @@ export default function SupportScreen() {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <i className={`fa-solid ${r.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 15, color: "var(--ink3)" }} />
                 <div style={{ fontWeight: 600, fontSize: 13.5, flex: 1 }}>{r.customerName}</div>
-                <span style={{ color: "var(--sec)", fontSize: 14 }}>{stars(r.rating)}</span>
+                <span style={{ color: "var(--secText)", fontSize: 14 }}>{stars(r.rating)}</span>
                 <span className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
                   {fmtDateTime(r.createdAt)}
                 </span>

@@ -148,7 +148,8 @@ export function MobileLayout() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              style={{ width: 38, height: 38, flex: "0 0 38px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              aria-label="Voltar"
+              style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               <i className="fa-solid fa-chevron-left" style={{ fontSize: 16 }} />
             </button>
@@ -160,7 +161,9 @@ export function MobileLayout() {
           <button
             type="button"
             onClick={() => setNotifOpen((v) => !v)}
-            style={{ position: "relative", width: 38, height: 38, flex: "0 0 38px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label={notifCount ? `Notificações: ${notifCount} novas` : "Notificações"}
+            aria-expanded={notifOpen}
+            style={{ position: "relative", width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <i className="fa-solid fa-bell" style={{ fontSize: 16 }} />
             {notifCount > 0 && (
@@ -192,7 +195,8 @@ export function MobileLayout() {
             type="button"
             onClick={() => navigate("/config/perfil")}
             title={staffRole}
-            style={{ width: 38, height: 38, flex: "0 0 38px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label={`Minha conta: ${staffName}, ${staffRole}`}
+            style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             {initialsOf(staffName)}
           </button>
@@ -215,8 +219,8 @@ export function MobileLayout() {
             >
               <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>Notificações</div>
-                <button type="button" onClick={() => setNotifOpen(false)} style={{ background: "transparent", border: 0, color: "var(--ink3)", cursor: "pointer", fontSize: 14 }}>
-                  <i className="fa-solid fa-xmark" />
+                <button type="button" aria-label="Fechar notificações" onClick={() => setNotifOpen(false)} style={{ background: "transparent", border: 0, color: "var(--ink3)", cursor: "pointer", fontSize: 14 }}>
+                  <i className="fa-solid fa-xmark" aria-hidden="true" />
                 </button>
               </div>
               {notifs.length === 0 && <div style={{ padding: "16px 14px", fontSize: 12.5, color: "var(--ink3)" }}>Nenhuma notificação agora.</div>}
@@ -241,7 +245,8 @@ export function MobileLayout() {
           )}
         </header>
 
-        <main style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--bg)" }}>
+        {/* The one scroller of the phone shell: focusable, so the keyboard can scroll screens with nothing to focus (UX-03). */}
+        <main tabIndex={0} style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--bg)" }}>
           <Outlet context={ctx} />
         </main>
 

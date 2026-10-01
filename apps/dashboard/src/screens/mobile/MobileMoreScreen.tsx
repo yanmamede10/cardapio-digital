@@ -51,7 +51,7 @@ export default function MobileMoreScreen() {
             {staffRole} · {restaurantName}
           </div>
         </div>
-        <button type="button" onClick={toggleTheme} style={{ width: 42, height: 42, borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer" }}>
+        <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Usar o tema claro" : "Usar o tema escuro"} style={{ width: 44, height: 44, borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer" }}>
           <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: 15 }} />
         </button>
       </section>

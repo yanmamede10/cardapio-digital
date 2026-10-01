@@ -173,7 +173,7 @@ export default function MobileMenuScreen() {
                             <span style={{ fontSize: 11, color: "var(--ink3)" }}>{p.scheduleLabel}</span>
                           </div>
                         </div>
-                        <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} />
+                        <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} label={`${p.name} disponível`} />
                         {canEdit && (
                           <button type="button" aria-label={`Opções de ${p.name}`} onClick={() => setMenuFor(p)} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
                             <i className="fa-solid fa-ellipsis" style={{ fontSize: 14 }} />

@@ -121,7 +121,7 @@ function Statement({ revenue, expenses, pct }: { revenue: [string, number][]; ex
 
   const cell: CSSProperties = { padding: "9px 0", borderBottom: "1px solid var(--line)" };
   return (
-    <section className="card" style={{ padding: "12px 22px 18px", overflowX: "auto" }}>
+    <section className="card" tabIndex={0} aria-label="Demonstrativo do resultado" style={{ padding: "12px 22px 18px", overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr className="field-label">

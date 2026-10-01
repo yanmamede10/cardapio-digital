@@ -239,7 +239,7 @@ export default function TablesScreen() {
           <div style={{ fontWeight: 600, fontSize: 14 }}>Mapa do salão</div>
           {editing && (
             <>
-              <select value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: 12.5 }}>
+              <select aria-label="Tamanho da grade do salão" value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: 12.5 }}>
                 {GRID_SIZE_OPTIONS.map((n) => (
                   <option key={n} value={n}>
                     {n}×{n}
@@ -437,7 +437,7 @@ export default function TablesScreen() {
                 QR code
               </button>
             )}
-            <select value={transferTo} onChange={(e) => setTransferTo(e.target.value ? Number(e.target.value) : "")} className="field" style={{ flex: 1, padding: "9px 10px", fontSize: 12.5 }}>
+            <select aria-label="Transferir os itens para a mesa" value={transferTo} onChange={(e) => setTransferTo(e.target.value ? Number(e.target.value) : "")} className="field" style={{ flex: 1, padding: "9px 10px", fontSize: 12.5 }}>
               <option value="">Transferir p/…</option>
               {freeTables.map((t) => (
                 <option key={t.id} value={t.number}>

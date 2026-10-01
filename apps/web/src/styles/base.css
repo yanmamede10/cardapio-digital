@@ -299,3 +299,9 @@ a { color: var(--acc); }
   background: var(--pri);
   color: var(--priInk);
 }
+
+/* UX-03 (Apple HIG): nothing a finger acts on is smaller than 44 × 44 — buttons, fields, switches, tabs and the label of a
+   checkbox. Checked on every screen by tests/e2e/a11y.ts. */
+button, [role="button"], [role="switch"], [role="tab"], [role="radio"], select { min-width: 44px !important; min-height: 44px !important; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]), textarea { min-height: 44px !important; }
+label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 44px; display: inline-flex; align-items: center; }

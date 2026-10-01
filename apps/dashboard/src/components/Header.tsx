@@ -119,7 +119,7 @@ export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem
       <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 12, borderLeft: "1px solid var(--line)" }}>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>{staffName}</div>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--sec)" }}>
+          <div className="mono" style={{ fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--secText)" }}>
             {staffRole}
           </div>
         </div>
