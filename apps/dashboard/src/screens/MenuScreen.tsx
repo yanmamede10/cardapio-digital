@@ -446,12 +446,14 @@ export default function MenuScreen() {
                   <div key={i} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 104px 44px", gap: 8, alignItems: "center" }}>
                     <input
                       className="field"
+                      aria-label="Nome do adicional"
                       style={{ padding: "8px 10px" }}
                       value={x.name}
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, name: e.target.value } : y)) })}
                     />
                     <input
                       className="field mono"
+                      aria-label={`Preço de ${x.name}`}
                       style={{ padding: "8px 10px" }}
                       value={x.price}
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, price: e.target.value } : y)) })}

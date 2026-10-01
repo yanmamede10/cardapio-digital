@@ -62,9 +62,9 @@ export function Calendar({ from, to, onPick }: { from: string | null; to?: strin
                   fontVariantNumeric: "tabular-nums",
                   fontWeight: end || iso === today ? 600 : 400,
                   background: end ? "var(--brand)" : "transparent",
-                  color: end ? "var(--brandInk)" : band || iso === today ? "var(--brandText)" : "var(--ink)",
-                  boxShadow: iso === today && !end ? "inset 0 0 0 1.5px var(--brand)" : "none",
-                  opacity: dt.getMonth() === m - 1 ? 1 : 0.32
+                  // Days of the next/previous month in the secondary ink (4.6:1), not faded: they're still tappable.
+                  color: end ? "var(--brandInk)" : band || iso === today ? "var(--brandText)" : dt.getMonth() === m - 1 ? "var(--ink)" : "var(--ink3)",
+                  boxShadow: iso === today && !end ? "inset 0 0 0 1.5px var(--brand)" : "none"
                 }}
               >
                 {dt.getDate()}

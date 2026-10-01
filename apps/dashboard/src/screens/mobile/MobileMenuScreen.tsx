@@ -133,10 +133,10 @@ export default function MobileMenuScreen() {
                 <button type="button" aria-label={`Excluir categoria ${c.name}`} onClick={() => cats.remove(c)} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
                   <i className="fa-solid fa-trash" style={{ fontSize: 13 }} />
                 </button>
-                <button type="button" onClick={() => moveCat(c, "up")} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
+                <button type="button" aria-label={`Subir ${c.name}`} onClick={() => moveCat(c, "up")} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
                   <i className="fa-solid fa-angle-up" style={{ fontSize: 14 }} />
                 </button>
-                <button type="button" onClick={() => moveCat(c, "down")} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
+                <button type="button" aria-label={`Descer ${c.name}`} onClick={() => moveCat(c, "down")} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
                   <i className="fa-solid fa-angle-down" style={{ fontSize: 14 }} />
                 </button>
               </div>

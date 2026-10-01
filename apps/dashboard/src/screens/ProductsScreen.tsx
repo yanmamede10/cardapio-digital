@@ -478,7 +478,7 @@ export function ProductForm({
               <span className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 Custo <i className="fa-solid fa-lock" style={{ fontSize: 10 }} />
               </span>
-              <div className="field mono" aria-readonly style={{ background: "var(--surface3)", color: "var(--ink2)", fontWeight: 600 }}>
+              <div className="field mono" style={{ background: "var(--surface3)", color: "var(--ink2)", fontWeight: 600 }}>
                 {brl(autoCost)}
               </div>
             </div>

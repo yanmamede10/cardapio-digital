@@ -145,6 +145,8 @@ export default function MobileChatScreen() {
         <button
           type="button"
           onClick={() => setQuickOpen((v) => !v)}
+          aria-label="Respostas rápidas"
+          aria-expanded={quickOpen}
           style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: quickOpen ? "var(--brandSoft)" : "var(--surface2)", border: `1px solid ${quickOpen ? "var(--brand)" : "var(--line)"}`, color: quickOpen ? "var(--brandText)" : "var(--ink2)", cursor: "pointer" }}
         >
           <i className="fa-solid fa-bolt" style={{ fontSize: 15 }} />
@@ -158,7 +160,7 @@ export default function MobileChatScreen() {
           maxLength={2000}
           style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 22, padding: "0 15px", font: "inherit", fontSize: 13.5, color: "var(--ink)", outline: "none" }}
         />
-        <button type="button" onClick={send} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brand)", color: "var(--brandInk)", border: 0, cursor: "pointer" }}>
+        <button type="button" onClick={send} aria-label="Enviar resposta" style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brand)", color: "var(--brandInk)", border: 0, cursor: "pointer" }}>
           <i className="fa-solid fa-paper-plane" style={{ fontSize: 15 }} />
         </button>
       </div>

@@ -43,7 +43,7 @@
   --ink2: #A9A59B;
   --ink3: #8B8984; /* 4.6:1 on every surface (was #726F69) */
   --brand: #732009;
-  --brandText: #C9743F;
+  --brandText: #D88852; /* 4.8:1 on the "Novo" chip and every dark surface (was #C9743F, 3.8:1 on the chip) */
   --brandInk: #FCF7D3;
   --brandSoft: #1F1510;
   --sec: #968576;

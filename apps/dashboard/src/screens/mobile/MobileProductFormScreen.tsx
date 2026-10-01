@@ -172,17 +172,19 @@ export default function MobileProductFormScreen() {
         {extras.map((v, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input
+              aria-label="Nome da variação"
               value={v.name}
               onChange={(e) => setExtras((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))}
               style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", font: "inherit", fontSize: 13, color: "var(--ink)", outline: "none" }}
             />
             <input
+              aria-label={`Preço de ${v.name}`}
               value={v.price}
               onChange={(e) => setExtras((prev) => prev.map((x, j) => (i === j ? { ...x, price: e.target.value } : x)))}
               className="mono"
               style={{ width: 92, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", fontSize: 13, color: "var(--ink)", outline: "none" }}
             />
-            <button type="button" onClick={() => setExtras((prev) => prev.filter((_, j) => j !== i))} style={{ width: 44, height: 44, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer" }}>
+            <button type="button" aria-label={`Remover ${v.name}`} onClick={() => setExtras((prev) => prev.filter((_, j) => j !== i))} style={{ width: 44, height: 44, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer" }}>
               <i className="fa-solid fa-trash" style={{ fontSize: 13 }} />
             </button>
           </div>

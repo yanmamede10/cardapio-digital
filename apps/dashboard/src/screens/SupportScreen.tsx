@@ -246,6 +246,7 @@ export default function SupportScreen() {
                     )}
                     <select
                       className="field"
+                      aria-label="Status da conversa"
                       style={{ width: 160 }}
                       value={selected.status}
                       onChange={(e) => setStatus(selected, e.target.value as TicketStatus)}
@@ -291,7 +292,7 @@ export default function SupportScreen() {
                       placeholder="Responder ao cliente"
                       maxLength={2000}
                     />
-                    <button type="button" className="btn btn-primary" onClick={send}>
+                    <button type="button" className="btn btn-primary" onClick={send} aria-label="Enviar resposta">
                       <i className="fa-solid fa-paper-plane" style={{ fontSize: 15 }} />
                     </button>
                   </div>

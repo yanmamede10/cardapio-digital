@@ -226,7 +226,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
   const PagePreview = ({ big }: { big: boolean }) => (
     <div style={{ borderRadius: big ? 22 : 18, overflow: "hidden", background: "#FFFDF1", color: "#1B1915", boxShadow: "var(--shadow1)" }}>
       {big && (
-        <div style={{ position: "relative", height: 150, background: coverSrc ? `url(${coverSrc}) center/cover` : "repeating-linear-gradient(135deg,#F2EEDD,#F2EEDD 6px,#E9E4CF 6px,#E9E4CF 12px)", display: "flex", alignItems: "center", justifyContent: "center", color: "#87837A" }}>
+        <div style={{ position: "relative", height: 150, background: coverSrc ? `url(${coverSrc}) center/cover` : "repeating-linear-gradient(135deg,#F2EEDD,#F2EEDD 6px,#E9E4CF 6px,#E9E4CF 12px)", display: "flex", alignItems: "center", justifyContent: "center", color: "#67645D" }}>
           {!coverSrc && <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />}
         </div>
       )}
@@ -266,7 +266,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: big ? 13.5 : 12.5, fontWeight: 600 }}>Prato em destaque</div>
-            <div style={{ fontSize: 12, color: "#87837A" }}>Descrição curta do item</div>
+            <div style={{ fontSize: 12, color: "#67645D" }}>Descrição curta do item</div>
           </div>
           <span className="mono" style={{ fontSize: 12.5, fontWeight: 600 }}>R$ 48,00</span>
         </div>
@@ -383,7 +383,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                   type="color"
                   value={brandColor}
                   onChange={(e) => patchDraft({ brandColor: e.target.value })}
-                  style={{ width: 30, height: 30, padding: 0, border: "1px solid var(--line2)", borderRadius: 10, background: "transparent", cursor: "pointer" }}
+                  style={{ width: 44, height: 44, padding: 0, border: "1px solid var(--line2)", borderRadius: 10, background: "transparent", cursor: "pointer" }}
                 />
                 <span className="mono" style={{ fontSize: 13.5, fontWeight: 500 }}>{brandColor.toUpperCase()}</span>
               </div>

@@ -216,13 +216,13 @@ export default function MobileTableDetailScreen() {
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 11, background: "var(--surface2)", borderRadius: 11, padding: "10px 12px" }}>
                 <div style={{ flex: 1, fontSize: 12.5, color: "var(--ink2)" }}>Pessoas na mesa</div>
-                <button type="button" onClick={() => setPeople((p) => Math.max(2, p - 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: 14 }}>
+                <button type="button" aria-label="Uma pessoa a menos" onClick={() => setPeople((p) => Math.max(2, p - 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: 14 }}>
                   <i className="fa-solid fa-minus" />
                 </button>
                 <div className="mono" style={{ fontSize: 16, fontWeight: 600, minWidth: 22, textAlign: "center" }}>
                   {people}
                 </div>
-                <button type="button" onClick={() => setPeople((p) => Math.min(12, p + 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: 14 }}>
+                <button type="button" aria-label="Uma pessoa a mais" onClick={() => setPeople((p) => Math.min(12, p + 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: 14 }}>
                   <i className="fa-solid fa-plus" />
                 </button>
               </div>
