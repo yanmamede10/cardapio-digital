@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
 import { after, test } from "node:test";
@@ -67,6 +68,24 @@ test("docker compose não monta a Evolution sem EVOLUTION_API_KEY; com ela, a po
   const withKey = config("k".repeat(64));
   assert.equal(withKey.status, 0, withKey.stderr);
   assert.match(withKey.stdout, /host_ip: 127\.0\.0\.1\s+target: 8080\s+published: "8085"/);
+});
+
+test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho e as imagens têm versão fixa", () => {
+  // --no-env-resolution: deploy/.env only exists on the VM.
+  const r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64) }, encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+  type Service = { image: string; restart: string; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
+  const services: Record<string, Service> = JSON.parse(r.stdout).services;
+  const published = Object.entries(services).flatMap(([name, s]) => (s.ports ?? []).map((p) => `${name} ${p.published}/${p.protocol}`));
+  assert.deepEqual(published, ["caddy 80/tcp", "caddy 443/tcp"]);
+  assert.equal(services.api.environment?.TRUSTED_PROXY, services.caddy.networks?.default?.ipv4_address);
+  assert.ok(services.api.healthcheck, "healthcheck na API");
+  assert.equal(services.evolution.image, "evoapicloud/evolution-api:v2.3.7", "a mesma do dev");
+  for (const [name, s] of Object.entries(services)) {
+    assert.equal(s.restart, "unless-stopped", name);
+    if (name !== "api") assert.match(s.image, /:v?\d+\.\d+(\.\d+)?(-[\w.]+)?$/,`${name}: ${s.image}`); // the API's base is pinned in its Dockerfile
+  }
+  for (const from of readFileSync("apps/api/Dockerfile", "utf8").match(/^FROM \S+/gm) ?? []) assert.match(from, /:\d+\.\d+\.\d+-/, from);
 });
 
 test("sem X-Session-Id válido nenhuma chamada devolve pedidos (nem a antiga sessão \"anonymous\")", async () => {
