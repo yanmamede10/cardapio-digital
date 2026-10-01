@@ -17,3 +17,6 @@ apps/api/prisma/dev.db-journal
 # Playwright artifacts (npm test)
 test-results/
 playwright-report/
+
+# Daily database dumps on the VM (deploy/docker-compose.prod.yml, service backup)
+deploy/backups/

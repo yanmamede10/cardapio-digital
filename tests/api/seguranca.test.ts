@@ -72,7 +72,7 @@ test("docker compose não monta a Evolution sem EVOLUTION_API_KEY; com ela, a po
 
 test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho e as imagens têm versão fixa", () => {
   // --no-env-resolution: deploy/.env only exists on the VM.
-  const r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64) }, encoding: "utf8" });
+  const r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres" }, encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr);
   type Service = { image: string; restart: string; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
   const services: Record<string, Service> = JSON.parse(r.stdout).services;
