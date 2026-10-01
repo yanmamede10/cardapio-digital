@@ -104,6 +104,18 @@ O webhook da Evolution chega sem a mídia (`base64: false`, só o tamanho que a 
 
 `npm run build:android --workspace apps/dashboard` (ou `apps/web`) gera o build com `.env.android`, que aponta a API para `10.0.2.2:4100` (o localhost da máquina visto de dentro do emulador, que alcança a API mesmo presa em `127.0.0.1`), e sincroniza com o projeto Capacitor. Num aparelho físico pela rede local, suba a API com `HOST=0.0.0.0`. `npm run android:open` abre no Android Studio.
 
+**APK de demonstração do painel (API na VM).** A URL da API entra no build (`VITE_API_URL`, embutida pelo Vite) e, definida no ambiente, vence o `.env.android`. O `capacitor.config.ts` lê a mesma variável no `cap sync`: com uma API `https://`, o app roda no esquema `https` e o Android continua bloqueando HTTP em texto puro (o manifesto final não tem `usesCleartextTraffic`); sem ela, o build de dev segue em `http` com texto puro liberado, como antes.
+
+```sh
+VITE_API_URL=https://<IP-da-VM> VITE_CUSTOMER_APP_URL=https://<cardapio>.vercel.app \
+  npm run build:android --workspace apps/dashboard      # vite build + cap sync (esquema https, sem texto puro)
+cd apps/dashboard/android && ./gradlew assembleDebug    # app/build/outputs/apk/debug/app-debug.apk (assinado com a chave de debug)
+```
+
+(O `gradlew` precisa de `JAVA_HOME`; o JDK do Android Studio serve. Ou, depois do primeiro comando, `npm run android:open` e Build → Build APK(s).)
+
+`VITE_CUSTOMER_APP_URL` é o cardápio da Vercel, para os QR codes impressos pelo APK. A API da VM precisa de `https://localhost` em `CORS_ORIGINS` (é a origem do app dentro do APK; ver `deploy/.env.example`). O certificado do IP é do Let's Encrypt (raiz ISRG Root X1): Android 7.1.1 ou mais novo. Depois, `npm run build:android` sem as variáveis volta o projeto Android para o modo de dev.
+
 ## Testes
 
 ```sh
