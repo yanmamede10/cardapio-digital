@@ -16,9 +16,12 @@ const PUBLIC_URL = process.env.STORAGE_PUBLIC_URL;
 const WHATSAPP_BUCKET = process.env.STORAGE_S3_WHATSAPP_BUCKET;
 
 /** What the WhatsApp bucket takes (MIME type → file extension) and up to what size (8 MB, in @cardapio/shared).
- *  The one definition: the API's upload limit and prisma/whatsapp-bucket.ts (the bucket's allow-list and size limit) read these. */
+ *  The one definition: the API's upload limit and prisma/buckets.ts (the bucket's allow-list and size limit) read these. */
 export const WHATSAPP_MEDIA_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/mp4": "m4a", "audio/aac": "aac", "audio/webm": "webm" };
 export { WHATSAPP_MEDIA_MAX_BYTES } from "@cardapio/shared";
+/** The public bucket (logo, capa, fotos): only what imageKind() lets through, up to the uploads' limit. Same use as above. */
+export const PUBLIC_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
+export const PUBLIC_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
 
 // Signed URLs are signed at the start of the current 30-min window and live 60 min: each one works for 30–60 min after
 // it's handed out. Atendimento re-reads its tickets every few seconds, so it always holds a live one, and the fixed window

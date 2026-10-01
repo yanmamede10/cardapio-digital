@@ -5,14 +5,14 @@ import { LEVEL, type MenuItemOptionGroup, type UpsertMenuItemRequest } from "@ca
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeMenuItem } from "../lib/serialize.js";
-import { NOT_AN_IMAGE, imageKind, uploadPublicFile } from "../lib/storage.js";
+import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const menuManagementRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("cardapio")];
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: PUBLIC_IMAGE_MAX_BYTES } });
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_NAME_LENGTH = 80;
 const MAX_SHORT_DESCRIPTION_LENGTH = 200;

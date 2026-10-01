@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:deploy": "prisma migrate deploy && tsx prisma/whatsapp-bucket.ts",
+    "db:deploy": "prisma migrate deploy && tsx prisma/buckets.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts"
   },

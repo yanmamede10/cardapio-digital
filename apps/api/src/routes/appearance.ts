@@ -4,11 +4,11 @@ import { LEVEL, type MenuTemplateId } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeAppearanceState, serializePublicAppearance } from "../lib/serialize.js";
-import { NOT_AN_IMAGE, imageKind, uploadPublicFile } from "../lib/storage.js";
+import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const appearanceRouter = asyncRouter();
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: PUBLIC_IMAGE_MAX_BYTES } });
 
 const TEMPLATES: MenuTemplateId[] = ["classico", "moderno", "minimalista", "vibrante", "editorial", "galeria"];
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
