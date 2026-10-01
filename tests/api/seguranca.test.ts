@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
 import { after, test } from "node:test";
@@ -71,8 +71,17 @@ test("docker compose não monta a Evolution sem EVOLUTION_API_KEY; com ela, a po
 });
 
 test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho e as imagens têm versão fixa", () => {
-  // --no-env-resolution: deploy/.env only exists on the VM.
-  const r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres" }, encoding: "utf8" });
+  // deploy/.env only exists on the VM, and older Compose (the CI's) wants the env_file to exist even with
+  // --no-env-resolution: an empty one for the duration of the check, never touching a real one.
+  const envFile = "deploy/.env";
+  const created = !existsSync(envFile);
+  if (created) writeFileSync(envFile, "");
+  let r;
+  try {
+    r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres" }, encoding: "utf8" });
+  } finally {
+    if (created) rmSync(envFile);
+  }
   assert.equal(r.status, 0, r.stderr);
   type Service = { image: string; restart: string; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
   const services: Record<string, Service> = JSON.parse(r.stdout).services;
