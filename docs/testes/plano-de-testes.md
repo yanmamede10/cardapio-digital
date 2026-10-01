@@ -23,9 +23,11 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `api:garcom` | `tests/api/garcom.test.ts` |
 | `api:seguranca` | `tests/api/seguranca.test.ts` |
 | `api:limites` | `tests/api/limites.test.ts` (rate limiting) |
+| `api:icones` | `tests/api/icones.test.ts` (ícones locais, sem CDN) |
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
+| `e2e:dialogos` | `tests/e2e/dialogos.spec.ts` (acessibilidade de diálogos, folhas e formulários; desktop e celular × 2 temas) |
 | `carga` | `tests/load/pico.mjs` (casa cheia), `tests/load/cardapio.mjs` (Lighthouse), `tests/load/painel.spec.ts` (pedido → Central nas telas) |
 | **M** | manual (roteiro abaixo) |
 
@@ -40,7 +42,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -151,7 +153,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | QR-01 | QR abre o restaurante certo | cliente | Link da Mesa 12 do Chapa 27 | Cardápio do Chapa 27, modo mesa, Mesa 12 | api:salao, e2e:fluxo | ✅ corrigido (B01) |
 | QR-02 | QR de mesa que não existe | cliente | `/t/chapa27.99`, `/t/12`, código cortado ou em minúsculas | "Mesa não encontrada" | api:salao | ✅ |
 | QR-03 | QR de restaurante inativo ou inexistente | cliente | Código de uma mesa de restaurante inativo | "Mesa não encontrada" | api:salao | ✅ |
-| QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens em até 2 s | carga | ❌ LCP 3,0–3,2 s no Lighthouse (CARGA-04); a API responde em p95 ≤ 0,30 s (CARGA-03) |
+| QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens; LCP até 2,5 s no Lighthouse em modo celular (decisão de 01/10) | carga | ✅ corrigido (C-1): LCP 2,21 s local · 2,34 s Supabase (era 3,03 · 3,18 s); a API responde em p95 ≤ 0,31 s (CARGA-03) |
 | QR-05 | Item com opções obrigatórias | cliente | Cheddar & Bacon: ponto "Bem passado" + Bacon extra | Preço 38,90 + 6,00 = 44,90 | api:salao, e2e:fluxo | ✅ |
 | QR-06 | Observação com acento e emoji | cliente | "sem cebola, pão bem tostado 🍔" | Chega igual na Central | e2e:fluxo | ✅ |
 | QR-07 | Observação longa | cliente | 301 caracteres | Campo limita a 300; API 400 acima | api:salao | ✅ |
@@ -200,7 +202,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 | ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
-| PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ local p95 3,9 s · ❌ Supabase p95 5,3 s (CARGA-02) |
+| PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ local p95 4,0 s · ❌ Supabase p95 5,5 s (CARGA-02, rodada C; a causa e a correção sugerida na seção 7, C-4) |
 | PED-02 | Card mostra opções e observação | Cozinha | Pedido com ponto + adicional + obs | Card mostra "Bem passado · Bacon extra" e "Obs: …" | e2e:fluxo | ✅ corrigido (B07) |
 | PED-03 | Aceitar | Cozinha | Aceitar | Vai para "Preparando" | e2e:fluxo | ✅ |
 | PED-04 | Recusar | Garçom | Recusar | Sai da Central (não aparece como entregue); some da comanda | api:salao, e2e:desktop | ✅ corrigido (B11) |
@@ -240,7 +242,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | MES-14 | Editar ambiente | Adm | Grade 13×13, nova mesa, arrastar, renomear, excluir | Posições salvas; mesa aberta não pode ser renomeada/excluída (409) | M | ✅ M |
 | MES-15 | Fechar conta no celular | Garçom | Mesa → Fechar conta | Pede a forma de pagamento antes de fechar; lançamento em Contas a Receber | e2e:mobile | ✅ corrigido (B15) |
 | MES-16 | Mesa sem pedidos | Garçom | Fechar conta em mesa livre | Botão desabilitado | M | ✅ M |
-| MES-17 | Mesas diferentes fecham ao mesmo tempo | 10 Garçons | 10 mesas com Clássico, Cheddar & Bacon, batata e onion rings (ordem alternada) fecham juntas | Todas fecham; estoque e 10 recebíveis certos (sem deadlock) | api:salao | ✅ corrigido (B04) |
+| MES-17 | Mesas diferentes fecham ao mesmo tempo | 10 Garçons | 10 mesas com Clássico, Cheddar & Bacon, batata e onion rings (ordem alternada) fecham juntas | Todas fecham; estoque e 10 recebíveis certos (sem deadlock) | api:salao | ✅ corrigido (B04); C-3: a baixa virou um comando só, mesmo resultado |
 
 ### 4.7 Produtos, estoque e ficha técnica (EST)
 
@@ -332,13 +334,14 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | ATD-04 | Responder | Garçom | Enviar resposta | Sai pelo provedor; dá "visto" nas pendentes | api:zap | ✅ |
 | ATD-05 | Duplo Enter / duplo clique | Garçom | Enviar a mesma resposta duas vezes seguidas | Uma mensagem só | e2e:desktop | ✅ corrigido (B09) |
 | ATD-06 | Envio falha | Garçom | Provedor fora | Mensagem não fica como enviada; aviso | api:zap | ✅ |
-| ATD-07 | Mídia | Garçom | Foto/áudio | Bucket privado; URL assinada | api:zap | ✅ |
+| ATD-07 | Mídia | Garçom | Foto/áudio | A API baixa da Evolution (até 8 MB) e guarda no bucket privado; URL assinada | api:zap | ✅ |
 | ATD-08 | Assumir ticket | Garçom | "Assumir" | Responsável = quem clicou (não um nome fixo) | e2e:desktop | ✅ corrigido (B14) |
 | ATD-09 | Desconectado | Garçom | Sessão cai | Faixa vermelha "WhatsApp desconectado" | M | ✅ M |
 | ATD-10 | Isolamento | Dono de outro restaurante | Ler/responder ticket alheio | 404/403 | api:zap | ✅ |
 | ATD-11 | Números reais | Dono | Ambiente hospedado com Evolution | Receber, responder, foto, áudio | M (hospedado) | ⏳ hospedado |
 | ATD-12 | Mídia acima de 8 MB | Garçom | Enviar foto de 8 MB + 1 byte | "Arquivo acima de 8 MB. Envie uma imagem menor ou um áudio mais curto." (antes de subir e, se chegar, 413 da API); 8 MB exatos saem | api:zap | ✅ (novo, A-4.1) |
-| ATD-13 | Webhook sem o segredo | — | POST no webhook sem `x-webhook-secret`, anunciando 50 MB | 401 antes de ler o corpo; com o segredo, corpo acima de 8 MB em base64 + 1 MB → 413 | api:zap | ✅ (novo, A-2.2) |
+| ATD-13 | Webhook sem o segredo | — | POST no webhook sem `x-webhook-secret`, anunciando 50 MB | 401 antes de ler o corpo; com o segredo, corpo acima de 2 MB → 413 (o webhook não traz mais a mídia) | api:zap | ✅ (A-2.2; 2 MB desde o C-5) |
+| ATD-15 | Mídia recebida acima de 8 MB | Garçom | Cliente manda foto de 12 MB (o tamanho vem na mensagem); outra de 8 MB exatos; uma sem tamanho que chega com 8 MB + 1 byte | 12 MB: não é baixada; na conversa daquele cliente, "[Arquivo de 12 MB não recebido (o limite é 8 MB). Peça para o cliente enviar de outro jeito.]" e a legenda; a conversa de outro cliente não muda. 8 MB: chega normal. 8 MB + 1: o mesmo aviso, "8,1 MB" | api:zap | ✅ (novo, C-5) |
 | ATD-14 | Status e responsável do ticket inválidos | — | status "fechado", responsável numérico ou com 121 caracteres | 400; nada muda | api:robustez | ✅ (novo, A-2.9) |
 
 ### 4.13 Configurações (CFG)
@@ -382,12 +385,12 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | ID | Caso | Como | Meta | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- |
 | CARGA-01 | Casa cheia sem erro | 30 mesas × 4 celulares + 15 tablets + 10 Centrais, cada um no polling do app, 10 pedidos/min por 10 min, tudo do mesmo IP | Todos os pedidos gravados; nenhuma resposta 4xx/5xx | carga | ✅ 100/100 e 0 erro · ✅ 100/100 e 0 erro |
-| CARGA-02 | Pedido → aparece na Central | Playwright: o celular pede pelo QR da Mesa 30 com a Central da cozinha aberta; 20 execuções, mesa livre ("Aguardando aceite") e mesa aberta (Recebido) | p95 ≤ 5 s | carga | ✅ p95 3,95 s · ❌ p95 5,26 s, pior 5,34 s |
-| CARGA-03 | Rotas públicas do cardápio | p50/p95/p99 de cada rota e do cardápio montado (restaurante + categorias + itens) | p95 ≤ 2 s | carga | ✅ p95 0,01 s · ✅ p95 0,30 s |
-| CARGA-04 | Cardápio utilizável | Lighthouse em modo celular (4G lenta simulada, CPU 4×) na rota do QR, com tela de celular e de tablet | LCP e TTI ≤ 2 s | carga | ❌ 3,03–3,04 s · ❌ 3,18 s |
-| CARGA-05 | Limites do A com a casa cheia | Tudo do mesmo IP; maior uso de cada limite numa janela | Nenhum 429 | carga | ✅ 0 · ✅ 0 (folga na seção 7) |
-| CARGA-06 | Consumo no pico | CPU e memória da API e da Evolution | Registrar | carga | API ≤ 20% de um núcleo e ≤ 207 MB; Evolution parada em 0%, 191 MB |
-| CARGA-07 | 29 contas fechadas ao mesmo tempo | Fim da noite do script | Sem meta | carga | máx 0,59 s · máx 29,8 s (seção 7) |
+| CARGA-02 | Pedido → aparece na Central | Playwright: o celular pede pelo QR da Mesa 30 com a Central da cozinha aberta; 20 execuções, mesa livre ("Aguardando aceite") e mesa aberta (Recebido) | p95 ≤ 5 s | carga | ✅ p95 3,97 s, pior 4,45 s · ❌ mesa livre p95 4,82 s, mesa aberta p95 5,49 s, pior 5,53 s (rodada C; B: p95 5,26 s) |
+| CARGA-03 | Rotas públicas do cardápio | p50/p95/p99 de cada rota e do cardápio montado (restaurante + categorias + itens) | p95 ≤ 2 s | carga | ✅ p95 0,01 s · ✅ p95 0,31 s (rodada C) |
+| CARGA-04 | Cardápio utilizável | Lighthouse em modo celular (4G lenta simulada, CPU 4×) na rota do QR, com tela de celular e de tablet | LCP ≤ 2,5 s (decisão de 01/10; era LCP e TTI ≤ 2 s) | carga | ✅ celular 2,21 s, tablet 2,20 s · ✅ 2,34 s nos dois (rodada C, ícones sem cdnjs; antes ❌ 3,03–3,04 s · 3,18 s) |
+| CARGA-05 | Limites do A com a casa cheia | Tudo do mesmo IP; maior uso de cada limite numa janela | Nenhum 429 | carga | ✅ 0 · ✅ 0 (folga na seção 7; o mesmo na rodada C) |
+| CARGA-06 | Consumo no pico | CPU e memória da API e da Evolution | Registrar | carga | Rodada C: API ≤ 21% · ≤ 26% de um núcleo e ≤ 211 MB; Evolution parada em 0%, 125 MB (B: ≤ 20%, ≤ 207 MB, 191 MB) |
+| CARGA-07 | Contas fechadas ao mesmo tempo | Fim da noite do script: as mesas com comanda (27–29) fecham juntas | Sem meta | carga | ✅ corrigido (C-3): máx 0,20 s · máx 2,43 s, p50 2,31 s (era 0,59 s · 29,8 s, p50 13,7 s; seção 7) |
 
 ### 4.17 Varredura de telas (UI)
 
@@ -399,6 +402,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | UI-04 | Central inteira no tablet e no desktop | Central com a cozinha em 1280×800 e com o Dono em 1366×820 | As 4 colunas cabem na tela; chamados e turno viram uma faixa acima | e2e:varredura | ✅ corrigido (B18) |
 | UI-05 | Barra de abas sempre na tela (celular) | Rolar Central, Cardápio e Mesas até o fim | Abas continuam visíveis (antes ficavam depois do conteúdo) | e2e:mobile | ✅ corrigido (B21) |
 | UX-03 | Acessibilidade de todas as telas | Seção 3, com axe-core e a medida dos alvos | Nenhuma violação WCAG 2.1 A/AA (contraste 4,5:1 e 3:1, nome em botões, links e campos) e nenhum alvo de toque menor que 44 × 44 | e2e:varredura | ✅ corrigido (A-4.2): 639 → 0, detalhes na seção 6 |
+| UX-04 | Acessibilidade do que abre com um toque | Todo diálogo, folha, popover e formulário aberto (seção 6, rodada C), desktop e celular, claro e escuro, com o axe e a medida dos alvos enquanto está aberto | Nenhuma violação WCAG 2.1 A/AA e nenhum alvo menor que 44 × 44 | e2e:dialogos | ✅ corrigido (C-7): 40 → 0 (112 → 0 elementos) |
+| UX-05 | Ícones sem CDN | Os dois apps sem nada de outra origem; cada classe `fa-*` usada (também as que vêm do seed) tem o seu SVG no `icons.css` do app; comparação lado a lado com o Font Awesome do cdnjs | Iguais (mesma caixa, largura e alinhamento); botão só com ícone tem nome | api:icones, M | ✅ (novo, C-1) |
 | ROB-01 | Requisição malformada não derruba a API | PATCH de prato com preço "abc" (Administrador) | Erro só nessa requisição; a API segue respondendo | api:robustez | ✅ corrigido (B05) |
 
 ### 4.18 Segurança e limites (SEG)
@@ -407,11 +412,14 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | --- | --- | --- | --- | --- | --- | --- |
 | SEG-01 | RLS em todas as tabelas | — | `pg_tables` do schema public | `rowsecurity = true` em todas (a API, dona das tabelas, segue funcionando) | api:seguranca | ✅ (novo, A-2.1) |
 | SEG-02 | Produção sem configuração obrigatória | — | `NODE_ENV=production` sem `JWT_SECRET` de 32+ ou sem `CORS_ORIGINS` | A API não sobe e diz o que falta; com os dois, sobe; fora de produção, como antes | api:seguranca | ✅ (novo, A-2.3) |
-| SEG-03 | API e Evolution só na máquina | — | API em 127.0.0.1; `docker compose config` | A rede local não chega na API; a Evolution (no Docker) chega; a porta 8085 só em 127.0.0.1; sem `EVOLUTION_API_KEY` o compose não sobe | M | ✅ M (30/09) |
+| SEG-03 | API e Evolution só na máquina | — | API sem `HOST`; `docker compose config` sem e com `EVOLUTION_API_KEY` | A API escuta em 127.0.0.1: a própria máquina conecta, o IP da rede local não; sem a chave o compose não monta; com ela, a porta 8085 só em 127.0.0.1 | api:seguranca | ✅ (automático desde o C-8; roda no CI) |
 | SEG-04 | Casa cheia no mesmo IP | — | 40 mesas × 7 aparelhos × 25 req + 70 pedidos + 10 aparelhos da equipe × 57 req, do mesmo IP | Nenhum 429 | api:limites | ✅ (novo, A-2.11) |
 | SEG-05 | Uma mesa acima do limite | — | 901 req/min de uma mesa; 41 pedidos em 5 min de uma mesa | 429 com `Retry-After` e mensagem; outra mesa do mesmo IP segue | api:limites | ✅ (novo) |
 | SEG-06 | IP real só pelo túnel | — | `CF-Connecting-IP` numa conexão local e numa da rede | Local: vale o cabeçalho; da rede: vale o endereço da conexão | api:limites | ✅ (novo) |
 | SEG-07 | Chamar garçom por pedido alheio | — | `call-waiter` sem sessão, com outra ou com "anonymous" | 404 e nenhum chamado | api:salao | ✅ (novo, A-2.5) |
+| SEG-09 | Limites sem `CF-Connecting-IP` | — | Da própria máquina, sem o cabeçalho: 901 req de uma mesa; 41 pedidos de uma mesa; 601 req de um funcionário (o `npm test` usa 3.001, porque sobe o limite para 3.000); 6 senhas erradas | Sem limite por IP, mas 429 na 901ª da mesa, no 41º pedido, na requisição acima do limite do funcionário e a conta bloqueada (nem a senha certa entra) | api:limites | ✅ corrigido (C-2: antes, nada disso valia sem o cabeçalho) |
+| SEG-10 | Buckets do Storage iguais em todo projeto | — | `npm run db:deploy` no Supabase de testes; `storage.buckets`; gravar SVG, MP3 e PNG no `cardapio` pelo S3 | `cardapio` público, 8 MB, só PNG/JPEG/WebP (antes aceitava SVG e áudio); `whatsapp-media` privado, 8 MB, imagens e áudios; SVG e MP3 recusados (415), PNG aceito | M (hospedado) | ✅ M (C-6, 01/10) |
+| SEG-11 | Chave da Evolution forte e sem padrão | — | Chave nova de 64 hex no `apps/api/.env`; `up -d` recria o contêiner | A chave antiga recebe 401; a nova, 200; o adaptador da API fala com a Evolution | M | ✅ M (C-9, 01/10) |
 | SEG-08 | Pedir pelo QR com a opção desligada | cliente | Pedido anônimo de mesa com Configurações → Salão sem QR | 403 "os pedidos da mesa são feitos pelo garçom"; o garçom lança; delivery não muda | api:garcom | ✅ (A-2.12, já existia) |
 
 ## 5. Só com aparelho na mão
@@ -518,7 +526,25 @@ As lacunas de produto listadas em 27/09 (categorias, ajuste manual de estoque, g
 
 - **Só com dados (na suíte completa, depois dos outros testes):** cartões da Central marcados como botão pelo arraste e com botões dentro (agora `role="group"`, com nome); o contador dos filtros da Central com opacidade 0,75; cartões de restaurante fechado no app do cliente com opacidade 0,62 (agora só a capa fica cinza); o selo "Pendente" da Minha Fatura a 4,49:1 sobre o próprio fundo tingido (`--warn` claro passou a #775214).
 
-Segunda passada: 154 (restavam estilos inline com altura menor e a cor secundária); terceira: **0 violações e 0 alvos pequenos** com as telas vazias; os quatro casos acima apareceram com os dados dos outros testes e foram corrigidos na sequência. A varredura roda a checagem só no desktop e no celular (o tablet segue com as checagens de layout). Limite conhecido: a varredura abre as telas (rotas); diálogos e gavetas que só abrem com um clique (cadastro de produto, lançar pedido, fechar conta) passam pelas mesmas regras globais de tamanho e pelos mesmos tokens, mas não pelo axe.
+Segunda passada: 154 (restavam estilos inline com altura menor e a cor secundária); terceira: **0 violações e 0 alvos pequenos** com as telas vazias; os quatro casos acima apareceram com os dados dos outros testes e foram corrigidos na sequência. A varredura roda a checagem só no desktop e no celular (o tablet segue com as checagens de layout). Limite conhecido: a varredura abre as telas (rotas); diálogos e gavetas que só abrem com um clique (cadastro de produto, lançar pedido, fechar conta) passam pelas mesmas regras globais de tamanho e pelos mesmos tokens, mas não pelo axe. Resolvido na rodada C: `tests/e2e/dialogos.spec.ts` (UX-04).
+
+**01/10 — rodada "Prompt C" (cards parciais e pontos abertos de A e B).** Um commit por item (`C-x` no início da mensagem). Casos novos: ATD-15, SEG-09 a SEG-11, UX-04, UX-05; SEG-03 passou a automático; números novos em QR-04, CARGA-02 a CARGA-07 e na seção 7. Suíte no fim da rodada (`npm test`): 129 testes de API, todos passaram; 87 de tela, 86 passaram e 1 foi pulado (a Central em 4 colunas, que não existe no celular).
+
+| Item | O que mudou | Casos |
+| --- | --- | --- |
+| C-0 | Árvore limpa; as alterações apontadas no A (lighthouse, `pico.mjs`, `cenario.mjs`) estão em a5d7c5d, 4b0bf6f e ce0316f | — |
+| C-1 | Ícones do Font Awesome servidos do próprio bundle (SVG em máscara CSS), sem o cdnjs; LCP 3,03–3,18 → 2,20–2,34 s | UX-05, QR-04, CARGA-04 |
+| C-2 | Sem `CF-Connecting-IP`, só os limites por IP deixam de valer; mesa, pedidos da mesa, funcionário e bloqueio da conta valem | SEG-09 |
+| C-3 | Baixa de estoque num comando SQL; 29 fechamentos juntos: 0,59 → 0,20 s local, 29,8 → 2,43 s no Supabase | CARGA-07, EST-07, MES-17 |
+| C-4 | Latência até o banco: pooler em modo transação 102,6 ms × direta 19,0 ms por consulta (seção 7) | — |
+| C-5 | WhatsApp: o webhook vem sem a mídia; a API baixa da Evolution até 8 MB; acima disso, o aviso na conversa certa | ATD-15, ATD-13, ATD-07 |
+| C-6 | Buckets do Storage versionados (`prisma/buckets.ts` no `db:deploy`); `cardapio` só PNG/JPEG/WebP | SEG-10 |
+| C-7 | Varredura de acessibilidade dos diálogos, folhas, popovers e formulários: 40 → 0 | UX-04 |
+| C-8 | Testes de `HOST` vazio (127.0.0.1) e do `docker compose config` sem a chave; rodam no CI | SEG-03 |
+| C-9 | Chave da Evolution de 64 hex só no `apps/api/.env`; contêiner recriado; a antiga dá 401 | SEG-11 |
+| C-10 | README e `.env.example` | — |
+
+**UX-04, diálogos (C-7).** `tests/e2e/dialogos.spec.ts` abre, com o Dono do fogo, desktop e celular, claro e escuro: no desktop, a Central com pedido aguardando aceite, notificações, Fechar conta (maquininha e PIX pelo sistema), o menu da mesa ao editar o salão, Lançar pedido (opções do prato e revisão), Cardápio (Adicionar prato, Organizar prato), Produtos (Novo item com ficha técnica, item com Ajustar estoque, Filtros), Contas a Pagar (Novo lançamento com mais opções, Quitar, Filtros com o calendário do período), Atendimento (Filtros), Promoções (Novo cupom), Aparência (Pré-visualizar) e Super Admin (Novo restaurante); no celular, os comuns mais as folhas de Fechar conta, Transferir e Dividir conta, Minha conta, as opções do prato, Reordenar categorias, Organizar prato, Novo lançamento, uma conversa e Novo cupom. Gerar novo QR é o `confirm` do navegador: o teste confere o texto e cancela. Antes: 40 achados (regra × diálogo × aparelho × tema), 112 elementos. Corrigido: dias de outro mês no calendário com opacidade 0,32 (2,0:1) → tinta secundária; botão principal ao passar o mouse virava `--sec` sob o texto claro (2,6:1) → a marca mais escura; `--brandText` do escuro #C9743F → #D88852 (3,8 → 4,8:1 no selo "Novo"); nomes em botões só com ícone (enviar e respostas rápidas no Atendimento, remover adicional, subir/descer categoria, pessoas −/+), no select de status e nos campos dos adicionais; o seletor de cor da Aparência de 30 para 44 px e o cinza antigo (#87837A) da pré-visualização; `aria-readonly` num `div`. Depois: 0. (Uma primeira passada crua deu 69 / 308: medida no meio da animação de entrada dos painéis e com 4 diálogos que o teste ainda não abria.)
 
 ## 7. Desempenho com a casa cheia (01/10/2026, PERF-01 a PERF-03)
 
@@ -573,7 +599,26 @@ O peso está no Font Awesome do cdnjs (`apps/web/index.html`): CSS de outra orig
 
 **Fora das metas pedidas, para o PERF-03: fechar 29 contas ao mesmo tempo leva até 29,8 s no Supabase (p50 13,7 s; local, máx 0,59 s).** O fechamento baixa o estoque numa transação com um `UPDATE "Product"` + um `INSERT "StockMovement"` por insumo (14 comandos para 2 pedidos). O lock da linha de cada insumo em comum (pão, blend, cheddar…) fica preso até o `COMMIT`, ~1,4 s no Supabase. Os fechamentos entram em fila: o pior caso ≈ 29 × ~1 s, e localmente 29 × 20 ms ≈ 0,59 s, o mesmo padrão. **Correção mínima:** baixar o estoque num comando só (`UPDATE … FROM (VALUES …)` e o `INSERT` das movimentações numa mesma CTE), para o lock durar uma ida ao banco. Vinte e nove fechamentos no mesmo segundo é o estresse do fim do script, não o pico de 10 minutos.
 
-**Limites da medição.** O Lighthouse roda sem o cabeçalho do IP: com ele, o cdnjs bloqueia o CSS do Font Awesome e o cardápio mede ~0,75 s mais rápido do que num celular real. O gerador não faz os preflights `OPTIONS` que o navegador faz: o `cors()` responde a eles antes do limite, então eles não contam nos limites, só custam CPU. Tudo roda numa máquina só, e a API usou no máximo 20% de um núcleo. O cardápio foi servido pelo `vite preview` (gzip), não pela Vercel. A rodada b deixou o Chapa 27 no projeto Supabase de testes, com ~140 pedidos fechados e o estoque consumido.
+**Limites da medição.** O Lighthouse roda sem o cabeçalho do IP: com ele, o cdnjs bloqueava o CSS do Font Awesome e o cardápio media ~0,75 s mais rápido do que num celular real (até a rodada B; desde o C-1 nada vem do cdnjs). O gerador não faz os preflights `OPTIONS` que o navegador faz: o `cors()` responde a eles antes do limite, então eles não contam nos limites, só custam CPU. Tudo roda numa máquina só, e a API usou no máximo 20% de um núcleo. O cardápio foi servido pelo `vite preview` (gzip), não pela Vercel. A rodada b deixou o Chapa 27 no projeto Supabase de testes, com ~140 pedidos fechados e o estoque consumido.
+
+### Rodada C (01/10/2026): ícones sem CDN (C-1) e baixa de estoque num comando (C-3)
+
+Mesmo cenário, mesma máquina, `npm run carga` e `npm run carga -- supabase` com as duas mudanças. Antes = rodada B (acima).
+
+| Medida | Local antes → depois | Supabase antes → depois | Meta |
+| --- | --- | --- | --- |
+| Lighthouse celular, rota do QR: LCP (mediana de 3) | 3,03 → **2,21 s** | 3,18 → **2,34 s** (as 3: 2,34 · 2,34 · 2,57) | LCP ≤ 2,5 s ✅ |
+| Lighthouse tablet (1280×800): LCP | 3,04 → **2,20 s** | 3,18 → **2,34 s** | ✅ |
+| TTI · FCP (celular) | 3,03 → 2,23 · 1,66 → 1,21 s | 3,18 → 2,36 · 1,66 → 1,21 s | — |
+| Contas fechadas ao mesmo tempo no fim (`POST /close`) | máx 0,59 → **0,20 s** (p50 agora 0,16 s; 27 mesas) | p50 13,7 → 2,31 s · máx 29,8 → **2,43 s** (28 mesas) | sem meta |
+| Pedidos · 4xx/5xx · 429 | 100/100 · 0 · 0 | 100/100 · 0 · 0 | ✅ |
+| Pedido → Central nas telas, p95 (mesa livre · aberta) | 3,97 · 3,96 s | 4,82 · **5,49 s** ❌ | ≤ 5 s |
+
+**C-1:** sem o CSS e a fonte do cdnjs (render-blocking de outra origem + 153 KB), o LCP caiu 0,8 s nos dois bancos e o FCP, 0,45 s. Os ícones vêm do próprio bundle (`src/styles/icons.css`, 8,3 KB com gzip no app do cliente).
+
+**C-3:** a baixa de estoque passou de um `UPDATE` + um `INSERT` por insumo (cada um uma ida ao banco, com o lock da linha preso até o `COMMIT`) para um comando só, que trava os insumos em ordem de id e baixa tudo de uma vez. No Supabase, as 28 contas deixaram de entrar em fila: cada fechamento leva ~2,3 s (as ~20 idas ao banco do fechamento, a ~100 ms cada pelo pooler) e todos terminam juntos. Os testes de ficha técnica e de baixa passaram sem alteração.
+
+**Ainda fora da meta (não é item da rodada C):** pedido → Central no Supabase, p95 5,49 s. O `POST /api/orders` leva 1,16 s (p50) com 16–19 comandos a ~100 ms; a seção abaixo (C-4) mostra que ~80 ms de cada ida vêm do `pgbouncer=true`.
 
 ### Latência até o banco (C-4, 01/10/2026, só medição)
 
