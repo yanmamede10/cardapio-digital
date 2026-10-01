@@ -151,7 +151,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | QR-01 | QR abre o restaurante certo | cliente | Link da Mesa 12 do Chapa 27 | Cardápio do Chapa 27, modo mesa, Mesa 12 | api:salao, e2e:fluxo | ✅ corrigido (B01) |
 | QR-02 | QR de mesa que não existe | cliente | `/t/chapa27.99`, `/t/12`, código cortado ou em minúsculas | "Mesa não encontrada" | api:salao | ✅ |
 | QR-03 | QR de restaurante inativo ou inexistente | cliente | Código de uma mesa de restaurante inativo | "Mesa não encontrada" | api:salao | ✅ |
-| QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens em até 2 s | carga | ✅ p95 0,39–0,53 s |
+| QR-04 | Carregamento do cardápio | cliente | Abrir pelo QR | Categorias e 30 itens em até 2 s | carga | ❌ LCP 3,0–3,2 s no Lighthouse (CARGA-04); a API responde em p95 ≤ 0,30 s (CARGA-03) |
 | QR-05 | Item com opções obrigatórias | cliente | Cheddar & Bacon: ponto "Bem passado" + Bacon extra | Preço 38,90 + 6,00 = 44,90 | api:salao, e2e:fluxo | ✅ |
 | QR-06 | Observação com acento e emoji | cliente | "sem cebola, pão bem tostado 🍔" | Chega igual na Central | e2e:fluxo | ✅ |
 | QR-07 | Observação longa | cliente | 301 caracteres | Campo limita a 300; API 400 acima | api:salao | ✅ |
@@ -200,7 +200,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 
 | ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
-| PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ p95 3,4–4,1 s |
+| PED-01 | Pedido novo aparece | todos | Cliente pede na Mesa 3 | Card em "Recebido" em até 5 s | e2e:fluxo, carga | ✅ local p95 3,9 s · ❌ Supabase p95 5,3 s (CARGA-02) |
 | PED-02 | Card mostra opções e observação | Cozinha | Pedido com ponto + adicional + obs | Card mostra "Bem passado · Bacon extra" e "Obs: …" | e2e:fluxo | ✅ corrigido (B07) |
 | PED-03 | Aceitar | Cozinha | Aceitar | Vai para "Preparando" | e2e:fluxo | ✅ |
 | PED-04 | Recusar | Garçom | Recusar | Sai da Central (não aparece como entregue); some da comanda | api:salao, e2e:desktop | ✅ corrigido (B11) |
@@ -375,13 +375,19 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | --- | --- | --- | --- | --- | --- |
 | E2E-01 | Pedido pelo QR até o financeiro | 1. Cliente abre o QR da Mesa 12 do Chapa 27 e pede 2× Cheddar & Bacon (Bem passado + Bacon extra, obs "sem cebola") e 1× Refrigerante lata. 2. O pedido aparece na Central com opções e observação. 3. A cozinha aceita, marca pronto e entrega. 4. O garçom fecha a conta no Cartão. 5. Estoque baixa pela ficha técnica. 6. Contas a Receber, Visão Geral, Turno de hoje e Relatórios batem. | Itens 2×(38,90+6,00)+7,00 = 96,80; com serviço 10% = 106,48 cobrado e lançado; pão −2, blend −2, cheddar −0,12, bacon −0,08, refrigerante −1; Relatórios: 96,80 a mais em "Hoje" | e2e:fluxo | ✅ |
 
-### 4.16 Carga de horário de pico (CARGA)
+### 4.16 Casa cheia (CARGA)
+
+`npm run carga` (Postgres local no Docker) e `npm run carga -- supabase` (banco do `apps/api/.env`). Cenário em `tests/load/cenario.mjs`; a medição de 01/10 está na seção 7. Resultados: local · Supabase.
 
 | ID | Caso | Como | Meta | Auto | Resultado |
 | --- | --- | --- | --- | --- | --- |
-| CARGA-01 | 30 mesas pedindo ao mesmo tempo | 30 clientes carregam o cardápio e enviam pedidos juntos, em 3 rodadas | Todos os pedidos gravados, sem erro | carga | ✅ 90/90 |
-| CARGA-02 | Pedido até aparecer no painel | 4 painéis (Central, como na tela, a cada 4 s) + 6 tablets (Mesas a cada 10 s) consultando em paralelo | p95 ≤ 5 s | carga | ✅ p95 3,4–4,1 s |
-| CARGA-03 | Carregamento do cardápio | Restaurante + categorias + itens + aparência, 30 clientes simultâneos | p95 ≤ 2 s | carga | ✅ p95 0,39–0,53 s |
+| CARGA-01 | Casa cheia sem erro | 30 mesas × 4 celulares + 15 tablets + 10 Centrais, cada um no polling do app, 10 pedidos/min por 10 min, tudo do mesmo IP | Todos os pedidos gravados; nenhuma resposta 4xx/5xx | carga | ✅ 100/100 e 0 erro · ✅ 100/100 e 0 erro |
+| CARGA-02 | Pedido → aparece na Central | Playwright: o celular pede pelo QR da Mesa 30 com a Central da cozinha aberta; 20 execuções, mesa livre ("Aguardando aceite") e mesa aberta (Recebido) | p95 ≤ 5 s | carga | ✅ p95 3,95 s · ❌ p95 5,26 s, pior 5,34 s |
+| CARGA-03 | Rotas públicas do cardápio | p50/p95/p99 de cada rota e do cardápio montado (restaurante + categorias + itens) | p95 ≤ 2 s | carga | ✅ p95 0,01 s · ✅ p95 0,30 s |
+| CARGA-04 | Cardápio utilizável | Lighthouse em modo celular (4G lenta simulada, CPU 4×) na rota do QR, com tela de celular e de tablet | LCP e TTI ≤ 2 s | carga | ❌ 3,03–3,04 s · ❌ 3,18 s |
+| CARGA-05 | Limites do A com a casa cheia | Tudo do mesmo IP; maior uso de cada limite numa janela | Nenhum 429 | carga | ✅ 0 · ✅ 0 (folga na seção 7) |
+| CARGA-06 | Consumo no pico | CPU e memória da API e da Evolution | Registrar | carga | API ≤ 20% de um núcleo e ≤ 207 MB; Evolution parada em 0%, 191 MB |
+| CARGA-07 | 29 contas fechadas ao mesmo tempo | Fim da noite do script | Sem meta | carga | máx 0,59 s · máx 29,8 s (seção 7) |
 
 ### 4.17 Varredura de telas (UI)
 
@@ -513,3 +519,58 @@ As lacunas de produto listadas em 27/09 (categorias, ajuste manual de estoque, g
 - **Só com dados (na suíte completa, depois dos outros testes):** cartões da Central marcados como botão pelo arraste e com botões dentro (agora `role="group"`, com nome); o contador dos filtros da Central com opacidade 0,75; cartões de restaurante fechado no app do cliente com opacidade 0,62 (agora só a capa fica cinza); o selo "Pendente" da Minha Fatura a 4,49:1 sobre o próprio fundo tingido (`--warn` claro passou a #775214).
 
 Segunda passada: 154 (restavam estilos inline com altura menor e a cor secundária); terceira: **0 violações e 0 alvos pequenos** com as telas vazias; os quatro casos acima apareceram com os dados dos outros testes e foram corrigidos na sequência. A varredura roda a checagem só no desktop e no celular (o tablet segue com as checagens de layout). Limite conhecido: a varredura abre as telas (rotas); diálogos e gavetas que só abrem com um clique (cadastro de produto, lançar pedido, fechar conta) passam pelas mesmas regras globais de tamanho e pelos mesmos tokens, mas não pelo axe.
+
+## 7. Desempenho com a casa cheia (01/10/2026, PERF-01 a PERF-03)
+
+**Rodada "Prompt B".** `npm run carga`: a casa cheia (`tests/load/pico.mjs`, só `fetch` do Node) e, com ela rodando, o Lighthouse no cardápio (`tests/load/cardapio.mjs`) e o pedido → Central nas telas de verdade (`tests/load/painel.spec.ts`, 20 execuções). Os dois apps são servidos já construídos (`vite build` + `vite preview`, com gzip), como o celular os recebe.
+
+**Cenário** (`tests/load/cenario.mjs`): 30 mesas com 4 celulares cada (o máximo), 15 tablets fixos (mesas 1 a 15), 10 aparelhos da equipe na Central (logins cozinha, garcom, gerente e dono, 3/3/2/2), 60 s de chegada e 10 pedidos/min por 10 min. Tudo sai do IP do Wi-Fi (`CF-Connecting-IP`, como chega pelo túnel), então os limites do A valem. Polling do código:
+
+| Tela | O que consulta | Intervalo | Onde |
+| --- | --- | --- | --- |
+| Central de Pedidos | pedidos, chamados, turno | 4 s | `apps/dashboard/src/screens/OrdersScreen.tsx:77` |
+| Menu lateral (todas as telas do painel) | pedidos, chamados, tickets (não para a cozinha) | 15 s | `apps/dashboard/src/lib/live.ts:33` |
+| Cardápio aberto (celular e tablet) | itens (disponibilidade) | 12 s | `apps/web/src/screens/MenuScreen.tsx:58` |
+| Status do pedido | o pedido, enquanto aguarda aceite ou está em Recebido | 3 s | `apps/web/src/screens/OrderStatusScreen.tsx:38` |
+
+Além do polling: um prato aberto a cada ~20 s por aparelho; a cozinha aceita o pedido de mesa livre 10 s depois que ele aparece e começa o preparo 30 s depois. No fim, os garçons fecham as 29 contas juntos.
+
+**Máquina:** AMD Ryzen 7 5700G (8 núcleos, 16 threads), 32 GB, Windows 11 Pro (10.0.26200), Node 22.18.0, Docker Desktop. API, Postgres local, gerador de carga, Chrome (Lighthouse e Playwright) e `vite preview` na mesma máquina. A Evolution (v2.3.7) estava no ar, mas sem conversa nenhuma: o cenário não tem WhatsApp.
+
+| Medida | a) API + Postgres local (Docker) | b) API local + Supabase de testes | Meta |
+| --- | --- | --- | --- |
+| Requisições (no pico, do IP do Wi-Fi) | 19.795 (1.789/min) | 19.496 (1.764/min) | — |
+| Pedidos gravados | 100/100 | 100/100 | todos |
+| Lighthouse celular, rota do QR: LCP · TTI · FCP | 3,03 · 3,03 · 1,66 s | 3,18 · 3,18 · 1,66 s | LCP e TTI ≤ 2 s ❌ |
+| Lighthouse tablet (1280×800): LCP · TTI · FCP | 3,04 · 3,04 · 1,65 s | 3,18 · 3,18 · 1,66 s | ❌ |
+| Cardápio montado na API (restaurante + categorias + itens): p50 · p95 · p99 | 0,01 · 0,01 · 0,01 s | 0,26 · 0,30 · 0,33 s | ≤ 2 s ✅ |
+| Pedido → Central, mesa livre (20 execuções): p50 · p95 · pior | 2,40 · 3,95 · 3,96 s | 3,23 · 5,26 · 5,30 s | ≤ 5 s: a ✅ b ❌ |
+| Pedido → Central, mesa aberta (20 execuções): p50 · p95 · pior | 1,38 · 3,92 · 3,94 s | 2,31 · 4,90 · 5,34 s | ≤ 5 s: a ✅ b ❌ |
+| Pedido → cada uma das 10 Centrais simuladas (100 pedidos): p50 · p95 · máx | 2,07 · 3,96 · 4,05 s | 3,14 · 4,81 · 5,38 s | — |
+| Respostas 4xx/5xx · 429 | 0 · 0 | 0 · 0 | nenhum 429 ✅ |
+| API no pico: CPU média · máx (de um núcleo) · memória máx | 10% · 20% · 207 MB | 12% · 18% · 200 MB | — |
+| Evolution no pico: CPU · memória | 0% · 191 MB | 0% · 191 MB | — |
+
+Rotas públicas do cardápio, p50 · p95 · p99 em ms (a · b): `GET /api/tables/:qr` 3 · 6 · 7 · 144 · 160 · 160; restaurante 3 · 5 · 9 · 103 · 118 · 156; categorias 4 · 7 · 9 · 204 · 228 · 280; itens 6 · 10 · 16 · 251 · 288 · 310; aparência 3 · 5 · 8 · 103 · 114 · 119; prato 3 · 5 · 9 · 143 · 160 · 175; status do pedido 3 · 5 · 9 · 143 · 160 · 170.
+
+**Limites do A (CARGA-05).** Nenhum 429 nos dois ambientes. Maior uso de cada limite numa janela deslizante (≥ a janela fixa da API), a · b: IP 1.880 · 1.879 de 15.000/min; funcionário (garcom, com a fila de fechamento do fim) 221 · 220 de 600/min; mesa 85 · 73 de 900/min; pedidos de uma mesa 5 · 8 de 40 em 5 min; logins do IP 11 · 11 de 50 em 15 min.
+
+### Gargalos (não corrigidos nesta rodada)
+
+**PERF-01: cardápio em 3,0–3,2 s (meta 2 s), no celular e no tablet, nos dois bancos.** O servidor não pesa: documento em 0 ms, API em milissegundos, TBT 0 e 95 ms de script mesmo com a CPU 4× mais lenta (sem limitação, o LCP real é 142 ms). O LCP é o nome do restaurante no topo do cardápio, e 85% do tempo é "atraso de renderização": ele espera a cadeia de rede. Experimentos com o mesmo build:
+
+| Variação | LCP |
+| --- | --- |
+| Como hoje | 3,03 s |
+| API na mesma origem do cardápio (sem preflight `OPTIONS`) | 2,89 s |
+| Direto em `/r/chapa27/menu` (sem o passo de resolver a mesa) | 3,03 s |
+| Sem o Font Awesome do cdnjs (CSS bloqueado) | 2,28 s |
+| Mesma origem e sem Font Awesome | 2,29 s |
+
+O peso está no Font Awesome do cdnjs (`apps/web/index.html`): CSS de outra origem que bloqueia a renderização (100 KB, 19 KB com gzip) mais a fonte `fa-solid-900.woff2` de 153 KB, disputando os 1,6 Mbps com o JS, para os 48 ícones que o app usa. **Correção mínima:** tirar o `<link>` do cdnjs e servir só esses 48 ícones (subconjunto da fonte ou SVG no próprio bundle): ≈ −0,75 s, para ~2,3 s. Abaixo de 2 s ainda falta ~0,3 s, e o resto é a cadeia documento → JS de 70 KB (gzip) → API. Nenhuma mudança de uma linha resolve isso; a próxima a medir é começar a buscar o cardápio no `index.html`, em paralelo com o JS.
+
+**PERF-02 no Supabase: p95 5,26 s e pior 5,34 s (meta 5 s); local, pior 4,05 s.** O tempo até o card é: o `POST /api/orders` gravar + esperar a próxima consulta da Central (0 a 4 s) + a consulta. No Supabase, o `POST` leva 1,06 s (p50; local 22 ms) e a consulta de pedidos 0,30 s. Medido: cada ida e volta ao banco custa ~102 ms (`SELECT 1` pelo pooler 6543, p50 de 30), e um pedido pelo QR faz 16 comandos SQL em sequência (19 com a mesa aberta). A consulta da Central faz 4 + 3 + 3. Logo, 1,06 + 4 + 0,30 ≈ 5,4 s no pior caso, que é o observado. **Correção mínima:** Central a cada 3 s em vez de 4 (`OrdersScreen.tsx:77`): pior ≈ 4,4 s. Efeito colateral: a Central passa de ~57 para ~72 requisições/min por aparelho, e 10 aparelhos com o mesmo login dariam 720/min, acima dos 600 de `STAFF_PER_MINUTE`. Junto, subir esse limite para 800 (`apps/api/src/lib/rateLimit.ts`). Alternativa sem mexer no polling: menos idas ao banco no `POST /api/orders`, uma mudança maior.
+
+**Fora das metas pedidas, para o PERF-03: fechar 29 contas ao mesmo tempo leva até 29,8 s no Supabase (p50 13,7 s; local, máx 0,59 s).** O fechamento baixa o estoque numa transação com um `UPDATE "Product"` + um `INSERT "StockMovement"` por insumo (14 comandos para 2 pedidos). O lock da linha de cada insumo em comum (pão, blend, cheddar…) fica preso até o `COMMIT`, ~1,4 s no Supabase. Os fechamentos entram em fila: o pior caso ≈ 29 × ~1 s, e localmente 29 × 20 ms ≈ 0,59 s, o mesmo padrão. **Correção mínima:** baixar o estoque num comando só (`UPDATE … FROM (VALUES …)` e o `INSERT` das movimentações numa mesma CTE), para o lock durar uma ida ao banco. Vinte e nove fechamentos no mesmo segundo é o estresse do fim do script, não o pico de 10 minutos.
+
+**Limites da medição.** O Lighthouse roda sem o cabeçalho do IP: com ele, o cdnjs bloqueia o CSS do Font Awesome e o cardápio mede ~0,75 s mais rápido do que num celular real. O gerador não faz os preflights `OPTIONS` que o navegador faz: o `cors()` responde a eles antes do limite, então eles não contam nos limites, só custam CPU. Tudo roda numa máquina só, e a API usou no máximo 20% de um núcleo. O cardápio foi servido pelo `vite preview` (gzip), não pela Vercel. A rodada b deixou o Chapa 27 no projeto Supabase de testes, com ~140 pedidos fechados e o estoque consumido.

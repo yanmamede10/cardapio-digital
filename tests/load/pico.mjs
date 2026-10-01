@@ -18,7 +18,7 @@ const P = `/api/restaurants/${C.restaurante}`;
 const POLL = { central: 4000, menuLateral: 15000, cardapio: 12000, status: 3000 };
 // The API's limits, read from its source so a 429 is shown against the number that is really there.
 const LIMITS = Object.fromEntries(
-  [...readFileSync(new URL("../../apps/api/src/lib/rateLimit.ts", import.meta.url), "utf8").matchAll(/^\s+([A-Z_]+): ([\d_]+),?$/gm)].map(([, k, v]) => [k, Number(v.replaceAll("_", ""))])
+  [...readFileSync(new URL("../../apps/api/src/lib/rateLimit.ts", import.meta.url), "utf8").matchAll(/^\s+([A-Z0-9_]+): ([\d_]+),?$/gm)].map(([, k, v]) => [k, Number(v.replaceAll("_", ""))])
 );
 // Rate-limit key → [limit, window in s]. Same keys as rateLimit(): the IP; the staff member or else the table; a table's orders.
 const RULES = { ip: ["IP_PER_MINUTE", 60], equipe: ["STAFF_PER_MINUTE", 60], mesa: ["TABLE_PER_MINUTE", 60], pedidos: ["TABLE_ORDERS_PER_5_MINUTES", 300], logins: ["LOGIN_ATTEMPTS_PER_IP_PER_15_MINUTES", 900] };
@@ -255,6 +255,14 @@ console.log(`Pedido → aparece na primeira Central: p50 ${s(pct(firstCentral, 5
 console.log(`\nRespostas 4xx/5xx: ${failed} de ${all} · 429: ${tooMany.length}`);
 for (const [k, n] of Object.entries(failures)) console.log(`  ${n} × ${k}`);
 for (const t of tooMany.slice(0, 10)) console.log(`  429 ${t.route} (Retry-After ${t.retryAfter} s): ${t.keys.join(" · ")}`);
+// Headroom: for each limit, the busiest key's most requests in any window of that limit (sliding, so ≥ the API's fixed window).
+console.log("Maior uso de cada limite (janela deslizante):");
+for (const [kind, [limit, win]] of Object.entries(RULES)) {
+  let top = [0, "—"];
+  for (const [k, ts] of Object.entries(counted))
+    if (k.startsWith(`${kind}:`)) for (let i = 0, j = 0; j < ts.length; j++) { while (ts[j] - ts[i] >= win * 1000) i++; if (j - i + 1 > top[0]) top = [j - i + 1, k]; }
+  console.log(`  ${limit.padEnd(37)} ${String(top[0]).padStart(5)} de ${LIMITS[limit]} em ${win} s (${top[1]})`);
+}
 console.log(`\nConsumo durante o pico (${peakS.toFixed(0)} s):`);
 console.log(`  ${usageLine(`API (pid ${usage.pid})`, usage.api.samples, apiCpu)}`);
 console.log(`  ${usageLine(`Evolution (${C.evolution})`, usage.evo.samples, usage.evo.samples.map((x) => x.pct))}`);

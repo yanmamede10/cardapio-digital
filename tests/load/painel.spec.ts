@@ -43,6 +43,8 @@ test(`pedido pelo QR → aparece na Central, ${C.execucoes} execuções com a ca
       await guest.getByRole("button", { name: /Enviar pedido para a cozinha/ }).click();
       const sent = guest.waitForRequest((r) => r.method() === "POST" && r.url() === `${API}/api/orders`).then(() => Date.now());
       const response = guest.waitForResponse((r) => r.request().method() === "POST" && r.url() === `${API}/api/orders`);
+      // A random moment of the Central's 4 s poll, as a real order: without it every run takes ~2 polls and lands in the same phase.
+      await guest.waitForTimeout(Math.random() * 4000);
       await guest.getByRole("button", { name: /Confirmar e enviar para a cozinha/ }).click();
       const { code } = await (await response).json();
       const card = central.getByRole("group", { name: `Pedido ${code}, Mesa ${TABLE}` });
