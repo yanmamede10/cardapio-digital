@@ -1,0 +1,33 @@
+# Caddy on the VM (deploy/docker-compose.prod.yml): HTTPS at https://<PUBLIC_IP>, in front of the API only. Evolution is never
+# proxied. HTTP → HTTPS is Caddy's automatic redirect. Variables come from deploy/.env.
+#   PUBLIC_IP   the VM's public IPv4: the site address and the certificate's subject
+#   CADDY_TLS   letsencrypt (default): a Let's Encrypt certificate for the IP (the "shortlived" profile, ~160 h — the only one
+#               Let's Encrypt issues for IPs), renewed by Caddy on its own; internal: Caddy's local CA, to test on a dev machine
+{
+	# A browser opening https://<IP> sends no SNI, and inside the container Caddy would look the certificate up by the
+	# container's own address. This answers those handshakes with the IP's certificate.
+	default_sni {$PUBLIC_IP}
+	# Only matters for CADDY_TLS=internal: there's no system trust store to install the local CA into.
+	skip_install_trust
+}
+
+(tls_letsencrypt) {
+	tls {
+		issuer acme {
+			profile shortlived
+		}
+	}
+}
+
+(tls_internal) {
+	tls internal
+}
+
+{$PUBLIC_IP} {
+	import tls_{$CADDY_TLS:letsencrypt}
+	reverse_proxy api:4100 {
+		# The client IP the API's rate limit uses (apps/api/src/lib/rateLimit.ts, TRUSTED_PROXY = this container): always
+		# the address that connected here, whatever the visitor sent in this header.
+		header_up CF-Connecting-IP {remote_host}
+	}
+}
