@@ -3,7 +3,8 @@ import type { WhatsAppState } from "@cardapio/shared";
 import type { WhatsAppMedia, WhatsAppMessage, WhatsAppProvider } from "./whatsapp.js";
 
 // Evolution API v2 (checked against v2.3.7 — see docker-compose.yml), Baileys channel. Instance name = restaurant id.
-// Dev only for now: nothing here is configured on Vercel, so there every WhatsApp route answers 503.
+// Evolution runs next to the API: docker-compose.yml in dev, deploy/docker-compose.prod.yml on the VM. Any of the four
+// variables unset = every WhatsApp route answers 503.
 const BASE = process.env.EVOLUTION_API_URL?.replace(/\/$/, "");
 const KEY = process.env.EVOLUTION_API_KEY;
 const WEBHOOK_URL = process.env.WHATSAPP_WEBHOOK_URL;

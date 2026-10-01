@@ -1,0 +1,22 @@
+# 10. Produção numa VM com Docker Compose (Caddy, API, Evolution)
+
+Aceita · 01/10/2026
+
+## Contexto
+A API precisa de um processo sempre ligado: os limites de requisição ficam na memória do processo (ADR 9), a Evolution (WhatsApp) precisa de um servidor com Docker e entrega mensagens por webhook, e o banco responde ~5× mais rápido com conexões persistentes no modo sessão do pooler do que no modo transação que uma função serverless exige (C-4, plano de testes). Na Vercel, o WhatsApp responde 503 e os limites por IP não funcionam. No PC do restaurante, atrás de um túnel da Cloudflare, tudo depende de um computador de balcão ficar ligado.
+
+O servidor disponível é uma VM da Oracle Cloud no nível gratuito: Ampere A1 (ARM64), 2 OCPUs, 12 GB, região São Paulo. O sistema operacional ainda não está escolhido (Ubuntu 24.04 ou Oracle Linux 9). Não há domínio: a API é acessada por `https://<IP-público>`. Os fronts continuam na Vercel; banco e Storage, num projeto Supabase de produção (sa-east-1).
+
+## Decisão
+- **Tudo em Docker Compose** (`deploy/docker-compose.prod.yml`): Caddy, API, Evolution 2.3.7 com o Postgres dela e o backup diário. Do sistema só se usa Docker e git, então Ubuntu e Oracle Linux servem igual.
+- **A VM só recebe código.** Ela clona a `master` e roda `deploy/deploy.sh`: `git pull --ff-only`, build da imagem da API ali mesmo (ARM64, sem registro de imagens), migrações e buckets num contêiner avulso, `up -d`, espera o healthcheck e imprime o commit no ar. `deploy.sh <commit>` volta para um commit anterior (sem desfazer migrações).
+- **Só o Caddy publica portas** (80 e 443). API e Evolution ficam na rede interna do Compose; a Evolution chama o webhook em `http://api:4100`, sem passar pela internet. O Caddy tem endereço fixo nessa rede e é o único proxy em quem a API acredita para o IP do cliente (`TRUSTED_PROXY`, ADR 9).
+- **HTTPS pelo IP com Let's Encrypt.** O Let's Encrypt emite certificado para endereço IP só no perfil `shortlived` (validade de ~160 h). O Caddy 2.11.4 pede esse perfil (`issuer acme { profile shortlived }`, em `deploy/Caddyfile`) e renova sozinho, sem cron. `CADDY_TLS=internal` troca pela CA local do Caddy para testar fora da VM.
+- **Backup diário** com `pg_dump` 17 (a versão do Supabase), formato custom, os últimos 7 no disco da VM (`deploy/backups`).
+
+## Consequências
+- **Sem garantia de disponibilidade.** O nível gratuito da Oracle não tem SLA, e a capacidade de Ampere A1 em São Paulo às vezes falta para criar ou redimensionar. Pior: a Oracle pode recuperar instâncias Always Free ociosas, e conta como ociosa a A1 que, em 7 dias, fica com CPU (percentil 95), rede **e** memória abaixo de 20% ([Always Free Resources](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)). Esta pilha usa ~1 GB dos 12 GB e quase nada de CPU fora do pico, então se encaixa. **Decisão pendente:** a página da Oracle não diz se a regra vale para contas Pay As You Go (que mantêm os recursos Always Free sem custo); confirmar com a Oracle antes de decidir entre mudar o tipo de conta ou aceitar o risco. Se a VM cair, a API, o WhatsApp e os backups param juntos; os dados do app estão no Supabase, mas as sessões do WhatsApp (volume `evolution_db`) e os backups ficam no disco da VM. Copie os backups para fora de vez em quando (`scp`), e espere ter de escanear o QR do WhatsApp de novo se a VM for perdida.
+- **Plano de saída.** Nada aqui é da Oracle: qualquer VPS com Docker (Hetzner, DigitalOcean, Magalu Cloud, outra conta Oracle; ARM64 ou x86-64, já que a imagem é construída na própria máquina) roda o mesmo Compose. É clonar o repositório, copiar o `deploy/.env` trocando `PUBLIC_IP`, rodar `deploy/deploy.sh` e atualizar o `VITE_API_URL` dos fronts na Vercel (e o APK). O certificado sai sozinho para o IP novo.
+- **Sem domínio, o endereço é o IP.** Se o IP mudar (instância recriada sem IP reservado), os fronts e o APK precisam ser reconstruídos com a URL nova. Reserve o IP público na Oracle. Com um domínio, basta trocar `PUBLIC_IP` pelo nome no Caddyfile (o certificado de 90 dias passa a ser o normal).
+- **Uma instância só.** Os limites de requisição continuam na memória do processo (ADR 9). Escalar para mais de um processo exige mover os contadores para o banco ou para um Redis.
+- **A Vercel deixa de hospedar a API.** O `apps/api/vercel.json`, a entrada `apps/api/api/index.ts` e o engine do Prisma para a Vercel saíram do repositório.

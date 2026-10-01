@@ -54,7 +54,7 @@ function full(key: string, max: number): number {
 
 /** Whose connections carry the visitor's IP in CF-Connecting-IP: TRUSTED_PROXY (comma-separated), else this machine. On the
  *  VM that's Caddy's fixed address on the compose network (deploy/docker-compose.prod.yml), and Caddy overwrites the header
- *  with whoever connected to it; in dev and in the tests it stays loopback, as with the Cloudflare tunnel. */
+ *  with whoever connected to it; in dev and in the tests it stays loopback. */
 const proxies = process.env.TRUSTED_PROXY?.split(",").map((a) => a.trim()).filter(Boolean);
 const TRUSTED = new Set(proxies?.length ? proxies : ["127.0.0.1", "::1"]);
 

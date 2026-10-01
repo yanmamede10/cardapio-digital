@@ -19,7 +19,8 @@ tests/
   run.mjs     Orquestra tudo: sobe o Postgres em Docker, migra, faz seed, sobe a API, roda os testes, derruba.
 docs/adr/     Decisões de arquitetura (uma por arquivo).
 docs/testes/  Plano de testes (o que é automático, o que é manual, resultados e medições).
-docker-compose.yml  Evolution API local (WhatsApp no Atendimento), na mesma máquina da API.
+docker-compose.yml  Evolution API local (WhatsApp no Atendimento), na mesma máquina da API (dev).
+deploy/             Produção na VM: Compose (Caddy, API, Evolution, backup), Caddyfile, deploy.sh, .env.example. Ver "Deploy".
 ```
 
 ## Pré-requisitos
@@ -45,9 +46,9 @@ npm run db:seed     --workspace apps/api    # dados de exemplo (restaurante "fog
 npm run dev:api                             # http://localhost:4100 (só nesta máquina: escuta em 127.0.0.1)
 ```
 
-A API escuta em `127.0.0.1` por padrão (`HOST` vazio): só a própria máquina chega nela (em produção, o túnel da Cloudflare roda nela). Para abrir no celular pela rede local em dev, rode com `HOST=0.0.0.0`.
+A API escuta em `127.0.0.1` por padrão (`HOST` vazio): só a própria máquina chega nela. Para abrir no celular pela rede local em dev, rode com `HOST=0.0.0.0`. Na VM, o contêiner escuta em `0.0.0.0` e só o Caddy, na rede interna do Compose, chega nela.
 
-Limites de requisição ([ADR 0009](docs/adr/0009-pedido-pelo-qr-e-limites.md)): por funcionário (600/min, somando os aparelhos do mesmo login), por mesa (900/min), pedidos por mesa (40 em 5 min), bloqueio da conta depois de 5 senhas erradas e, para o IP real que o túnel manda em `CF-Connecting-IP`, um teto por IP e um de logins por IP. Uma requisição da própria máquina sem esse cabeçalho não tem IP: escapa só dos dois limites por IP; os outros valem.
+Limites de requisição ([ADR 0009](docs/adr/0009-pedido-pelo-qr-e-limites.md)): por funcionário (600/min, somando os aparelhos do mesmo login), por mesa (900/min), pedidos por mesa (40 em 5 min), bloqueio da conta depois de 5 senhas erradas e, para o IP real, um teto por IP e um de logins por IP. O IP vem de `CF-Connecting-IP` só quando a conexão vem do proxy confiável (`TRUSTED_PROXY`: o Caddy na VM, que sobrescreve esse cabeçalho; a própria máquina em dev); de qualquer outro endereço vale o da conexão. Uma requisição da própria máquina sem esse cabeçalho, em dev, não tem IP: escapa só dos dois limites por IP; os outros valem.
 
 Não há `dotenv` no código: o `apps/api/.env` é carregado pelo próprio Prisma Client quando ele é importado, e isso vale para todas as variáveis do arquivo.
 
@@ -84,7 +85,7 @@ npm run dev:web                             # http://localhost:5173
 
 ### WhatsApp no Atendimento
 
-Conexão **não oficial** via [Evolution API](https://github.com/evolution-foundation/evolution-api) (Baileys), rodando no Docker da mesma máquina da API. Não vai para a Vercel — a troca pela Cloud API oficial da Meta é uma segunda implementação de `WhatsAppProvider` (`apps/api/src/lib/whatsapp.ts`), sem mexer em tickets, rotas ou telas.
+Conexão **não oficial** via [Evolution API](https://github.com/evolution-foundation/evolution-api) (Baileys), rodando no Docker da mesma máquina da API (na VM, no mesmo Compose: ver "Deploy"). Não roda na Vercel — a troca pela Cloud API oficial da Meta é uma segunda implementação de `WhatsAppProvider` (`apps/api/src/lib/whatsapp.ts`), sem mexer em tickets, rotas ou telas.
 
 ```sh
 # em apps/api/.env: as 4 variáveis de WhatsApp do .env.example; EVOLUTION_API_KEY e WHATSAPP_WEBHOOK_SECRET geradas com openssl rand -hex 32
@@ -140,10 +141,11 @@ Cada app tem um `.env.example`. Copie para `.env` no mesmo diretório.
 
 | Variável | Obrigatória | Para quê |
 | --- | --- | --- |
-| `DATABASE_URL` | sim | Postgres usado em runtime. Hoje, o pooler do Supabase em modo transação (porta 6543, `pgbouncer=true`); a medição de latência e a recomendação estão no plano de testes, seção 7. |
-| `DIRECT_URL` | sim | Usado por migrações e seed (hoje, o pooler do Supabase em modo sessão, porta 5432). |
+| `DATABASE_URL` | sim | Postgres usado em runtime. Na VM: o pooler do Supabase em modo **sessão** (porta 5432), sem `pgbouncer=true` e com `connection_limit=10` (a conta está em `deploy/.env.example`; a medição de latência, no plano de testes, seção 7). |
+| `DIRECT_URL` | sim | Usado por migrações, seeds e pelo backup (`pg_dump`): o pooler do Supabase em modo sessão, porta 5432, sem opções do Prisma. |
 | `PORT` | não | Porta da API (padrão 4000; o exemplo usa 4100, que é o que os fronts esperam). |
-| `HOST` | não | Interface em que a API escuta. Vazia = `127.0.0.1`: só a máquina e o túnel chegam nela (há teste disso). `0.0.0.0` só para testar pelo celular na rede local, em dev. |
+| `HOST` | não | Interface em que a API escuta. Vazia = `127.0.0.1`: só a própria máquina chega nela (há teste disso). `0.0.0.0` para testar pelo celular na rede local, em dev; no contêiner da VM, fixada em `0.0.0.0` pelo Compose. |
+| `TRUSTED_PROXY` | não | Endereço(s), separados por vírgula, de quem a API aceita o IP do cliente em `CF-Connecting-IP`. Vazia = a própria máquina (dev e testes). Na VM, fixada no Compose: o Caddy (`172.30.0.2`). |
 | `NODE_ENV` | em produção | `production` no servidor de verdade: a API só sobe com `JWT_SECRET` (32+ caracteres) e `CORS_ORIGINS` definidas, e diz qual falta. |
 | `JWT_SECRET` | em produção | Assina os tokens de staff. Em produção, pelo menos 32 caracteres (`openssl rand -base64 48`). Em dev, vazia usa um valor inseguro de fallback. |
 | `SUPER_ADMIN_KEY` | para usar /admin | Chave única do painel de plataforma. |
@@ -173,6 +175,77 @@ Cada app tem um `.env.example`. Copie para `.env` no mesmo diretório.
 
 ## Deploy
 
-Os dois fronts vão para a Vercel como SPA (`vercel.json` de cada um; `VITE_API_URL` aponta para a API). A API roda no PC do restaurante, atrás do túnel da Cloudflare (o `cloudflared` na mesma máquina), com a Evolution no Docker ao lado: é o cenário suportado ([ADR 0009](docs/adr/0009-pedido-pelo-qr-e-limites.md)). O `apps/api/vercel.json` ainda existe, mas numa função serverless o WhatsApp responde 503 e os limites por IP não funcionam (o IP seria o do proxy da Vercel e os contadores não seriam compartilhados).
+Os dois fronts vão para a Vercel como SPA (`vercel.json` de cada um), com `VITE_API_URL=https://<IP-da-VM>`. A API roda numa VM da Oracle Cloud (Ampere A1, ARM64, 2 OCPUs, 12 GB, São Paulo) com Docker Compose; banco e Storage ficam num projeto Supabase de produção (sa-east-1). Por que assim, os riscos e o plano de saída: [ADR 0010](docs/adr/0010-vm-com-docker-compose.md).
 
-Na API de produção são obrigatórias: `DATABASE_URL`, `DIRECT_URL`, `NODE_ENV=production`, `JWT_SECRET` com pelo menos 32 caracteres e `CORS_ORIGINS` com as URLs do painel e do cardápio — sem uma das duas últimas a API não sobe e diz qual falta. `HOST` fica vazia (127.0.0.1). Para o WhatsApp, as quatro variáveis da Evolution; para fotos, as do Storage. Migrações e buckets: `npm run db:deploy --workspace apps/api` com `DIRECT_URL` apontando para o Supabase.
+```
+deploy/docker-compose.prod.yml  Caddy (único com portas: 80 e 443) → API; Evolution 2.3.7 + o Postgres dela; backup diário
+deploy/Caddyfile                HTTPS pelo IP (Let's Encrypt) e proxy só para a API
+deploy/deploy.sh                deploy, rollback e o seed de demonstração
+deploy/.env.example             todas as variáveis de produção, comentadas → deploy/.env no servidor (fora do git)
+apps/api/Dockerfile             imagem da API, construída na própria VM (ARM64)
+```
+
+A VM só recebe código: clona a `master` e roda o `deploy/deploy.sh`. Nada é editado nela além do `deploy/.env`.
+
+### Primeira vez
+
+Funciona igual em Ubuntu 24.04 e Oracle Linux 9: do sistema, só Docker e git.
+
+1. **Oracle Cloud:** reserve o IP público da instância (um IP efêmero muda se a instância for recriada). Na Security List (ou NSG) da subnet, libere entrada TCP 80 e 443 de `0.0.0.0/0`: o Let's Encrypt valida o IP pela porta 80 ou 443, e o HTTP só redireciona para HTTPS.
+2. **Docker:** instale o Docker Engine com o plugin compose ([docs.docker.com/engine/install](https://docs.docker.com/engine/install/)) e o git; `sudo systemctl enable --now docker` (é o que traz os contêineres de volta quando a VM reinicia) e `sudo usermod -aG docker $USER` (saia e entre de novo).
+3. **Código e variáveis:**
+   ```sh
+   git clone https://github.com/yanmamede10/cardapio-digital.git && cd cardapio-digital
+   cp deploy/.env.example deploy/.env && chmod 600 deploy/.env   # preencha seguindo os comentários
+   ```
+4. **Deploy:** `deploy/deploy.sh`. Na primeira vez, o build da imagem leva alguns minutos; o Caddy pede o certificado assim que sobe.
+5. **Demonstração (uma vez):** `SEED_DEMO_PASSWORD='…' deploy/deploy.sh seed-demo` cria o Chapa 27 no banco vazio (ver "Hamburgueria de demonstração").
+6. **Fronts:** na Vercel, `VITE_API_URL=https://<IP-da-VM>` nos dois projetos e um redeploy. O APK do painel: "APK de demonstração do painel", acima.
+7. **Confira** de fora da VM: `curl https://<IP-da-VM>/api/health` → `{"ok":true}`; `curl -I http://<IP-da-VM>/api/health` → `308` para `https://`. Se não responder com a Security List aberta, confira o firewall do sistema (iptables nas imagens Ubuntu da Oracle, firewalld no Oracle Linux).
+
+### Deploy, rollback e seed
+
+| Comando | O que faz |
+| --- | --- |
+| `deploy/deploy.sh` | `git pull --ff-only` na `master` → build da API → `db:deploy` (migrações e buckets) num contêiner avulso → `up -d` → espera o healthcheck → imprime `No ar: <commit> <assunto> (<data>)`. Se a API não ficar saudável, mostra o log e sai com erro. |
+| `deploy/deploy.sh <commit>` | Rollback: o mesmo com um commit anterior (`git log --oneline`), **sem** migrações — o banco fica como está, então o código anterior roda sobre o schema novo (as migrações daqui só acrescentam). O próximo `deploy/deploy.sh` volta para a `master`. |
+| `SEED_DEMO_PASSWORD='…' deploy/deploy.sh seed-demo` | Uma vez: o Chapa 27. Se ele já existe, não altera nada. |
+| `deploy/deploy.sh seed` | Recusado. O seed de dev (`prisma/seed.ts`) apaga o banco e cria logins com `senha123`; em produção ele também se recusa sozinho (`NODE_ENV=production`, o padrão da imagem). |
+
+Logs: `docker compose -f deploy/docker-compose.prod.yml logs -f api` (ou `caddy`, `evolution`, `backup`).
+
+### HTTPS pelo IP
+
+O Let's Encrypt emite certificado para endereço IP só no perfil `shortlived`, válido por ~160 h (6,7 dias). O Caddy 2.11.4 pede esse perfil para `PUBLIC_IP` (`issuer acme { profile shortlived }` no `deploy/Caddyfile`) e renova sozinho, sem cron: confere os certificados a cada 10 minutos e renova quando falta cerca de um terço da validade (ou na janela que o Let's Encrypt indicar), uns 2 dias antes de vencer. O Caddy aceita certificado de IP do Let's Encrypt desde a 2.10.x (issue [caddyserver/caddy#7399](https://github.com/caddyserver/caddy/issues/7399)); a 2.11 trouxe as correções do desafio TLS-ALPN e de IPv6 para IPs. O `default_sni` responde com esse certificado aos navegadores que abrem `https://<IP>` (eles não mandam SNI).
+
+- O HTTP redireciona para HTTPS (redirecionamento automático do Caddy).
+- O Caddy só encaminha para a API (`reverse_proxy api:4100`). A Evolution não tem rota nem porta publicada.
+- O Caddy **sobrescreve** `CF-Connecting-IP` com o IP de quem conectou; a API só aceita esse cabeçalho vindo do Caddy (`TRUSTED_PROXY`, [ADR 0009](docs/adr/0009-pedido-pelo-qr-e-limites.md)).
+- Conferir na VM: `docker compose -f deploy/docker-compose.prod.yml logs caddy | grep -i "certificate obtained"` e `echo | openssl s_client -connect <IP>:443 2>/dev/null | openssl x509 -noout -issuer -dates -ext subjectAltName`.
+- Testar a pilha fora da VM: `CADDY_TLS=internal` e `PUBLIC_IP=127.0.0.1` no `deploy/.env` (CA local do Caddy; a raiz fica em `/data/caddy/pki/authorities/local/root.crt` no contêiner).
+
+### Dados que ficam na VM
+
+| Onde | O que guarda |
+| --- | --- |
+| volume `caddy_data` | certificados, chaves e a conta ACME |
+| volume `caddy_config` | configuração ativa do Caddy |
+| volume `evolution_db` | o banco interno da Evolution: instâncias, as sessões do WhatsApp (tabela `Session`; sem ele, é preciso escanear o QR de novo) e mensagens |
+| volume `evolution_instances` | arquivos por instância da Evolution |
+| pasta `deploy/backups/` do clone | os backups diários do banco |
+
+Os volumes ficam em `/var/lib/docker/volumes/cardapio_<nome>/_data`. Sobrevivem a `deploy/deploy.sh` (`up -d --build`) e à reinicialização da VM; só `docker compose … down -v` os apaga. A prova está no plano de testes ("Rodada D").
+
+### Backup e restauração
+
+O serviço `backup` (`postgres:17.11`, o mesmo major do Supabase) roda `pg_dump --format=custom --schema=public` uma vez por dia, depois das 04:00 de São Paulo, em `deploy/backups/cardapio-AAAA-MM-DD.dump` (compactado), e guarda os 7 mais novos. Ele confere de hora em hora, então reiniciar não pula um dia. O dump tem o schema e os dados do app (inclusive o histórico de migrações), não os arquivos do Storage (fotos e mídia do WhatsApp ficam no Supabase Storage). Copie os backups para fora da VM de vez em quando: `scp <vm>:cardapio-digital/deploy/backups/*.dump .`
+
+Restaurar num banco **vazio** (um projeto Supabase novo, ou um Postgres descartável para conferir um backup), antes de qualquer migração:
+
+```sh
+docker compose -f deploy/docker-compose.prod.yml run --rm backup \
+  pg_restore --schema=public --no-owner --no-privileges --exit-on-error \
+  --dbname='postgresql://…' /backups/cardapio-AAAA-MM-DD.dump
+```
+
+`--schema=public` restaura o que está dentro do schema, não o `CREATE SCHEMA public` (todo banco novo já tem um, e o `pg_restore` pararia nele). Depois, com o `deploy/.env` apontando para o banco restaurado, `deploy/deploy.sh` (as migrações já estão lá; os buckets são recriados). Prova feita com o projeto Supabase de testes; as contagens estão no plano de testes ("Rodada D").

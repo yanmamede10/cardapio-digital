@@ -4,7 +4,8 @@
 # Only Caddy publishes ports (80, 443). The API and Evolution are reachable only on this project's network.
 # Data that outlives the containers, in Docker named volumes (/var/lib/docker/volumes/cardapio_<name>/_data on the VM):
 #   caddy_data           certificates, their keys and the ACME account
-#   evolution_instances  the WhatsApp sessions (Baileys keys); evolution_db: Evolution's own store (instances, messages)
+#   evolution_db         Evolution's store: its instances, the WhatsApp sessions (table Session) and messages
+#   evolution_instances  Evolution's per-instance files
 # The app's data is in Supabase; its daily dump lands in deploy/backups (the backup service below).
 name: cardapio
 services:

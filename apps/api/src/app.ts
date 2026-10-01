@@ -21,7 +21,7 @@ import { tablesRouter } from "./routes/tables.js";
 import { whatsappRouter, whatsappWebhookRouter } from "./routes/whatsapp.js";
 import { rateLimit } from "./lib/rateLimit.js";
 
-// Day/month boundaries ("hoje", "mês corrente") are computed in server-local time. Vercel runs in UTC,
+// Day/month boundaries ("hoje", "mês corrente") are computed in server-local time. Containers run in UTC,
 // which would shift them 3h vs. a Brazilian dev machine, so pin the zone explicitly.
 process.env.TZ = process.env.APP_TZ || "America/Sao_Paulo";
 
