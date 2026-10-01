@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { networkInterfaces } from "node:os";
 import { before, test } from "node:test";
 import { clientIp, LIMITS } from "../../apps/api/src/lib/rateLimit.ts";
 import { call, login, newTable, tableCode } from "./helpers.ts";
 
-// Rate limits (apps/api/src/lib/rateLimit.ts). The API trusts CF-Connecting-IP on loopback (the Cloudflare tunnel), so these
-// tests pose as visitors from documentation IPs (RFC 5737). Every other test file calls from this machine without the
+// Rate limits (apps/api/src/lib/rateLimit.ts). Without TRUSTED_PROXY (dev, the tests) the API trusts CF-Connecting-IP on
+// loopback, so these tests pose as visitors from documentation IPs (RFC 5737); on the VM it trusts only Caddy (one test below). Every other test file calls from this machine without the
 // header: no per-IP limit applies to that, the staff member's, the table's and the account's do (last test here).
 const D = "chapa27";
 const from = (ip: string, headers: Record<string, string> = {}) => ({ "CF-Connecting-IP": ip, ...headers });
@@ -31,12 +33,35 @@ async function burst(n: number, one: (i: number) => Promise<{ status: number }>)
   return statuses;
 }
 
-test("CF-Connecting-IP só vale numa conexão da própria máquina (o túnel); de fora vale o endereço da conexão", () => {
+test("sem TRUSTED_PROXY, CF-Connecting-IP só vale numa conexão da própria máquina; de fora vale o endereço da conexão", () => {
   const req = (remoteAddress: string, cf?: string) => ({ socket: { remoteAddress }, header: (n: string) => (n.toLowerCase() === "cf-connecting-ip" ? cf : undefined) });
   assert.equal(clientIp(req("127.0.0.1", "203.0.113.9") as never), "203.0.113.9");
   assert.equal(clientIp(req("::ffff:127.0.0.1", "203.0.113.9") as never), "203.0.113.9");
   assert.equal(clientIp(req("192.168.0.20", "203.0.113.9") as never), "192.168.0.20", "da rede local, o cabeçalho é ignorado");
   assert.equal(clientIp(req("127.0.0.1") as never), null, "a própria máquina, sem o túnel");
+});
+
+test("com TRUSTED_PROXY (o Caddy na VM), o cabeçalho só vale vindo dele; forjado direto na API, de outro endereço, é ignorado", async (t) => {
+  const lan = Object.values(networkInterfaces()).flat().find((a) => a?.family === "IPv4" && !a.internal)?.address;
+  if (!lan) return t.skip("sem endereço de rede local para fazer o papel do proxy");
+  // A second API set up as on the VM: every interface, and one trusted proxy — here this machine's LAN address plays Caddy.
+  const api = spawn(process.execPath, ["--import", "tsx", "apps/api/src/index.ts"], { env: { ...process.env, PORT: "4297", HOST: "0.0.0.0", TRUSTED_PROXY: lan } });
+  try {
+    await new Promise<void>((ok, fail) => {
+      api.stdout.on("data", (b) => String(b).includes("listening") && ok());
+      api.on("exit", (code) => fail(new Error(`a API saiu com ${code}`)));
+    });
+    // One login attempt more than the per-IP ceiling, each claiming a different visitor in the header.
+    const logins = (host: string) =>
+      burst(LIMITS.LOGIN_ATTEMPTS_PER_IP_PER_15_MINUTES + 1, (i) =>
+        fetch(`http://${host}:4297/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json", ...from(`203.0.113.${i}`) }, body: JSON.stringify({ email: `proxy-${i}@t.com`, password: "qualquer-1" }) })
+      );
+    assert.deepEqual([...new Set(await logins(lan))], [401], "pelo proxy confiável, cada IP do cabeçalho conta por si");
+    const direct = await logins("127.0.0.1"); // loopback isn't trusted once TRUSTED_PROXY is set
+    assert.deepEqual([direct.filter((s) => s === 401).length, direct.filter((s) => s === 429).length], [LIMITS.LOGIN_ATTEMPTS_PER_IP_PER_15_MINUTES, 1], "direto na API, todas contam para o endereço da conexão");
+  } finally {
+    api.kill();
+  }
 });
 
 test("casa cheia no mesmo IP (40 mesas × 7 aparelhos + 10 aparelhos da equipe, um minuto de uso) não é bloqueada", async () => {

@@ -52,18 +52,20 @@ function full(key: string, max: number): number {
   return w && w.resetAt > now && w.count >= max ? Math.ceil((w.resetAt - now) / 1000) : 0;
 }
 
-const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+/** Whose connections carry the visitor's IP in CF-Connecting-IP: TRUSTED_PROXY (comma-separated), else this machine. On the
+ *  VM that's Caddy's fixed address on the compose network (deploy/docker-compose.prod.yml), and Caddy overwrites the header
+ *  with whoever connected to it; in dev and in the tests it stays loopback, as with the Cloudflare tunnel. */
+const proxies = process.env.TRUSTED_PROXY?.split(",").map((a) => a.trim()).filter(Boolean);
+const TRUSTED = new Set(proxies?.length ? proxies : ["127.0.0.1", "::1"]);
 
 /**
- * The client's IP. Behind the Cloudflare tunnel every request reaches the API from this machine (cloudflared), with the
- * visitor's IP in CF-Connecting-IP, which Cloudflare's edge sets itself. So that header is believed only on a loopback
- * connection; from anywhere else the socket's address counts and the header is ignored. A loopback request without it is
- * this machine itself (Evolution, someone on the PC, the tests): null — no per-IP limit applies to it; the staff member's,
- * the table's and the account's still do.
+ * The client's IP. The header is believed only on a connection from a trusted proxy; from anywhere else the socket's address
+ * counts and the header is ignored. A trusted connection without it is the proxy's own machine (in dev: Evolution, someone on
+ * the PC, the tests): null — no per-IP limit applies to it; the staff member's, the table's and the account's still do.
  */
 export function clientIp(req: Pick<Request, "header"> & { socket: { remoteAddress?: string } }): string | null {
-  const peer = req.socket.remoteAddress ?? "";
-  if (!LOOPBACK.has(peer)) return peer;
+  const peer = (req.socket.remoteAddress ?? "").replace(/^::ffff:/, ""); // an IPv4 peer on a dual-stack socket
+  if (!TRUSTED.has(peer)) return peer;
   return req.header("cf-connecting-ip")?.trim() || null;
 }
 

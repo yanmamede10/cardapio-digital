@@ -1,6 +1,6 @@
 # 9. Pedido pelo QR: identidade da mesa, aceite do primeiro pedido e limites de requisição
 
-Aceita · 30/09/2026
+Aceita · 30/09/2026 · revista em 01/10/2026 (D-4: na VM, o proxy confiável é o Caddy)
 
 ## Contexto
 O QR da mesa levava `<restaurante>.<número>` e a API aceitava o número da mesa vindo do celular do cliente: qualquer pessoa, de qualquer lugar, podia pedir para qualquer mesa digitando números, e o primeiro pedido já abria a mesa e entrava na conta. Não havia nenhum limite de requisições. Para a demonstração, a API roda num PC comum atrás de um túnel da Cloudflare: toda requisição chega do próprio PC, com o IP do visitante no cabeçalho `CF-Connecting-IP`. No restaurante, clientes e garçons saem pelo mesmo IP do Wi-Fi; nos dados móveis, as operadoras compartilham IPs (CGNAT). O IP, sozinho, não identifica ninguém.
@@ -44,7 +44,13 @@ As contas partem do polling que existe no código:
 - **Cliente**: o status do pedido é consultado a cada 3 s enquanto espera (20/min) e a disponibilidade do cardápio a cada 12 s (5/min), mais os pratos abertos. São cerca de 30 por minuto por celular no pico. O limite de 900 por mesa comporta um grupo de 30 celulares. Os 40 pedidos em 5 minutos comportam um grupo de 20 pedindo junto, duas vezes.
 - **Casa cheia num Wi-Fi só**: 40 mesas × 7 aparelhos × 25/min + 10 aparelhos da equipe × 57/min ≈ 7.600 por minuto. O teto de 15.000 por IP comporta isso duas vezes.
 
-O IP real vem de `CF-Connecting-IP`, e esse cabeçalho só é aceito numa conexão da própria máquina (o `cloudflared` roda nela). De qualquer outro endereço vale o endereço da conexão, e o cabeçalho é ignorado. A API escuta em `127.0.0.1` por padrão. Uma requisição da própria máquina sem o cabeçalho é a própria máquina (Evolution, alguém no PC, os testes): sem IP, o teto por IP e o de logins por IP não se aplicam a ela; o limite do funcionário, o da mesa, o dos pedidos da mesa e o bloqueio da conta valem do mesmo jeito (C-2). O `npm test` sobe o limite do funcionário para 3.000 por minuto (`STAFF_PER_MINUTE`), porque as suítes chamam a API com poucos logins, muito mais rápido que gente. Acima do limite, a resposta é 429 com `Retry-After` e a mensagem "Muitas tentativas em pouco tempo. Tente de novo em N s."
+O IP real vem de `CF-Connecting-IP`, e esse cabeçalho só é aceito numa conexão vinda de um proxy confiável. De qualquer outro endereço vale o endereço da conexão, e o cabeçalho é ignorado.
+
+- **Na VM** ([ADR 0010](0010-vm-com-docker-compose.md)): o proxy confiável é o Caddy, com endereço fixo na rede interna do Compose (`TRUSTED_PROXY=172.30.0.2`, em `deploy/docker-compose.prod.yml`). O Caddy **sobrescreve** o `CF-Connecting-IP` com o IP de quem conectou nele (`header_up CF-Connecting-IP {remote_host}`, em `deploy/Caddyfile`): o valor que o visitante mandar é descartado. Só o Caddy publica portas; a API não é alcançável de fora sem passar por ele, e uma conexão direta de qualquer outro endereço (inclusive a própria máquina) tem o cabeçalho ignorado.
+- **Em dev e nos testes** (`TRUSTED_PROXY` vazia): o proxy confiável é a própria máquina (loopback), como era com o túnel da Cloudflare. A API escuta em `127.0.0.1` por padrão.
+- **Webhook da Evolution**: a rota `/api/whatsapp/webhook` é montada antes do limitador e responde ali mesmo, autenticada pelo segredo (`x-webhook-secret`); ela não tem IP de cliente nem limite por IP, na VM e em dev.
+
+Uma conexão de proxy confiável sem o cabeçalho é a própria máquina (em dev: alguém no PC, os testes): sem IP, o teto por IP e o de logins por IP não se aplicam a ela; o limite do funcionário, o da mesa, o dos pedidos da mesa e o bloqueio da conta valem do mesmo jeito (C-2). O `npm test` sobe o limite do funcionário para 3.000 por minuto (`STAFF_PER_MINUTE`), porque as suítes chamam a API com poucos logins, muito mais rápido que gente. Acima do limite, a resposta é 429 com `Retry-After` e a mensagem "Muitas tentativas em pouco tempo. Tente de novo em N s."
 
 ### 4. Risco aceito: o token do painel fica no `localStorage` por 24 h
 O token de sessão do painel continua no `localStorage`, válido por 24 h, para durar um turno inteiro num tablet. Um XSS no painel poderia lê-lo. Aceitamos o risco nesta fase porque:
@@ -58,4 +64,4 @@ Revisitar quando houver cookie `HttpOnly` com o painel e a API no mesmo domínio
 - Quem lê o QR de fora do restaurante não abre mesa nem gera conta: o pedido para em "Aguardando aceite" até alguém da equipe decidir.
 - O primeiro pedido de uma mesa livre passa por dois toques na Central: **Aceitar** (abre a mesa) e depois o Aceitar de sempre (vai para Preparando). A regra seguiu o pedido de levar o aceito ao status inicial de um pedido do QR. Juntar os dois toques é uma mudança de uma linha, se for preferível.
 - Os limites valem para uma instância. Se a API rodar em mais de um processo, os contadores precisam ir para o banco ou para um Redis.
-- A API na Vercel (função serverless) não tem o túnel na frente: lá o IP seria o do proxy da Vercel e os contadores não seriam compartilhados. O cenário suportado é o do PC com o túnel.
+- A API roda numa VM, atrás do Caddy ([ADR 0010](0010-vm-com-docker-compose.md)). Se um dia houver outro proxy na frente (CDN, balanceador), ele precisa entrar em `TRUSTED_PROXY` e o Caddy precisa passar adiante o IP que esse proxy informa; do contrário, todos os visitantes aparecem com o IP do proxy e dividem o mesmo teto.
