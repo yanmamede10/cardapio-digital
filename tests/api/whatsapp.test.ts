@@ -14,6 +14,7 @@ let scanned = false;
 let failSends = false;
 let failReads = false;
 let failUploads = false;
+const files = new Map<string, Buffer>(); // received message id → the bytes getBase64FromMediaMessage hands back
 
 const evolution = http.createServer((req, res) => {
   const chunks: Buffer[] = [];
@@ -34,12 +35,17 @@ const evolution = http.createServer((req, res) => {
     if (action === "connect") return json(200, scanned ? { instance: { instanceName: name, state: "open" } } : { pairingCode: null, code: "2@abc", base64: "data:image/png;base64,QR", count: 1 });
     if (action === "delete") return instances.delete(decodeURIComponent(name)), json(200, { status: "SUCCESS", error: false });
     if (group === "message") return failSends ? json(500, { status: 500, error: "Internal Server Error" }) : json(201, { key: { id: `SENT-${seen.length}` } });
+    if (action === "getBase64FromMediaMessage") {
+      const file = files.get(r.body?.message?.key?.id);
+      return file ? json(201, { mediaType: "imageMessage", base64: file.toString("base64") }) : json(400, { status: 400, error: "Message not found" });
+    }
     if (action === "markMessageAsRead") return failReads ? json(500, { status: 500, error: "Internal Server Error" }) : json(201, { message: "Read messages", read: "success" });
     json(404, {});
   });
 });
 const sends = () => seen.filter((r) => r.path.startsWith("/message/"));
 const reads = () => seen.filter((r) => r.path.startsWith("/chat/markMessageAsRead/"));
+const downloads = () => seen.filter((r) => r.path.startsWith("/chat/getBase64FromMediaMessage/"));
 
 let firstId = ""; // the first customer message — still unread when Atendimento first replies
 let A: string; // fresh restaurant that sets WhatsApp up (keeps the seeded one untouched for the UI tests)
@@ -59,7 +65,13 @@ const text = (conversation: string, over: object = {}) => ({
   ...over
 });
 const hook = (payload: object, headers: Record<string, string> = SECRET) => call("POST", "/api/whatsapp/webhook", { body: payload, headers });
-const ticketOf = async () => (await call("GET", `${P()}/tickets`, { token: owner })).body.find((t: { channel: string }) => t.channel === "whatsapp");
+const ticketOf = async (from = phone) => (await call("GET", `${P()}/tickets`, { token: owner })).body.find((t: { refLabel: string }) => t.refLabel === `WhatsApp · +${from}`);
+/** A photo or voice note as Evolution posts it: no bytes (base64: false), only what the message says; `file` is what
+ *  downloadMedia gets back for it. */
+const mediaMsg = (kind: "image" | "audio", media: { mimetype: string; caption?: string; fileLength?: unknown }, file?: Buffer, base = text("")) => {
+  if (file) files.set(base.key.id, file);
+  return { ...base, messageType: `${kind}Message`, message: { [`${kind}Message`]: media } };
+};
 
 before(async () => {
   await new Promise<void>((ok) => evolution.listen(4299, ok));
@@ -88,7 +100,7 @@ describe("WhatsApp (Evolution)", () => {
     const create = seen.find((r) => r.path === "/instance/create")!;
     assert.equal(create.apikey, "test-evo-key");
     assert.equal(create.body.instanceName, A);
-    assert.deepEqual(create.body.webhook, { enabled: true, url: "http://localhost:4200/api/whatsapp/webhook", headers: SECRET, byEvents: false, base64: true, events: ["MESSAGES_UPSERT"] });
+    assert.deepEqual(create.body.webhook, { enabled: true, url: "http://localhost:4200/api/whatsapp/webhook", headers: SECRET, byEvents: false, base64: false, events: ["MESSAGES_UPSERT"] });
     assert.deepEqual([create.body.groupsIgnore, create.body.alwaysOnline, create.body.readMessages], [true, false, false]);
 
     scanned = true;
@@ -106,7 +118,7 @@ describe("WhatsApp (Evolution)", () => {
     assert.equal(await ticketOf(), undefined);
   });
 
-  test("sem o segredo, a recusa vem antes de ler o corpo; com o segredo, corpo acima de 8 MB em base64 + 1 MB → 413", async () => {
+  test("sem o segredo, a recusa vem antes de ler o corpo; com o segredo, corpo acima de 2 MB → 413", async () => {
     const API = process.env.API_URL ?? "http://localhost:4200";
     // Announces 50 MB and sends a few bytes: the 401 must come back while the body is still "on its way".
     const early = await new Promise<number | "esperou o corpo">((resolve) => {
@@ -121,7 +133,7 @@ describe("WhatsApp (Evolution)", () => {
     });
     assert.equal(early, 401);
 
-    const limit = Math.ceil((8 * 1024 * 1024) / 3) * 4 + 1024 * 1024;
+    const limit = 2 * 1024 * 1024; // no media bytes in the webhook any more
     const over = await fetch(`${API}/api/whatsapp/webhook`, { method: "POST", headers: { "Content-Type": "application/json", ...SECRET }, body: JSON.stringify({ event: "messages.upsert", pad: "x".repeat(limit) }) });
     assert.equal(over.status, 413);
     const under = await hook({ ...upsert(text("")), pad: "x".repeat(limit - 2048) });
@@ -204,14 +216,14 @@ describe("WhatsApp (Evolution)", () => {
 
   test("imagem que o Storage recusa não se perde: fica o aviso para ver no celular", async () => {
     failUploads = true;
-    await hook(upsert({ ...text(""), messageType: "imageMessage", message: { imageMessage: { mimetype: "image/jpeg", caption: "cardápio?" }, base64: Buffer.from("fake").toString("base64") } }));
+    await hook(upsert(mediaMsg("image", { mimetype: "image/jpeg", caption: "cardápio?" }, Buffer.from("fake"))));
     failUploads = false;
     const last = (await ticketOf()).messages.at(-1);
     assert.deepEqual([last.text, last.mediaUrl], ["[Imagem — não foi possível salvar, veja no celular] cardápio?", null]);
   });
 
   test("mídia vai para o bucket privado (tipo sem parâmetro) e o payload só traz URL assinada, nunca a pública", async () => {
-    await hook(upsert({ ...text(""), messageType: "audioMessage", message: { audioMessage: { mimetype: "audio/ogg; codecs=opus" }, base64: Buffer.from("OggS").toString("base64") } }));
+    await hook(upsert(mediaMsg("audio", { mimetype: "audio/ogg; codecs=opus" }, Buffer.from("OggS"))));
     const up = uploads.at(-1)!;
     assert.match(up.path, new RegExp(`^/wa-test/${A}/[0-9a-f-]{36}\\.ogg$`));
     assert.equal(up.type, "audio/ogg");
@@ -222,6 +234,32 @@ describe("WhatsApp (Evolution)", () => {
     assert.ok(url.searchParams.get("X-Amz-Signature"), "assinada");
     assert.equal(url.searchParams.get("X-Amz-Expires"), "3600");
     assert.ok(process.env.STORAGE_PUBLIC_URL && !JSON.stringify(t).includes(process.env.STORAGE_PUBLIC_URL), "nada do bucket público");
+  });
+
+  test("mídia recebida acima de 8 MB não é baixada e a conversa certa avisa o atendente; até 8 MB chega normal", async () => {
+    const MB = 1024 * 1024;
+    const other = `55219${String(Date.now()).slice(-8)}`;
+    const fromOther = text("", { key: { remoteJid: `${other}@s.whatsapp.net`, fromMe: false, id: `BIG-${uid()}` }, pushName: "Maria" });
+    // 12 MB as Evolution declares it (Baileys' Long): no download, the note in Maria's conversation, João's untouched.
+    const before = (await ticketOf()).messages.length;
+    const big = mediaMsg("image", { mimetype: "image/jpeg", caption: "o cardápio", fileLength: { low: 12 * MB, high: 0, unsigned: true } }, undefined, fromOther);
+    assert.equal((await hook(upsert(big))).status, 200);
+    const maria = (await ticketOf(other)).messages.at(-1);
+    assert.deepEqual([maria.from, maria.text, maria.mediaUrl], ["customer", "[Arquivo de 12 MB não recebido (o limite é 8 MB). Peça para o cliente enviar de outro jeito.] o cardápio", null]);
+    assert.ok(!downloads().some((r) => r.body.message.key.id === big.key.id), "não baixou");
+    assert.equal((await ticketOf()).messages.length, before, "a conversa do João não muda");
+
+    // Exactly 8 MB (declared as a string): downloaded and kept in the private bucket.
+    const ok = mediaMsg("audio", { mimetype: "audio/ogg; codecs=opus", fileLength: String(8 * MB) }, Buffer.alloc(8 * MB));
+    assert.equal((await hook(upsert(ok))).status, 200);
+    let last = (await ticketOf()).messages.at(-1);
+    assert.deepEqual([last.text, last.mediaType, Boolean(last.mediaUrl)], ["", "audio", true]);
+    assert.deepEqual(downloads().at(-1)!.body, { message: { key: { id: ok.key.id } }, convertToMp4: false });
+
+    // No size declared, and the file turns out bigger than 8 MB: not kept either.
+    await hook(upsert(mediaMsg("image", { mimetype: "image/jpeg" }, Buffer.alloc(8 * MB + 1))));
+    last = (await ticketOf()).messages.at(-1);
+    assert.deepEqual([last.text, last.mediaUrl], ["[Arquivo de 8,1 MB não recebido (o limite é 8 MB). Peça para o cliente enviar de outro jeito.]", null]);
   });
 
   test("mídia acima de 8 MB pelo Atendimento: 413 com a mensagem para quem enviou; exatamente 8 MB passa", async () => {

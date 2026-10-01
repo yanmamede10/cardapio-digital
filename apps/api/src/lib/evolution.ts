@@ -24,12 +24,18 @@ interface Upsert {
     messageType?: string;
     message?: {
       conversation?: string; // Evolution folds extendedTextMessage into this
-      imageMessage?: { caption?: string; mimetype?: string };
-      audioMessage?: { mimetype?: string };
-      base64?: string; // media bytes — the instance's webhook is created with base64: true
+      imageMessage?: Media & { caption?: string };
+      audioMessage?: Media;
     };
   };
 }
+// No bytes in the webhook (it's created with base64: false): the size it declares, and downloadMedia fetches the rest.
+// fileLength is Baileys' protobuf Long as Evolution serializes it ({ low, high }), or a plain number/string.
+type Media = { mimetype?: string; fileLength?: number | string | { low: number; high: number } };
+const byteCount = (n: Media["fileLength"]) => {
+  const v = n && typeof n === "object" ? (n.low >>> 0) + (n.high >>> 0) * 2 ** 32 : Number(n);
+  return Number.isFinite(v) && v > 0 ? v : null;
+};
 
 export class EvolutionProvider implements WhatsAppProvider {
   readonly configured = Boolean(BASE && KEY && WEBHOOK_URL && SECRET);
@@ -68,7 +74,7 @@ export class EvolutionProvider implements WhatsAppProvider {
         rejectCall: false,
         syncFullHistory: false,
         groupsIgnore: true,
-        webhook: { enabled: true, url: WEBHOOK_URL, headers: { [SECRET_HEADER]: SECRET }, byEvents: false, base64: true, events: ["MESSAGES_UPSERT"] }
+        webhook: { enabled: true, url: WEBHOOK_URL, headers: { [SECRET_HEADER]: SECRET }, byEvents: false, base64: false, events: ["MESSAGES_UPSERT"] }
       });
     }
     // close → starts a session (first QR may take a moment); connecting → the current QR; open → just the state.
@@ -110,6 +116,12 @@ export class EvolutionProvider implements WhatsAppProvider {
     await this.ok("POST", `/chat/markMessageAsRead/${encodeURIComponent(restaurantId)}`, { readMessages: messageIds.map((id) => ({ remoteJid, fromMe: false, id })) });
   }
 
+  async downloadMedia(restaurantId: string, messageId: string) {
+    // Evolution keeps every received message (DATABASE_SAVE_DATA_NEW_MESSAGE in docker-compose.yml) and finds it by id.
+    const r = await this.ok<{ base64: string }>("POST", `/chat/getBase64FromMediaMessage/${encodeURIComponent(restaurantId)}`, { message: { key: { id: messageId } }, convertToMp4: false });
+    return Buffer.from(r.base64, "base64");
+  }
+
   verifyWebhook(header: (name: string) => string | undefined) {
     const got = Buffer.from(header(SECRET_HEADER) ?? "");
     const want = Buffer.from(SECRET ?? "");
@@ -124,9 +136,9 @@ export class EvolutionProvider implements WhatsAppProvider {
     if (event !== "messages.upsert" || !instance || !data?.key?.id || !phone) return [];
 
     const m = data.message ?? {};
-    const kind = m.imageMessage ? "image" : m.audioMessage ? "audio" : null;
+    const kind = m.imageMessage ? ("image" as const) : m.audioMessage ? ("audio" as const) : null;
     const mimetype = (m.imageMessage ?? m.audioMessage)?.mimetype ?? (kind === "image" ? "image/jpeg" : "audio/ogg");
-    const media: WhatsAppMedia | null = kind && m.base64 ? { kind, mimetype, base64: m.base64 } : null;
+    const media = kind ? { kind, mimetype, bytes: byteCount((m.imageMessage ?? m.audioMessage)?.fileLength) } : null;
     const note = NOTE[data.messageType ?? ""];
     const text = m.conversation || m.imageMessage?.caption || (media ? "" : note ? `[${note} — veja no celular]` : null);
     if (text === null) return [];

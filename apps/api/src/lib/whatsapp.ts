@@ -15,7 +15,9 @@ export interface WhatsAppMessage {
   fromMe: boolean;
   pushName: string | null;
   text: string;
-  media: WhatsAppMedia | null;
+  /** What the message says about its photo or voice note — the size it declares, null if none. The bytes themselves come
+   *  from downloadMedia, only when they fit. */
+  media: { kind: "image" | "audio"; mimetype: string; bytes: number | null } | null;
 }
 
 /**
@@ -35,6 +37,8 @@ export interface WhatsAppProvider {
   sendMedia(restaurantId: string, phone: string, media: WhatsAppMedia): Promise<string>;
   /** Read receipts ("visto") for these incoming messages. Only after a reply from Atendimento went out — never on receiving or opening. */
   markRead(restaurantId: string, phone: string, messageIds: string[]): Promise<void>;
+  /** The bytes of a received message's media (WhatsAppMessage.media), fetched from the provider. */
+  downloadMedia(restaurantId: string, messageId: string): Promise<Buffer>;
   /** Webhook: is this request really from the provider? */
   verifyWebhook(header: (name: string) => string | undefined): boolean;
   /** Webhook body → messages worth a ticket (groups, reactions, receipts etc. are dropped). */

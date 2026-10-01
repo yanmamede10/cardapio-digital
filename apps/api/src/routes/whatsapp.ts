@@ -61,9 +61,9 @@ whatsappRouter.post("/:id/whatsapp/disconnect", ...ownerGuard, async (req, res) 
 // Provider → API. Authenticated by the provider's own check (a shared secret header for Evolution) before a single byte of the
 // body is read, so a stranger can't make the API buffer anything. Receiving never sends anything.
 export const whatsappWebhookRouter = asyncRouter();
-/** Evolution posts received media as base64 inside the JSON: the largest media we keep (8 MB) in base64 (4 bytes per 3),
- *  plus 1 MB for the rest of the message (caption, thumbnail, keys). Bigger media gets 413 and never reaches the ticket. */
-export const WEBHOOK_BODY_LIMIT = Math.ceil(WHATSAPP_MEDIA_MAX_BYTES / 3) * 4 + 1024 * 1024;
+/** The webhook carries no media bytes (base64: false; receive() downloads what fits): text, caption, keys and thumbnails,
+ *  which Evolution sends as JSON objects of numbers (~10× their size) — a few hundred KB at most. */
+export const WEBHOOK_BODY_LIMIT = 2 * 1024 * 1024;
 
 whatsappWebhookRouter.use((req, res, next) => (whatsapp.verifyWebhook((name) => req.header(name)) ? next() : res.status(401).json({ error: "invalid webhook secret" })));
 whatsappWebhookRouter.use(express.json({ limit: WEBHOOK_BODY_LIMIT }));
@@ -105,11 +105,26 @@ async function receive(m: WhatsAppMessage) {
   if (await prisma.supportMessage.findUnique({ where: key })) return; // redelivered webhook
 
   let mediaKey: string | null = null;
+  let note = "";
   if (m.media) {
-    // A failed upload must not lose the message itself: it's kept with a note to check the phone.
-    mediaKey = await storeWhatsAppMedia(m.restaurantId, Buffer.from(m.media.base64, "base64"), m.media.mimetype).catch((err) => (console.error(err), null));
+    const { kind, mimetype, bytes } = m.media;
+    // Over 8 MB (as the message declares it, or as it really came) it's never downloaded or kept: the conversation says so,
+    // rounded up (8 MB + 1 byte reads 8,1).
+    const tooBig = (size: number) =>
+      `[Arquivo de ${(Math.ceil((size / 2 ** 20) * 10) / 10).toLocaleString("pt-BR")} MB não recebido (o limite é ${WHATSAPP_MEDIA_MAX_BYTES / 2 ** 20} MB).${m.fromMe ? "" : " Peça para o cliente enviar de outro jeito."}] `;
+    if (bytes && bytes > WHATSAPP_MEDIA_MAX_BYTES) note = tooBig(bytes);
+    else {
+      try {
+        const file = await whatsapp.downloadMedia(m.restaurantId, m.externalId);
+        if (file.length > WHATSAPP_MEDIA_MAX_BYTES) note = tooBig(file.length);
+        else mediaKey = await storeWhatsAppMedia(m.restaurantId, file, mimetype);
+      } catch (err) {
+        // A failed download or upload must not lose the message itself: it's kept with a note to check the phone.
+        console.error(err);
+        note = `[${kind === "image" ? "Imagem" : "Áudio"} — não foi possível salvar, veja no celular] `;
+      }
+    }
   }
-  const lost = m.media && !mediaKey ? `[${m.media.kind === "image" ? "Imagem" : "Áudio"} — não foi possível salvar, veja no celular] ` : "";
   const { count } = await prisma.supportMessage.createMany({
     skipDuplicates: true, // the same redelivery, racing the check above
     data: [
@@ -117,7 +132,7 @@ async function receive(m: WhatsAppMessage) {
         ticketId: ticket.id,
         from: m.fromMe ? "staff" : "customer",
         authorName: m.fromMe ? "Celular do restaurante" : null,
-        text: (lost + m.text).trim(),
+        text: (note + m.text).trim(),
         mediaType: mediaKey ? m.media!.kind : null,
         mediaKey,
         externalId: m.externalId
