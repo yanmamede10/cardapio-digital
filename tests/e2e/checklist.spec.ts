@@ -1,12 +1,59 @@
-import { asSuperAdmin, expect, loginAs, staffToken, tableUrl, test } from "./fixtures";
+import type { Page } from "@playwright/test";
+import { adminApi, asSuperAdmin, expect, loginAs, loginFreshOwner, newRestaurant, staffToken, tableUrl, test } from "./fixtures";
 
 // The UI checklist (items 1–20), on desktop and phone, light and dark — the UX-03 way. Each test names its item.
 const WEB = "http://localhost:5273";
 const API = "http://localhost:4200";
 
+/** Nothing reaches past the screen's right edge, unless a scrolling or clipping box holds it in. */
+async function fits(p: Page, where: string) {
+  const out = await p.evaluate(() => {
+    const w = document.documentElement.clientWidth;
+    const held = (e: Element) => {
+      for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowX !== "visible" && a.getBoundingClientRect().right <= w + 1) return true;
+      }
+      return false;
+    };
+    const wide = [...document.querySelectorAll("body *")].filter((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.right > w + 1 && !held(e);
+    });
+    return { page: document.documentElement.scrollWidth - w, wide: wide.slice(0, 3).map((e) => `${e.tagName} "${(e.textContent ?? "").trim().slice(0, 50)}"`) };
+  });
+  expect(out.page, `${where}: rolagem lateral`).toBeLessThanOrEqual(1);
+  expect(out.wide, `${where}: passa da borda`).toEqual([]);
+}
+
 for (const theme of ["light", "dark"] as const) {
   test.describe(`tema ${theme === "light" ? "claro" : "escuro"}`, () => {
     test.use({ theme });
+
+    test("1 · sem rolagem lateral: no celular a 360 e 390 px, no desktop a 1366 px — as telas do Dono, o Super Admin e o cardápio", async ({ page, request }, info) => {
+      test.setTimeout(240_000);
+      const mobile = info.project.name === "mobile";
+      const shared = ["/", "/mesas", "/mesas/qr", "/cardapio", "/atendimento", "/promocoes", "/relatorios", "/financeiro", "/produtos", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/config"];
+      const routes = mobile ? [...shared, "/mais", "/mesas/1", "/config/perfil", "/config/horarios", "/config/equipe", "/config/fiscal", "/config/whatsapp", "/config/salao"] : shared;
+      const token = await staffToken(request, "dono@chapa27.example");
+      const menu = await tableUrl(request, token, "chapa27", 21);
+      const items: { id: string }[] = await (await request.get(`${API}/api/restaurants/chapa27/items`)).json();
+      await loginAs(page, request, "dono@chapa27.example");
+      await asSuperAdmin(page);
+      const settle = () => expect(page.locator(".skeleton")).toHaveCount(0, { timeout: 8_000 });
+      for (const width of mobile ? [360, 390] : [1366]) {
+        await page.setViewportSize({ width, height: mobile ? 780 : 820 });
+        for (const path of [...routes, "/admin", "/admin/mensalidades"]) {
+          await page.goto(path);
+          await settle();
+          await fits(page, `${path} a ${width} px`);
+        }
+        for (const url of [menu, `${WEB}/r/chapa27/item/${items[0].id}`, `${WEB}/cart`, `${WEB}/t/codigo-que-nao-existe`]) {
+          await page.goto(url);
+          await settle();
+          await fits(page, `${url.replace(WEB, "cardápio ")} a ${width} px`);
+        }
+      }
+    });
 
     test("4 · favicon no painel e no cardápio: o MP da MesaPronta", async ({ page }) => {
       for (const url of ["/", WEB]) {
@@ -106,7 +153,7 @@ for (const theme of ["light", "dark"] as const) {
       await expect(stars).toHaveCount(5);
       const filled = await stars.evaluateAll((els) => els.filter((e) => (e as HTMLElement).style.opacity === "1").length);
       expect(filled).toBe(Math.round(rating));
-      await guest.goto(`${WEB}/r/chapa27/item/${dish.id}`);
+      await guest.goto(`${WEB}/r/${r.id}/item/${dish.id}`);
       await expect(guest.getByRole("button", { name: /Adicionar ao carrinho/ })).toBeVisible();
       await expect(guest.getByText(/foto ·/)).toHaveCount(0);
       await guest.close();
@@ -209,6 +256,68 @@ for (const theme of ["light", "dark"] as const) {
       await guest.getByRole("button", { name: /voltar ao topo do cardápio/ }).click();
       await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
       await guest.close();
+    });
+
+    test("16 · textos longos não estouram a tela: nome de prato, observação do pedido e nome do cliente no WhatsApp", async ({ page, request, browser }, info) => {
+      test.setTimeout(90_000);
+      const mobile = info.project.name === "mobile";
+      // A restaurant of its own: it accepts the WhatsApp terms (the webhook ignores a restaurant that hasn't), which no
+      // other test may see.
+      const r = await newRestaurant(request);
+      await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "ativo" });
+      await loginFreshOwner(page, request, r);
+      const { token } = await (await request.post(`${API}/api/auth/login`, { data: { email: r.ownerEmail, password: "senha-nova-1" } })).json();
+      const call = async (method: string, path: string, data?: unknown) => (await request.fetch(`${API}${path}`, { method, data, headers: { Authorization: `Bearer ${token}` } })).json();
+      const P = `/api/restaurants/${r.id}`;
+      // At the limits: an 80-character dish name, a 300-character note with a 40-letter run-on word, a long WhatsApp name.
+      const dishName = "Hambúrguer Artesanal Supremo Triplo com Cheddar Defumado, Bacon e Cebola Caramelo".slice(0, 80);
+      const note = `Sem cebola e sem tomate, ${"semmaionesesemcatchupsemmostardaporfavor"} pão bem tostado, carne ao ponto para bem passada, queijo derretido por cima e embalar o molho separado, que é para viagem; obrigado!`.padEnd(300, " ok").slice(0, 300);
+      const customer = "Maria Aparecida dos Santos Albuquerque de Oliveira Figueiredo Junior";
+      const [category]: { id: string }[] = await call("POST", `${P}/categories`, { name: "Lanches" }); // answers with the list
+      const dish: { id: string } = await call("POST", `${P}/items`, { categoryId: category.id, name: dishName, price: 39.9, shortDescription: "" });
+      const { number } = await call("POST", `${P}/tables`, { seats: 4 });
+      await call("PATCH", `${P}/tables/${number}/position`, { gridRow: 0, gridCol: 0 }); // on the map (a new table waits off it)
+      await call("POST", `${P}/tables/${number}/orders`, { lines: [{ itemId: dish.id, quantity: 1, notes: note, selectedOptions: [] }] });
+      await call("POST", `${P}/whatsapp/terms`);
+      await request.post(`${API}/api/whatsapp/webhook`, {
+        headers: { "x-webhook-secret": "test-webhook-secret" },
+        data: { event: "messages.upsert", instance: r.id, data: { key: { remoteJid: "5511987654321@s.whatsapp.net", fromMe: false, id: `LONG-${Date.now()}` }, pushName: customer, messageType: "conversation", messageTimestamp: Math.floor(Date.now() / 1000), message: { conversation: "Oi, vocês abrem hoje?" } } }
+      });
+      const ticket = (await call("GET", `${P}/tickets`) as { id: string; customerName: string }[]).find((t) => t.customerName === customer)!;
+      expect(ticket, "a conversa chegou").toBeTruthy();
+
+      const seen = async (p: import("@playwright/test").Page, text: string) => expect(p.getByText(text.slice(0, 24)).first()).toBeVisible();
+
+      await page.goto("/");
+      if (mobile) await page.getByText("Preparando", { exact: true }).click();
+      await seen(page, dishName);
+      await fits(page, "Central de Pedidos");
+      if (mobile) {
+        await page.goto(`/mesas/${number}`);
+      } else {
+        await page.goto("/mesas");
+        await page.locator(`button[title^="Mesa ${String(number).padStart(2, "0")} ·"]`).first().click();
+      }
+      await seen(page, dishName);
+      await fits(page, "comanda da mesa");
+      await page.goto("/cardapio");
+      await seen(page, dishName);
+      await fits(page, "Cardápio do painel");
+      await page.goto(mobile ? `/atendimento/${ticket.id}` : "/atendimento");
+      if (!mobile) await page.getByText(customer.slice(0, 24)).first().click();
+      await seen(page, customer);
+      await fits(page, "Atendimento");
+
+      // The customer's side: the menu card and the dish's page.
+      const guest = await browser.newPage({ viewport: page.viewportSize()! });
+      await guest.goto(await tableUrl(request, token, r.id, number));
+      await seen(guest, dishName);
+      await fits(guest, "cardápio do cliente");
+      await guest.goto(`${WEB}/r/${r.id}/item/${dish.id}`);
+      await seen(guest, dishName);
+      await fits(guest, "página do prato");
+      await guest.close();
+
     });
   });
 }

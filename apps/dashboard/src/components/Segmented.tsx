@@ -15,7 +15,8 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div style={{ display: "inline-flex", gap: 3, padding: 3, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14 }}>
+    // Narrower than its options (the Super Admin's four filters at 360 px): it scrolls inside instead of widening the page.
+    <div className="no-scrollbar" style={{ display: "inline-flex", maxWidth: "100%", overflowX: "auto", gap: 3, padding: 3, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14 }}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -26,6 +27,8 @@ export function Segmented<T extends string>({
             className="tap"
             style={{
               display: "inline-flex",
+              flex: "none",
+              whiteSpace: "nowrap",
               alignItems: "center",
               gap: 6,
               border: 0,
