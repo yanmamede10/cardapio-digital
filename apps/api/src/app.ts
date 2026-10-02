@@ -20,6 +20,7 @@ import { supportRouter } from "./routes/support.js";
 import { tablesRouter } from "./routes/tables.js";
 import { whatsappRouter, whatsappWebhookRouter } from "./routes/whatsapp.js";
 import { rateLimit } from "./lib/rateLimit.js";
+import { PUBLIC_IMAGE_MAX_BYTES } from "./lib/storage.js";
 
 // Day/month boundaries ("hoje", "mês corrente") are computed in server-local time. Containers run in UTC,
 // which would shift them 3h vs. a Brazilian dev machine, so pin the zone explicitly.
@@ -75,6 +76,8 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   // The body parser's own errors (malformed JSON 400, body over the limit 413) keep their status.
   const status = (err as { status?: number }).status;
   if (status && status >= 400 && status < 500) return res.status(status).json({ error: (err as Error).message });
+  // Multer's file limit (logo, capa, foto do prato: 8 MB) carries no status: whoever sent it must read why, not "internal error".
+  if ((err as { code?: string }).code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: `file too large — limit is ${PUBLIC_IMAGE_MAX_BYTES / 1024 / 1024} MB` });
   console.error(err);
   res.status(500).json({ error: "internal error" });
 });

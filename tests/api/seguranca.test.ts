@@ -244,3 +244,17 @@ test("login: e-mail que não existe leva o mesmo tempo que senha errada (não d�
   const known = await median(() => email);
   assert.ok(unknown > known * 0.5, `e-mail inexistente ${unknown.toFixed(1)} ms × senha errada ${known.toFixed(1)} ms`);
 });
+
+test("logo, capa ou foto acima de 8 MB: 413 com o motivo (antes, 500 \"internal error\")", async () => {
+  const token = await login();
+  const P = `/api/restaurants/${R}`;
+  const itemId = (await call("GET", `${P}/items`)).body[0].id;
+  const big = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(8 * 1024 * 1024)]);
+  for (const [path, kind] of [[`${P}/appearance/upload`, "cover"], [`${P}/items/${itemId}/image`, undefined]]) {
+    const form = new FormData();
+    if (kind) form.append("kind", kind);
+    form.append("file", new Blob([big], { type: "image/png" }), "grande.png");
+    const res = await fetch(`${process.env.API_URL ?? "http://localhost:4200"}${path}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+    assert.deepEqual([res.status, (await res.json()).error], [413, "file too large — limit is 8 MB"], path);
+  }
+});
