@@ -26,11 +26,6 @@ const SORTS = [
   { id: "fee", label: "Taxa de entrega", icon: "fa-solid fa-motorcycle" }
 ];
 
-const BANNERS = [
-  { restaurantId: "fogo", kicker: "Promoção", title: "20% off em grelhados", sub: "Fogo & Nó · até domingo", icon: "fa-solid fa-tag" },
-  { restaurantId: "napoli", kicker: "Frete grátis", title: "Pizzas sem taxa hoje", sub: "Forno di Napoli · pedidos acima de R$ 60", icon: "fa-solid fa-motorcycle" }
-];
-
 export default function DiscoveryScreen() {
   const navigate = useNavigate();
   const { mode, restaurantId, theme, toggleTheme, addressId, setAddressId } = useApp();
@@ -126,33 +121,6 @@ export default function DiscoveryScreen() {
               <Pill key={c.label} icon={c.icon} active={cuisine === c.label} onClick={() => setCuisine(c.label)}>
                 {c.label}
               </Pill>
-            ))}
-          </div>
-
-          <div className="no-scrollbar" role="group" aria-label="Destaques" tabIndex={0} style={{ marginTop: 18, display: "flex", gap: 12, overflowX: "auto", padding: "0 var(--pad) 4px" }}>
-            {BANNERS.map((b, i) => (
-              <div
-                key={b.restaurantId}
-                role="link"
-                tabIndex={0}
-                aria-label={`${b.title}: ${b.sub}`}
-                onClick={() => navigate(`/r/${b.restaurantId}/menu`)}
-                onKeyDown={(e) => e.key === "Enter" && navigate(`/r/${b.restaurantId}/menu`)}
-                style={{
-                  position: "relative", flex: "none", width: "min(84vw, 300px)", height: 156, borderRadius: "var(--r-standard)", overflow: "hidden", cursor: "pointer",
-                  backgroundColor: "var(--surf2)",
-                  backgroundImage: `repeating-linear-gradient(${i ? 115 : 135}deg,rgba(205,140,82,.34) 0 8px,rgba(205,140,82,.12) 8px 16px)`
-                }}
-              >
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg,rgba(2,3,4,.72),rgba(2,3,4,.18))" }} />
-                <div style={{ position: "relative", padding: "16px 18px", display: "flex", flexDirection: "column", height: "100%", boxSizing: "border-box" }}>
-                  <div style={{ display: "inline-flex", alignSelf: "flex-start", alignItems: "center", gap: 7, padding: "6px 11px", borderRadius: 999, background: "var(--pri)", color: "var(--priInk)", font: "600 var(--t-xs) var(--font)" }}>
-                    <i className={b.icon} style={{ fontSize: "var(--i-s)" }} />{b.kicker}
-                  </div>
-                  <div style={{ marginTop: "auto", font: "700 var(--t-l) var(--font)", letterSpacing: "-.02em", color: "#FCF7D3" }}>{b.title}</div>
-                  <div style={{ marginTop: 5, font: "500 var(--t-s) var(--font)", color: "rgba(252,247,211,.82)" }}>{b.sub}</div>
-                </div>
-              </div>
             ))}
           </div>
 

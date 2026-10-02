@@ -1,12 +1,13 @@
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { createServer, request as forward, type Server } from "node:http";
 import { extname, join } from "node:path";
 import { expect, type Page } from "@playwright/test";
-import { R, asSuperAdmin, loginAs, newTable, test } from "./fixtures";
+import { R, adminApi, asSuperAdmin, loginAs, newTable, test } from "./fixtures";
 
 // SEG-A05: the fronts' security headers, from each app's vercel.json, on the apps as Vercel serves them — the production
-// build, every response with those headers — and a browser walking their screens. Any resource or script the CSP blocks is a
+// build, every response with those headers — and a browser walking their screens. (F-5 reads the same build: no restaurant
+// name hard-coded in the cardápio's bundle.) Any resource or script the CSP blocks is a
 // failure. Each app gets its own origin, with /api/ forwarded to the test API: connect-src 'self' covers it here (in
 // production the API is https://<VM>, which connect-src's https: covers).
 const API = "http://localhost:4200";
@@ -93,4 +94,16 @@ test("cardápio do cliente com a CSP: delivery, prato e mesa pelo QR, nada bloqu
   const item = (await api<{ id: string; soldOut: boolean }[]>("GET", `/api/restaurants/${R}/items`)).find((i) => !i.soldOut)!;
   const table = await newTable(api);
   expect(await blocked(page, origin, ["/", `/r/${R}/menu`, `/r/${R}/item/${item.id}`, `/t/${table.code}`])).toEqual([]);
+});
+
+test("o bundle do app do cliente não traz nome de restaurante fixo: nenhum dos restaurantes do banco aparece no código", async ({ request }) => {
+  // esbuild escapes non-ASCII (Nó → N\xF3): undo it so names with accents count too.
+  const bundle = readdirSync("apps/web/dist/csp/assets")
+    .filter((f) => f.endsWith(".js"))
+    .map((f) => readFileSync(`apps/web/dist/csp/assets/${f}`, "utf8"))
+    .join("\n")
+    .replace(/\x([0-9a-f]{2})|\u([0-9a-f]{4})/gi, (_, x, u) => String.fromCharCode(parseInt(x ?? u, 16)));
+  const names = (await adminApi<{ name: string }[]>(request, "GET", "/restaurants")).map((r) => r.name);
+  expect(names).toContain("Fogo & Nó"); // the seed's: the list is the real one
+  expect(names.filter((n) => bundle.includes(n))).toEqual([]);
 });
