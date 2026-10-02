@@ -216,7 +216,7 @@ for (const theme of ["light", "dark"] as const) {
       await expect(stars).toHaveCount(5);
       const filled = await stars.evaluateAll((els) => els.filter((e) => (e as HTMLElement).style.opacity === "1").length);
       expect(filled).toBe(Math.round(rating));
-      await guest.goto(`${WEB}/r/${r.id}/item/${dish.id}`);
+      await guest.goto(`${WEB}/r/chapa27/item/${dish.id}`);
       await expect(guest.getByRole("button", { name: /Adicionar ao carrinho/ })).toBeVisible();
       await expect(guest.getByText(/foto ·/)).toHaveCount(0);
       await guest.close();
