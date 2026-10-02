@@ -173,3 +173,10 @@ test("restaurante inativo (ou pendente): o cardápio público some (404); reativ
   });
   for (const path of paths) assert.equal((await call("GET", `/api/restaurants/${R}${path}`)).status, 200, `GET ${path || "/"} ativo`);
 });
+
+test("restaurante inativo (ou pendente) não recebe pedido de delivery; reativado, recebe", async () => {
+  const item = await someItem();
+  const order = () => call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] } });
+  await whileInactive(async () => assert.equal((await order()).status, 404));
+  assert.equal((await order()).status, 201);
+});

@@ -24,6 +24,9 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
   if (!restaurant) return { status: 404, error: "restaurant not found" };
 
   const mode = body.mode === "delivery" ? "delivery" : "table";
+  // Delivery: only an active restaurant takes orders (pending and deactivated ones aren't listed either). A table order is
+  // checked with its table below; the waiter's, by requireStaff.
+  if (mode === "delivery" && restaurant.status !== "ativo") return { status: 404, error: "restaurant not found" };
   if (mode === "table" && !waiterName && !restaurant.qrOrdering) return { status: 403, error: "Neste restaurante os pedidos da mesa são feitos pelo garçom." };
   let tableNumber: number | null = null;
   if (mode === "table" && waiterName) tableNumber = body.tableNumber ?? null; // the route already found the table
