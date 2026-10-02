@@ -1,6 +1,6 @@
 # Auditoria de segurança — outubro de 2026 (rodada E)
 
-Feita em 01–02/10/2026, sobre a `master` a partir de `cccd0cd` (a última versão validada antes desta rodada). Roteiro: OWASP Top 10 (2021) e OWASP ASVS 4.0.3 nível 2. Cobriu a API (as 104 rotas), o painel e o app do cliente, a pilha de produção da VM (`deploy/`, `apps/api/Dockerfile`), os fronts na Vercel, o projeto Supabase de testes (RLS, políticas, buckets) e as dependências.
+Feita em 01–02/10/2026 (rodada E; as decisões, na rodada F, também em 02/10), sobre a `master` a partir de `cccd0cd` (a última versão validada antes desta rodada). Roteiro: OWASP Top 10 (2021) e OWASP ASVS 4.0.3 nível 2. Cobriu a API (as 104 rotas), o painel e o app do cliente, a pilha de produção da VM (`deploy/`, `apps/api/Dockerfile`), os fronts na Vercel, o projeto Supabase de testes (RLS, políticas, buckets) e as dependências.
 
 **Como foi feita.** Leitura de todo o código da API (rotas, autenticação, limites, pedidos, uploads, webhook), dos pontos dos fronts que montam HTML, URLs e redirecionamentos, e de toda a pilha de produção; um teste automático que percorre todas as rotas do Express (seção 3); reprodução de cada achado contra a API de teste antes de corrigir (cada correção tem um teste que falhava antes); consultas ao Supabase de testes (RLS, `pg_policies`, `storage.buckets`, funções no `public`, advisors de segurança); `npm audit --omit=dev` em cada workspace; e, no fim, o `/security-review` do Claude Code sobre as mudanças da rodada (seção 6).
 
@@ -9,23 +9,23 @@ Feita em 01–02/10/2026, sobre a `master` a partir de `cccd0cd` (a última vers
 | Gravidade | Achados | Corrigidos | Decisão pendente | Sem ação (informativo aceito) |
 | --- | --- | --- | --- | --- |
 | Crítico | 0 | — | — | — |
-| Alto | 1 | 0 | 1 | — |
-| Médio | 7 | 5 | 2 | — |
+| Alto | 1 | 1 | 0 | — |
+| Médio | 7 | 7 | 0 | — |
 | Baixo | 13 | 9 | 4 | — |
-| Informativo | 12 | — | 2 | 10 |
-| **Total** | **33** | **14** | **9** | **10** |
+| Informativo | 12 | 2 | 0 | 10 |
+| **Total** | **33** | **19** | **4** | **10** |
 
-O `/security-review` sobre as mudanças da rodada não achou vulnerabilidade (seção 6). Nenhum crítico na auditoria: não há injeção de SQL, toda rota da equipe exige token e confere o restaurante, o papel e o módulo (provado rota a rota), o RLS do Supabase fecha as tabelas para as chaves públicas, e segredos não estão no código nem no bundle. O único **alto** é de regra de negócio (cupom) e ficou para decisão, como pede a rodada. As decisões pendentes, com recomendação e exemplo, estão na seção 5.
+O `/security-review` sobre as mudanças da rodada não achou vulnerabilidade (seção 6). Nenhum crítico na auditoria: não há injeção de SQL, toda rota da equipe exige token e confere o restaurante, o papel e o módulo (provado rota a rota), o RLS do Supabase fecha as tabelas para as chaves públicas, e segredos não estão no código nem no bundle. O único **alto** (cupom) era regra de negócio: ficou para decisão na rodada E e foi resolvido na rodada F (02/10/2026), junto com as outras quatro decisões tomadas (SEG-A06, A07, A21, A31). Continuam pendentes SEG-A17 a SEG-A20 e duas questões novas do cupom, com recomendação e exemplo na seção 5.
 
 | ID | Gravidade | Achado | Status |
 | --- | --- | --- | --- |
-| SEG-A01 | Alto | Qualquer texto no campo de cupom dá 10% de desconto no delivery | Decisão pendente |
+| SEG-A01 | Alto | Qualquer texto no campo de cupom dá 10% de desconto no delivery | Resolvido (decisão de 02/10) — `4f2f9ae` (F-1) |
 | SEG-A02 | Médio | Administrador alterava Configurações (perfil, fiscal, serviço 10%, QR, aparência) pela API; a tela e a ADR 0005 são só do Dono | Corrigido — `fe64437` |
 | SEG-A03 | Médio | Restaurante inativo ou pendente recebia pedido de delivery | Corrigido — `da7b110` |
 | SEG-A04 | Médio | Pedido malformado devolvia o erro interno do Prisma (caminho do arquivo, trecho do código, consulta) a qualquer um | Corrigido — `e43f959` |
 | SEG-A05 | Médio | Fronts na Vercel sem CSP nem cabeçalhos de segurança | Corrigido — `27f3d60` |
-| SEG-A06 | Médio | Troca ou reset de senha não derruba as sessões já abertas | Decisão pendente |
-| SEG-A07 | Médio | O status do pedido muda sem regra: pedido de comanda já paga pode virar "cancelado" ou "preparando" | Decisão pendente |
+| SEG-A06 | Médio | Troca ou reset de senha não derruba as sessões já abertas | Resolvido (decisão de 02/10) — `c593198` (F-2) |
+| SEG-A07 | Médio | O status do pedido muda sem regra: pedido de comanda já paga pode virar "cancelado" ou "preparando" | Resolvido (decisão de 02/10) — `63782c8` (F-3) |
 | SEG-A08 | Médio | Nenhum registro de quem mudou o pedido (aceitou, recusou, cancelou, fechou) | Corrigido — `7aa29d3` (E-5) |
 | SEG-A09 | Baixo | API sem cabeçalhos de segurança e anunciando `X-Powered-By: Express` | Corrigido — `99590a8` |
 | SEG-A10 | Baixo | Logo e capas aceitavam qualquer URL (outro site, pixel de rastreio, `javascript:`) | Corrigido — `de6f1f6` |
@@ -39,7 +39,7 @@ O `/security-review` sobre as mudanças da rodada não achou vulnerabilidade (se
 | SEG-A18 | Baixo | Senhas com scrypt no custo padrão do Node (N=2¹⁴), abaixo do recomendado | Decisão pendente |
 | SEG-A19 | Baixo | Backups sem criptografia e só no disco da VM | Decisão pendente |
 | SEG-A20 | Baixo | Logins com falha e ações do super admin não ficam registrados | Decisão pendente |
-| SEG-A21 | Informativo | Garçom e cozinha fecham conta, excluem e renumeram mesa | Decisão pendente (confirmar) |
+| SEG-A21 | Informativo | Garçom e cozinha fecham conta, excluem e renumeram mesa | Resolvido (decisão de 02/10) — `2707c25` (F-4) |
 | SEG-A22 | Informativo | Token da equipe e chave do super admin ficam no armazenamento do navegador | Aceito (CSP do SEG-A05) |
 | SEG-A23 | Informativo | Filtros do query string aceitam objetos que viram operadores do Prisma | Sem ação |
 | SEG-A24 | Informativo | Supabase: RLS sem políticas nas 22 tabelas, buckets e `storage.objects` | Sem ação (está certo) |
@@ -49,7 +49,7 @@ O `/security-review` sobre as mudanças da rodada não achou vulnerabilidade (se
 | SEG-A28 | Informativo | Postgres da Evolution com senha fixa | Sem ação |
 | SEG-A29 | Informativo | 5 senhas erradas travam a conta por 15 min, para qualquer um que tente | Risco aceito (ADR 0009) |
 | SEG-A30 | Informativo | Sem HSTS (o acesso é por IP) | Sem ação até ter domínio |
-| SEG-A31 | Informativo | Destaques da tela inicial do delivery fixos no código | Decisão pendente |
+| SEG-A31 | Informativo | Destaques da tela inicial do delivery fixos no código | Resolvido (decisão de 02/10) — `1fedf6f` (F-5) |
 | SEG-A32 | Informativo | Cardápio público mostra o vínculo do prato com o estoque (ids) | Sem ação |
 | SEG-A33 | Baixo | Logs dos contêineres sem limite de tamanho no disco da VM | Corrigido — `cfe1df7` |
 
@@ -57,12 +57,13 @@ O `/security-review` sobre as mudanças da rodada não achou vulnerabilidade (se
 
 Os testes citados rodam no `npm test` (API: `tests/api/*.test.ts`; telas: `tests/e2e/*.spec.ts`) e no CI.
 
-### SEG-A01 · Alto · Qualquer texto no campo de cupom dá 10% de desconto no delivery — decisão pendente
+### SEG-A01 · Alto · Qualquer texto no campo de cupom dá 10% de desconto no delivery — resolvido (F-1)
 
 - **Onde:** `apps/api/src/lib/coupons.ts`, `evaluateCoupon`: `if (!trimmed) … return { valid: true, discountPercent: 10 }` — qualquer texto não vazio vale 10%. Usado por `POST /api/coupons/apply` e por `placeOrder` (`apps/api/src/lib/orders.ts`, `const coupon = mode === "delivery" ? evaluateCoupon(body.couponCode) …`). Os cupons cadastrados em Promoções (`Coupon`: validade, canal, limite de uso) não são consultados.
 - **Reproduzir:** `POST /api/orders` com `{"mode":"delivery", …, "couponCode":"QUALQUER"}` → `discount` = 10% do subtotal. Pelo app: Checkout → campo Cupom → "abc" → "Cupom aplicado: 10% de desconto no subtotal".
 - **Por que não foi corrigido:** é a regra do desconto (o que é cupom válido, combo, limite de uso, canal). A correção muda o que o cliente vê no checkout.
 - **Recomendação:** validar contra a tabela `Coupon` do restaurante (ativo, `validUntil`, canal delivery, `usedCount < usageLimit`, tipo e valor) e somar o uso na mesma transação do pedido; até lá, recusar todo código. Hoje nenhum restaurante usa delivery próprio, então o prejuízo é zero — mas qualquer um que ligar o módulo Delivery passa a perder 10% em todo pedido.
+- **Decisão (02/10/2026) e correção (F-1, `4f2f9ae`):** o cupom só vale se for um dos cupons do restaurante em Promoções e estiver válido pelas regras daquela tela (ligado, dentro da validade, com usos sobrando, canal Delivery ou Ambos). O desconto vem do cupom (percentual do subtotal ou valor fixo, nunca maior que o subtotal), é calculado no servidor e gravado no pedido com o código; um uso é contado na mesma transação do pedido. Código inexistente ou inválido é recusado com o motivo, e o pedido não é criado. O servidor não lê desconto nem total vindos do aparelho. **Teste:** `tests/api/cupom.test.ts` (4 de 5 falhavam no código antigo). Cupom de **combo** é recusado ("ainda não vale no app"): como ele se aplica a um carrinho não foi decidido (seção 5).
 
 ### SEG-A02 · Médio · Administrador alterava Configurações pela API — corrigido
 
@@ -88,17 +89,19 @@ Os testes citados rodam no `npm test` (API: `tests/api/*.test.ts`; telas: `tests
 - **Correção:** os dois mandam `Content-Security-Policy` (`default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` e `X-Frame-Options: DENY`. `img-src`/`connect-src` aceitam `https:` porque o endereço da API (`https://<IP da VM>`) e o do Supabase mudam por ambiente e o `vercel.json` é estático. Os previews da Vercel deixam de carregar a barra de comentários da Vercel (script de outra origem); a produção não usa.
 - **Teste:** `tests/e2e/csp.spec.ts` — os dois apps construídos como na Vercel e servidos com esses cabeçalhos; o navegador percorre o login, 12 telas do Dono e o Super Admin, e a lista, o cardápio, o prato e a mesa pelo QR do app do cliente: nada bloqueado, e um `<script>` injetado na página não roda. Tirar `data:` do `img-src` faz o teste falhar (os ícones são SVG em `data:`).
 
-### SEG-A06 · Médio · Troca ou reset de senha não derruba as sessões abertas — decisão pendente
+### SEG-A06 · Médio · Troca ou reset de senha não derruba as sessões abertas — resolvido (F-2)
 
 - **Onde:** `apps/api/src/lib/auth.ts`, `staffGuard`: confere a assinatura, a validade (24 h), o restaurante ativo e `mustChangePassword` — não confere se a senha mudou depois que o token foi emitido.
 - **Reproduzir:** o garçom entra no tablet; o Dono troca a senha dele em Equipe & Permissões; o tablet continua funcionando por até 24 h. No reset do super admin, as sessões antigas param só até a pessoa trocar a senha provisória; depois voltam a valer.
 - **Recomendação:** gravar `passwordChangedAt` no `StaffMember` e recusar (401) token emitido antes dele; quem troca a própria senha recebe um token novo naquele aparelho. **Efeito que a pessoa vê:** os outros aparelhos com o mesmo login voltam para a tela de login — se o restaurante usa um login só em vários tablets, todos pedem a senha nova.
+- **Decisão (02/10/2026) e correção (F-2, `c593198`):** troca ou reset feito pelo Dono ou pelo Super Admin encerra todas as sessões da pessoa na próxima requisição; quando a própria pessoa troca, o aparelho em que ela está segue logado (recebe um token novo) e os outros caem. Feito com a revogação por requisição que já existia: `StaffMember.sessionVersion` (migração `9l`), levado no token e comparado pelo `requireStaff`; sem tabela de sessões. **Teste:** `tests/api/sessoes.test.ts` (4 de 5 falhavam no código antigo).
 
-### SEG-A07 · Médio · Status do pedido muda sem regra de transição — decisão pendente
+### SEG-A07 · Médio · Status do pedido muda sem regra de transição — resolvido para o pedido de comanda fechada (F-3)
 
 - **Onde:** `apps/api/src/routes/orders.ts`, `PATCH /:id/stage`: aceita qualquer status de `VALID_STAGES` a partir de qualquer status (menos "aguardando aceite").
 - **Reproduzir:** fechar a comanda de um pedido (R$ 80 entram em Contas a Receber como pago) → `PATCH /api/orders/<id>/stage {"stage":"cancelled"}` → 200. Os Relatórios deixam de contar o pedido (`apps/api/src/lib/analytics.ts` ignora cancelados), mas os R$ 80 continuam recebidos: os números passam a não bater. O mesmo vale para entregue → preparando.
 - **Recomendação:** recusar mudança de status em pedido de comanda já fechada e a partir de entregue ou cancelado; um estorno, se for preciso, vira uma ação própria (com o seu lançamento em Contas). Desde o E-5, toda mudança fica registrada com quem fez (SEG-A08).
+- **Decisão (02/10/2026) e correção (F-3, `63782c8`):** depois que a comanda do pedido é fechada, a API recusa qualquer mudança de status daquele pedido (409, "Comanda já fechada: o status deste pedido não muda mais."), também dentro da transação, se o fechamento chegar ao mesmo tempo; a Central não deixa arrastar o cartão. Pedido de delivery entregue ou cancelado não entrou na decisão e segue como estava. **Teste:** `tests/api/fechado.test.ts` (antes, "cancelado" era aceito).
 
 ### SEG-A08 · Médio · Nenhum registro de quem mudou o pedido — corrigido (E-5)
 
@@ -167,10 +170,11 @@ Ver E-4: serviço `storage-backup` no compose de produção. **Teste:** o teste 
 - **Onde:** `apps/api/src/routes/auth.ts` e `admin.ts` não registram nada; o `console.error` só pega erros 500. ASVS V7.1/7.2 pedem registro de eventos de autenticação e de ações administrativas.
 - **Recomendação:** uma linha no log por login recusado/bloqueado (conta e IP) e por ação do super admin (o que e em qual restaurante), sem senha nem token; o `docker compose logs` da VM já guarda. Ou uma tabela, no mesmo molde do `OrderEvent`, se for para aparecer numa tela.
 
-### SEG-A21 · Informativo · Garçom e cozinha fecham conta, excluem e renumeram mesa — decisão pendente (confirmar)
+### SEG-A21 · Informativo · Garçom e cozinha fecham conta, excluem e renumeram mesa — resolvido (F-4)
 
 - **Onde:** `apps/api/src/routes/restaurantTables.ts`: todas as rotas de Mesas pedem só o módulo "mesas" e qualquer papel, exceto "Gerar novo QR" (Administrador). A ADR 0005 diz que Funcionário vê Operação, mas não diz quais ações.
 - **Pergunta:** a cozinha (Igor) precisa poder fechar a conta da Mesa 5 no cartão, excluir a Mesa 12 ou mudar o tamanho do mapa? Se não, essas rotas passam a exigir o garçom ou Administrador+.
+- **Decisão (02/10/2026) e correção (F-4, `2707c25`):** fechar conta: garçom, Administrador e Dono (a cozinha recebe 403); excluir mesa e editar o mapa do salão — o "Editar ambiente" da tela: nova mesa, renumerar, mover, excluir, tamanho da grade —: Administrador e Dono. A tela esconde o que o papel não pode. Transferir, Lançar pedido, comanda e QR ficaram como estavam (não entraram na decisão). **Testes:** o teste de autorização (`autorizacao.test.ts`) e os de tela por papel (`desktop.spec.ts`, `mobile.spec.ts`).
 
 ### SEG-A22 · Informativo · Token e chave do super admin no navegador — aceito
 
@@ -208,10 +212,11 @@ Um segredo (`WHATSAPP_WEBHOOK_SECRET`, comparado em tempo constante) para todos 
 
 O navegador ignora HSTS para endereço IP (RFC 6797), e a API é acessada por `https://<IP>`. O HTTP já redireciona para HTTPS (Caddy). Com um domínio, ligar HSTS no Caddyfile.
 
-### SEG-A31 · Informativo · Destaques fixos na tela inicial do delivery — decisão pendente
+### SEG-A31 · Informativo · Destaques fixos na tela inicial do delivery — resolvido (F-5)
 
 - **Onde:** `apps/web/src/screens/DiscoveryScreen.tsx`, `BANNERS`: "20% off em grelhados · Fogo & Nó" e "Pizzas sem taxa hoje · Forno di Napoli", fixos no código. Aparecem para todo cliente, mesmo que o restaurante não exista (no banco de produção só há o Chapa 27) ou não tenha o módulo Delivery (E-6).
 - **Recomendação:** tirar os dois destaques até haver promoções de verdade (cadastradas pelo restaurante), ou mostrar só os de restaurantes que estão na lista.
+- **Decisão (02/10/2026) e correção (F-5, `1fedf6f`):** os destaques fixos saíram e, sem nada vindo da API, a seção não aparece. **Teste:** `tests/e2e/csp.spec.ts` — nenhum nome de restaurante do banco no bundle de produção do cardápio (antes, "Fogo & Nó" e "Forno di Napoli").
 
 ### SEG-A32 · Informativo · Vínculo do prato com o estoque no cardápio público — sem ação
 
@@ -246,19 +251,29 @@ O navegador ignora HSTS para endereço IP (RFC 6797), e a API é acessada por `h
 
 Imagens da pilha de produção, todas com versão fixa (o teste do compose confere): `caddy:2.11.4-alpine`, `node:22.23.3-bookworm-slim` (API), `evoapicloud/evolution-api:v2.3.7`, `postgres:16.15-alpine3.24`, `postgres:17.11-alpine3.24`, `rclone/rclone:1.75.1` (novo, E-4).
 
-## 5. Decisões pendentes, com recomendação
+## 5. Decisões
+
+### Tomadas em 02/10/2026 e implementadas (rodada F)
+
+| ID | Decisão | Commit | Teste |
+| --- | --- | --- | --- |
+| SEG-A01 | Cupom só vale se for do restaurante em Promoções e válido pelas regras da tela; desconto do cupom, calculado no servidor e gravado no pedido; código inválido recusa o pedido | `4f2f9ae` (F-1) | `tests/api/cupom.test.ts` |
+| SEG-A06 | Troca/reset pelo Dono ou Super Admin encerra todas as sessões da pessoa; quem troca a própria senha segue logado naquele aparelho e os outros caem | `c593198` (F-2) | `tests/api/sessoes.test.ts`, `admin.test.ts` |
+| SEG-A07 | Pedido de comanda fechada não muda mais de status (409); a tela não oferece | `63782c8` (F-3) | `tests/api/fechado.test.ts` |
+| SEG-A21 | Fechar conta: garçom, Administrador, Dono (cozinha 403); excluir mesa e editar o mapa: Administrador e Dono; a tela esconde | `2707c25` (F-4) | `autorizacao.test.ts`, `desktop.spec.ts`, `mobile.spec.ts` |
+| SEG-A31 | Destaques fixos removidos; sem dados, a seção não aparece | `1fedf6f` (F-5) | `tests/e2e/csp.spec.ts` |
+| — (E-6) | Delivery desligado por padrão: restaurante novo do Super Admin e a Chapa 27 do seed nascem sem ele; a migração `9i` e os restaurantes existentes não mudam | `0e7f468` (F-6) | `admin.test.ts`, `demo-seed.test.ts` |
+
+### Ainda pendentes, com recomendação
 
 | ID | O que decidir | Exemplo | Recomendação |
 | --- | --- | --- | --- |
-| SEG-A01 | O que é um cupom válido no delivery | Pedido de R$ 80; o cliente digita "abc" no cupom e paga R$ 72 | Validar contra os cupons de Promoções; até lá, recusar todo código |
-| SEG-A06 | Trocar a senha derruba os outros aparelhos? | O Dono troca a senha da Paula porque ela saiu; o tablet da Paula continua entrando até amanhã | Sim: token emitido antes da troca deixa de valer; o aparelho que trocou recebe um token novo |
-| SEG-A07 | Pedido de comanda paga pode mudar de status? | Mesa 5 pagou R$ 80; alguém marca o pedido como cancelado: o Relatório perde os R$ 80, o Contas a Receber não | Não: travar status depois do fechamento e a partir de entregue/cancelado; estorno como ação própria |
 | SEG-A17 | Subir o React Router para a versão 7 | — | Sim, numa rodada com as telas testadas (não é explorável hoje) |
 | SEG-A18 | Senhas com scrypt mais caro | — | Sim, N=2¹⁷ com parâmetros no hash, regravando no próximo login |
 | SEG-A19 | Cópia criptografada dos backups fora da VM | A VM é perdida: os backups iam junto | Semanal, `age` + bucket de outro provedor |
 | SEG-A20 | Registrar logins recusados e ações do super admin | Alguém tenta 50 senhas no e-mail do Dono: hoje não fica rastro | Uma linha de log por evento, sem senha nem token |
-| SEG-A21 | O que garçom e cozinha podem fazer em Mesas | A cozinha fecha a conta da Mesa 5 ou exclui a Mesa 12 | Fechar conta e transferir: garçom e acima; excluir/renumerar mesa e mudar o mapa: Administrador+ |
-| SEG-A31 | Destaques da tela inicial do delivery | O cliente toca em "Pizzas sem taxa hoje" e cai num restaurante que não existe | Tirar até haver promoções de verdade |
+| F-1 (combo) | Como um cupom de combo vale no app | Combo "X-Burger + Batata por R$ 35". O cliente pede 2 X-Burgers, 1 batata e bacon extra num deles: o combo vale uma vez? o bacon entra no preço do combo? Hoje o cupom de combo é recusado no app ("ainda não vale no app") | Uma vez por conjunto completo de itens do combo no carrinho; o preço do combo substitui o preço base desses itens; adicionais cobrados à parte |
+| F-1 (uso devolvido) | Pedido recusado devolve o uso do cupom? | Cupom de uso único; o restaurante recusa o pedido: hoje o uso fica gasto e o cliente não consegue usar de novo | Devolver o uso quando o pedido é recusado (ou cancelado antes de sair), na mesma transação |
 
 ## 6. `/security-review` (E-3)
 
