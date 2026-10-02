@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { serializeStaff } from "../lib/serialize.js";
@@ -6,6 +7,8 @@ import { passwordAttempt, passwordFailed, tooMany } from "../lib/rateLimit.js";
 import { MIN_PASSWORD_LENGTH, type StaffRole } from "@cardapio/shared";
 
 export const authRouter = asyncRouter();
+/** What a login without an account (or without a password yet) is checked against: a random password nobody knows. */
+const NO_ACCOUNT_HASH = hashPassword(randomBytes(16).toString("hex"));
 
 authRouter.post("/login", async (req, res) => {
   const { email, password } = req.body as { email?: unknown; password?: unknown };
@@ -16,7 +19,9 @@ authRouter.post("/login", async (req, res) => {
   if (wait) return tooMany(res, wait);
 
   const staff = await prisma.staffMember.findUnique({ where: { email: account }, include: { restaurant: { select: { status: true } } } });
-  if (!staff || !staff.passwordHash || !verifyPassword(password, staff.passwordHash)) {
+  // An unknown e-mail costs the same scrypt as a wrong password: the response time doesn't tell who has an account.
+  const matches = verifyPassword(password, staff?.passwordHash || NO_ACCOUNT_HASH);
+  if (!staff || !staff.passwordHash || !matches) {
     passwordFailed(account);
     return res.status(401).json({ error: "invalid credentials" });
   }

@@ -226,3 +226,21 @@ test("em produção a chave do super admin, se definida, tem 32+ caracteres; sem
   assert.equal(boot(prod).status, 0, "sem chave: /api/admin responde 503");
   assert.equal(boot({ SUPER_ADMIN_KEY: "admin123" }).status, 0, "fora de produção, como antes");
 });
+
+test("login: e-mail que não existe leva o mesmo tempo que senha errada (não dá para descobrir quem tem conta)", async () => {
+  const owner = await login();
+  const email = `tempo-${uid()}@t.com`;
+  assert.equal((await call("POST", `/api/restaurants/${R}/staff`, { token: owner, body: { name: "Tempo", email, role: "waiter", password: "senha-certa-1" } })).status, 201);
+  const median = async (who: (i: number) => string) => {
+    const times: number[] = [];
+    for (let i = 0; i < 4; i++) { // 4: the 5th wrong password would lock the account
+      const t = performance.now();
+      assert.equal((await call("POST", "/api/auth/login", { body: { email: who(i), password: "senha-errada" } })).status, 401);
+      times.push(performance.now() - t);
+    }
+    return times.sort((a, b) => a - b)[2];
+  };
+  const unknown = await median((i) => `ninguem-${uid()}-${i}@t.com`);
+  const known = await median(() => email);
+  assert.ok(unknown > known * 0.5, `e-mail inexistente ${unknown.toFixed(1)} ms × senha errada ${known.toFixed(1)} ms`);
+});
