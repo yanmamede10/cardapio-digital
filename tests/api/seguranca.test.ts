@@ -5,7 +5,7 @@ import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
 import { after, test } from "node:test";
 import { PrismaClient } from "@prisma/client";
-import { ADMIN_KEY, R, call, login } from "./helpers.ts";
+import { ADMIN_KEY, R, call, login, uid } from "./helpers.ts";
 
 // Security checks that aren't about one screen. The test database is the one tests/run.mjs migrated.
 const db = new PrismaClient();
@@ -19,7 +19,7 @@ test("RLS ligado em todas as tabelas do schema public (a API segue funcionando: 
 
 /** Loads the API module (app.ts builds the app without listening) with these settings; everything else as the test API. */
 const boot = (env: Record<string, string>) =>
-  spawnSync(process.execPath, ["--import", "tsx", "apps/api/src/app.ts"], { env: { ...process.env, NODE_ENV: "", JWT_SECRET: "", CORS_ORIGINS: "", ...env }, encoding: "utf8", timeout: 60_000 });
+  spawnSync(process.execPath, ["--import", "tsx", "apps/api/src/app.ts"], { env: { ...process.env, NODE_ENV: "", JWT_SECRET: "", CORS_ORIGINS: "", SUPER_ADMIN_KEY: "", ...env }, encoding: "utf8", timeout: 60_000 });
 
 test("em produção a API não sobe sem JWT_SECRET de 32+ caracteres e CORS_ORIGINS, e diz o que falta; fora de produção, como antes", () => {
   const none = boot({ NODE_ENV: "production" });
@@ -215,4 +215,14 @@ test("logo e capas: só URL do bucket público (o que o upload devolve) ou a que
   } finally {
     await draft({ logoUrl: before.logoUrl, coverPhotos: before.coverPhotos });
   }
+});
+
+test("em produção a chave do super admin, se definida, tem 32+ caracteres; sem ela, o super admin fica desligado e a API sobe", () => {
+  const prod = { NODE_ENV: "production", JWT_SECRET: "x".repeat(32), CORS_ORIGINS: "https://painel.exemplo.com" };
+  const weak = boot({ ...prod, SUPER_ADMIN_KEY: "admin123" });
+  assert.equal(weak.status, 1);
+  assert.match(weak.stderr, /SUPER_ADMIN_KEY com pelo menos 32 caracteres/);
+  assert.equal(boot({ ...prod, SUPER_ADMIN_KEY: "k".repeat(32) }).status, 0);
+  assert.equal(boot(prod).status, 0, "sem chave: /api/admin responde 503");
+  assert.equal(boot({ SUPER_ADMIN_KEY: "admin123" }).status, 0, "fora de produção, como antes");
 });
