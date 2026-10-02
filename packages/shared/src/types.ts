@@ -450,9 +450,10 @@ export const SUPPORT_ROLES: StaffRole[] = ["owner", "manager", "waiter"];
 /** Any role string outside StaffRole counts as Funcionário. */
 export const roleLevel = (role: string | undefined) => ROLE_LEVEL[role as StaffRole] ?? LEVEL.FUNCIONARIO;
 
-/** Contracted modules (ADMIN-03): screens the super admin turns on/off per restaurant — the dashboard menu keys.
- *  Minha Fatura and Configurações aren't here: always on. */
-export const PLAN_MODULES = ["pedidos", "cardapio", "mesas", "promocoes", "atendimento", "produtos", "relatorios", "visao", "pagar", "receber", "fiscal"] as const;
+/** Contracted modules (ADMIN-03): what the super admin turns on/off per restaurant — the dashboard menu keys, plus "delivery",
+ *  which has no screen: the restaurant in the customer app's list, and its delivery orders (RF-DESC-03). Without it, the
+ *  table QR, the tablet and the waiter work as always. Minha Fatura and Configurações aren't here: always on. */
+export const PLAN_MODULES = ["pedidos", "cardapio", "mesas", "promocoes", "atendimento", "produtos", "relatorios", "visao", "pagar", "receber", "fiscal", "delivery"] as const;
 export type PlanModule = (typeof PLAN_MODULES)[number];
 
 export interface StaffMember {

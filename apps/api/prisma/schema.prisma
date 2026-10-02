@@ -40,8 +40,9 @@ model Restaurant {
   // Mensalidade (super admin): monthly price and due day (1-28, so every month has it).
   planPrice         Float    @default(0)
   planDueDay        Int      @default(10)
-  // Contracted modules (PLAN_MODULES keys) — gate the dashboard menu and API; toggled by the super admin.
-  planModulesJson   String   @default("[\"pedidos\",\"cardapio\",\"mesas\",\"promocoes\",\"atendimento\",\"produtos\",\"relatorios\",\"visao\",\"pagar\",\"receber\",\"fiscal\"]")
+  // Contracted modules (PLAN_MODULES keys) — gate the dashboard menu and API, and ("delivery") the customer app's list;
+  // toggled by the super admin.
+  planModulesJson   String   @default("[\"pedidos\",\"cardapio\",\"mesas\",\"promocoes\",\"atendimento\",\"produtos\",\"relatorios\",\"visao\",\"pagar\",\"receber\",\"fiscal\",\"delivery\"]")
 
   // How the restaurant takes payment at the table/counter: "sistema" (PIX via
   // our Asaas subconta) or "maquininha_propria" (their own card/PIX terminal —

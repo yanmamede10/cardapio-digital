@@ -21,7 +21,8 @@ restaurantsRouter.get("/:id/orders", requireStaff, requireOwnRestaurant, require
 
 restaurantsRouter.get("/", async (req, res) => {
   const { query, cuisine, sort } = req.query as { query?: string; cuisine?: string; sort?: string };
-  const all = await prisma.restaurant.findMany({ where: { status: "ativo" }, orderBy: { sortOrder: "asc" } });
+  // RF-DESC-03: only active restaurants with the delivery module — the others still work by the table QR and the tablet.
+  const all = await prisma.restaurant.findMany({ where: { status: "ativo", planModulesJson: { contains: "\"delivery\"" } }, orderBy: { sortOrder: "asc" } });
 
   let list = all.filter((r) => {
     const okCuisine = !cuisine || cuisine === "Todos" || JSON.parse(r.cuisineTagsJson).includes(cuisine);

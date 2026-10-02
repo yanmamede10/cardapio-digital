@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { PAYMENT_MODE_LABEL, PLAN_MODULES, ROLE_LABEL, TAX_REGIME_LABEL, type AdminRestaurantDetail, type PlanModule, type StaffMember } from "@cardapio/shared";
 import { fmtDate } from "../lib/format";
-import { moduleByKey } from "../lib/modules";
+import { moduleLabel } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { Field } from "../components/SlideOver";
 import { WhatsAppBadge } from "../components/WhatsApp";
@@ -69,7 +69,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
     try {
       const res = await call<{ modules: PlanModule[] }>(`/restaurants/${encodeURIComponent(r.id)}/modules`, { method: "PATCH", body: JSON.stringify({ modules }) });
       setR({ ...r, modules: res.modules });
-      notify(`${moduleByKey(m).label} ${on ? "ligado" : "desligado"}`);
+      notify(`${moduleLabel(m)} ${on ? "ligado" : "desligado"}`);
     } catch {
       notify("Não foi possível alterar o módulo");
     }
@@ -163,11 +163,11 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
           {PLAN_MODULES.map((m) => (
             <label key={m} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
               <input type="checkbox" checked={r.modules.includes(m)} onChange={(e) => toggleModule(m, e.target.checked)} />
-              {moduleByKey(m).label}
+              {moduleLabel(m)}
             </label>
           ))}
         </div>
-        <div style={{ fontSize: 12, color: "var(--ink3)" }}>Desligado some do menu do restaurante e a API recusa. Minha Fatura e Configurações ficam sempre ligados.</div>
+        <div style={{ fontSize: 12, color: "var(--ink3)" }}>Desligado some do menu do restaurante e a API recusa; sem Delivery, o restaurante sai da lista do app do cliente (mesa e tablet seguem). Minha Fatura e Configurações ficam sempre ligados.</div>
       </Card>
 
       <Card title="Configurações atuais · só leitura">

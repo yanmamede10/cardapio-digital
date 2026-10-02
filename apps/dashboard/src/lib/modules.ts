@@ -53,6 +53,8 @@ export const NAV_GROUPS: { label: string; icon: string; keys: string[] }[] = [
 ];
 
 export const moduleByKey = (key: string) => MODULES.find((m) => m.key === key)!;
+/** A PLAN_MODULES key's name: its screen's, or "Delivery" — the one module without a screen (the customer app's list). */
+export const moduleLabel = (key: string) => MODULES.find((m) => m.key === key)?.label ?? (key === "delivery" ? "Delivery" : key);
 
 /** Where "/" lands: Central de Pedidos, or the first screen this user sees when it's off. */
 export const homePath = () => (canSee(MODULES[0]) ? "/" : MODULES.find(canSee)?.path ?? "/");

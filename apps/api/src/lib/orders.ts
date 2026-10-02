@@ -27,6 +27,8 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
   // Delivery: only an active restaurant takes orders (pending and deactivated ones aren't listed either). A table order is
   // checked with its table below; the waiter's, by requireStaff.
   if (mode === "delivery" && restaurant.status !== "ativo") return { status: 404, error: "restaurant not found" };
+  // RF-DESC-03: without the delivery module the restaurant isn't listed, and a delivery order reaching it anyway is refused.
+  if (mode === "delivery" && !(JSON.parse(restaurant.planModulesJson) as string[]).includes("delivery")) return { status: 403, error: "Este restaurante não recebe pedidos de delivery pelo app." };
   if (mode === "table" && !waiterName && !restaurant.qrOrdering) return { status: 403, error: "Neste restaurante os pedidos da mesa são feitos pelo garçom." };
   let tableNumber: number | null = null;
   if (mode === "table" && waiterName) tableNumber = body.tableNumber ?? null; // the route already found the table
