@@ -47,10 +47,6 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
         <div style={{ fontSize: 12, color: "var(--ink3)" }}>{tagline}</div>
       </div>
       <div style={{ flex: 1 }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", minWidth: 0, width: 230 }}>
-        <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
-        <input placeholder="Buscar pedido, mesa, item" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
-      </div>
       <div style={{ position: "relative" }}>
         <button
           type="button"

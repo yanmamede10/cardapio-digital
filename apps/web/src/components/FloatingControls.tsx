@@ -79,31 +79,3 @@ export function BottomBar() {
     </div>
   );
 }
-
-/** Floating support button, delivery mode only — replaces "call waiter" entirely. */
-export function SupportFab() {
-  const { mode } = useApp();
-  const { count } = useCart();
-  const { showToast } = useToast();
-  if (mode !== "delivery") return null;
-
-  return (
-    <button
-      type="button"
-      title="Suporte"
-      aria-label="Suporte"
-      onClick={() => showToast("Chat de suporte abrindo…", "fa-solid fa-headset")}
-      className="tap"
-      style={{
-        position: "absolute", right: "var(--pad)", bottom: count > 0 ? 86 : 22,
-        width: 44, height: 44, borderRadius: 999, cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        border: "1px solid var(--line)", background: "var(--glassStrong)", color: "var(--ink2)",
-        backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)",
-        boxShadow: "var(--shadow-fab)", zIndex: 30
-      }}
-    >
-      <i className="fa-solid fa-headset" style={{ fontSize: "var(--i-m)" }} />
-    </button>
-  );
-}

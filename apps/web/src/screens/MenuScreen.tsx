@@ -2,7 +2,7 @@ import type { MenuCategory, MenuItem, PublicAppearance, Restaurant } from "@card
 import { onColor } from "@cardapio/shared";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { BottomBar, SupportFab } from "../components/FloatingControls";
+import { BottomBar } from "../components/FloatingControls";
 import { IconButton } from "../components/IconButton";
 import { CategoryNav } from "../components/menu/CategoryNav";
 import { ItemCard } from "../components/menu/ItemCard";
@@ -97,7 +97,6 @@ export default function MenuScreen() {
       <div className="screen">
         <MenuSkeleton />
         <BottomBar />
-        <SupportFab />
       </div>
     );
   }
@@ -380,11 +379,6 @@ export default function MenuScreen() {
           <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", alignItems: "center", gap: 8 }}>
             {deliveryOrMesaBadge(true)}
             <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-              {isDelivery && (
-                <button type="button" onClick={() => showToast("Chat de suporte abrindo…", "fa-solid fa-headset")} style={{ border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, padding: "8px 13px", borderRadius: 999, background: "rgba(2,3,4,.55)", backdropFilter: "blur(6px)", color: "#FCF7D3", font: "600 var(--t-s) var(--font)" }}>
-                  <i className="fa-solid fa-headset" style={{ fontSize: "var(--i-s)" }} />Suporte
-                </button>
-              )}
               {themeButton()}
             </div>
           </div>
@@ -444,7 +438,6 @@ export default function MenuScreen() {
     <div className="screen" style={brandVars}>
       {content}
       <BottomBar />
-      <SupportFab />
     </div>
   );
 }

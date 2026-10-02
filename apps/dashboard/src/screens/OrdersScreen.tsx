@@ -186,9 +186,9 @@ export default function OrdersScreen() {
             <span className="dot" style={{ background: offline ? "var(--alert)" : "var(--ok)" }} />
             {offline ? "Sem conexão com o servidor — tentando de novo" : "Atualizando em tempo real"}
           </div>
-          <button type="button" className="btn btn-outline" onClick={() => notify("Fila de produção enviada à impressora")}>
+          <button type="button" className="btn btn-outline" disabled title="A impressão da fila chega em breve">
             <i className="fa-solid fa-print" style={{ fontSize: 17, lineHeight: 1 }} />
-            Imprimir fila
+            Impressão em breve
           </button>
         </div>
 
@@ -414,12 +414,6 @@ function KanbanCardBody({
           {brl(o.total)}
         </div>
         <div style={{ flex: 1 }} />
-        <button type="button" title="Chat do pedido" aria-label={`Abrir chat do pedido ${ref}`} className="icon-btn" onClick={() => notify(`Chat de ${ref} aberto`)}>
-          <i className="fa-solid fa-comment" style={{ fontSize: 17, lineHeight: 1 }} />
-        </button>
-        <button type="button" title="Imprimir comanda" aria-label={`Imprimir comanda do pedido ${ref}`} className="icon-btn" onClick={() => notify(`Comanda de ${ref} enviada à impressora`)}>
-          <i className="fa-solid fa-print" style={{ fontSize: 17, lineHeight: 1 }} />
-        </button>
       </div>
       {o.status === "pending" || o.status === "awaiting" ? (
         <div style={{ display: "flex", gap: 7 }}>

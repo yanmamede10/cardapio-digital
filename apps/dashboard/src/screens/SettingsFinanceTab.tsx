@@ -279,9 +279,9 @@ export default function PaymentSubaccountTab() {
             ))}
           </div>
           <div style={{ display: "flex", gap: 11, flexWrap: "wrap" }}>
-            <button type="button" className="btn btn-primary" onClick={() => notify("Abrindo extrato da subconta")}>
+            <button type="button" className="btn btn-primary" disabled title="O extrato da subconta chega em breve">
               <i className="fa-solid fa-receipt" style={{ fontSize: 17, lineHeight: 1 }} />
-              Ver extrato da subconta
+              Extrato em breve
             </button>
             <button type="button" className="btn btn-outline" onClick={() => setStatus("form")}>
               Atualizar dados bancários

@@ -80,7 +80,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .btn:active { transform: scale(.97); }
 .btn-primary { background: var(--brand); color: var(--brandInk); }
 .btn-primary:hover { background: color-mix(in srgb, var(--brand) 82%, #000); } /* was --sec: 2.6:1 under the light text */
-.btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn-outline {
   background: var(--surface);
   border: 1px solid var(--line2);

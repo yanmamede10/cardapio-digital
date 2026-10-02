@@ -267,9 +267,9 @@ export default function MobileTableDetailScreen() {
               <i className="fa-solid fa-right-left" style={{ fontSize: 13 }} />
               Transferir itens
             </button>
-            <button type="button" onClick={() => notify("Comanda enviada à impressora")} style={ACTION_BTN}>
+            <button type="button" disabled title="A impressão da comanda chega em breve" style={{ ...ACTION_BTN, opacity: 0.5, cursor: "not-allowed" }}>
               <i className="fa-solid fa-print" style={{ fontSize: 13 }} />
-              Imprimir
+              Impressão em breve
             </button>
           </div>
           <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ ...ACTION_BTN, minHeight: 52, fontSize: 14 }}>

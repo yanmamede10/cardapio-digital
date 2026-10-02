@@ -111,5 +111,39 @@ for (const theme of ["light", "dark"] as const) {
       await expect(guest.getByText(/foto ·/)).toHaveCount(0);
       await guest.close();
     });
+
+    test("11 · nenhum botão de mentira: imprimir e extrato desabilitados com o motivo; chat, busca e suporte que não existem saem", async ({ page, request, browser }, info) => {
+      const mobile = info.project.name === "mobile";
+      const token = await staffToken(request, "dono@chapa27.example");
+      const call = async (method: string, path: string, data?: unknown) => (await request.fetch(`${API}${path}`, { method, data, headers: { Authorization: `Bearer ${token}` } })).json();
+      const P = "/api/restaurants/chapa27";
+      const items: { id: string; optionGroups: unknown[]; soldOut: boolean }[] = await call("GET", `${P}/items`);
+      const dish = items.find((i) => !i.optionGroups.length && !i.soldOut)!;
+      await call("POST", `${P}/tables/26/orders`, { lines: [{ itemId: dish.id, quantity: 1, notes: "", selectedOptions: [] }] });
+      await loginAs(page, request, "dono@chapa27.example");
+      // Nothing may claim it printed or opened a chat: those don't exist yet.
+      const fake = page.getByText(/enviada à impressora|Chat de .* aberto|Abrindo extrato/);
+      const soon = (name: string) => expect(page.getByRole("button", { name })).toBeDisabled();
+      await page.goto("/");
+      if (mobile) await page.getByText("Preparando", { exact: true }).click(); // the phone shows one stage at a time
+      await expect(page.getByText("Mesa 26").first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Imprimir comanda|Abrir chat/ })).toHaveCount(0);
+      if (!mobile) {
+        await soon("Impressão em breve");
+        await expect(page.getByRole("button", { name: "Impressão em breve" })).toHaveAttribute("title", /em breve/);
+        await expect(page.getByPlaceholder("Buscar pedido, mesa, item")).toHaveCount(0); // a search box that searched nothing
+      } else {
+        await page.goto("/mesas/26");
+        await soon("Impressão em breve");
+      }
+      await expect(fake).toHaveCount(0);
+      // The customer's delivery menu (paused): no "Suporte" chat that never opens.
+      const guest = await browser.newPage({ viewport: page.viewportSize()! });
+      await guest.goto(`${WEB}/r/chapa27/menu`);
+      await expect(guest.getByText("Clássico", { exact: true }).first()).toBeVisible();
+      await expect(guest.getByRole("button", { name: "Suporte" })).toHaveCount(0);
+      await guest.close();
+      await call("POST", `${P}/tables/26/close`, { paymentMethod: "Cartão" }); // table 26 free again
+    });
   });
 }

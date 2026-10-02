@@ -254,9 +254,6 @@ export default function MobileOrdersScreen() {
                     {brl(o.total)}
                   </div>
                 </div>
-                <button type="button" title="Imprimir comanda" onClick={() => notify(`Comanda ${o.code} enviada à impressora`)} style={{ width: 42, height: 42, borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className="fa-solid fa-print" style={{ fontSize: 15 }} />
-                </button>
               </div>
 
               {isNew && (
