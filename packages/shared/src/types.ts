@@ -255,6 +255,8 @@ export interface Order {
   waiterName?: string | null;
   /** "Para levar": a table order the customer takes away — on the comanda as any other, flagged for the kitchen. */
   takeaway?: boolean;
+  /** Table orders: when their comanda was closed (paid) — from then on the status never changes (F-3). */
+  closedAt?: string | null;
   partySize?: number | null;
   addressLabel?: string | null;
 }

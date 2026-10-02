@@ -320,9 +320,10 @@ function KanbanCard({
   onAdvance: () => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: order.id });
-  // A free table's first order moves only by Aceitar/Recusar (accepting is what opens the table): no drag handlers on it.
+  // A free table's first order moves only by Aceitar/Recusar (accepting is what opens the table), and one whose comanda was
+  // closed (paid) doesn't move at all (F-3, the API answers 409): no drag handlers on them.
   // Not dnd-kit's `disabled`, which marks the whole card aria-disabled — its buttons included.
-  const drag = order.status === "awaiting" ? {} : { ...listeners, ...attributes };
+  const drag = order.status === "awaiting" || order.closedAt ? {} : { ...listeners, ...attributes };
   // role="group" over dnd-kit's role="button": the card holds its own buttons (Aceitar, Recusar, the next step), and a button
   // can't contain buttons. It still takes focus and the keyboard drag (space, arrows).
   const ref = order.mode === "table" ? `Mesa ${order.tableNumber}` : `Delivery ${order.code}`;

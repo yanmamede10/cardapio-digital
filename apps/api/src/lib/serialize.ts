@@ -129,7 +129,8 @@ export function serializeOrder(order: Order & { lines: OrderLine[] }): ApiOrder 
     round: order.round,
     createdAt: order.createdAt.toISOString(),
     waiterName: order.waiterName,
-    takeaway: order.takeaway
+    takeaway: order.takeaway,
+    closedAt: order.closedAt ? order.closedAt.toISOString() : null
   };
 }
 

@@ -65,16 +65,19 @@ ordersRouter.post("/:id/call-waiter", async (req, res) => {
 });
 
 // Accept, refuse and every move in the Central: the conditional update claims the change, and its OrderEvent goes in the same
-// transaction — no history without the change, no change without its line in the history.
+// transaction — no history without the change, no change without its line in the history. An order whose comanda was closed
+// (paid) never changes status again (F-3): Relatórios and Contas a Receber would stop agreeing.
+const CLOSED = "Comanda já fechada: o status deste pedido não muda mais.";
 ordersRouter.post("/:id/accept", requireStaff, requireModule("pedidos"), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  if (order.closedAt) return res.status(409).json({ error: CLOSED });
   // A free table's first order goes to Recebido (and opens the table); any other, from Recebido to Preparando.
   const [from, to] = order.status === "awaiting" ? ["awaiting", "pending"] : ["pending", "preparing"];
   // Conditional: of two devices accepting/refusing the same order at once, exactly one wins (the other gets 409).
   const accepted = await prisma.$transaction(async (tx) => {
-    const { count } = await tx.order.updateMany({ where: { id: order.id, status: from }, data: { status: to } });
+    const { count } = await tx.order.updateMany({ where: { id: order.id, status: from, closedAt: null }, data: { status: to } });
     if (count) await tx.orderEvent.create({ data: { orderId: order.id, ...orderEvent(order.restaurantId, "aceito", to, staffActor(req.staff!)) } });
     return count > 0;
   });
@@ -87,9 +90,10 @@ ordersRouter.post("/:id/reject", requireStaff, requireModule("pedidos"), async (
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  if (order.closedAt) return res.status(409).json({ error: CLOSED });
   // Refused: "Pedido não confirmado" for the customer; a free table's first order leaves the table as it was. See accept.
   const refused = await prisma.$transaction(async (tx) => {
-    const { count } = await tx.order.updateMany({ where: { id: order.id, status: { in: ["awaiting", "pending"] } }, data: { status: "cancelled" } });
+    const { count } = await tx.order.updateMany({ where: { id: order.id, status: { in: ["awaiting", "pending"] }, closedAt: null }, data: { status: "cancelled" } });
     if (count) await tx.orderEvent.create({ data: { orderId: order.id, ...orderEvent(order.restaurantId, "recusado", "cancelled", staffActor(req.staff!)) } });
     return count > 0;
   });
@@ -103,14 +107,19 @@ ordersRouter.patch("/:id/stage", requireStaff, requireModule("pedidos"), async (
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  if (order.closedAt) return res.status(409).json({ error: CLOSED });
   if (order.status === "awaiting") return res.status(409).json({ error: "Aceite o pedido antes: aceitar é o que abre a mesa." });
-  // Only a real move is claimed (and recorded): a second click on the same column changes nothing. The final update is
-  // the same as always (it also marks updatedAt, which the turno reads).
-  const { moved, updated } = await prisma.$transaction(async (tx) => {
-    const moved = (await tx.order.updateMany({ where: { id: order.id, status: { not: stage } }, data: { status: stage } })).count > 0;
+  // Only a real move is claimed (and recorded): a second click on the same column changes nothing. The second write is the
+  // same as always (it also marks updatedAt, which the turno reads). Both only while the comanda is open: a close that
+  // lands meanwhile wins, and this answers 409.
+  const result = await prisma.$transaction(async (tx) => {
+    const moved = (await tx.order.updateMany({ where: { id: order.id, closedAt: null, status: { not: stage } }, data: { status: stage } })).count > 0;
+    if (!(await tx.order.updateMany({ where: { id: order.id, closedAt: null }, data: { status: stage } })).count) return null;
     if (moved) await tx.orderEvent.create({ data: { orderId: order.id, ...orderEvent(order.restaurantId, "status", stage, staffActor(req.staff!)) } });
-    return { moved, updated: await tx.order.update({ where: { id: order.id }, data: { status: stage }, include: { lines: true } }) };
+    return { moved, updated: await tx.order.findUniqueOrThrow({ where: { id: order.id }, include: { lines: true } }) };
   });
+  if (!result) return res.status(409).json({ error: CLOSED });
+  const { moved, updated } = result;
   // A delivery closes when delivered (table orders take stock on comanda close instead). The claim above happens once, so a
   // double click can't take stock twice.
   if (moved && order.mode === "delivery" && stage === "delivered") await takeStockForOrders(order.restaurantId, [updated], `Pedido delivery ${order.code}`);
