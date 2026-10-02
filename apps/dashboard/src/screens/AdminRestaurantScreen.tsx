@@ -186,7 +186,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
         {reset && (
           <div role="status" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: 12, border: "1px solid var(--ok)", borderRadius: 10, fontSize: 13, lineHeight: 1.5 }}>
             <div style={{ flex: 1, minWidth: 240 }}>
-              Nova senha provisória de <b>{reset.name}</b> (<span className="mono">{reset.email}</span>):{" "}
+              Nova senha provisória de <b>{reset.name}</b> (<a className="mono" href={`mailto:${reset.email}`}>{reset.email}</a>):{" "}
               <span className="mono" style={{ fontWeight: 600 }}>{reset.password}</span>
               <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No próximo login a pessoa troca por uma senha dela; até lá, as sessões abertas param.</div>
             </div>
@@ -200,9 +200,9 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
             <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: "1px solid var(--line)", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500 }}>{s.name}</div>
-                <div className="mono" style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+                <a className="mono" href={`mailto:${s.email}`} style={{ fontSize: 11.5 }}>
                   {s.email}
-                </div>
+                </a>
               </div>
               <span className="pill" style={{ background: "var(--surface2)", color: "var(--ink2)" }}>
                 {ROLE_LABEL[s.role] ?? s.role}

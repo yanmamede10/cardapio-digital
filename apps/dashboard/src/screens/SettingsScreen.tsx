@@ -196,7 +196,7 @@ export default function SettingsScreen() {
             {staff.map((s) => (
               <div key={s.id} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px 90px 70px", gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{s.name}</div>
-                <div style={{ fontSize: 12.5, color: "var(--ink2)", overflow: "hidden", textOverflow: "ellipsis" }}>{s.email}</div>
+                <a href={`mailto:${s.email}`} style={{ display: "block", fontSize: 12.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "44px" }}>{s.email}</a>
                 <span className="pill" style={{ alignSelf: "start", background: "var(--surface2)", color: "var(--brandText)" }}>
                   {ROLE_LABEL[s.role] ?? s.role}
                 </span>

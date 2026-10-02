@@ -319,5 +319,20 @@ for (const theme of ["light", "dark"] as const) {
       await guest.close();
 
     });
+
+    test("19 · e-mail na tela é link mailto: a equipe (desktop) e as pessoas de um restaurante no Super Admin", async ({ page, request }, info) => {
+      const mail = (address: string) => page.locator(`a[href="mailto:${address}"]`).first();
+      if (info.project.name !== "mobile") {
+        await loginAs(page, request, "dono@chapa27.example");
+        await page.goto("/config");
+        await page.getByRole("radio", { name: "Equipe & Permissões" }).or(page.getByRole("button", { name: "Equipe & Permissões" })).first().click();
+        await expect(mail("dono@chapa27.example")).toBeVisible();
+      }
+      // On the phone the team's e-mail sits inside the button that opens the person: a link can't go in a button.
+      await asSuperAdmin(page);
+      await page.goto("/admin/restaurantes/chapa27");
+      await expect(mail("dono@chapa27.example")).toBeVisible();
+      await expect(mail("dono@chapa27.example")).toHaveText("dono@chapa27.example");
+    });
   });
 }
