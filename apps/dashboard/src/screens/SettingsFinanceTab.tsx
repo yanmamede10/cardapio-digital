@@ -149,7 +149,7 @@ export default function PaymentSubaccountTab() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
             <Field label="CNPJ">
-              <input className="field mono" placeholder="00.000.000/0000-00" value={cnpj} onChange={(e) => setCnpj(e.target.value)} />
+              <input inputMode="numeric" className="field mono" placeholder="00.000.000/0000-00" value={cnpj} onChange={(e) => setCnpj(e.target.value)} />
             </Field>
             <Field label="Razão social">
               <input className="field" placeholder="Nome da empresa" value={legalName} onChange={(e) => setLegalName(e.target.value)} />

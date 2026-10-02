@@ -526,11 +526,11 @@ export function ProductForm({
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr)", gap: 12 }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span className="field-label">NCM</span>
-            <input className="field mono" maxLength={20} placeholder="0000.00.00" value={draft.ncm} onChange={(e) => set({ ncm: e.target.value })} />
+            <input inputMode="numeric" className="field mono" maxLength={20} placeholder="0000.00.00" value={draft.ncm} onChange={(e) => set({ ncm: e.target.value })} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span className="field-label">CST / CSOSN</span>
-            <input className="field mono" maxLength={20} placeholder="102" value={draft.cst} onChange={(e) => set({ cst: e.target.value })} />
+            <input inputMode="numeric" className="field mono" maxLength={20} placeholder="102" value={draft.cst} onChange={(e) => set({ cst: e.target.value })} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span className="field-label">Alíquota %</span>

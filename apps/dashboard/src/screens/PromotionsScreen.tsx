@@ -265,7 +265,7 @@ export default function PromotionsScreen() {
 
           {drawer.kind !== "combo" ? (
             <Field label={drawer.kind === "percent" ? "Percentual de desconto" : "Valor do desconto"}>
-              <input className="field mono" value={drawer.value} onChange={(e) => setDrawer({ ...drawer, value: e.target.value })} placeholder={drawer.kind === "percent" ? "10" : "0,00"} />
+              <input inputMode="decimal" className="field mono" value={drawer.value} onChange={(e) => setDrawer({ ...drawer, value: e.target.value })} placeholder={drawer.kind === "percent" ? "10" : "0,00"} />
             </Field>
           ) : (
             <>
@@ -280,7 +280,7 @@ export default function PromotionsScreen() {
                 </div>
               </Field>
               <Field label="Preço do combo">
-                <input className="field mono" value={drawer.comboPrice} onChange={(e) => setDrawer({ ...drawer, comboPrice: e.target.value })} placeholder="R$ 0,00" />
+                <input inputMode="decimal" className="field mono" value={drawer.comboPrice} onChange={(e) => setDrawer({ ...drawer, comboPrice: e.target.value })} placeholder="R$ 0,00" />
               </Field>
             </>
           )}
@@ -290,7 +290,7 @@ export default function PromotionsScreen() {
               <input type="date" className="field mono" value={drawer.validUntil} onChange={(e) => setDrawer({ ...drawer, validUntil: e.target.value })} />
             </Field>
             <Field label="Limite de uso">
-              <input className="field mono" value={drawer.usageLimit} onChange={(e) => setDrawer({ ...drawer, usageLimit: e.target.value })} placeholder="100" />
+              <input inputMode="numeric" className="field mono" value={drawer.usageLimit} onChange={(e) => setDrawer({ ...drawer, usageLimit: e.target.value })} placeholder="100" />
             </Field>
           </div>
         </SlideOver>

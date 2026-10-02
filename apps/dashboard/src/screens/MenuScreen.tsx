@@ -451,7 +451,7 @@ export default function MenuScreen() {
                       value={x.name}
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, name: e.target.value } : y)) })}
                     />
-                    <input
+                    <input inputMode="decimal"
                       className="field mono"
                       aria-label={`Preço de ${x.name}`}
                       style={{ padding: "8px 10px" }}

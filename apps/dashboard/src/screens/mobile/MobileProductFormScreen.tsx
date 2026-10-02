@@ -177,7 +177,7 @@ export default function MobileProductFormScreen() {
               onChange={(e) => setExtras((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))}
               style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", font: "inherit", fontSize: 13, color: "var(--ink)", outline: "none" }}
             />
-            <input
+            <input inputMode="decimal"
               aria-label={`Preço de ${v.name}`}
               value={v.price}
               onChange={(e) => setExtras((prev) => prev.map((x, j) => (i === j ? { ...x, price: e.target.value } : x)))}

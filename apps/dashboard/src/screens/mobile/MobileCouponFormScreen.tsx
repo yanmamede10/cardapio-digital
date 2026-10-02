@@ -88,7 +88,7 @@ export default function MobileCouponFormScreen() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             <span className="field-label">Valor</span>
-            <input value={value} onChange={(e) => setValue(e.target.value)} placeholder={kind === "percent" ? "20" : "15,00"} className="field-mobile mono" />
+            <input inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} placeholder={kind === "percent" ? "20" : "15,00"} className="field-mobile mono" />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             <span className="field-label">Validade</span>
@@ -112,7 +112,7 @@ export default function MobileCouponFormScreen() {
 
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Limite de uso</span>
-          <input value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} placeholder="200" className="field-mobile" />
+          <input inputMode="numeric" value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} placeholder="200" className="field-mobile" />
         </label>
       </section>
 

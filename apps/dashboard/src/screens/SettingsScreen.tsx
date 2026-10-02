@@ -252,7 +252,7 @@ export default function SettingsScreen() {
           </Field>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Field label="CNPJ">
-              <input className="field mono" value={fiscal.cnpj} onChange={(e) => setFiscal({ ...fiscal, cnpj: e.target.value })} />
+              <input inputMode="numeric" className="field mono" value={fiscal.cnpj} onChange={(e) => setFiscal({ ...fiscal, cnpj: e.target.value })} />
             </Field>
             <Field label="Inscrição estadual">
               <input className="field mono" value={fiscal.stateRegistration} onChange={(e) => setFiscal({ ...fiscal, stateRegistration: e.target.value })} />

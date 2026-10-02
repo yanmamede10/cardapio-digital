@@ -43,7 +43,7 @@ export default function MobileFiscalScreen() {
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">CNPJ</span>
-          <input value={fiscal.cnpj} onChange={(e) => setFiscal({ ...fiscal, cnpj: e.target.value })} className="field-mobile mono" />
+          <input inputMode="numeric" value={fiscal.cnpj} onChange={(e) => setFiscal({ ...fiscal, cnpj: e.target.value })} className="field-mobile mono" />
         </label>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Inscrição estadual</span>
