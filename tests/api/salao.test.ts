@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
-import { ADMIN_KEY, SEED_MODULES, accepted, call, firstLogin, setModules, tableCode, uid } from "./helpers.ts";
+import { ADMIN_KEY, DEMO_MODULES, accepted, call, firstLogin, setModules, tableCode, uid } from "./helpers.ts";
 
 // Salão of the demo hamburgueria (prisma/seed-demo.ts): QR → pedido → Central → comanda → fechamento.
 const D = "chapa27";
@@ -215,12 +215,12 @@ describe("fechamento → Contas a Receber", () => {
     let res;
     try {
       await fresh(24);
-      await setModules(SEED_MODULES.filter((m) => m !== "receber"), D);
+      await setModules(DEMO_MODULES.filter((m) => m !== "receber"), D);
       await order(24, [{ name: "Batata Frita" }]);
       res = await close(24, { paymentMethod: "Cartão" });
       assert.equal(res.body.closed, 1);
     } finally {
-      await setModules(SEED_MODULES, D);
+      await setModules(DEMO_MODULES, D); // the Chapa 27's own (no Delivery, F-6): SEED_MODULES turned it on for every later test
     }
     assert.equal((await receivables()).some((e) => e.description === `Mesa 24 · comanda ${res.body.code}`), false);
   });
