@@ -185,7 +185,7 @@ deploy/.env.example             todas as variáveis de produção, comentadas �
 apps/api/Dockerfile             imagem da API, construída na própria VM (ARM64)
 ```
 
-A VM só recebe código: clona a `master` e roda o `deploy/deploy.sh`. Nada é editado nela além do `deploy/.env`.
+A VM só recebe código: clona a `master` e roda o `deploy/deploy.sh`. Nada é editado nela além do `deploy/.env`. Antes e depois do primeiro deploy, siga o [checklist de segurança](docs/seguranca/checklist-deploy.md) (a auditoria de outubro de 2026 está em [docs/seguranca/auditoria-2026-10.md](docs/seguranca/auditoria-2026-10.md)).
 
 ### Primeira vez
 
