@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MIN_PASSWORD_LENGTH } from "@cardapio/shared";
 import { ApiError, changePassword, login, logout } from "../lib/api";
 import { Field } from "../components/SlideOver";
@@ -8,6 +8,9 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    document.title = "Entrar · MesaPronta Gestão";
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

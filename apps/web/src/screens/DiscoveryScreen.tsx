@@ -8,6 +8,7 @@ import { SupportFab } from "../components/FloatingControls";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
+import { usePageTitle } from "../lib/title";
 import { brl, formatRating } from "../lib/format";
 
 const CUISINES = [
@@ -28,6 +29,7 @@ const SORTS = [
 
 export default function DiscoveryScreen() {
   const navigate = useNavigate();
+  usePageTitle("Restaurantes");
   const { mode, restaurantId, theme, toggleTheme, addressId, setAddressId } = useApp();
   const { showToast } = useToast();
 

@@ -5,13 +5,17 @@ import type { NotifItem } from "../lib/live";
 import { useDashboardState } from "../state/DashboardStateContext";
 
 
-export function Header({ tagline, notifs }: { tagline: string; notifs: NotifItem[] }) {
+export function Header({ screen, tagline, notifs }: { screen: string; tagline: string; notifs: NotifItem[] }) {
   const { staffName, staffRole } = useDashboardState();
   const [notifOpen, setNotifOpen] = useState(false);
   const [restaurantName, setRestaurantName] = useState("");
   useEffect(() => {
     api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {});
   }, []);
+  // Checklist 5: the tab says which screen and which restaurant ("Central de Pedidos · Chapa 27 Burgers").
+  useEffect(() => {
+    document.title = restaurantName ? `${screen} · ${restaurantName}` : screen;
+  }, [screen, restaurantName]);
   const notifCount = notifs.length;
 
   return (

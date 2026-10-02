@@ -6,6 +6,7 @@ import { photoStyle } from "../components/menu/ItemCard";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
+import { usePageTitle } from "../lib/title";
 import { brl } from "../lib/format";
 import { computeSelectedOptions, computeUnitPrice, defaultDraft, type ItemDraft } from "../lib/itemDraft";
 
@@ -16,6 +17,7 @@ export default function ItemDetailScreen() {
   const { showToast } = useToast();
 
   const [item, setItem] = useState<MenuItem | null>(null);
+  usePageTitle(item?.name ?? "", restaurantId);
   const [draft, setDraft] = useState<ItemDraft | null>(null);
 
   useEffect(() => {

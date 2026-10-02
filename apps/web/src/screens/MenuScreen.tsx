@@ -11,6 +11,7 @@ import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
+import { usePageTitle } from "../lib/title";
 import { brl, formatRating } from "../lib/format";
 import { computeSelectedOptions, computeUnitPrice, defaultDraft } from "../lib/itemDraft";
 
@@ -19,6 +20,7 @@ const GALLERY_HEIGHTS = [196, 148, 222, 164, 206, 144, 184, 228];
 
 export default function MenuScreen() {
   const { restaurantId = "" } = useParams();
+  usePageTitle("Cardápio", restaurantId);
   const navigate = useNavigate();
   const { mode, tableNumber, guestName, setGuestName, setActiveRestaurant, theme, toggleTheme, tableSession, addressId } = useApp();
   const { addLine } = useCart();

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
+import { usePageTitle } from "../lib/title";
 import { brl } from "../lib/format";
 
 const STAGES: { status: OrderStatus; label: string; note: string; icon: string }[] = [
@@ -20,6 +21,7 @@ export default function OrderStatusScreen() {
   const { mode, tableNumber, restaurantId, tableSession, setWaiterCalled, registerTableOrder } = useApp();
   const { showToast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
+  usePageTitle(order ? `Pedido ${order.code}` : "", order?.restaurantId);
 
   useEffect(() => {
     let cancelled = false;

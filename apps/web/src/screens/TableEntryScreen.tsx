@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../lib/api";
+import { usePageTitle } from "../lib/title";
 import { useApp } from "../context/AppContext";
 
 export default function TableEntryScreen() {
@@ -8,6 +9,7 @@ export default function TableEntryScreen() {
   const navigate = useNavigate();
   const { enterTableMode } = useApp();
   const [error, setError] = useState<string | null>(null);
+  usePageTitle(!error ? "Identificando a mesa" : error.startsWith("Mesa não encontrada") ? "Mesa não encontrada" : "Chame um atendente");
 
   useEffect(() => {
     let cancelled = false;

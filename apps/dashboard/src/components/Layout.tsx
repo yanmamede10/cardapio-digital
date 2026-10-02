@@ -27,7 +27,7 @@ export function Layout() {
     <div style={{ display: "flex", minHeight: "100vh", width: "100%", background: "var(--bg)", color: "var(--ink)" }}>
       <Sidebar badges={badges} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <Header tagline={current.tagline} notifs={notifs} />
+        <Header screen={current.label} tagline={current.tagline} notifs={notifs} />
         <main style={{ flex: 1, minWidth: 0, padding: "20px 22px 28px" }}>
           <Outlet context={ctx} />
         </main>

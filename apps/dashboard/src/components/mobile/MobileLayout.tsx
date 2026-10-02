@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { App } from "@capacitor/app";
 import { type LiveData, buildNotifs, useLiveData } from "../../lib/live";
+import { api } from "../../lib/api";
 import { initialsOf } from "../../lib/format";
 import { canSee, moduleByKey } from "../../lib/modules";
 import { useDashboardState } from "../../state/DashboardStateContext";
@@ -64,6 +65,15 @@ export function MobileLayout() {
   const live = useLiveData();
   const [header, setHeaderState] = useState<MobileHeaderConfig | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [restaurantName, setRestaurantName] = useState("");
+  useEffect(() => {
+    api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {});
+  }, []);
+  // Checklist 5: the tab (and the Android task switcher) says which screen and which restaurant.
+  const screen = header?.title ?? "";
+  useEffect(() => {
+    if (screen) document.title = restaurantName ? `${screen} · ${restaurantName}` : screen;
+  }, [screen, restaurantName]);
 
   const setHeader = useCallback((next: MobileHeaderConfig | null) => setHeaderState((prev) => (headerEqual(prev, next) ? prev : next)), []);
 

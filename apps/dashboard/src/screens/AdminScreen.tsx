@@ -45,6 +45,9 @@ export default function AdminScreen() {
   const { pathname } = useLocation();
   const billing = pathname.startsWith("/admin/mensalidades");
   const detailId = pathname.match(/^\/admin\/restaurantes\/([^/]+)/)?.[1];
+  useEffect(() => {
+    document.title = `${!key ? "Entrar" : billing ? "Mensalidades" : detailId ? "Restaurante" : "Restaurantes"} · Super Admin`;
+  }, [key, billing, detailId]);
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
   const call: AdminCall = async <T,>(path: string, init?: RequestInit): Promise<T> => {
