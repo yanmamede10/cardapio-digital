@@ -69,7 +69,6 @@ export default function ItemDetailScreen() {
     <div className="screen">
       <div className="scroll no-scrollbar">
         <div className="photo-placeholder" style={{ position: "relative", height: "calc(var(--banner) + 40px)", ...photoStyle(item) }}>
-          {!item.imageUrl && <span style={{ font: "500 11px var(--font)", letterSpacing: ".08em", color: "var(--ink2)" }}>{item.photoLabel}</span>}
           <IconButton icon="fa-solid fa-arrow-left" onClick={goBack} title="Voltar" glass style={{ position: "absolute", top: 12, left: 12 }} />
         </div>
         <div style={{ padding: "18px var(--pad) 0" }}>

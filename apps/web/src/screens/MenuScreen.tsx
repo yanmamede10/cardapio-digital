@@ -154,10 +154,11 @@ export default function MenuScreen() {
       <IconButton icon="fa-solid fa-arrow-left" onClick={() => navigate("/")} title="Voltar" glass={glass} />
     );
 
+  // The restaurant's own rating, rounded to whole stars (it was a fixed four, even with no reviews).
   const rating = (
-    <span style={{ display: "inline-flex", gap: 3, color: "var(--acc)", fontSize: "var(--i-s)" }}>
+    <span role="img" aria-label={`Nota ${formatRating(restaurant.rating)} de 5`} style={{ display: "inline-flex", gap: 3, color: "var(--acc)", fontSize: "var(--i-s)" }}>
       {[0, 1, 2, 3, 4].map((i) => (
-        <i key={i} className="fa-solid fa-star" style={{ opacity: i === 4 ? 0.32 : 1 }} />
+        <i key={i} className="fa-solid fa-star" style={{ opacity: i < Math.round(restaurant.rating) ? 1 : 0.32 }} />
       ))}
     </span>
   );
@@ -375,7 +376,6 @@ export default function MenuScreen() {
     content = (
       <div className="scroll no-scrollbar">
         <div className="photo-placeholder" style={{ position: "relative", height: "var(--banner)", ...coverStyle }}>
-          {!cover && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", font: "500 10px var(--font)", letterSpacing: ".08em", color: "var(--ink2)" }}>foto · fachada / salão</div>}
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "64%", background: "linear-gradient(to top,rgba(2,3,4,.58),rgba(2,3,4,0))" }} />
           <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", alignItems: "center", gap: 8 }}>
             {deliveryOrMesaBadge(true)}

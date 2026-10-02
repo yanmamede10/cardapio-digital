@@ -81,7 +81,6 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
       <div className="card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", opacity: dim, flex: width ? "none" : undefined, width }}>
         <div onClick={onOpen} style={{ cursor: "pointer" }}>
           <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)", ...photoStyle(item) }}>
-            {!item.imageUrl && <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)", padding: "0 8px", textAlign: "center" }}>{item.photoLabel}</span>}
             <TagBadge item={item} />
             {item.soldOut && soldOutBadge}
           </div>
@@ -133,7 +132,6 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
       <div style={{ background: "var(--surf)", border: "1px solid var(--line)", borderRadius: "var(--r-standard)", overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", opacity: dim, boxShadow: "0 18px 40px rgba(2,3,4,.26)" }}>
         <div onClick={onOpen}>
           <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)", ...photoStyle(item) }}>
-            {!item.imageUrl && <span style={{ font: "500 10px var(--font)", letterSpacing: ".06em", color: "var(--ink2)", padding: "0 8px", textAlign: "center" }}>{item.photoLabel}</span>}
             <TagBadge item={item} />
             {item.soldOut && soldOutBadge}
           </div>
