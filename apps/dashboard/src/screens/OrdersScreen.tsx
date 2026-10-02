@@ -16,6 +16,7 @@ import { api } from "../lib/api";
 import { brl, minutesSince } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { AwaitingTag, InHouseTag, LineExtras, TakeawayTag } from "../components/OrderCard";
+import { moduleOn } from "../lib/modules";
 
 const ALERT_MINUTES = 20;
 
@@ -148,39 +149,42 @@ export default function OrdersScreen() {
     <div className="central">
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", gap: 4, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14, padding: 3 }}>
-            {filters.map((f) => {
-              const count = f.key === "todos" ? live.length : live.filter((o) => o.mode === f.key).length;
-              const active = filter === f.key;
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFilter(f.key)}
-                  className="tap"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    border: 0,
-                    borderRadius: 11,
-                    padding: "6px 12px",
-                    cursor: "pointer",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    background: active ? "var(--surface)" : "transparent",
-                    color: active ? "var(--brandText)" : "var(--ink2)"
-                  }}
-                >
-                  <i className={`fa-solid ${f.icon}`} style={{ fontSize: 17, lineHeight: 1 }} />
-                  {f.label}
-                  <span className="mono" style={{ fontSize: 11 }}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {/* Mesa / Delivery: only with Delivery contracted — without it every order is a table's (checklist 15). */}
+          {moduleOn("delivery") && (
+            <div style={{ display: "flex", gap: 4, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14, padding: 3 }}>
+              {filters.map((f) => {
+                const count = f.key === "todos" ? live.length : live.filter((o) => o.mode === f.key).length;
+                const active = filter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFilter(f.key)}
+                    className="tap"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 7,
+                      border: 0,
+                      borderRadius: 11,
+                      padding: "6px 12px",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      background: active ? "var(--surface)" : "transparent",
+                      color: active ? "var(--brandText)" : "var(--ink2)"
+                    }}
+                  >
+                    <i className={`fa-solid ${f.icon}`} style={{ fontSize: 17, lineHeight: 1 }} />
+                    {f.label}
+                    <span className="mono" style={{ fontSize: 11 }}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div style={{ flex: 1 }} />
           <div role={offline ? "alert" : undefined} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: offline ? 600 : 400, color: offline ? "var(--alert)" : "var(--ink3)" }}>
             <span className="dot" style={{ background: offline ? "var(--alert)" : "var(--ok)" }} />

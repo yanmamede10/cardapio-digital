@@ -55,6 +55,69 @@ for (const theme of ["light", "dark"] as const) {
       }
     });
 
+    test("2 · nenhum link quebrado: cada link do painel e do Super Admin abre a sua tela, e o link do QR abre a mesa", async ({ page, request }, info) => {
+      test.setTimeout(240_000);
+      const mobile = info.project.name === "mobile";
+      const shared = ["/", "/mesas", "/mesas/qr", "/cardapio", "/atendimento", "/promocoes", "/relatorios", "/financeiro", "/produtos", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/config", "/admin", "/admin/mensalidades", "/admin/restaurantes/chapa27"];
+      const routes = mobile ? [...shared, "/mais", "/mesas/1", "/config/perfil", "/config/equipe"] : shared;
+      await loginAs(page, request, "dono@chapa27.example");
+      await asSuperAdmin(page);
+      const hrefs = new Set<string>();
+      for (const path of routes) {
+        await page.goto(path);
+        await expect(page.locator(".skeleton")).toHaveCount(0, { timeout: 8_000 });
+        for (const href of await page.locator("a[href]").evaluateAll((as) => as.map((a) => a.getAttribute("href")!))) hrefs.add(href);
+      }
+      expect(hrefs.size).toBeGreaterThan(5);
+      for (const href of hrefs) {
+        if (href.startsWith("mailto:")) {
+          expect(href).toMatch(/^mailto:[^@\s]+@[^@\s]+\.\w+$/);
+          continue;
+        }
+        expect(href, "nenhum link sai do app").toMatch(/^\//);
+        await page.goto(href);
+        await expect.poll(() => new URL(page.url()).pathname, `${href}: abre a sua tela, não cai no redirecionamento`).toBe(href);
+      }
+      // The QR's link: the table's code opens that table's menu.
+      const token = await staffToken(request, "dono@chapa27.example");
+      await page.goto(await tableUrl(request, token, "chapa27", 20));
+      await expect(page).toHaveURL(/\/r\/chapa27\/menu$/);
+      await expect(page.getByText("Clássico", { exact: true }).first()).toBeVisible();
+    });
+
+    test("3 · menu do celular por papel: cada um vê só o que pode, cada entrada abre a sua tela, e a barra de abas funciona em todas", async ({ page, request }, info) => {
+      test.skip(info.project.name !== "mobile", "o menu \"Mais\" e a barra de abas são do celular; no desktop é a barra lateral (varredura.spec)");
+      test.setTimeout(240_000);
+      // Chapa 27 has no Emissão Fiscal nor Delivery (DEMO_MODULES). Gerente = Administrador; Atendimento is also the garçom's.
+      const MORE: Record<string, string> = { "/atendimento": "Tickets, chat e avaliações", "/promocoes": "Cupons e combos ativos", "/produtos": "Catálogo, estoque e movimentações", "/visao-geral": "Saldo, contas da semana e atrasos", "/contas-a-pagar": "Despesas e vencimentos", "/contas-a-receber": "Repasses e recebíveis", "/financeiro": "Taxas e mensalidade", "/relatorios": "Faturamento, ranking e picos", "/config": "Perfil, horários, equipe", "/emissao-fiscal": "Pedidos que precisam de nota" };
+      const admin = ["/atendimento", "/promocoes", "/produtos", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/financeiro", "/relatorios"];
+      const roles: [string, string[]][] = [
+        ["dono@chapa27.example", [...admin, "/config"]],
+        ["gerente@chapa27.example", admin],
+        ["garcom@chapa27.example", ["/atendimento"]],
+        ["cozinha@chapa27.example", []]
+      ];
+      const tabs = page.getByRole("navigation").last();
+      for (const [email, allowed] of roles) {
+        await loginAs(page, request, email); // the last session put in wins
+        await page.goto("/mais");
+        for (const [path, sub] of Object.entries(MORE)) {
+          await expect(page.getByRole("button", { name: new RegExp(sub) }), `${email}: ${path}`).toHaveCount(allowed.includes(path) ? 1 : 0);
+        }
+        for (const path of allowed) {
+          await page.goto("/mais");
+          await page.getByRole("button", { name: new RegExp(MORE[path]) }).click();
+          await expect.poll(() => new URL(page.url()).pathname, `${email}: ${path}`).toBe(path);
+          // From that screen, every tab of the bar still takes you to its own.
+          for (const [tab, to] of [["Pedidos", "/"], ["Mesas", "/mesas"], ["Cardápio", "/cardapio"], ["Mais", "/mais"]]) {
+            await tabs.getByRole("button", { name: new RegExp(`^${tab}`) }).click(); // "Pedidos 2": the badge is in the name
+            await expect.poll(() => new URL(page.url()).pathname, `${email}: ${path} → ${tab}`).toBe(to);
+            if (to !== "/mais") await page.goto(path);
+          }
+        }
+      }
+    });
+
     test("4 · favicon no painel e no cardápio: o MP da MesaPronta", async ({ page }) => {
       for (const url of ["/", WEB]) {
         await page.goto(url);
@@ -385,6 +448,34 @@ for (const theme of ["light", "dark"] as const) {
       }, file.toString("base64"));
       expect(Math.max(width, height)).toBe(1200);
       expect(width / height).toBeCloseTo(3000 / 2250, 2);
+    });
+
+    test("8 · QR antigo ou inválido: mensagem clara na tela; endereço desconhecido volta ao início (ainda não há página 404)", async ({ page, request }) => {
+      const token = await staffToken(request, "dono@chapa27.example");
+      const old = await tableUrl(request, token, "chapa27", 19);
+      // "Gerar novo QR" (the Dono's): the printed one stops working.
+      expect((await request.post(`${API}/api/restaurants/chapa27/tables/19/qr`, { headers: { Authorization: `Bearer ${token}` } })).ok()).toBe(true);
+      for (const url of [old, `${WEB}/t/codigo-que-nao-existe`]) {
+        await page.goto(url);
+        await expect(page.getByText("Mesa não encontrada. Confira o código do QR ou chame um atendente.")).toBeVisible();
+        await expect(page).toHaveTitle("Mesa não encontrada · Cardápio Digital");
+      }
+      // No 404 screen yet (it needs one): an unknown address lands on each app's start, never on a blank page.
+      await loginAs(page, request, "dono@chapa27.example");
+      await page.goto("/pagina-que-nao-existe");
+      await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+      await expect(page).toHaveTitle(/^Central de Pedidos · /);
+    });
+
+    test("15 · sem navegação para tela sempre vazia: sem o módulo Delivery, a Central não oferece o filtro Mesa/Delivery", async ({ page, request }) => {
+      const delivery = page.getByRole("button", { name: /^Delivery/ });
+      await page.goto("/"); // Fogo & Nó (the fixture's): Delivery contracted, the filter is there
+      await expect(delivery).toBeVisible();
+      await loginAs(page, request, "dono@chapa27.example"); // Chapa 27: no Delivery (DEMO_MODULES), like every new restaurant
+      await page.goto("/");
+      await expect(page.getByText(/Nenhum pedido|Recebido|RECEBIDO/i).first()).toBeVisible();
+      await expect(delivery).toHaveCount(0);
+      await expect(page.getByRole("button", { name: /^Mesa \d/ })).toHaveCount(0); // "Mesa" alone would equal "Todos"
     });
   });
 }

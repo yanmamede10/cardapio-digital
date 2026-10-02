@@ -7,6 +7,7 @@ import { nextStatusFor } from "../OrdersScreen";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
+import { moduleOn } from "../../lib/modules";
 
 type Tab = "pending" | "preparing" | "ready" | "done";
 
@@ -115,17 +116,20 @@ export default function MobileOrdersScreen() {
             Sem conexão com o servidor — tentando de novo
           </div>
         )}
-        <div style={{ display: "flex", gap: 6 }}>
-          <MobileChip active={channel === "todos"} onClick={() => setChannel("todos")} icon="fa-list-check" grow>
-            Todos
-          </MobileChip>
-          <MobileChip active={channel === "table"} onClick={() => setChannel("table")} icon="fa-chair" grow>
-            Mesa
-          </MobileChip>
-          <MobileChip active={channel === "delivery"} onClick={() => setChannel("delivery")} icon="fa-motorcycle" grow>
-            Delivery
-          </MobileChip>
-        </div>
+        {/* Mesa / Delivery: only with Delivery contracted (checklist 15). */}
+        {moduleOn("delivery") && (
+          <div style={{ display: "flex", gap: 6 }}>
+            <MobileChip active={channel === "todos"} onClick={() => setChannel("todos")} icon="fa-list-check" grow>
+              Todos
+            </MobileChip>
+            <MobileChip active={channel === "table"} onClick={() => setChannel("table")} icon="fa-chair" grow>
+              Mesa
+            </MobileChip>
+            <MobileChip active={channel === "delivery"} onClick={() => setChannel("delivery")} icon="fa-motorcycle" grow>
+              Delivery
+            </MobileChip>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 4, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 12, padding: 3 }}>
           {TABS.map((t) => {
             const active = t.key === tab;
