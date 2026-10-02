@@ -28,6 +28,9 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `api:eventos` | `tests/api/eventos.test.ts` (histórico do pedido, `OrderEvent`) |
 | `api:descoberta` | `tests/api/descoberta.test.ts` (lista do app do cliente e o módulo Delivery) |
 | `api:moeda` | `tests/api/moeda.test.ts` (o formatador de dinheiro dos dois apps) |
+| `api:cupom` | `tests/api/cupom.test.ts` (cupom do delivery pelas regras de Promoções) |
+| `api:sessoes` | `tests/api/sessoes.test.ts` (troca e reset de senha encerram as sessões) |
+| `api:fechado` | `tests/api/fechado.test.ts` (pedido de comanda paga não muda de status) |
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
@@ -47,7 +50,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -58,8 +61,9 @@ Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR c
 | Funcionalidade | Dono | Administrador | Garçom | Cozinha |
 | --- | --- | --- | --- | --- |
 | Central de Pedidos (aceitar, recusar, avançar) | ✔ | ✔ | ✔ | ✔ |
-| Mesas: mapa, comanda, fechar conta, transferir, QR | ✔ | ✔ | ✔ | ✔ |
-| Mesas: editar ambiente (grade, nova mesa, renomear, excluir) | ✔ | ✔ | ✔ | ✔ |
+| Mesas: mapa, comanda, transferir, QR | ✔ | ✔ | ✔ | ✔ |
+| Mesas: fechar conta (F-4) | ✔ | ✔ | ✔ | — |
+| Mesas: editar ambiente (grade, nova mesa, renumerar, mover, excluir) (F-4) | ✔ | ✔ | — | — |
 | Lançar pedido (o garçom faz o pedido pela mesa) | ✔ | ✔ | ✔ | ✔ |
 | Cardápio: ver e marcar Esgotado/Disponível | ✔ | ✔ | ✔ | ✔ |
 | Cardápio: adicionar, organizar, remover, reordenar, foto; categorias | ✔ | ✔ | 👁 | 👁 |
@@ -134,6 +138,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | SEN-04 | Repetição diferente | Dono novo | Nova ≠ repetida | "As duas senhas novas não são iguais" | M | ✅ M |
 | SEN-05 | Até trocar, nada mais funciona | Dono novo | Chamar qualquer rota com o token | 403 "password change required" | api:admin | ✅ |
 | SEN-06 | Reset derruba sessão aberta | Garçom | Super Admin reseta a senha com o garçom logado | Próximo request 403 → só a troca | api:admin | ✅ |
+| SEN-07 | Troca ou reset de senha por outra pessoa encerra as sessões | Dono, Super Admin | Garçom logado em 2 aparelhos; o Dono troca a senha dele em Equipe (ou o Super Admin reseta) | Os 2 aparelhos recebem 401 na próxima requisição (voltam ao login); a senha nova entra; mudar só nome ou papel não derruba ninguém; depois do reset as sessões antigas não voltam nem com a provisória trocada | api:sessoes, api:admin | ✅ (novo, F-2) |
+| SEN-08 | A própria pessoa troca a senha | qualquer | Logado em 2 aparelhos, troca a senha num deles (troca obrigatória, ou o Dono editando a própria senha em Equipe) | Este aparelho segue logado (recebe um token novo); o outro cai | api:sessoes, e2e:desktop | ✅ (novo, F-2) |
 
 ### 4.3 Permissões e módulos (PER)
 
@@ -223,6 +229,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | PED-15 | Pedido aguardando aceite | Cozinha | Primeiro pedido de mesa livre na Central (desktop e celular) | Em Recebido, com "Aguardando aceite" e "Mesa N" em destaque; não arrasta para outra coluna; a API recusa mudar a etapa antes do aceite (409) | api:salao, e2e:fluxo | ✅ (novo) |
 | PED-16 | Duas etapas no primeiro pedido | Cozinha | Aceitar (abre a mesa) e depois Aceitar de novo (Preparando) | Fluxo do pedido: aguardando → Recebido → Preparando | e2e:fluxo | ✅ (novo; ver A-3.3 na seção 6) |
 | PED-14 | Aceitar e recusar o mesmo pedido juntos | Cozinha + Garçom | Um aceita enquanto o outro recusa | Só um vale; o outro recebe "não foi possível"; o pedido está na comanda se e só se não foi recusado | api:salao | ✅ corrigido (B20) |
+| PED-17 | Pedido de comanda paga não muda de status | Dono | Fechar a comanda; mover o pedido para cancelado, preparando, pronto, servido; aceitar; recusar | 409 "Comanda já fechada: o status deste pedido não muda mais."; Relatórios e Contas a Receber iguais; na Central o cartão não arrasta | api:fechado | ✅ corrigido (F-3, SEG-A07: antes, "cancelado" era aceito) |
 
 ### 4.6 Mesas: mapa, comanda, fechamento e transferência (MES)
 
@@ -248,6 +255,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | MES-15 | Fechar conta no celular | Garçom | Mesa → Fechar conta | Pede a forma de pagamento antes de fechar; lançamento em Contas a Receber | e2e:mobile | ✅ corrigido (B15) |
 | MES-16 | Mesa sem pedidos | Garçom | Fechar conta em mesa livre | Botão desabilitado | M | ✅ M |
 | MES-17 | Mesas diferentes fecham ao mesmo tempo | 10 Garçons | 10 mesas com Clássico, Cheddar & Bacon, batata e onion rings (ordem alternada) fecham juntas | Todas fecham; estoque e 10 recebíveis certos (sem deadlock) | api:salao | ✅ corrigido (B04); C-3: a baixa virou um comando só, mesmo resultado |
+| MES-18 | Fechar conta por papel | Cozinha, Garçom | Mesa com comanda aberta, desktop e celular | Cozinha não vê "Fechar conta" e a API responde 403; garçom, Administrador e Dono fecham | api:autorizacao, e2e:desktop, e2e:mobile | ✅ corrigido (F-4) |
+| MES-19 | Editar ambiente por papel | Garçom, Cozinha, Adm | Mesas | Só Administrador e Dono veem "Editar ambiente"; a API recusa criar, renumerar, mover, excluir mesa e mudar a grade para Funcionário (403) | api:autorizacao, e2e:desktop | ✅ corrigido (F-4: antes, garçom e cozinha excluíam mesas) |
 
 ### 4.7 Produtos, estoque e ficha técnica (EST)
 
@@ -409,6 +418,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | UX-03 | Acessibilidade de todas as telas | Seção 3, com axe-core e a medida dos alvos | Nenhuma violação WCAG 2.1 A/AA (contraste 4,5:1 e 3:1, nome em botões, links e campos) e nenhum alvo de toque menor que 44 × 44 | e2e:varredura | ✅ corrigido (A-4.2): 639 → 0, detalhes na seção 6 |
 | UX-04 | Acessibilidade do que abre com um toque | Todo diálogo, folha, popover e formulário aberto (seção 6, rodada C), desktop e celular, claro e escuro, com o axe e a medida dos alvos enquanto está aberto | Nenhuma violação WCAG 2.1 A/AA e nenhum alvo menor que 44 × 44 | e2e:dialogos | ✅ corrigido (C-7): 40 → 0 (112 → 0 elementos) |
 | UX-05 | Ícones sem CDN | Os dois apps sem nada de outra origem; cada classe `fa-*` usada (também as que vêm do seed) tem o seu SVG no `icons.css` do app; comparação lado a lado com o Font Awesome do cdnjs | Iguais (mesma caixa, largura e alinhamento); botão só com ícone tem nome | api:icones, M | ✅ (novo, C-1) |
+| UX-06 | Texto sobre a cor de alerta no tema escuro | Celular, tema escuro, com pedido novo pendente: o selo da aba Central (e o de não lidas do Atendimento, o botão de enviar áudio) | Contraste de pelo menos 4,5:1 | e2e:mobile | ✅ corrigido (rodada F: era 3,51:1, branco sobre `#CE6E54`; achado pelo `npm test` antes do push) |
 | ROB-01 | Requisição malformada não derruba a API | PATCH de prato com preço "abc" (Administrador) | Erro só nessa requisição; a API segue respondendo | api:robustez | ✅ corrigido (B05) |
 
 ### 4.18 Segurança e limites (SEG)
@@ -459,6 +469,12 @@ Lido direto do banco de teste (`OrderEvent`): não há tela nem rota para ele.
 | DESC-01 | Só restaurante com Delivery na lista | Super Admin, cliente | Desligar o módulo Delivery do restaurante; abrir a lista e buscar pelo nome; pedir delivery | Some da lista e da busca; o pedido de delivery é recusado ("Este restaurante não recebe pedidos de delivery pelo app."); religado, volta | api:descoberta | ✅ (novo, E-6) |
 | DESC-02 | Sem Delivery, a mesa segue | cliente, Garçom | Módulo desligado: cardápio público, QR da mesa (e o tablet), aceite, Lançar pedido | Tudo como antes | api:descoberta | ✅ (novo, E-6) |
 | DESC-03 | Dinheiro igual nos dois apps | — | `brl` de -10; 1340,5; -0,001 | "-R$ 10,00", "R$ 1.340,50", "R$ 0,00"; o cardápio e o painel usam o mesmo (`@cardapio/shared`) | api:moeda | ✅ corrigido (E-7: o cardápio mostrava "R$ -10,00" e "R$ 1340,50") |
+| DESC-04 | Sem destaques fixos | cliente | Tela inicial do delivery; o bundle de produção do cardápio | Nenhum destaque inventado; nenhum nome de restaurante do banco no código | e2e:csp | ✅ corrigido (F-5: "Fogo & Nó" e "Forno di Napoli" estavam no código) |
+| DESC-05 | Delivery desligado por padrão | Super Admin | Cadastrar restaurante e ativar; seed de demonstração | Nasce com todos os módulos menos Delivery e não aparece na lista até o Super Admin ligar; a Chapa 27 do seed sem Delivery; os restaurantes que já existiam não mudam | api:admin, api:seed | ✅ (novo, F-6) |
+| CUP-01 | Cupom que não existe | cliente | "abc" no Pagamento; pedido com ele | "Cupom não encontrado neste restaurante."; o pedido não é criado | api:cupom | ✅ corrigido (F-1, SEG-A01: antes, qualquer texto dava 10%) |
+| CUP-02 | Cupom cadastrado em Promoções | cliente | 15%, R$ 7,50 e R$ 9.999 de desconto num pedido de delivery | Desconto exatamente o do cupom, sobre o subtotal e nunca maior que ele; gravado no pedido com o código; o uso é contado | api:cupom | ✅ (novo, F-1) |
+| CUP-03 | Desconto enviado pelo aparelho | cliente | Pedido com `discount`, `discountPercent`, `total` e `subtotal` forjados | Ignorados: o servidor calcula | api:cupom | ✅ (novo, F-1) |
+| CUP-04 | Regras de Promoções | cliente | Cupom pausado, expirado, só para mesa, de combo, esgotado, de outro restaurante; dois pedidos com o último uso | Cada um recusado com o motivo; do último uso, só um pedido leva | api:cupom | ✅ (novo, F-1; combo fica para decisão) |
 
 ## 5. Só com aparelho na mão
 
@@ -742,3 +758,21 @@ Casos novos nas seções 4.18 (SEG-15 a SEG-25), 4.19 (OBS) e 4.20 (DESC); os ac
 | 3º | `cfe1df7` e a documentação | 154 / 0 / 1 | 89 / 0 / 1 | ver o relatório da rodada |
 
 O teste pulado da API é o do `deploy.sh` (SEG-24), que só roda em Linux (o CI); o das telas é o de sempre (a Central no celular, coberta no desktop e no tablet). **Supabase de testes:** as migrações `9i` e `9j` aplicadas com `npm run db:deploy` (02/10): 22 tabelas com RLS, `OrderEvent` incluída; os 7 restaurantes com o módulo Delivery; o advisor de segurança só com "RLS Enabled No Policy" (INFO).
+
+### Rodada F (02/10/2026): as decisões da auditoria
+
+As decisões pendentes da auditoria (`docs/seguranca/auditoria-2026-10.md`, seção 5) tomadas em 02/10 e implementadas, cada uma com um teste que falhava no código anterior:
+
+| Item | Decisão | Casos | Antes → depois |
+| --- | --- | --- | --- |
+| F-1 (SEG-A01) | Cupom só do restaurante, válido pelas regras de Promoções; desconto calculado no servidor e gravado no pedido | CUP-01 a CUP-04 | `cupom.test.ts`: 4 de 5 falhavam ("abc" dava 10%) → 5 de 5 |
+| F-2 (SEG-A06) | Troca/reset de senha encerra as sessões; quem troca a própria senha segue no aparelho | SEN-07, SEN-08 | `sessoes.test.ts`: 4 de 5 falhavam (os tokens seguiam valendo) → 5 de 5 |
+| F-3 (SEG-A07) | Pedido de comanda fechada não muda de status | PED-17 | `fechado.test.ts`: "cancelado" respondia 200 → 409 |
+| F-4 (SEG-A21) | Fechar conta: garçom e acima; editar o mapa: Administrador e Dono | MES-18, MES-19 | autorização: garçom e cozinha criavam/moviam/excluíam mesas → 403; telas por papel: os botões apareciam para todos → escondidos |
+| F-5 (SEG-A31) | Sem destaques fixos no app do cliente | DESC-04 | bundle com "Fogo & Nó" e "Forno di Napoli" → nenhum nome de restaurante |
+| F-6 | Delivery desligado por padrão (Super Admin e Chapa 27 do seed) | DESC-05 | restaurante novo e Chapa 27 com Delivery → sem |
+| F-7 | Tempo máximo do CI: 25 → 40 min | — | (a execução do CI é a prova) |
+| Achado no `npm test` | Texto sobre a cor de alerta legível no tema escuro (token `--alertInk`) | UX-06 | o selo da Central no celular, tema escuro: 3,51:1 → 5,5:1 |
+
+**`npm test` antes do push** (nesta máquina): API 166 passaram, 0 falharam, 1 pulado (o do `deploy.sh`, só Linux); telas 93 passaram, 0 falharam, 1 pulado (o de sempre). A primeira execução achou o UX-06 (1 falha no celular, tema escuro); corrigido e rodado de novo. CI: ver a execução do último commit da rodada.
+
