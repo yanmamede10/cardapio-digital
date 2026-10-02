@@ -24,10 +24,15 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `api:seguranca` | `tests/api/seguranca.test.ts` |
 | `api:limites` | `tests/api/limites.test.ts` (rate limiting) |
 | `api:icones` | `tests/api/icones.test.ts` (ícones locais, sem CDN) |
+| `api:autorizacao` | `tests/api/autorizacao.test.ts` (todas as rotas do Express: sem token, outro restaurante, papel, módulo) |
+| `api:eventos` | `tests/api/eventos.test.ts` (histórico do pedido, `OrderEvent`) |
+| `api:descoberta` | `tests/api/descoberta.test.ts` (lista do app do cliente e o módulo Delivery) |
+| `api:moeda` | `tests/api/moeda.test.ts` (o formatador de dinheiro dos dois apps) |
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
 | `e2e:dialogos` | `tests/e2e/dialogos.spec.ts` (acessibilidade de diálogos, folhas e formulários; desktop e celular × 2 temas) |
+| `e2e:csp` | `tests/e2e/csp.spec.ts` (os dois apps no build de produção com os cabeçalhos do `vercel.json`) |
 | `carga` | `tests/load/pico.mjs` (casa cheia), `tests/load/cardapio.mjs` (Lighthouse), `tests/load/painel.spec.ts` (pedido → Central nas telas) |
 | **M** | manual (roteiro abaixo) |
 
@@ -42,7 +47,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -424,6 +429,36 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | SEG-10 | Buckets do Storage iguais em todo projeto | — | `npm run db:deploy` no Supabase de testes; `storage.buckets`; gravar SVG, MP3 e PNG no `cardapio` pelo S3 | `cardapio` público, 8 MB, só PNG/JPEG/WebP (antes aceitava SVG e áudio); `whatsapp-media` privado, 8 MB, imagens e áudios; SVG e MP3 recusados (415), PNG aceito | M (hospedado) | ✅ M (C-6, 01/10) |
 | SEG-11 | Chave da Evolution forte e sem padrão | — | Chave nova de 64 hex no `apps/api/.env`; `up -d` recria o contêiner | A chave antiga recebe 401; a nova, 200; o adaptador da API fala com a Evolution | M | ✅ M (C-9, 01/10) |
 | SEG-08 | Pedir pelo QR com a opção desligada | cliente | Pedido anônimo de mesa com Configurações → Salão sem QR | 403 "os pedidos da mesa são feitos pelo garçom"; o garçom lança; delivery não muda | api:garcom | ✅ (A-2.12, já existia) |
+| SEG-15 | Todas as rotas, sem token, de outro restaurante, com papel abaixo e com o módulo desligado | — | As 104 rotas lidas do próprio Express; cada uma numa lista (pública, webhook, própria, super admin ou equipe com papel e módulo) | Rota fora das listas falha o teste; sem credencial 401; outro restaurante 403/404; papel abaixo 403 (o mínimo passa nas leituras); módulo desligado 403 até para o Dono; chave do super admin com um caractere a mais ou a menos 401 | api:autorizacao | ✅ (novo, E-1) |
+| SEG-16 | Configurações só do Dono, também pela API | Adm | `PATCH` perfil, horários, fiscal, forma de pagamento/serviço 10%/QR e aparência com o login do gerente | 403 (antes, 200); o Dono segue; a forma de pagamento continua lida por todos | api:autorizacao | ✅ corrigido (SEG-A02) |
+| SEG-17 | Pedido malformado sem detalhe interno | cliente | `POST /api/orders` com `itemId` 123, `{ "not": "x" }` ou `null` | 400 sem caminho de arquivo, código nem consulta do Prisma (antes vinham os três) | api:seguranca | ✅ corrigido (SEG-A04) |
+| SEG-18 | Restaurante inativo some do público | — | Super Admin desativa; cardápio, categorias, prato e aparência; pedido de delivery | 404 em tudo; reativado, volta | api:seguranca | ✅ corrigido (SEG-A11, SEG-A03) |
+| SEG-19 | Cabeçalhos de segurança da API | — | `GET /api/health`, uma rota que não existe, o webhook sem segredo, o cardápio | `nosniff`, `X-Frame-Options: DENY`, CSP `default-src 'none'`, `Referrer-Policy: no-referrer`; sem `X-Powered-By` | api:seguranca | ✅ corrigido (SEG-A09) |
+| SEG-20 | Logo e capa só do bucket | Dono | `logoUrl`/`coverPhotos`/`coverUrl` com `javascript:`, outro site, `http:`, um número | 400; a URL do bucket público e a que já estava gravada passam | api:seguranca | ✅ corrigido (SEG-A10) |
+| SEG-21 | Chave do super admin forte em produção | — | API com `NODE_ENV=production` e `SUPER_ADMIN_KEY` de 8 caracteres | Não sobe e diz o motivo; com 32+ sobe; vazia sobe com o super admin desligado | api:seguranca | ✅ corrigido (SEG-A13) |
+| SEG-22 | Login não revela quem tem conta | — | 4 logins com e-mail inexistente × 4 com senha errada de uma conta | Tempos parecidos (antes: 4,2 ms × 66,7 ms) | api:seguranca | ✅ corrigido (SEG-A12) |
+| SEG-23 | Upload acima de 8 MB | Dono | Capa e foto do prato com 8 MB + 8 bytes | 413 "file too large — limit is 8 MB" (antes 500) | api:seguranca | ✅ corrigido (SEG-A14) |
+| SEG-24 | `deploy/.env` só do dono | — | `deploy/.env` criado com 644; `deploy/deploy.sh seed-demo` sem senha | Sai pedindo a senha e o `.env` fica 600 | api:seguranca (Linux/CI) | ✅ corrigido (SEG-A15) |
+| SEG-25 | CSP e cabeçalhos dos fronts | — | Os dois apps no build de produção com os cabeçalhos do `vercel.json`: login, 12 telas do Dono, Super Admin; lista, cardápio, prato e mesa pelo QR; um `<script>` injetado | Nada bloqueado pela CSP; o script injetado não roda | e2e:csp | ✅ corrigido (SEG-A05) |
+
+### 4.19 Histórico do pedido (OBS)
+
+Lido direto do banco de teste (`OrderEvent`): não há tela nem rota para ele.
+
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
+| --- | --- | --- | --- | --- | --- | --- |
+| OBS-01 | Da mesa livre ao fechamento | cliente, Garçom, Cozinha | QR numa mesa livre → aceitar → preparar → pronto (duas vezes) → servido; o garçom lança outro; o cliente pede de novo, a cozinha aceita; dois garçons fecham a conta no PIX ao mesmo tempo | Cada pedido com a sua sequência (criado pelo QR/garçom, aguardando aceite pelo sistema, aceito, cada status, servido pelo fechamento, comanda fechada no PIX), com quem fez; o clique repetido e o segundo fechamento não gravam nada; totais dos pedidos e o Contas a Receber iguais | api:eventos | ✅ (novo, E-5) |
+| OBS-02 | Recusado | cliente, Cozinha | 1º pedido de uma mesa livre recusado; recusar de novo | criado, aguardando aceite, recusado; o segundo 409 não grava | api:eventos | ✅ (novo, E-5) |
+| OBS-03 | Delivery | cliente, Dono, Cozinha, Garçom | Pedido de delivery → aceitar → pronto → saiu para entrega → entregue | criado (delivery), aceito, cada status, com quem fez | api:eventos | ✅ (novo, E-5) |
+| OBS-04 | Dois aparelhos ao mesmo tempo | Garçom | Aceitar e recusar juntos; aceitar e aceitar juntos | Uma linha por mudança que valeu; a última é o status do pedido | api:eventos | ✅ (novo, E-5) |
+
+### 4.20 Lista do app do cliente e o módulo Delivery (DESC)
+
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
+| --- | --- | --- | --- | --- | --- | --- |
+| DESC-01 | Só restaurante com Delivery na lista | Super Admin, cliente | Desligar o módulo Delivery do restaurante; abrir a lista e buscar pelo nome; pedir delivery | Some da lista e da busca; o pedido de delivery é recusado ("Este restaurante não recebe pedidos de delivery pelo app."); religado, volta | api:descoberta | ✅ (novo, E-6) |
+| DESC-02 | Sem Delivery, a mesa segue | cliente, Garçom | Módulo desligado: cardápio público, QR da mesa (e o tablet), aceite, Lançar pedido | Tudo como antes | api:descoberta | ✅ (novo, E-6) |
+| DESC-03 | Dinheiro igual nos dois apps | — | `brl` de -10; 1340,5; -0,001 | "-R$ 10,00", "R$ 1.340,50", "R$ 0,00"; o cardápio e o painel usam o mesmo (`@cardapio/shared`) | api:moeda | ✅ corrigido (E-7: o cardápio mostrava "R$ -10,00" e "R$ 1340,50") |
 
 ## 5. Só com aparelho na mão
 
@@ -678,3 +713,32 @@ De onde vem a diferença: não é o pooler, é o `pgbouncer=true` do Prisma (sem
 | as outras 8 (`Address` 2, `BillingCharge` 3, `Coupon` 4, `PaymentMethod` 4, `Review` 5, `SupportMessage` 6, `SupportTicket` 3, `WaiterCall` 1) | iguais | iguais | iguais |
 
 **O que esta máquina não prova:** o certificado do Let's Encrypt para o IP (precisa de um IP público com as portas 80 e 443 abertas: só na VM; a configuração passa no `caddy validate` e o `caddy adapt` mostra o emissor `acme` com o perfil `shortlived`); o IP real do visitante chegando ao Caddy (no Docker Desktop toda conexão do host chega pelo gateway; num Linux com Docker, a publicação de porta preserva o IP de origem em IPv4); a reinicialização de uma VM de verdade (aqui, o Docker reiniciou; na VM é o `systemctl enable docker` que traz tudo de volta).
+
+### Rodada E (02/10/2026): segurança, histórico do pedido, lista do delivery e backup do Storage
+
+Casos novos nas seções 4.18 (SEG-15 a SEG-25), 4.19 (OBS) e 4.20 (DESC); os achados da auditoria estão em `docs/seguranca/auditoria-2026-10.md`.
+
+**Backup do Storage (E-4, BKP-01), contra o projeto Supabase de testes.** Como na Rodada D: um diretório de rascunho com o `deploy/docker-compose.prod.yml` commitado e um `deploy/.env` com as chaves S3 do `apps/api/.env` (projeto de testes). A pasta `/backups` do serviço num volume Docker (Linux), para as permissões valerem — o NTFS desta máquina não guarda modo de arquivo. Os dois buckets estavam vazios; os arquivos da prova foram enviados num prefixo próprio (`prova-bkp-01/`) e apagados no fim, com o contêiner, o volume e a rede: os buckets voltaram a 0 objeto.
+
+| Passo | No Supabase (`rclone size` e `storage.objects`) | Na cópia local |
+| --- | --- | --- |
+| Envio da prova | `cardapio` 5 (3 PNG, 2 JPEG); `whatsapp-media` 3 (2 OGG, 1 JPEG) | — |
+| Serviço `storage-backup` sobe (depois das 04:00, sem `.ultima-copia`) | — | log: "cardapio, 5 arquivos" e "whatsapp-media, 3 arquivos"; `.ultima-copia` com o dia |
+| Permissões | — | pastas `700 root`, arquivos `600 root` (umask 077, como o dump) |
+| +1 PNG no `cardapio` e segunda cópia | `cardapio` 6 | só `prova-bkp-01/foto-4.png: Copied (new)`; `whatsapp-media`: "There was nothing to transfer"; `cardapio` 6 arquivos, os 5 antigos não baixados de novo |
+| Terceira cópia | 6 e 3 | "Transferred: 0 B / 0 B", "Checks: 6 / 6" e "3 / 3" |
+| Perda simulada: `rclone delete` do prefixo nos dois buckets | 0 e 0 | 6 e 3 (a cópia nunca apaga) |
+| Restauração (o comando do README, com o tipo pela extensão) | `cardapio` 6 e `whatsapp-media` 3, com `image/png`, `image/jpeg` e `audio/ogg` e os mesmos tamanhos (10–14 B) | — |
+
+**Pilha de produção de novo (mexemos em `deploy/`):** o teste do compose de produção (SEG-13, agora também com o `storage-backup` e o log com teto de cada serviço) passa; a imagem da API construída para `linux/arm64` (`docker buildx build --platform linux/arm64 --no-cache`), engine `linux-arm64-openssl-3.0.x`, build sem cache em 2 min 13 s (emulado); com a própria imagem, `prisma migrate deploy` num Postgres 17.11 descartável aplicou as 20 migrações (`9i` e `9j` incluídas), e o Prisma da imagem leu `OrderEvent` (0 linhas, RLS ligado) com `process.arch = arm64`.
+
+**`npm test` antes de cada push** (API e telas no Postgres descartável, nesta máquina) **e o CI** depois:
+
+| Push | Commits | API (passaram / falharam / pulados) | Telas (passaram / falharam / pulados) | CI |
+| --- | --- | --- | --- | --- |
+| Base (antes da rodada) | `cccd0cd` | 132 / 0 / 0 | 86 / 0 / 1 | — |
+| 1º | `a99cf86`…`ea0fb19` (12) | 147 / 0 / 0 | 86 / 0 / 1 | ✅ run 36957900059 (15 min 44 s) |
+| 2º | `c2d1f7b`…`27f3d60` (9) | 154 / 0 / 1 | 89 / 0 / 1 | ✅ run 36960082396 (19 min 16 s) |
+| 3º | `cfe1df7` e a documentação | 154 / 0 / 1 | 89 / 0 / 1 | ver o relatório da rodada |
+
+O teste pulado da API é o do `deploy.sh` (SEG-24), que só roda em Linux (o CI); o das telas é o de sempre (a Central no celular, coberta no desktop e no tablet). **Supabase de testes:** as migrações `9i` e `9j` aplicadas com `npm run db:deploy` (02/10): 22 tabelas com RLS, `OrderEvent` incluída; os 7 restaurantes com o módulo Delivery; o advisor de segurança só com "RLS Enabled No Policy" (INFO).
