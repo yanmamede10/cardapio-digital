@@ -1,4 +1,5 @@
 import { test as base, expect, type APIRequestContext } from "@playwright/test";
+import { PLAN_MODULES } from "@cardapio/shared";
 
 const API = "http://localhost:4200";
 export const R = "fogo";
@@ -84,8 +85,8 @@ export async function loginAs(page: import("@playwright/test").Page, request: AP
   await page.addInitScript((s) => localStorage.setItem("cardapio.dashboard.session", s), session);
 }
 
-/** Every module; the seed leaves "fiscal" off for fogo (demo restaurant). Tests that change them restore SEED_MODULES. */
-export const ALL_MODULES = ["pedidos", "cardapio", "mesas", "promocoes", "atendimento", "produtos", "relatorios", "visao", "pagar", "receber", "fiscal"];
+/** Every module (PLAN_MODULES); the seed leaves "fiscal" off for fogo (demo restaurant). Tests that change them restore SEED_MODULES. */
+export const ALL_MODULES: string[] = [...PLAN_MODULES];
 export const SEED_MODULES = ALL_MODULES.filter((m) => m !== "fiscal");
 export const ADMIN_KEY = "test-admin-key"; // tests/run.mjs
 export async function setModules(request: APIRequestContext, modules: string[]) {
