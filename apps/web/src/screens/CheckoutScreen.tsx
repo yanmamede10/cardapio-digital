@@ -1,4 +1,4 @@
-import type { Address, PaymentMethod, Restaurant } from "@cardapio/shared";
+import { couponDiscount, type Address, type PaymentMethod, type Restaurant } from "@cardapio/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
@@ -9,7 +9,7 @@ import { brl } from "../lib/format";
 
 export default function CheckoutScreen() {
   const navigate = useNavigate();
-  const { mode, restaurantId, addressId, setAddressId, paymentMethodId, setPaymentMethodId, discountPercent, setCoupon } = useApp();
+  const { mode, restaurantId, addressId, setAddressId, paymentMethodId, setPaymentMethodId, coupon, setCoupon } = useApp();
   const { subtotal, lines } = useCart();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -41,13 +41,14 @@ export default function CheckoutScreen() {
   if (mode === "table") return null;
 
   const fee = restaurant?.deliveryFee ?? 0;
-  const discount = discountPercent > 0 ? Math.round(subtotal * (discountPercent / 100) * 100) / 100 : 0;
+  const discount = coupon ? couponDiscount(coupon, subtotal) : 0;
   const total = subtotal + fee - discount;
 
   const applyCoupon = async () => {
-    const result = await api.applyCoupon(couponInput);
+    if (!restaurantId) return;
+    const result = await api.applyCoupon(restaurantId, couponInput);
     setCouponNote(result.message);
-    setCoupon(result.valid ? couponInput : null, result.valid ? result.discountPercent : 0);
+    setCoupon(result.valid ? couponInput : null, result.kind ? { kind: result.kind, value: result.value } : null);
   };
 
   return (
@@ -106,7 +107,7 @@ export default function CheckoutScreen() {
         </div>
         {couponNote && (
           <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, font: "500 var(--t-s) var(--font)", color: "var(--acc)" }}>
-            <i className={discountPercent > 0 ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation"} style={{ fontSize: "var(--i-s)" }} />{couponNote}
+            <i className={coupon ? "fa-solid fa-circle-check" : "fa-solid fa-circle-exclamation"} style={{ fontSize: "var(--i-s)" }} />{couponNote}
           </div>
         )}
 

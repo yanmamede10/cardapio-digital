@@ -275,10 +275,13 @@ export interface CreateOrderRequest {
   lines: CartLineInput[];
 }
 
+/** POST /api/coupons/apply: whether the code is one of the restaurant's coupons (Promoções), usable on a delivery order now,
+ *  and what it takes off the subtotal (couponDiscount). kind is null when it isn't. */
 export interface CouponResult {
   valid: boolean;
-  discountPercent: number;
   message: string;
+  kind: "percent" | "fixed" | null;
+  value: number;
 }
 
 export interface TableResolveResponse {

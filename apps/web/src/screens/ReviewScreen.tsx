@@ -1,4 +1,4 @@
-import type { Address } from "@cardapio/shared";
+import { couponDiscount, type Address } from "@cardapio/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
@@ -11,7 +11,7 @@ import { brl } from "../lib/format";
 export default function ReviewScreen() {
   const navigate = useNavigate();
   const {
-    mode, tableNumber, tableCode, guestName, restaurantId, addressId, paymentMethodId, couponCode, discountPercent,
+    mode, tableNumber, tableCode, guestName, restaurantId, addressId, paymentMethodId, couponCode, coupon,
     registerTableOrder
   } = useApp();
   const { lines, subtotal, count, clear } = useCart();
@@ -33,7 +33,7 @@ export default function ReviewScreen() {
 
   const selectedAddress = addresses.find((a) => a.id === addressId);
   const fee = isMesa ? 0 : restaurantFee;
-  const discount = !isMesa && discountPercent > 0 ? Math.round(subtotal * (discountPercent / 100) * 100) / 100 : 0;
+  const discount = !isMesa && coupon ? couponDiscount(coupon, subtotal) : 0;
   const total = subtotal + fee - discount;
 
   const backTo = () => navigate(isMesa ? "/cart" : "/checkout");

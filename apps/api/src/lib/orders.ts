@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
-import type { CreateOrderRequest } from "@cardapio/shared";
+import { couponDiscount, type CreateOrderRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { generateOrderCode } from "./codes.js";
-import { evaluateCoupon } from "./coupons.js";
+import { COUPON_USED_UP, deliveryCoupon } from "./coupons.js";
 import { PricingError, priceLine, round2 } from "./pricing.js";
 import { recipeOf } from "./stock.js";
 import { hasOpenComanda } from "./tables.js";
@@ -82,8 +82,12 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
 
   const subtotal = round2(pricedLines.reduce((t, l) => t + l.unitPrice * l.quantity, 0));
   const deliveryFee = mode === "delivery" ? restaurant.deliveryFee : 0;
-  const coupon = mode === "delivery" ? evaluateCoupon(body.couponCode) : { valid: false, discountPercent: 0, message: "" };
-  const discount = coupon.valid ? round2(subtotal * (coupon.discountPercent / 100)) : 0;
+  // A delivery coupon is one of the restaurant's (Promoções), valid now; its discount is computed here and frozen on the
+  // order. Nothing the device sends as a discount or a total is ever read. An unknown or unusable code refuses the order.
+  const found = mode === "delivery" && body.couponCode ? await deliveryCoupon(body.restaurantId, body.couponCode) : null;
+  if (found && "error" in found) return { status: 400, error: found.error };
+  const coupon = found?.coupon ?? null;
+  const discount = coupon ? couponDiscount(coupon, subtotal) : 0;
 
   let round = 1;
   // Taken at the table by the waiter: no one needs to accept it, it goes straight into production.
@@ -99,37 +103,40 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
     round = 1 + (await prisma.order.count({ where: { mode: "table", restaurantId: body.restaurantId, tableNumber, guestSessionId, createdAt: { gte: startOfDay } } }));
   }
 
-  const order = await prisma.order.create({
-    data: {
-      code: generateOrderCode(),
-      mode,
-      restaurantId: body.restaurantId,
-      restaurantName: restaurant.name,
-      tableNumber,
-      guestName: body.guestName || null,
-      guestSessionId,
-      waiterName,
-      // "Para levar" exists only at the end of a customer's table order (QR or tablet).
-      takeaway: mode === "table" && !waiterName && body.takeaway === true,
-      addressId: mode === "delivery" ? body.addressId ?? null : null,
-      paymentMethodId: mode === "delivery" ? body.paymentMethodId ?? null : null,
-      couponCode: coupon.valid ? body.couponCode ?? null : null,
-      subtotal,
-      deliveryFee,
-      discount,
-      total: round2(subtotal + deliveryFee - discount),
-      status,
-      round,
-      lines: { create: pricedLines },
-      // In the same write as the order: who created it and from where; a free table's first order also waits on the system.
-      events: {
-        create: [
-          orderEvent(body.restaurantId, "criado", status, waiter ? staffActor(waiter) : CUSTOMER, { channel: waiter ? "garcom" : mode === "delivery" ? "delivery" : "qr" }),
-          ...(status === "awaiting" ? [orderEvent(body.restaurantId, "aguardando_aceite", status, SYSTEM)] : [])
-        ]
-      }
-    },
-    include: { lines: true }
+  const data: Prisma.OrderUncheckedCreateInput = {
+    code: generateOrderCode(),
+    mode,
+    restaurantId: body.restaurantId,
+    restaurantName: restaurant.name,
+    tableNumber,
+    guestName: body.guestName || null,
+    guestSessionId,
+    waiterName,
+    // "Para levar" exists only at the end of a customer's table order (QR or tablet).
+    takeaway: mode === "table" && !waiterName && body.takeaway === true,
+    addressId: mode === "delivery" ? body.addressId ?? null : null,
+    paymentMethodId: mode === "delivery" ? body.paymentMethodId ?? null : null,
+    couponCode: coupon?.code ?? null,
+    subtotal,
+    deliveryFee,
+    discount,
+    total: round2(subtotal + deliveryFee - discount),
+    status,
+    round,
+    lines: { create: pricedLines },
+    // In the same write as the order: who created it and from where; a free table's first order also waits on the system.
+    events: {
+      create: [
+        orderEvent(body.restaurantId, "criado", status, waiter ? staffActor(waiter) : CUSTOMER, { channel: waiter ? "garcom" : mode === "delivery" ? "delivery" : "qr" }),
+        ...(status === "awaiting" ? [orderEvent(body.restaurantId, "aguardando_aceite", status, SYSTEM)] : [])
+      ]
+    }
+  };
+  if (!coupon) return { order: await prisma.order.create({ data, include: { lines: true } }) };
+  // With a coupon: one of its uses is taken in the same transaction as the order — two customers can't take the last one.
+  const order = await prisma.$transaction(async (tx) => {
+    const { count } = await tx.coupon.updateMany({ where: { id: coupon.id, usedCount: { lt: coupon.usageLimit } }, data: { usedCount: { increment: 1 } } });
+    return count ? tx.order.create({ data, include: { lines: true } }) : null;
   });
-  return { order };
+  return order ? { order } : { status: 400, error: COUPON_USED_UP };
 }

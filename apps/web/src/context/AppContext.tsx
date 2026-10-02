@@ -22,7 +22,8 @@ interface AppState {
   addressId: string | null;
   paymentMethodId: string | null;
   couponCode: string | null;
-  discountPercent: number;
+  /** The applied coupon's rule (from /api/coupons/apply): the checkout shows its discount with couponDiscount. */
+  coupon: { kind: "percent" | "fixed"; value: number } | null;
 }
 
 interface AppContextValue extends AppState {
@@ -34,7 +35,7 @@ interface AppContextValue extends AppState {
   setWaiterCalled: (called: boolean) => void;
   setAddressId: (id: string) => void;
   setPaymentMethodId: (id: string) => void;
-  setCoupon: (code: string | null, discountPercent: number) => void;
+  setCoupon: (code: string | null, coupon: AppState["coupon"]) => void;
 }
 
 const SESSION_STATE_KEY = "cardapio.tableSession";
@@ -54,7 +55,7 @@ function loadInitialState(): AppState {
     addressId: null,
     paymentMethodId: null,
     couponCode: null,
-    discountPercent: 0
+    coupon: null
   };
   if (stored) {
     try {
@@ -124,8 +125,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, paymentMethodId: id }));
   }, []);
 
-  const setCoupon = useCallback((code: string | null, discountPercent: number) => {
-    setState((s) => ({ ...s, couponCode: code, discountPercent }));
+  const setCoupon = useCallback((code: string | null, coupon: AppState["coupon"]) => {
+    setState((s) => ({ ...s, couponCode: code, coupon }));
   }, []);
 
   const value = useMemo<AppContextValue>(

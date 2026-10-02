@@ -73,8 +73,8 @@ export const api = {
   resolveTable: (tableCode: string) => request<TableResolveResponse>(`/api/tables/${tableCode}`),
   getAddresses: () => request<Address[]>("/api/addresses"),
   getPaymentMethods: () => request<PaymentMethod[]>("/api/payment-methods"),
-  applyCoupon: (code: string) =>
-    request<CouponResult>("/api/coupons/apply", { method: "POST", body: JSON.stringify({ code }) }),
+  applyCoupon: (restaurantId: string, code: string) =>
+    request<CouponResult>("/api/coupons/apply", { method: "POST", body: JSON.stringify({ restaurantId, code }) }),
   createOrder: (payload: CreateOrderRequest) =>
     request<Order>("/api/orders", { method: "POST", body: JSON.stringify(payload) }),
   getOrder: (id: string) => request<Order>(`/api/orders/${id}`),
