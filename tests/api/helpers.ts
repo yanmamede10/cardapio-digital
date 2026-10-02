@@ -56,6 +56,8 @@ export const ADMIN_KEY = process.env.SUPER_ADMIN_KEY ?? "test-admin-key"; // set
 /** Every module (PLAN_MODULES); the seed leaves "fiscal" off for fogo (demo restaurant). */
 export const ALL_MODULES: string[] = [...PLAN_MODULES];
 export const SEED_MODULES = ALL_MODULES.filter((m) => m !== "fiscal");
+/** Chapa 27's (seed-demo): no Emissão Fiscal and no Delivery (F-6). */
+export const DEMO_MODULES = SEED_MODULES.filter((m) => m !== "delivery");
 export const setModules = (modules: string[], restaurantId = R) => call("PATCH", `/api/admin/restaurants/${restaurantId}/modules`, { token: ADMIN_KEY, body: { modules } });
 
 /** First login with a provisional password (super admin sign-up/reset): logs in and replaces it, as the dashboard forces. */

@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { a11yProblems } from "./a11y";
-import { ADMIN_KEY, expect, loginAs, staffToken, tableUrl, test } from "./fixtures";
+import { ADMIN_KEY, DEMO_MODULES, expect, loginAs, setModules, staffToken, tableUrl, test } from "./fixtures";
 
 // UI-01 + UX-03 (docs/testes/plano-de-testes.md): every screen in scope — the dashboard with every role that sees it, and the
 // customer app at a table and on delivery — on the three screen sizes (Playwright projects desktop/tablet/mobile) and in both
@@ -100,7 +100,9 @@ for (const theme of ["light", "dark"] as const) {
       problems.push(...(await check(g, "cliente mesa: recusado", shot("mesa-recusado"), null)));
       await atTable.close();
 
-      // Delivery: restaurants, menu, cart, checkout, review, the order's status and the history.
+      // Delivery: restaurants, menu, cart, checkout, review, the order's status and the history. The Chapa 27 has no Delivery
+      // module (F-6, seed-demo): on for this part only.
+      await setModules(request, [...DEMO_MODULES, "delivery"], "chapa27");
       const home = await browser.newContext(device);
       const d = await home.newPage();
       problems.push(...(await check(d, "cliente delivery: restaurantes", shot("delivery-inicio"), `${WEB}/`)));
@@ -118,6 +120,7 @@ for (const theme of ["light", "dark"] as const) {
       await request.post(`${API}/api/orders/${d.url().split("/order/")[1]}/reject`, auth); // leaves the Central clean
       problems.push(...(await check(d, "cliente delivery: meus pedidos", shot("delivery-historico"), `${WEB}/history`)));
       await home.close();
+      await setModules(request, DEMO_MODULES, "chapa27");
       expect(problems).toEqual([]);
     });
   });

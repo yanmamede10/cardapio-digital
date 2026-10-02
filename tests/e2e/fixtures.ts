@@ -88,9 +88,11 @@ export async function loginAs(page: import("@playwright/test").Page, request: AP
 /** Every module (PLAN_MODULES); the seed leaves "fiscal" off for fogo (demo restaurant). Tests that change them restore SEED_MODULES. */
 export const ALL_MODULES: string[] = [...PLAN_MODULES];
 export const SEED_MODULES = ALL_MODULES.filter((m) => m !== "fiscal");
+/** Chapa 27's (seed-demo): no Emissão Fiscal and no Delivery (F-6). */
+export const DEMO_MODULES = SEED_MODULES.filter((m) => m !== "delivery");
 export const ADMIN_KEY = "test-admin-key"; // tests/run.mjs
-export async function setModules(request: APIRequestContext, modules: string[]) {
-  const res = await request.patch(`${API}/api/admin/restaurants/${R}/modules`, { data: { modules }, headers: { Authorization: `Bearer ${ADMIN_KEY}` } });
+export async function setModules(request: APIRequestContext, modules: string[], restaurantId = R) {
+  const res = await request.patch(`${API}/api/admin/restaurants/${restaurantId}/modules`, { data: { modules }, headers: { Authorization: `Bearer ${ADMIN_KEY}` } });
   if (!res.ok()) throw new Error(`setModules → ${res.status()}`);
 }
 

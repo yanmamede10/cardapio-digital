@@ -41,8 +41,9 @@ model Restaurant {
   planPrice         Float    @default(0)
   planDueDay        Int      @default(10)
   // Contracted modules (PLAN_MODULES keys) — gate the dashboard menu and API, and ("delivery") the customer app's list;
+  // a new restaurant starts without "delivery" (F-6).
   // toggled by the super admin.
-  planModulesJson   String   @default("[\"pedidos\",\"cardapio\",\"mesas\",\"promocoes\",\"atendimento\",\"produtos\",\"relatorios\",\"visao\",\"pagar\",\"receber\",\"fiscal\",\"delivery\"]")
+  planModulesJson   String   @default("[\"pedidos\",\"cardapio\",\"mesas\",\"promocoes\",\"atendimento\",\"produtos\",\"relatorios\",\"visao\",\"pagar\",\"receber\",\"fiscal\"]")
 
   // How the restaurant takes payment at the table/counter: "sistema" (PIX via
   // our Asaas subconta) or "maquininha_propria" (their own card/PIX terminal —

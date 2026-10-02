@@ -124,7 +124,7 @@ async function main() {
       fiscalAddress: "Endereço fictício de demonstração",
       planPrice: 299.9,
       planDueDay: 10,
-      planModulesJson: JSON.stringify(PLAN_MODULES.filter((m) => m !== "fiscal")), // no Emissão Fiscal
+      planModulesJson: JSON.stringify(PLAN_MODULES.filter((m) => m !== "fiscal" && m !== "delivery")), // no Emissão Fiscal, no Delivery (F-6)
       paymentMode: "maquininha_propria",
       template: "classico",
       brandColor: "#B4411B",

@@ -201,7 +201,9 @@ async function main() {
         reopensAt: p.reopen ?? null,
         promoLabel: p.promo ? p.promo : null,
         coverLabel: p.cover,
-        sortOrder: i
+        sortOrder: i,
+        // The dev seed's delivery restaurants: every module, Delivery included (the column's default no longer has it, F-6).
+        planModulesJson: JSON.stringify(PLAN_MODULES)
       }
     });
 

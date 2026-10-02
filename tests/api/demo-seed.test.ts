@@ -38,6 +38,8 @@ test("seed de demonstração: hamburgueria com cardápio, ficha técnica, estoqu
 
   const admin = (await call("GET", `/api/admin/restaurants/${D}`, { token: ADMIN_KEY })).body;
   assert.equal(admin.modules.includes("fiscal"), false, "Emissão Fiscal desligada");
+  assert.equal(admin.modules.includes("delivery"), false, "Delivery desligado (F-6)");
+  assert.ok(!(await call("GET", "/api/restaurants/")).body.some((r: { id: string }) => r.id === D), "fora da lista do app do cliente");
   assert.deepEqual([admin.status, admin.planPrice, admin.planDueDay], ["ativo", 299.9, 10]);
 });
 

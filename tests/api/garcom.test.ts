@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, test } from "node:test";
-import { SEED_MODULES, call, setModules, tableCode } from "./helpers.ts";
+import { DEMO_MODULES, call, setModules, tableCode } from "./helpers.ts";
 
 // Lançar pedido: the waiter orders for the table from the dashboard, without the customer's phone.
 const D = "chapa27";
@@ -49,10 +49,10 @@ test("mesmas regras do pedido do cliente: esgotado, carrinho vazio, observação
 
 test("com Mesas desligado o garçom não lança", async () => {
   try {
-    await setModules(SEED_MODULES.filter((m) => m !== "mesas"), D);
+    await setModules(DEMO_MODULES.filter((m) => m !== "mesas"), D);
     assert.equal((await launch(11, [line("Kids")])).status, 403);
   } finally {
-    await setModules(SEED_MODULES, D);
+    await setModules(DEMO_MODULES, D);
   }
 });
 
@@ -67,9 +67,11 @@ test("pedido pelo QR desligado: o QR e o pedido do cliente na mesa são recusado
     assert.equal(customer.status, 403);
     assert.match(customer.body.error, /garçom/);
     assert.equal((await launch(3, [line("Kids")])).status, 201, "o garçom lança normalmente");
+    await setModules([...DEMO_MODULES, "delivery"], D); // the Chapa 27 has no Delivery (F-6): on just for this check
     assert.equal((await call("POST", "/api/orders", { session: crypto.randomUUID(), body: { mode: "delivery", restaurantId: D, lines: [line("Kids")] } })).status, 201, "delivery não depende da opção");
   } finally {
     await setQr(true);
+    await setModules(DEMO_MODULES, D);
   }
   assert.equal((await call("GET", `/api/tables/${code}`)).status, 200);
   await call("POST", `${P}/tables/3/close`, { token: tokens.garcom });

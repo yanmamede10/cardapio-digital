@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { R, call, firstLogin, uid } from "./helpers.ts";
+import { ALL_MODULES, R, call, firstLogin, uid } from "./helpers.ts";
 
 const token = process.env.SUPER_ADMIN_KEY ?? "test-admin-key"; // set by tests/run.mjs
 let seq = 0;
@@ -30,7 +30,9 @@ describe("super admin", () => {
     assert.equal(await listed(), false, "pendente não aparece no delivery");
     assert.equal((await call("PATCH", `/api/admin/restaurants/${created.body.id}/status`, { token, body: { status: "pendente" } })).status, 400);
     assert.equal((await call("PATCH", `/api/admin/restaurants/${created.body.id}/status`, { token, body: { status: "ativo" } })).body.status, "ativo");
-    assert.equal(await listed(), true);
+    assert.equal(await listed(), false, "ativo, mas sem o módulo Delivery (F-6)");
+    assert.equal((await call("PATCH", `/api/admin/restaurants/${created.body.id}/modules`, { token, body: { modules: ALL_MODULES } })).status, 200);
+    assert.equal(await listed(), true, "com o Delivery ligado pelo super admin");
     assert.ok((await call("GET", "/api/admin/restaurants", { token })).body.some((r: { id: string; status: string }) => r.id === created.body.id && r.status === "ativo"));
   });
 
@@ -247,4 +249,12 @@ test("só o super admin: token de staff (até de Dono) recebe 401 em todas as ro
   for (const [method, path] of routes) {
     for (const t of [staff, undefined]) assert.equal((await call(method, `/api/admin${path}`, { token: t, body: method === "GET" ? undefined : {} })).status, 401, `${method} ${path}`);
   }
+});
+
+test("restaurante novo do super admin nasce sem o módulo Delivery (F-6): todos os outros ligados, e fora da lista do app do cliente", async () => {
+  const r = await fresh();
+  const modules = (await call("GET", `/api/admin/restaurants/${r.id}`, { token })).body.modules as string[];
+  assert.deepEqual(modules, ALL_MODULES.filter((m) => m !== "delivery"));
+  assert.ok(!(await call("GET", "/api/restaurants/")).body.some((x: { id: string }) => x.id === r.id), "ativo, mas sem Delivery não aparece");
+  assert.ok((await call("GET", `/api/admin/restaurants/${R}`, { token })).body.modules.includes("delivery"), "os que já existiam ficam como estavam");
 });
