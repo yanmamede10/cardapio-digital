@@ -143,3 +143,12 @@ test("logo, capa e foto do prato: só PNG, JPEG ou WebP, reconhecidos pelos prim
     assert.equal((await send(`${P}/items/${itemId}/image`, bytes, "text/plain", "foto.txt")).status, 503);
   }
 });
+
+test("pedido malformado responde 400 sem detalhe interno (nada de caminho de arquivo, código ou consulta do Prisma)", async () => {
+  const session = crypto.randomUUID();
+  for (const itemId of [123, { not: "x" }, null]) {
+    const res = await call("POST", "/api/orders", { session, body: { mode: "delivery", restaurantId: R, lines: [{ itemId, quantity: 1, notes: "", selectedOptions: [] }] } });
+    assert.equal(res.status, 400, JSON.stringify(itemId));
+    assert.doesNotMatch(JSON.stringify(res.body), /prisma|invocation|\.ts|apps[\/]|Argument/i, JSON.stringify(res.body));
+  }
+});

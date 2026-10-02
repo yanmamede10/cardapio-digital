@@ -3,7 +3,7 @@ import type { CreateOrderRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { generateOrderCode } from "./codes.js";
 import { evaluateCoupon } from "./coupons.js";
-import { priceLine, round2 } from "./pricing.js";
+import { PricingError, priceLine, round2 } from "./pricing.js";
 import { recipeOf } from "./stock.js";
 import { hasOpenComanda } from "./tables.js";
 
@@ -36,7 +36,8 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
   const pricedLines: { itemId: string; name: string; unitPrice: number; quantity: number; notes: string; selectedOptionsJson: string; stockJson: string }[] = [];
   try {
     for (const line of body.lines) {
-      const item = await prisma.menuItem.findUnique({ where: { id: line.itemId }, include: { product: { include: { components: true } } } });
+      // A string, or Prisma would answer with its own error (source path and query) instead of "unknown item".
+      const item = typeof line.itemId === "string" ? await prisma.menuItem.findUnique({ where: { id: line.itemId }, include: { product: { include: { components: true } } } }) : null;
       if (!item || item.restaurantId !== body.restaurantId) return { status: 400, error: `unknown item ${line.itemId}` };
       if (item.soldOut) return { status: 400, error: `${item.name} está esgotado` };
       const { unitPrice, selectedOptions } = priceLine(item, (line.selectedOptions || []).map((o) => ({ groupId: o.groupId, optionId: o.optionId })));
@@ -52,7 +53,8 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
       });
     }
   } catch (err) {
-    return { status: 400, error: err instanceof Error ? err.message : "invalid line options" };
+    if (!(err instanceof PricingError)) throw err; // anything else is ours: a plain 500, never its message
+    return { status: 400, error: err.message };
   }
 
   const subtotal = round2(pricedLines.reduce((t, l) => t + l.unitPrice * l.quantity, 0));
