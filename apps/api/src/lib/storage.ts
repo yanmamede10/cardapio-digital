@@ -56,6 +56,12 @@ export function imageKind(b: Buffer): { extension: string; contentType: string }
 }
 export const NOT_AN_IMAGE = "Envie uma imagem PNG, JPEG ou WebP.";
 
+/** Whether the apps may be told to show this image URL: one this API handed out from the public bucket (uploadPublicFile),
+ *  or one the restaurant already has (`kept` — so a photo from before a bucket move can still be kept or removed). Never an
+ *  arbitrary site in front of the customers: a tracking pixel, someone else's photo, a javascript: URL. */
+export const imageUrlAllowed = (url: unknown, kept: (string | null)[]) =>
+  typeof url === "string" && (kept.includes(url) || (!!PUBLIC_URL && url.startsWith(`${PUBLIC_URL.replace(/\/$/, "")}/`)));
+
 /** Uploads a file to the configured public bucket and returns its public URL. */
 export async function uploadPublicFile(params: { buffer: Buffer; contentType: string; folder: string; extension: string }): Promise<string> {
   if (!PUBLIC_URL) throw new Error("object storage is not configured — set STORAGE_PUBLIC_URL");

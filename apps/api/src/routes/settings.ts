@@ -3,6 +3,7 @@ import { LEVEL, MIN_PASSWORD_LENGTH, ROLE_LEVEL, type FiscalInfo, type Operating
 import { prisma } from "../db.js";
 import { hashPassword, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
+import { imageUrlAllowed } from "../lib/storage.js";
 
 export const settingsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
@@ -44,6 +45,9 @@ settingsRouter.patch("/:id/profile", ...ownerGuard, async (req, res) => {
   }
   const existing = await requireRestaurant(req.params.id);
   if (!existing) return res.status(404).json({ error: "restaurant not found" });
+  for (const url of [body.logoUrl, body.coverUrl]) {
+    if (url !== undefined && url !== null && !imageUrlAllowed(url, [existing.logoUrl, existing.coverUrl])) return res.status(400).json({ error: "logoUrl and coverUrl must be uploaded images" });
+  }
   const r = await prisma.restaurant.update({
     where: { id: req.params.id },
     data: {

@@ -5,7 +5,7 @@ import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeAppearanceState, serializePublicAppearance } from "../lib/serialize.js";
 import { activeRestaurant } from "./restaurants.js";
-import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, uploadPublicFile } from "../lib/storage.js";
+import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, imageUrlAllowed, uploadPublicFile } from "../lib/storage.js";
 
 export const appearanceRouter = asyncRouter();
 // Aparência is a tab of Configurações: the Dono's (docs/adr/0005-modelo-de-permissoes.md). The published skin is public (last route).
@@ -39,8 +39,13 @@ appearanceRouter.patch("/:id/appearance/draft", ...staffGuard, async (req, res) 
   if (body.brandColor !== undefined && !HEX_RE.test(body.brandColor)) {
     return res.status(400).json({ error: "brandColor must be a #rrggbb hex color" });
   }
-  if (body.coverPhotos !== undefined && (!Array.isArray(body.coverPhotos) || body.coverPhotos.length > MAX_COVER_PHOTOS)) {
-    return res.status(400).json({ error: `coverPhotos must be an array of at most ${MAX_COVER_PHOTOS} URLs` });
+  // Photos come from the upload below (or are already the restaurant's): the customer menu shows these URLs as they are.
+  const kept = [existing.draftLogoUrl, existing.appearanceLogoUrl, ...(JSON.parse(existing.draftCoverPhotosJson) as string[]), ...(JSON.parse(existing.coverPhotosJson) as string[])];
+  if (body.logoUrl !== undefined && body.logoUrl !== null && !imageUrlAllowed(body.logoUrl, kept)) {
+    return res.status(400).json({ error: "logoUrl must be an uploaded image" });
+  }
+  if (body.coverPhotos !== undefined && (!Array.isArray(body.coverPhotos) || body.coverPhotos.length > MAX_COVER_PHOTOS || !body.coverPhotos.every((u) => imageUrlAllowed(u, kept)))) {
+    return res.status(400).json({ error: `coverPhotos must be an array of at most ${MAX_COVER_PHOTOS} uploaded images` });
   }
 
   const r = await prisma.restaurant.update({

@@ -193,3 +193,26 @@ test("toda resposta da API sai com cabeçalhos de segurança e sem X-Powered-By 
     assert.equal(res.headers.get("referrer-policy"), "no-referrer", label);
   }
 });
+
+test("logo e capas: só URL do bucket público (o que o upload devolve) ou a que já estava gravada; javascript: e outros sites, 400", async () => {
+  const token = await login();
+  const P = `/api/restaurants/${R}`;
+  const bucket = `${process.env.STORAGE_PUBLIC_URL}/restaurants/${R}/appearance/teste.png`;
+  const draft = (body: unknown) => call("PATCH", `${P}/appearance/draft`, { token, body });
+  const profile = (body: unknown) => call("PATCH", `${P}/profile`, { token, body });
+  const before = (await call("GET", `${P}/appearance/draft`, { token })).body.draft;
+  try {
+    for (const url of ["javascript:alert(1)", "https://rastreio.example/pixel.png", "http://public.invalid/x.png", `${process.env.STORAGE_PUBLIC_URL}x/../outro.png`, 42]) {
+      assert.equal((await draft({ logoUrl: url })).status, 400, `logo ${url}`);
+      assert.equal((await draft({ coverPhotos: [url] })).status, 400, `capa ${url}`);
+      assert.equal((await profile({ logoUrl: url })).status, 400, `perfil logo ${url}`);
+      assert.equal((await profile({ coverUrl: url })).status, 400, `perfil capa ${url}`);
+    }
+    assert.equal((await draft({ logoUrl: bucket, coverPhotos: [bucket] })).status, 200);
+    assert.equal((await draft({ coverPhotos: [bucket, bucket] })).status, 200, "a que já estava gravada continua valendo");
+    assert.equal((await draft({ logoUrl: null, coverPhotos: [] })).status, 200);
+    assert.equal((await draft({ coverPhotos: [null] })).status, 400, "capa vazia");
+  } finally {
+    await draft({ logoUrl: before.logoUrl, coverPhotos: before.coverPhotos });
+  }
+});
