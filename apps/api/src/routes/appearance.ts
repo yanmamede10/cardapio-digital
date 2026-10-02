@@ -7,7 +7,8 @@ import { serializeAppearanceState, serializePublicAppearance } from "../lib/seri
 import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const appearanceRouter = asyncRouter();
-const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
+// Aparência is a tab of Configurações: the Dono's (docs/adr/0005-modelo-de-permissoes.md). The published skin is public (last route).
+const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO)];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: PUBLIC_IMAGE_MAX_BYTES } });
 
 const TEMPLATES: MenuTemplateId[] = ["classico", "moderno", "minimalista", "vibrante", "editorial", "galeria"];

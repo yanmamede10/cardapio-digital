@@ -8,7 +8,10 @@ export const settingsRouter = asyncRouter();
 // Applied per-route (not via router.use) — several routers share the
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
-const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR)];
+// Configurações is the Dono's (docs/adr/0005-modelo-de-permissoes.md, the menu's level): every read and write behind that
+// screen. Only the payment mode is read by every role (below). Equipe & Permissões above all: an Administrador who could
+// write there could promote themselves to Dono.
+const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO)];
 const MAX_NAME_LENGTH = 120;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_RESTAURANT_NAME_LENGTH = 80;
@@ -22,13 +25,13 @@ async function requireRestaurant(id: string) {
   return prisma.restaurant.findUnique({ where: { id } });
 }
 
-settingsRouter.get("/:id/profile", ...staffGuard, async (req, res) => {
+settingsRouter.get("/:id/profile", ...ownerGuard, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json(serializeProfile(r));
 });
 
-settingsRouter.patch("/:id/profile", ...staffGuard, async (req, res) => {
+settingsRouter.patch("/:id/profile", ...ownerGuard, async (req, res) => {
   const body = req.body as Partial<RestaurantProfile>;
   if (body.name !== undefined && body.name.length > MAX_RESTAURANT_NAME_LENGTH) {
     return res.status(400).json({ error: `name must be at most ${MAX_RESTAURANT_NAME_LENGTH} characters` });
@@ -54,12 +57,12 @@ settingsRouter.patch("/:id/profile", ...staffGuard, async (req, res) => {
   res.json(serializeProfile(r));
 });
 
-settingsRouter.get("/:id/hours", ...staffGuard, async (req, res) => {
+settingsRouter.get("/:id/hours", ...ownerGuard, async (req, res) => {
   const rows = await prisma.operatingHour.findMany({ where: { restaurantId: req.params.id } });
   res.json(serializeHours(rows));
 });
 
-settingsRouter.patch("/:id/hours", ...staffGuard, async (req, res) => {
+settingsRouter.patch("/:id/hours", ...ownerGuard, async (req, res) => {
   const { rows } = req.body as { rows?: OperatingHoursRow[] };
   const okRow = (r: OperatingHoursRow) =>
     !!r && Number.isInteger(r.weekday) && r.weekday >= 0 && r.weekday <= 6 && typeof r.isOpen === "boolean" &&
@@ -80,8 +83,6 @@ settingsRouter.patch("/:id/hours", ...staffGuard, async (req, res) => {
   res.json(serializeHours(updated));
 });
 
-// Equipe & Permissões is Dono-only: an Administrador who could write here could promote themselves to Dono.
-const ownerGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.DONO)];
 type StaffBody = { name?: string; email?: string; role?: StaffRole; password?: string };
 
 /** Error message for a bad staff payload, or null. `partial` (edit) allows omitted fields. */
@@ -137,13 +138,13 @@ settingsRouter.patch("/:id/staff/:staffId", ...ownerGuard, async (req, res) => {
   res.json(serializeStaff(staff));
 });
 
-settingsRouter.get("/:id/fiscal", ...staffGuard, async (req, res) => {
+settingsRouter.get("/:id/fiscal", ...ownerGuard, async (req, res) => {
   const r = await requireRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json(serializeFiscal(r));
 });
 
-settingsRouter.patch("/:id/fiscal", ...staffGuard, async (req, res) => {
+settingsRouter.patch("/:id/fiscal", ...ownerGuard, async (req, res) => {
   const body = req.body as Partial<FiscalInfo>;
   if (body.taxRegime !== undefined && !TAX_REGIMES.includes(body.taxRegime)) {
     return res.status(400).json({ error: `taxRegime must be one of ${TAX_REGIMES.join(", ")}` });
@@ -172,7 +173,7 @@ settingsRouter.get("/:id/payment-mode", requireStaff, requireOwnRestaurant, asyn
 
 // How the salon works: payment at the table (Configurações → Financeiro), the 10% service and ordering by QR
 // (Configurações → Salão). Only the fields sent change.
-settingsRouter.patch("/:id/payment-mode", ...staffGuard, async (req, res) => {
+settingsRouter.patch("/:id/payment-mode", ...ownerGuard, async (req, res) => {
   const { paymentMode, serviceCharge, qrOrdering } = req.body as { paymentMode?: PaymentMode; serviceCharge?: unknown; qrOrdering?: unknown };
   if (paymentMode === undefined && serviceCharge === undefined && qrOrdering === undefined) return res.status(400).json({ error: "nothing to change" });
   if (paymentMode !== undefined && !PAYMENT_MODES.includes(paymentMode)) return res.status(400).json({ error: `paymentMode must be one of ${PAYMENT_MODES.join(", ")}` });
