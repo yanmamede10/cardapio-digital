@@ -6,7 +6,7 @@ import { hasModule, requireMinRole, requireModule, requireOwnRestaurant, require
 import { buildComanda, openOrdersByTable, openOrdersForTable, serviceFee, servicePct, statusForTable } from "../lib/tables.js";
 import { serializeOrder, serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
-import { placeOrder } from "../lib/orders.js";
+import { orderEvent, placeOrder, staffActor } from "../lib/orders.js";
 
 export const restaurantTablesRouter = asyncRouter();
 // Applied per-route (not via router.use) because several routers share the
@@ -136,7 +136,7 @@ restaurantTablesRouter.post("/:id/tables/:number/orders", ...staffGuard, async (
   if (!table) return res.status(404).json({ error: "table not found" });
   const waiter = await prisma.staffMember.findUniqueOrThrow({ where: { id: req.staff!.staffId }, select: { name: true } });
   const { lines } = req.body as { lines?: CartLineInput[] };
-  const placed = await placeOrder({ mode: "table", restaurantId: req.params.id, tableNumber: table.number, lines: lines ?? [] }, `garcom-${req.staff!.staffId}`, waiter.name);
+  const placed = await placeOrder({ mode: "table", restaurantId: req.params.id, tableNumber: table.number, lines: lines ?? [] }, `garcom-${req.staff!.staffId}`, { name: waiter.name, ...req.staff! });
   if ("error" in placed) return res.status(placed.status).json({ error: placed.error });
   res.status(201).json(serializeOrder(placed.order));
 });
@@ -154,14 +154,28 @@ restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (r
   const target = Array.isArray(orderIds) ? open.filter((o) => orderIds.includes(o.id)) : open;
   // Claims each order once (closedAt IS NULL), so two waiters/double clicks never charge or take stock twice. The same UPDATE
   // freezes the service charged on each order (Emissão Fiscal reads it), so no order is ever closed with its service unwritten.
-  // Raw: updatedAt (when it was served, read by the turno) doesn't move.
+  // Raw: updatedAt (when it was served, read by the turno) doesn't move. It returns each claimed order's status as it is now
+  // (the row stays locked until the end of the transaction).
   const fees = target.map((o) => Prisma.sql`WHEN ${o.id} THEN ${serviceFee(o, pct)}::double precision`);
+  const who = staffActor(req.staff!);
   const claimed = target.length
-    ? await prisma.$queryRaw<{ id: string }[]>`UPDATE "Order" SET "closedAt" = NOW(), "service" = CASE "id" ${Prisma.join(fees, " ")} END WHERE "id" IN (${Prisma.join(target.map((o) => o.id))}) AND "closedAt" IS NULL RETURNING "id"`
+    ? await prisma.$transaction(async (tx) => {
+        const claimed = await tx.$queryRaw<{ id: string; status: string }[]>`UPDATE "Order" SET "closedAt" = NOW(), "service" = CASE "id" ${Prisma.join(fees, " ")} END WHERE "id" IN (${Prisma.join(target.map((o) => o.id))}) AND "closedAt" IS NULL RETURNING "id", "status"`;
+        if (!claimed.length) return claimed;
+        await tx.order.updateMany({ where: { id: { in: claimed.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
+        // Its history, in the same transaction: the orders the close served (nobody had marked them), then the comanda closed
+        // with how it was paid.
+        await tx.orderEvent.createMany({
+          data: [
+            ...claimed.filter((o) => o.status !== "served").map((o) => ({ orderId: o.id, ...orderEvent(req.params.id, "status", "served", who) })),
+            ...claimed.map((o) => ({ orderId: o.id, ...orderEvent(req.params.id, "comanda_fechada", "served", who, { paymentMethod: (paymentMethod as string | undefined) ?? null }) }))
+          ]
+        });
+        return claimed;
+      })
     : [];
   const closed = target.filter((o) => claimed.some((c) => c.id === o.id));
   if (closed.length) {
-    await prisma.order.updateMany({ where: { id: { in: closed.map((o) => o.id) }, status: { not: "served" } }, data: { status: "served" } });
     await takeStockForOrders(req.params.id, closed, `Fechamento de comanda ${closed[0].code}`);
     // What was charged at the table enters Contas a Receber as paid (only when the restaurant has that module).
     if (hasModule(req, "receber")) {

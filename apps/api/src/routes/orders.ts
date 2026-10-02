@@ -3,7 +3,7 @@ import { asyncRouter } from "../lib/router.js";
 import type { CreateOrderRequest, OrderStatus } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireStaff } from "../lib/auth.js";
-import { placeOrder } from "../lib/orders.js";
+import { orderEvent, placeOrder, staffActor } from "../lib/orders.js";
 import { serializeOrder } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
 
@@ -64,20 +64,22 @@ ordersRouter.post("/:id/call-waiter", async (req, res) => {
   res.json({ ok: true });
 });
 
+// Accept, refuse and every move in the Central: the conditional update claims the change, and its OrderEvent goes in the same
+// transaction — no history without the change, no change without its line in the history.
 ordersRouter.post("/:id/accept", requireStaff, requireModule("pedidos"), async (req, res) => {
   const order = await prisma.order.findUnique({ where: { id: req.params.id } });
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
+  // A free table's first order goes to Recebido (and opens the table); any other, from Recebido to Preparando.
+  const [from, to] = order.status === "awaiting" ? ["awaiting", "pending"] : ["pending", "preparing"];
   // Conditional: of two devices accepting/refusing the same order at once, exactly one wins (the other gets 409).
-  if (order.status === "awaiting") {
-    // A free table's first order: accepting opens the table, and the order joins it as any QR order does (Recebido).
-    const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "awaiting" }, data: { status: "pending" } });
-    if (!count) return res.status(409).json({ error: "order is not awaiting" });
-    await prisma.restaurantTable.updateMany({ where: { restaurantId: order.restaurantId, number: order.tableNumber!, openedAt: null }, data: { openedAt: new Date() } });
-  } else {
-    const { count } = await prisma.order.updateMany({ where: { id: order.id, status: "pending" }, data: { status: "preparing" } });
-    if (!count) return res.status(409).json({ error: "order is not pending" });
-  }
+  const accepted = await prisma.$transaction(async (tx) => {
+    const { count } = await tx.order.updateMany({ where: { id: order.id, status: from }, data: { status: to } });
+    if (count) await tx.orderEvent.create({ data: { orderId: order.id, ...orderEvent(order.restaurantId, "aceito", to, staffActor(req.staff!)) } });
+    return count > 0;
+  });
+  if (!accepted) return res.status(409).json({ error: `order is not ${from}` });
+  if (from === "awaiting") await prisma.restaurantTable.updateMany({ where: { restaurantId: order.restaurantId, number: order.tableNumber!, openedAt: null }, data: { openedAt: new Date() } });
   res.json(serializeOrder(await prisma.order.findUniqueOrThrow({ where: { id: order.id }, include: { lines: true } })));
 });
 
@@ -86,8 +88,12 @@ ordersRouter.post("/:id/reject", requireStaff, requireModule("pedidos"), async (
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
   // Refused: "Pedido não confirmado" for the customer; a free table's first order leaves the table as it was. See accept.
-  const { count } = await prisma.order.updateMany({ where: { id: order.id, status: { in: ["awaiting", "pending"] } }, data: { status: "cancelled" } });
-  if (!count) return res.status(409).json({ error: "order is not pending" });
+  const refused = await prisma.$transaction(async (tx) => {
+    const { count } = await tx.order.updateMany({ where: { id: order.id, status: { in: ["awaiting", "pending"] } }, data: { status: "cancelled" } });
+    if (count) await tx.orderEvent.create({ data: { orderId: order.id, ...orderEvent(order.restaurantId, "recusado", "cancelled", staffActor(req.staff!)) } });
+    return count > 0;
+  });
+  if (!refused) return res.status(409).json({ error: "order is not pending" });
   res.json({ ok: true });
 });
 
@@ -98,13 +104,15 @@ ordersRouter.patch("/:id/stage", requireStaff, requireModule("pedidos"), async (
   if (!order) return res.status(404).json({ error: "order not found" });
   if (order.restaurantId !== req.staff!.restaurantId) return res.status(403).json({ error: "forbidden: restaurant mismatch" });
   if (order.status === "awaiting") return res.status(409).json({ error: "Aceite o pedido antes: aceitar é o que abre a mesa." });
-  // A delivery closes when delivered (table orders take stock on comanda close instead). The
-  // conditional updateMany claims that transition once, so a double click can't take stock twice.
-  const delivering =
-    order.mode === "delivery" &&
-    stage === "delivered" &&
-    (await prisma.order.updateMany({ where: { id: order.id, status: { not: "delivered" } }, data: { status: "delivered" } })).count > 0;
-  const updated = await prisma.order.update({ where: { id: order.id }, data: { status: stage }, include: { lines: true } });
-  if (delivering) await takeStockForOrders(order.restaurantId, [updated], `Pedido delivery ${order.code}`);
+  // Only a real move is claimed (and recorded): a second click on the same column changes nothing. The final update is
+  // the same as always (it also marks updatedAt, which the turno reads).
+  const { moved, updated } = await prisma.$transaction(async (tx) => {
+    const moved = (await tx.order.updateMany({ where: { id: order.id, status: { not: stage } }, data: { status: stage } })).count > 0;
+    if (moved) await tx.orderEvent.create({ data: { orderId: order.id, ...orderEvent(order.restaurantId, "status", stage, staffActor(req.staff!)) } });
+    return { moved, updated: await tx.order.update({ where: { id: order.id }, data: { status: stage }, include: { lines: true } }) };
+  });
+  // A delivery closes when delivered (table orders take stock on comanda close instead). The claim above happens once, so a
+  // double click can't take stock twice.
+  if (moved && order.mode === "delivery" && stage === "delivered") await takeStockForOrders(order.restaurantId, [updated], `Pedido delivery ${order.code}`);
   res.json(serializeOrder(updated));
 });

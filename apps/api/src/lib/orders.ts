@@ -12,9 +12,27 @@ const MAX_GUEST_NAME_LENGTH = 120;
 
 type Placed = { order: Prisma.OrderGetPayload<{ include: { lines: true } }> } | { status: number; error: string };
 
+/** Who changed an order (OrderEvent): a staff member — their role then, and who —, the customer, or the system itself. */
+export type Actor = { actor: string; staffId?: string | null };
+export const staffActor = (staff: { role: string; staffId: string }): Actor => ({ actor: staff.role, staffId: staff.staffId });
+const CUSTOMER: Actor = { actor: "cliente" };
+const SYSTEM: Actor = { actor: "sistema" };
+
+/** One row of an order's history (OrderEvent, OBS-01), minus the order — always written in the same transaction as the
+ *  change it records: a nested create with the order, or the transaction of the route that changes it. */
+export const orderEvent = (restaurantId: string, type: string, status: string, who: Actor, extra: { channel?: string; paymentMethod?: string | null } = {}) => ({
+  restaurantId,
+  type,
+  status,
+  actor: who.actor,
+  staffId: who.staffId ?? null,
+  ...extra
+});
+
 /** One way into the kitchen for every order: the customer's (QR, tablet, delivery) and the waiter's (Lançar pedido).
  *  Prices are re-derived from the menu, sold-out dishes refused, and a table's first order opens it. */
-export async function placeOrder(body: CreateOrderRequest, guestSessionId: string, waiterName: string | null = null): Promise<Placed> {
+export async function placeOrder(body: CreateOrderRequest, guestSessionId: string, waiter: { name: string; role: string; staffId: string } | null = null): Promise<Placed> {
+  const waiterName = waiter?.name ?? null;
   if (!body || !body.restaurantId || !Array.isArray(body.lines) || body.lines.length === 0) {
     return { status: 400, error: "restaurantId and at least one line are required" };
   }
@@ -102,7 +120,14 @@ export async function placeOrder(body: CreateOrderRequest, guestSessionId: strin
       total: round2(subtotal + deliveryFee - discount),
       status,
       round,
-      lines: { create: pricedLines }
+      lines: { create: pricedLines },
+      // In the same write as the order: who created it and from where; a free table's first order also waits on the system.
+      events: {
+        create: [
+          orderEvent(body.restaurantId, "criado", status, waiter ? staffActor(waiter) : CUSTOMER, { channel: waiter ? "garcom" : mode === "delivery" ? "delivery" : "qr" }),
+          ...(status === "awaiting" ? [orderEvent(body.restaurantId, "aguardando_aceite", status, SYSTEM)] : [])
+        ]
+      }
     },
     include: { lines: true }
   });

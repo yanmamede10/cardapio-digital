@@ -93,6 +93,7 @@ model Restaurant {
   products       Product[]
   stockMovements StockMovement[]
   financeEntries FinanceEntry[]
+  orderEvents    OrderEvent[]
 }
 
 model MenuCategory {
@@ -239,7 +240,28 @@ model Order {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @default(now()) @updatedAt
 
-  lines OrderLine[]
+  lines  OrderLine[]
+  events OrderEvent[]
+}
+
+// OBS-01: an order's history — every change of state, written in the same transaction as the change. No screen reads it
+// yet, and nothing here is a value: what was charged stays on the order (subtotal, total, service frozen at the close).
+model OrderEvent {
+  id            String     @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  orderId       String
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // "criado" | "aguardando_aceite" | "aceito" | "recusado" | "status" (a move in the Central) | "comanda_fechada"
+  type          String
+  status        String     // the order's status right after it
+  channel       String?    // "criado": "qr" (the table's QR or its fixed tablet — the same link) | "garcom" | "delivery"
+  actor         String     // who: "cliente", "sistema", or the staff member's role then ("owner", "manager", "waiter", "kitchen")
+  staffId       String?    // the staff member, when actor is a role
+  paymentMethod String?    // "comanda_fechada": how it was paid (PAYMENT_METHODS), when the waiter said
+  createdAt     DateTime   @default(now())
+
+  @@index([orderId])
 }
 
 model OrderLine {
