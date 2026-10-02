@@ -8,7 +8,7 @@ import { SupportFab } from "../components/FloatingControls";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
-import { formatMoney, formatRating } from "../lib/format";
+import { brl, formatRating } from "../lib/format";
 
 const CUISINES = [
   { label: "Todos", icon: "fa-solid fa-border-all" },
@@ -221,7 +221,7 @@ export default function DiscoveryScreen() {
                         <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />{r.etaMinMinutes}–{r.etaMaxMinutes} min
                       </span>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: r.deliveryFee === 0 ? "var(--good)" : "var(--ink2)", fontWeight: r.deliveryFee === 0 ? 600 : 500 }}>
-                        <i className="fa-solid fa-motorcycle" style={{ fontSize: "var(--i-s)" }} />{r.deliveryFee === 0 ? "Grátis" : formatMoney(r.deliveryFee)}
+                        <i className="fa-solid fa-motorcycle" style={{ fontSize: "var(--i-s)" }} />{r.deliveryFee === 0 ? "Grátis" : brl(r.deliveryFee)}
                       </span>
                     </div>
                   </div>

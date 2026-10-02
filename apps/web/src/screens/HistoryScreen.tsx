@@ -6,7 +6,7 @@ import { useApp } from "../context/AppContext";
 import { cartLineKey, useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
-import { formatDate, formatMoney } from "../lib/format";
+import { formatDate, brl } from "../lib/format";
 
 const STATUS_LABEL: Record<Order["status"], string> = {
   awaiting: "Aguardando confirmação",
@@ -89,7 +89,7 @@ export default function HistoryScreen() {
               {h.lines.map((l) => `${l.quantity}× ${l.name}`).join(" · ")}
             </div>
             <div style={{ marginTop: 11, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-              <div style={{ font: "700 var(--t-b) var(--font)" }}>{formatMoney(h.total)}</div>
+              <div style={{ font: "700 var(--t-b) var(--font)" }}>{brl(h.total)}</div>
               <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 10px", borderRadius: 999, background: "var(--surf2)", font: "600 var(--t-xs) var(--font)", color: "var(--ink2)" }}>
                 <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--i-s)", color: h.status === "delivered" ? "var(--good)" : "var(--ink2)" }} />
                 {STATUS_LABEL[h.status]}

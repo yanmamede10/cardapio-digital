@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { MenuItem } from "@cardapio/shared";
-import { formatMoney } from "../../lib/format";
+import { brl } from "../../lib/format";
 
 type Variant = "grid" | "wide" | "tile" | "row" | "gallery";
 
@@ -95,7 +95,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
           </div>
         </div>
         <div style={{ padding: "14px 18px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ flex: "none", whiteSpace: "nowrap", font: "700 var(--t-m) var(--font)", letterSpacing: "-.02em" }}>{formatMoney(item.price)}</div>
+          <div style={{ flex: "none", whiteSpace: "nowrap", font: "700 var(--t-m) var(--font)", letterSpacing: "-.02em" }}>{brl(item.price)}</div>
           <SolidQuickAdd item={item} onQuickAdd={onQuickAdd} />
         </div>
       </div>
@@ -120,7 +120,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
             </div>
           </div>
           <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-            <div style={{ font: "700 var(--t-b) var(--font)", letterSpacing: "-.02em" }}>{formatMoney(item.price)}</div>
+            <div style={{ font: "700 var(--t-b) var(--font)", letterSpacing: "-.02em" }}>{brl(item.price)}</div>
             <SolidQuickAdd item={item} onQuickAdd={onQuickAdd} />
           </div>
         </div>
@@ -142,7 +142,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
           </div>
         </div>
         <div style={{ padding: "12px 16px 16px", marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ font: "700 var(--t-b) var(--font)", letterSpacing: "-.02em" }}>{formatMoney(item.price)}</div>
+          <div style={{ font: "700 var(--t-b) var(--font)", letterSpacing: "-.02em" }}>{brl(item.price)}</div>
           <SolidQuickAdd item={item} onQuickAdd={onQuickAdd} />
         </div>
       </div>
@@ -163,7 +163,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px 14px", display: "flex", alignItems: "flex-end", gap: 10 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ font: "600 var(--t-b)/1.22 var(--font)", letterSpacing: "-.015em", color: "#FFF7EC", textWrap: "pretty" }}>{item.name}</div>
-              <div style={{ marginTop: 5, font: "600 var(--t-s) var(--font)", color: "#F0E4C4" }}>{formatMoney(item.price)}</div>
+              <div style={{ marginTop: 5, font: "600 var(--t-s) var(--font)", color: "#F0E4C4" }}>{brl(item.price)}</div>
             </div>
             {!item.soldOut && (
               <button type="button" title="Adicionar" aria-label={`Adicionar ${item.name} ao pedido`} onClick={onQuickAdd} className="tap" style={{ flex: "none", width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--priInk)", color: "var(--pri)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -185,7 +185,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
             <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
               <div style={{ font: "600 var(--t-m) var(--font)", lineHeight: 1.25, letterSpacing: "-.02em" }}>{item.name}</div>
               <div style={{ flex: 1, minWidth: 12, height: 1, background: "var(--line)" }} />
-              <div style={{ flex: "none", whiteSpace: "nowrap", font: "600 var(--t-m) var(--font)", letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.price)}</div>
+              <div style={{ flex: "none", whiteSpace: "nowrap", font: "600 var(--t-m) var(--font)", letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums" }}>{brl(item.price)}</div>
             </div>
             <div style={{ marginTop: 7, maxWidth: "44ch", font: "400 var(--t-s) var(--font)", lineHeight: 1.6, color: "var(--ink2)", textWrap: "pretty" }}>{item.shortDescription}</div>
           </>
@@ -193,7 +193,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
           <>
             <div style={{ font: "600 var(--t-b) var(--font)", lineHeight: 1.25, letterSpacing: "-.015em", textWrap: "pretty" }}>{item.name}</div>
             <div style={{ marginTop: 6, font: "400 var(--t-s) var(--font)", lineHeight: 1.6, color: "var(--ink2)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.shortDescription}</div>
-            <div style={{ marginTop: 9, font: "700 var(--t-b) var(--font)", letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.price)}</div>
+            <div style={{ marginTop: 9, font: "700 var(--t-b) var(--font)", letterSpacing: "-.02em", fontVariantNumeric: "tabular-nums" }}>{brl(item.price)}</div>
           </>
         )}
         {item.soldOut && <div style={{ marginTop: 8, font: "500 var(--t-xs) var(--font)", letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)" }}>indisponível hoje</div>}

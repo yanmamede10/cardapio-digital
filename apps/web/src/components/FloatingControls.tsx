@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { formatMoney } from "../lib/format";
+import { brl } from "../lib/format";
 import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
@@ -73,7 +73,7 @@ export function BottomBar() {
           <span style={{ flex: 1, textAlign: "left", font: "600 var(--t-b) var(--font)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             Ver carrinho
           </span>
-          <span style={{ font: "700 var(--t-m) var(--font)" }}>{formatMoney(subtotal)}</span>
+          <span style={{ font: "700 var(--t-m) var(--font)" }}>{brl(subtotal)}</span>
         </button>
       )}
     </div>

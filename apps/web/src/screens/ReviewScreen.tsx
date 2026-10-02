@@ -6,7 +6,7 @@ import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api, ApiError } from "../lib/api";
-import { formatMoney } from "../lib/format";
+import { brl } from "../lib/format";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
@@ -124,7 +124,7 @@ export default function ReviewScreen() {
                   {optionsLabel && <div style={{ marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--ink2)", lineHeight: 1.6 }}>{optionsLabel}</div>}
                   {r.notes && <div style={{ marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--acc)", lineHeight: 1.6 }}>Obs: {r.notes}</div>}
                 </div>
-                <div style={{ font: "700 var(--t-b) var(--font)" }}>{formatMoney(r.unitPrice * r.quantity)}</div>
+                <div style={{ font: "700 var(--t-b) var(--font)" }}>{brl(r.unitPrice * r.quantity)}</div>
               </div>
             );
           })}
@@ -138,21 +138,21 @@ export default function ReviewScreen() {
           ) : (
             <>
               <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
-                <span>Subtotal</span><span style={{ color: "var(--ink)" }}>{formatMoney(subtotal)}</span>
+                <span>Subtotal</span><span style={{ color: "var(--ink)" }}>{brl(subtotal)}</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
-                <span>Taxa de entrega</span><span style={{ color: "var(--ink)" }}>{fee === 0 ? "Grátis" : formatMoney(fee)}</span>
+                <span>Taxa de entrega</span><span style={{ color: "var(--ink)" }}>{fee === 0 ? "Grátis" : brl(fee)}</span>
               </div>
               {discount > 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
-                  <span>Cupom {(couponCode || "").toUpperCase()}</span><span style={{ color: "var(--ink)" }}>− {formatMoney(discount)}</span>
+                  <span>Cupom {(couponCode || "").toUpperCase()}</span><span style={{ color: "var(--ink)" }}>− {brl(discount)}</span>
                 </div>
               )}
             </>
           )}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 4 }}>
             <span style={{ font: "600 var(--t-m) var(--font)" }}>Total</span>
-            <span style={{ font: "700 var(--t-xl) var(--font)", letterSpacing: "-.025em" }}>{formatMoney(total)}</span>
+            <span style={{ font: "700 var(--t-xl) var(--font)", letterSpacing: "-.025em" }}>{brl(total)}</span>
           </div>
         </div>
         <div style={{ height: 24 }} />

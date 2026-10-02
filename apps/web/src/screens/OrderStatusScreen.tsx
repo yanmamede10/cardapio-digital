@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
-import { formatMoney } from "../lib/format";
+import { brl } from "../lib/format";
 
 const STAGES: { status: OrderStatus; label: string; note: string; icon: string }[] = [
   { status: "pending", label: "Pedido confirmado", note: "Restaurante recebeu seu pedido", icon: "fa-solid fa-check" },
@@ -153,7 +153,7 @@ export default function OrderStatusScreen() {
               </div>
               <div>
                 <div className="mono-label">total na mesa</div>
-                <div style={{ marginTop: 3, font: "700 var(--t-m) var(--font)" }}>{formatMoney(tableSession.tableTotal)}</div>
+                <div style={{ marginTop: 3, font: "700 var(--t-m) var(--font)" }}>{brl(tableSession.tableTotal)}</div>
               </div>
             </div>
           </div>

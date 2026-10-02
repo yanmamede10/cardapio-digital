@@ -5,7 +5,7 @@ import { ScreenHeader } from "../components/ScreenHeader";
 import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
-import { formatMoney } from "../lib/format";
+import { brl } from "../lib/format";
 
 export default function CartScreen() {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ export default function CartScreen() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
                       <div style={{ flex: 1, font: "600 var(--t-b) var(--font)", lineHeight: 1.25 }}>{r.name}</div>
-                      <div style={{ font: "700 var(--t-b) var(--font)" }}>{formatMoney(r.unitPrice * r.quantity)}</div>
+                      <div style={{ font: "700 var(--t-b) var(--font)" }}>{brl(r.unitPrice * r.quantity)}</div>
                     </div>
                     {optionsLabel && (
                       <div style={{ marginTop: 4, font: "400 var(--t-s) var(--font)", color: "var(--ink2)", lineHeight: 1.6 }}>{optionsLabel}</div>
@@ -131,7 +131,7 @@ export default function CartScreen() {
         <div style={{ flex: "none", padding: "16px var(--pad) calc(16px + var(--safe))", borderTop: "1px solid var(--line)", background: "var(--glass)", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)" }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
             <div style={{ font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>{isMesa ? "Total da rodada" : "Subtotal"}</div>
-            <div style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.02em" }}>{formatMoney(subtotal)}</div>
+            <div style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.02em" }}>{brl(subtotal)}</div>
           </div>
           <button
             className="btn-primary"

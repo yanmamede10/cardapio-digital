@@ -11,7 +11,7 @@ import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
-import { formatMoney, formatRating } from "../lib/format";
+import { brl, formatRating } from "../lib/format";
 import { computeSelectedOptions, computeUnitPrice, defaultDraft } from "../lib/itemDraft";
 
 const DEFAULT_APPEARANCE: PublicAppearance = { template: "classico", brandColor: "#732009", logoUrl: null, coverPhotos: [], publishedAt: null };
@@ -413,7 +413,7 @@ export default function MenuScreen() {
                 <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />Entrega em <b style={{ color: "var(--ink)" }}>{restaurant.etaMinMinutes}–{restaurant.etaMaxMinutes} min</b>
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <i className="fa-solid fa-motorcycle" style={{ fontSize: "var(--i-s)" }} />Taxa <b style={{ color: "var(--ink)" }}>{restaurant.deliveryFee === 0 ? "Grátis" : formatMoney(restaurant.deliveryFee)}</b>
+                <i className="fa-solid fa-motorcycle" style={{ fontSize: "var(--i-s)" }} />Taxa <b style={{ color: "var(--ink)" }}>{restaurant.deliveryFee === 0 ? "Grátis" : brl(restaurant.deliveryFee)}</b>
               </span>
               <button type="button" onClick={() => navigate("/history")} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, border: "none", background: "transparent", padding: 0, cursor: "pointer", color: "var(--acc)", font: "600 var(--t-s) var(--font)" }}>
                 <i className="fa-solid fa-receipt" style={{ fontSize: "var(--i-s)" }} />Meus pedidos

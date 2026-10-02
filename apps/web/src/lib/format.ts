@@ -1,6 +1,4 @@
-export function formatMoney(v: number): string {
-  return "R$ " + v.toFixed(2).replace(".", ",");
-}
+export { brl } from "@cardapio/shared";
 
 export function formatRating(v: number): string {
   return v.toFixed(1).replace(".", ",");

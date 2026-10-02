@@ -6,7 +6,7 @@ import { photoStyle } from "../components/menu/ItemCard";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
-import { formatMoney } from "../lib/format";
+import { brl } from "../lib/format";
 import { computeSelectedOptions, computeUnitPrice, defaultDraft, type ItemDraft } from "../lib/itemDraft";
 
 export default function ItemDetailScreen() {
@@ -73,7 +73,7 @@ export default function ItemDetailScreen() {
         <div style={{ padding: "18px var(--pad) 0" }}>
           <div style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.025em" }}>{item.name}</div>
           <div style={{ marginTop: 8, font: "400 var(--t-b) var(--font)", color: "var(--ink2)", lineHeight: 1.6 }}>{item.longDescription}</div>
-          <div style={{ marginTop: 12, font: "700 var(--t-m) var(--font)", color: "var(--acc)" }}>{formatMoney(item.price)}</div>
+          <div style={{ marginTop: 12, font: "700 var(--t-m) var(--font)", color: "var(--acc)" }}>{brl(item.price)}</div>
 
           {item.optionGroups.map((g) => (
             <div key={g.id} style={{ marginTop: 22 }}>
@@ -95,7 +95,7 @@ export default function ItemDetailScreen() {
                       </div>
                       <div style={{ flex: 1, font: "500 var(--t-b) var(--font)" }}>{o.label}</div>
                       <div style={{ font: "600 var(--t-s) var(--font)", color: "var(--ink2)" }}>
-                        {o.priceDelta > 0 ? `+ ${formatMoney(o.priceDelta)}` : ""}
+                        {o.priceDelta > 0 ? `+ ${brl(o.priceDelta)}` : ""}
                       </div>
                     </div>
                   );
@@ -142,7 +142,7 @@ export default function ItemDetailScreen() {
                 <i className="fa-solid fa-plus" style={{ fontSize: "var(--i-m)" }} />
               </button>
             </div>
-            <div style={{ font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>Unidade {formatMoney(unit)}</div>
+            <div style={{ font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>Unidade {brl(unit)}</div>
           </div>
           <div style={{ height: 20 }} />
         </div>
@@ -153,7 +153,7 @@ export default function ItemDetailScreen() {
           <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
             <i className="fa-solid fa-basket-shopping" style={{ fontSize: "var(--i-m)" }} />Adicionar ao carrinho
           </span>
-          <span style={{ fontWeight: 700 }}>{formatMoney(unit * draft.qty)}</span>
+          <span style={{ fontWeight: 700 }}>{brl(unit * draft.qty)}</span>
         </button>
       </div>
     </div>

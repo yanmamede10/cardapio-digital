@@ -5,7 +5,7 @@ import { ScreenHeader } from "../components/ScreenHeader";
 import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { api } from "../lib/api";
-import { formatMoney } from "../lib/format";
+import { brl } from "../lib/format";
 
 export default function CheckoutScreen() {
   const navigate = useNavigate();
@@ -112,20 +112,20 @@ export default function CheckoutScreen() {
 
         <div style={{ marginTop: 22, padding: 18, borderRadius: "var(--r-standard)", background: "var(--surf)", border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
           <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
-            <span>Subtotal</span><span style={{ color: "var(--ink)" }}>{formatMoney(subtotal)}</span>
+            <span>Subtotal</span><span style={{ color: "var(--ink)" }}>{brl(subtotal)}</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
-            <span>Taxa de entrega</span><span style={{ color: "var(--ink)" }}>{fee === 0 ? "Grátis" : formatMoney(fee)}</span>
+            <span>Taxa de entrega</span><span style={{ color: "var(--ink)" }}>{fee === 0 ? "Grátis" : brl(fee)}</span>
           </div>
           {discount > 0 && (
             <div style={{ display: "flex", justifyContent: "space-between", font: "500 var(--t-b) var(--font)", color: "var(--ink2)" }}>
-              <span>Cupom {couponInput.toUpperCase()}</span><span style={{ color: "var(--ink)" }}>− {formatMoney(discount)}</span>
+              <span>Cupom {couponInput.toUpperCase()}</span><span style={{ color: "var(--ink)" }}>− {brl(discount)}</span>
             </div>
           )}
           <div style={{ height: 1, background: "var(--line)" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <span style={{ font: "600 var(--t-b) var(--font)" }}>Total</span>
-            <span style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.02em" }}>{formatMoney(total)}</span>
+            <span style={{ font: "700 var(--t-l) var(--font)", letterSpacing: "-.02em" }}>{brl(total)}</span>
           </div>
         </div>
         <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
