@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
-import { api } from "../../lib/api";
+import { CLOSE_BILL_ROLES, type RestaurantTable, type StaffRole, type TableComanda, type TableStatus } from "@cardapio/shared";
+import { api, getSession } from "../../lib/api";
 import { brl } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { ActionSheet } from "../../components/mobile/ActionSheet";
@@ -276,14 +276,17 @@ export default function MobileTableDetailScreen() {
             <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
             Lançar pedido
           </button>
-          <button
-            type="button"
-            onClick={() => setPayOpen(true)}
-            style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
-          >
-            <i className="fa-solid fa-receipt" style={{ fontSize: 15 }} />
-            Fechar conta · {brl(total)}
-          </button>
+          {/* F-4: the waiter and up close the bill; the kitchen doesn't (the API answers 403). */}
+          {CLOSE_BILL_ROLES.includes(getSession()?.role as StaffRole) && (
+            <button
+              type="button"
+              onClick={() => setPayOpen(true)}
+              style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
+            >
+              <i className="fa-solid fa-receipt" style={{ fontSize: 15 }} />
+              Fechar conta · {brl(total)}
+            </button>
+          )}
         </>
       )}
 

@@ -31,6 +31,16 @@ plain("menu mostra só o que o papel alcança: Funcionário só Operação (gar�
   await expect(nav).not.toContainText("Configurações");
 });
 
+plain("Mesas por papel (F-4): a cozinha não vê Fechar conta; Funcionário não vê Editar ambiente; o Administrador vê os dois", async ({ page, request }) => {
+  for (const [email, close, editMap] of [["igor@fogoeno.com.br", 0, 0], ["paula@fogoeno.com.br", 1, 0], ["bruno@fogoeno.com.br", 1, 1]] as const) {
+    await loginAs(page, request, email); // the last init script wins
+    await page.goto("/mesas");
+    await expect(page.getByRole("button", { name: "Lançar pedido" })).toBeVisible(); // the comanda panel is drawn
+    await expect(page.getByRole("button", { name: "Fechar conta" }), email).toHaveCount(close);
+    await expect(page.getByRole("button", { name: "Editar ambiente" }), email).toHaveCount(editMap);
+  }
+});
+
 test("módulo desligado some do menu; sem Central de Pedidos a tela inicial é o primeiro módulo ligado", async ({ page, request }) => {
   await setModules(request, SEED_MODULES.filter((m) => m !== "pedidos" && m !== "promocoes")); // + fiscal, off in the seed
   try {

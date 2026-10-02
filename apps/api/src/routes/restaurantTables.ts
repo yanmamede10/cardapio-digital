@@ -1,8 +1,8 @@
 import { asyncRouter } from "../lib/router.js";
-import { LEVEL, PAYMENT_METHODS, type CartLineInput, type SalonGrid } from "@cardapio/shared";
+import { CLOSE_BILL_ROLES, LEVEL, PAYMENT_METHODS, type CartLineInput, type SalonGrid } from "@cardapio/shared";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
-import { hasModule, requireMinRole, requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
+import { hasModule, requireMinRole, requireModule, requireOwnRestaurant, requireRole, requireStaff } from "../lib/auth.js";
 import { buildComanda, openOrdersByTable, openOrdersForTable, serviceFee, servicePct, statusForTable } from "../lib/tables.js";
 import { serializeOrder, serializeTable, serializeWaiterCall } from "../lib/serialize.js";
 import { takeStockForOrders } from "../lib/stock.js";
@@ -13,6 +13,8 @@ export const restaurantTablesRouter = asyncRouter();
 // "/api/restaurants" mount point — a path-based router.use() here would also
 // run for sibling routers' routes (e.g. reports' /:id/shift-stats).
 const staffGuard = [requireStaff, requireOwnRestaurant, requireModule("mesas")];
+// Editing the salon map — a new table, its number, its place, its removal, the grid's size: Administrador and Dono (F-4).
+const mapGuard = [...staffGuard, requireMinRole(LEVEL.ADMINISTRADOR)];
 const MIN_GRID_SIZE = 7;
 const MAX_GRID_SIZE = 15; // odd sizes only (validated in the PATCH below)
 
@@ -39,7 +41,7 @@ restaurantTablesRouter.get("/:id/tables", ...staffGuard, async (req, res) => {
   res.json(await tablesWithStatus(req.params.id));
 });
 
-restaurantTablesRouter.post("/:id/tables", ...staffGuard, async (req, res) => {
+restaurantTablesRouter.post("/:id/tables", ...mapGuard, async (req, res) => {
   const { seats } = req.body as { seats?: number };
   const last = await prisma.restaurantTable.findFirst({ where: { restaurantId: req.params.id }, orderBy: { number: "desc" } });
   const table = await prisma.restaurantTable.create({
@@ -52,7 +54,7 @@ restaurantTablesRouter.get("/:id/salon-grid", ...staffGuard, async (req, res) =>
   res.json(await buildSalonGrid(req.params.id));
 });
 
-restaurantTablesRouter.patch("/:id/salon-grid", ...staffGuard, async (req, res) => {
+restaurantTablesRouter.patch("/:id/salon-grid", ...mapGuard, async (req, res) => {
   const { gridSize } = req.body as { gridSize?: number };
   if (!Number.isInteger(gridSize) || gridSize! % 2 === 0 || gridSize! < MIN_GRID_SIZE || gridSize! > MAX_GRID_SIZE) {
     return res.status(400).json({ error: `gridSize must be an odd integer between ${MIN_GRID_SIZE} and ${MAX_GRID_SIZE}` });
@@ -67,7 +69,7 @@ restaurantTablesRouter.patch("/:id/salon-grid", ...staffGuard, async (req, res) 
   res.json(await buildSalonGrid(req.params.id));
 });
 
-restaurantTablesRouter.patch("/:id/tables/:number/position", ...staffGuard, async (req, res) => {
+restaurantTablesRouter.patch("/:id/tables/:number/position", ...mapGuard, async (req, res) => {
   const { gridRow, gridCol } = req.body as { gridRow?: number | null; gridCol?: number | null };
   const number = parseInt(req.params.number, 10);
   const table = await findTable(req.params.id, number);
@@ -97,7 +99,7 @@ restaurantTablesRouter.patch("/:id/tables/:number/position", ...staffGuard, asyn
   res.json(await buildSalonGrid(req.params.id));
 });
 
-restaurantTablesRouter.patch("/:id/tables/:number", ...staffGuard, async (req, res) => {
+restaurantTablesRouter.patch("/:id/tables/:number", ...mapGuard, async (req, res) => {
   const { number: nextNumber } = req.body as { number?: number };
   const current = parseInt(req.params.number, 10);
   const table = await findTable(req.params.id, current);
@@ -114,7 +116,7 @@ restaurantTablesRouter.patch("/:id/tables/:number", ...staffGuard, async (req, r
   res.json(await buildSalonGrid(req.params.id));
 });
 
-restaurantTablesRouter.delete("/:id/tables/:number", ...staffGuard, async (req, res) => {
+restaurantTablesRouter.delete("/:id/tables/:number", ...mapGuard, async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
   if ((await openOrdersForTable(req.params.id, table.number)).length) return res.status(409).json({ error: "feche a conta antes de excluir a mesa" });
@@ -141,7 +143,8 @@ restaurantTablesRouter.post("/:id/tables/:number/orders", ...staffGuard, async (
   res.status(201).json(serializeOrder(placed.order));
 });
 
-restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, async (req, res) => {
+// Fechar conta: the waiter and up; the kitchen gets 403 (F-4).
+restaurantTablesRouter.post("/:id/tables/:number/close", ...staffGuard, requireRole(...CLOSE_BILL_ROLES), async (req, res) => {
   const table = await findTable(req.params.id, parseInt(req.params.number, 10));
   if (!table) return res.status(404).json({ error: "table not found" });
   // orderIds = the comanda the waiter was looking at: an order that arrives meanwhile stays open on the table.

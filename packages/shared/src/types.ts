@@ -452,6 +452,8 @@ export const ROLE_LEVEL: Record<StaffRole, number> = { owner: LEVEL.DONO, manage
 export const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "Administrador", waiter: "Funcionário · Garçom", kitchen: "Funcionário · Cozinha" };
 /** Atendimento splits the Funcionário level: the waiter talks to customers, the kitchen doesn't. */
 export const SUPPORT_ROLES: StaffRole[] = ["owner", "manager", "waiter"];
+/** Fechar conta (Mesas): whoever serves the tables — waiter, Administrador and Dono; not the kitchen (decided 02/10/2026, F-4). */
+export const CLOSE_BILL_ROLES: StaffRole[] = ["owner", "manager", "waiter"];
 /** Any role string outside StaffRole counts as Funcionário. */
 export const roleLevel = (role: string | undefined) => ROLE_LEVEL[role as StaffRole] ?? LEVEL.FUNCIONARIO;
 

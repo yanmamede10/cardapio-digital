@@ -45,6 +45,19 @@ test("fechar a conta no celular pede a forma de pagamento, baixa a ficha técnic
   await expect(page.getByText(`Fechamento de comanda ${order.code}`)).toHaveCount(2);
 });
 
+test("no celular a cozinha não vê Fechar conta na mesa com comanda aberta; o garçom vê (F-4)", async ({ page, api, request }) => {
+  const { item } = await burgerKit(api);
+  const { number: table } = await newTable(api);
+  await api("POST", `/api/restaurants/${R}/tables/${table}/orders`, { lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] });
+  for (const [email, close] of [["igor@fogoeno.com.br", 0], ["paula@fogoeno.com.br", 1]] as const) {
+    await loginAs(page, request, email); // the last init script wins
+    await page.goto(`/mesas/${table}`);
+    await expect(page.getByRole("button", { name: "Lançar pedido" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Fechar conta/ }), email).toHaveCount(close);
+  }
+  await api("POST", `/api/restaurants/${R}/tables/${table}/close`, {});
+});
+
 test("cadastro de produto no celular: a busca da composição ocupa a linha inteira", async ({ page }) => {
   await page.goto("/produtos");
   await page.getByRole("button", { name: "Novo item" }).click();

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { PaymentMode, RestaurantTable, TableComanda, TableStatus } from "@cardapio/shared";
+import { CLOSE_BILL_ROLES, LEVEL, type PaymentMode, type RestaurantTable, type StaffRole, type TableComanda, type TableStatus } from "@cardapio/shared";
 import {
   DndContext,
   DragOverlay,
@@ -13,7 +13,8 @@ import {
   useSensors,
   type DragEndEvent
 } from "@dnd-kit/core";
-import { ApiError, api } from "../lib/api";
+import { ApiError, api, getSession } from "../lib/api";
+import { myLevel } from "../lib/modules";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { PixPaymentModal } from "../components/pix/PixPaymentModal";
@@ -178,6 +179,10 @@ export default function TablesScreen() {
   }, [selected]);
 
   const selT = tables.find((t) => t.number === selected) || null;
+  // F-4: the map (tables, numbers, places, the grid) is Administrador and Dono's; Fechar conta, the waiter's and up — the API
+  // refuses the rest, the screen just doesn't offer it.
+  const canEditMap = myLevel() >= LEVEL.ADMINISTRADOR;
+  const canClose = CLOSE_BILL_ROLES.includes(getSession()?.role as StaffRole);
 
   const confirmCloseTable = async (number: number, paymentMethod: string) => {
     setPixTarget(null);
@@ -267,17 +272,19 @@ export default function TablesScreen() {
               Imprimir QR
             </button>
           )}
-          <button
-            type="button"
-            className={editing ? "btn btn-primary" : "btn btn-outline"}
-            onClick={() => {
-              setMenu(null);
-              setEditing((v) => !v);
-            }}
-          >
-            <i className={`fa-solid ${editing ? "fa-check" : "fa-pen-to-square"}`} style={{ fontSize: 16, lineHeight: 1 }} />
-            {editing ? "Concluir edição" : "Editar ambiente"}
-          </button>
+          {canEditMap && (
+            <button
+              type="button"
+              className={editing ? "btn btn-primary" : "btn btn-outline"}
+              onClick={() => {
+                setMenu(null);
+                setEditing((v) => !v);
+              }}
+            >
+              <i className={`fa-solid ${editing ? "fa-check" : "fa-pen-to-square"}`} style={{ fontSize: 16, lineHeight: 1 }} />
+              {editing ? "Concluir edição" : "Editar ambiente"}
+            </button>
+          )}
         </div>
 
         <DndContext sensors={sensors} onDragStart={({ active }) => setActiveDragId(String(active.id))} onDragEnd={handleDragEnd} onDragCancel={() => setActiveDragId(null)}>
@@ -372,22 +379,24 @@ export default function TablesScreen() {
             <i className="fa-solid fa-plus" style={{ fontSize: 14, lineHeight: 1 }} />
             Lançar pedido
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!selT || selT.status === "free"}
-            onClick={() =>
-              selT &&
-              setPixTarget({
-                number: selT.number,
-                title: `Mesa ${String(selT.number).padStart(2, "0")}`,
-                amount: total,
-                itemsLabel: `${(comanda?.lines || []).length} itens${comanda?.servicePct ? ` · serviço ${comanda.servicePct}% incluso` : ""}`
-              })
-            }
-          >
-            Fechar conta
-          </button>
+          {canClose && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!selT || selT.status === "free"}
+              onClick={() =>
+                selT &&
+                setPixTarget({
+                  number: selT.number,
+                  title: `Mesa ${String(selT.number).padStart(2, "0")}`,
+                  amount: total,
+                  itemsLabel: `${(comanda?.lines || []).length} itens${comanda?.servicePct ? ` · serviço ${comanda.servicePct}% incluso` : ""}`
+                })
+              }
+            >
+              Fechar conta
+            </button>
+          )}
           <div style={{ display: "flex", gap: 8 }}>
             <button
               type="button"

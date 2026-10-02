@@ -7,7 +7,8 @@ import { ADMIN_KEY, ALL_MODULES, R, SEED_MODULES, call, login, setModules } from
 // test fails — a new route can't ship without saying who may call it. For each protected route: no credential → 401; a
 // staff token of another restaurant → 403/404; every role below the minimum → 403; its module off → 403.
 
-type Min = "funcionario" | "atendimento" | "administrador" | "dono";
+// garcom: the waiter and up, not the kitchen (Atendimento, Fechar conta).
+type Min = "funcionario" | "garcom" | "administrador" | "dono";
 type Rule = [min: Min, module: string | null];
 
 /** Anyone, no token: the customer app (menu, QR, orders by device id) and the login itself. */
@@ -56,15 +57,15 @@ const STAFF: Record<string, Rule> = {
   "PATCH /api/orders/:id/stage": ["funcionario", "pedidos"],
 
   "GET /api/restaurants/:id/tables": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/tables": ["funcionario", "mesas"],
+  "POST /api/restaurants/:id/tables": ["administrador", "mesas"],
   "GET /api/restaurants/:id/salon-grid": ["funcionario", "mesas"],
-  "PATCH /api/restaurants/:id/salon-grid": ["funcionario", "mesas"],
-  "PATCH /api/restaurants/:id/tables/:number/position": ["funcionario", "mesas"],
-  "PATCH /api/restaurants/:id/tables/:number": ["funcionario", "mesas"],
-  "DELETE /api/restaurants/:id/tables/:number": ["funcionario", "mesas"],
+  "PATCH /api/restaurants/:id/salon-grid": ["administrador", "mesas"],
+  "PATCH /api/restaurants/:id/tables/:number/position": ["administrador", "mesas"],
+  "PATCH /api/restaurants/:id/tables/:number": ["administrador", "mesas"],
+  "DELETE /api/restaurants/:id/tables/:number": ["administrador", "mesas"],
   "GET /api/restaurants/:id/tables/:number/comanda": ["funcionario", "mesas"],
   "POST /api/restaurants/:id/tables/:number/orders": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/tables/:number/close": ["funcionario", "mesas"],
+  "POST /api/restaurants/:id/tables/:number/close": ["garcom", "mesas"],
   "POST /api/restaurants/:id/tables/:number/transfer": ["funcionario", "mesas"],
   "GET /api/restaurants/:id/tables/:number/qr": ["funcionario", "mesas"],
   "POST /api/restaurants/:id/tables/:number/qr": ["administrador", "mesas"],
@@ -89,13 +90,13 @@ const STAFF: Record<string, Rule> = {
   "DELETE /api/restaurants/:id/coupons/:couponId": ["administrador", "promocoes"],
   "POST /api/restaurants/:id/coupons/:couponId/duplicate": ["administrador", "promocoes"],
 
-  "GET /api/restaurants/:id/tickets": ["atendimento", "atendimento"],
-  "PATCH /api/restaurants/:id/tickets/:ticketId": ["atendimento", "atendimento"],
-  "POST /api/restaurants/:id/tickets/:ticketId/messages": ["atendimento", "atendimento"],
-  "POST /api/restaurants/:id/tickets/:ticketId/media": ["atendimento", "atendimento"],
-  "GET /api/restaurants/:id/reviews": ["atendimento", "atendimento"],
-  "POST /api/restaurants/:id/reviews/:reviewId/reply": ["atendimento", "atendimento"],
-  "GET /api/restaurants/:id/whatsapp": ["atendimento", "atendimento"],
+  "GET /api/restaurants/:id/tickets": ["garcom", "atendimento"],
+  "PATCH /api/restaurants/:id/tickets/:ticketId": ["garcom", "atendimento"],
+  "POST /api/restaurants/:id/tickets/:ticketId/messages": ["garcom", "atendimento"],
+  "POST /api/restaurants/:id/tickets/:ticketId/media": ["garcom", "atendimento"],
+  "GET /api/restaurants/:id/reviews": ["garcom", "atendimento"],
+  "POST /api/restaurants/:id/reviews/:reviewId/reply": ["garcom", "atendimento"],
+  "GET /api/restaurants/:id/whatsapp": ["garcom", "atendimento"],
   "POST /api/restaurants/:id/whatsapp/terms": ["dono", "atendimento"],
   "POST /api/restaurants/:id/whatsapp/connect": ["dono", "atendimento"],
   "POST /api/restaurants/:id/whatsapp/disconnect": ["dono", "atendimento"],
@@ -144,8 +145,8 @@ function registeredRoutes(): string[] {
 }
 
 const ROLE_TOKENS: Record<string, string> = {};
-const BELOW: Record<Min, string[]> = { funcionario: [], atendimento: ["kitchen"], administrador: ["waiter", "kitchen"], dono: ["waiter", "kitchen", "manager"] };
-const MIN_ROLE: Record<Min, string> = { funcionario: "kitchen", atendimento: "waiter", administrador: "manager", dono: "owner" };
+const BELOW: Record<Min, string[]> = { funcionario: [], garcom: ["kitchen"], administrador: ["waiter", "kitchen"], dono: ["waiter", "kitchen", "manager"] };
+const MIN_ROLE: Record<Min, string> = { funcionario: "kitchen", garcom: "waiter", administrador: "manager", dono: "owner" };
 let otherRestaurant: string; // the Dono of Chapa 27 (seed-demo), on fogo's routes
 const params: Record<string, string> = { id: R, number: "1", tableCode: "nao-existe" };
 
