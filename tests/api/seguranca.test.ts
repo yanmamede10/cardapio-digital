@@ -5,7 +5,7 @@ import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
 import { after, test } from "node:test";
 import { PrismaClient } from "@prisma/client";
-import { R, call, login } from "./helpers.ts";
+import { ADMIN_KEY, R, call, login } from "./helpers.ts";
 
 // Security checks that aren't about one screen. The test database is the one tests/run.mjs migrated.
 const db = new PrismaClient();
@@ -151,4 +151,25 @@ test("pedido malformado responde 400 sem detalhe interno (nada de caminho de arq
     assert.equal(res.status, 400, JSON.stringify(itemId));
     assert.doesNotMatch(JSON.stringify(res.body), /prisma|invocation|\.ts|apps[\/]|Argument/i, JSON.stringify(res.body));
   }
+});
+
+/** Runs `check` with fogo deactivated by the super admin, then reactivates it whatever happens. */
+async function whileInactive(check: () => Promise<void>) {
+  const setStatus = (status: string) => call("PATCH", `/api/admin/restaurants/${R}/status`, { token: ADMIN_KEY, body: { status } });
+  assert.equal((await setStatus("inativo")).status, 200);
+  try {
+    await check();
+  } finally {
+    await setStatus("ativo");
+  }
+}
+const someItem = async () => (await call("GET", `/api/restaurants/${R}/items`)).body.find((i: { soldOut: boolean }) => !i.soldOut) as { id: string };
+
+test("restaurante inativo (ou pendente): o cardápio público some (404); reativado, volta", async () => {
+  const item = await someItem();
+  const paths = ["", "/categories", "/items", `/items/${item.id}`, "/appearance"];
+  await whileInactive(async () => {
+    for (const path of paths) assert.equal((await call("GET", `/api/restaurants/${R}${path}`)).status, 404, `GET ${path || "/"}`);
+  });
+  for (const path of paths) assert.equal((await call("GET", `/api/restaurants/${R}${path}`)).status, 200, `GET ${path || "/"} ativo`);
 });

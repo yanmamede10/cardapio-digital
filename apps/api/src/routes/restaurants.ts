@@ -37,14 +37,18 @@ restaurantsRouter.get("/", async (req, res) => {
   res.json(list.map(serializeRestaurant));
 });
 
+/** The customer app's view of a restaurant: only an active one exists. A pending (not yet launched) or deactivated one is
+ *  "not found" on every public route — its menu, photos and appearance included. */
+export const activeRestaurant = (id: string) => prisma.restaurant.findFirst({ where: { id, status: "ativo" } });
+
 restaurantsRouter.get("/:id", async (req, res) => {
-  const r = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+  const r = await activeRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json(serializeRestaurant(r));
 });
 
 restaurantsRouter.get("/:id/categories", async (req, res) => {
-  const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+  const restaurant = await activeRestaurant(req.params.id);
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
   const categories = await prisma.menuCategory.findMany({
     where: { restaurantId: req.params.id },
@@ -56,7 +60,7 @@ restaurantsRouter.get("/:id/categories", async (req, res) => {
 });
 
 restaurantsRouter.get("/:id/items", async (req, res) => {
-  const restaurant = await prisma.restaurant.findUnique({ where: { id: req.params.id } });
+  const restaurant = await activeRestaurant(req.params.id);
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
   const { categoryId } = req.query as { categoryId?: string };
   const items = await prisma.menuItem.findMany({
@@ -72,7 +76,7 @@ restaurantsRouter.get("/:id/items/:itemId", async (req, res) => {
     where: { id: req.params.itemId },
     include: { category: true }
   });
-  if (!item || item.restaurantId !== req.params.id) {
+  if (!item || item.restaurantId !== req.params.id || !(await activeRestaurant(req.params.id))) {
     return res.status(404).json({ error: "item not found" });
   }
   res.json(serializeMenuItem(item, item.category.name));

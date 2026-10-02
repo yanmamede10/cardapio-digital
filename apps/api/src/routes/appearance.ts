@@ -4,6 +4,7 @@ import { LEVEL, type MenuTemplateId } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
 import { serializeAppearanceState, serializePublicAppearance } from "../lib/serialize.js";
+import { activeRestaurant } from "./restaurants.js";
 import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const appearanceRouter = asyncRouter();
@@ -108,7 +109,7 @@ appearanceRouter.post("/:id/appearance/upload", ...staffGuard, upload.single("fi
 
 // Public — no auth. The customer menu (QR, tablet, delivery) reads the published skin from here.
 appearanceRouter.get("/:id/appearance", async (req, res) => {
-  const r = await requireRestaurant(req.params.id);
+  const r = await activeRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
   res.json(serializePublicAppearance(r));
 });
