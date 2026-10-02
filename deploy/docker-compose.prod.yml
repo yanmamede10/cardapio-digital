@@ -9,10 +9,16 @@
 # The app's data is in Supabase; its daily dump lands in deploy/backups (the backup service below), and a daily copy of the
 # Storage buckets in deploy/backups/storage (storage-backup).
 name: cardapio
+# Every container's log, capped: Docker's json-file grows without end on the VM's disk otherwise (Evolution logs each message).
+x-logging: &logging
+  driver: json-file
+  options: { max-size: 10m, max-file: "5" }
+
 services:
   caddy:
     image: caddy:2.11.4-alpine
     restart: unless-stopped
+    logging: *logging
     ports: ["80:80", "443:443"]
     environment:
       PUBLIC_IP: ${PUBLIC_IP:?set PUBLIC_IP in deploy/.env (the VM's public IPv4)}
@@ -28,6 +34,7 @@ services:
     build: { context: .., dockerfile: apps/api/Dockerfile }
     image: cardapio-api
     restart: unless-stopped
+    logging: *logging
     init: true # PID 1 that forwards SIGTERM, so `up -d` stops the old container at once
     env_file: .env
     # Wiring of this stack, not settings: they win over deploy/.env.
@@ -48,6 +55,7 @@ services:
   evolution:
     image: evoapicloud/evolution-api:v2.3.7
     restart: unless-stopped
+    logging: *logging
     depends_on: [evolution-db]
     environment:
       SERVER_URL: http://evolution:8080
@@ -73,6 +81,7 @@ services:
   evolution-db:
     image: postgres:16.15-alpine3.24
     restart: unless-stopped
+    logging: *logging
     environment: { POSTGRES_USER: evolution, POSTGRES_PASSWORD: evolution, POSTGRES_DB: evolution }
     volumes: [evolution_db:/var/lib/postgresql/data]
 
@@ -87,6 +96,7 @@ services:
   backup:
     image: postgres:17.11-alpine3.24
     restart: unless-stopped
+    logging: *logging
     environment:
       DIRECT_URL: ${DIRECT_URL:?set DIRECT_URL in deploy/.env}
       TZ: America/Sao_Paulo
@@ -117,6 +127,7 @@ services:
   storage-backup:
     image: rclone/rclone:1.75.1
     restart: unless-stopped
+    logging: *logging
     environment:
       RCLONE_CONFIG: "" # no config file: the remote "supabase" is these variables
       RCLONE_CONFIG_SUPABASE_TYPE: s3

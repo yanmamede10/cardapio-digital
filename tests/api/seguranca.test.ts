@@ -70,7 +70,7 @@ test("docker compose não monta a Evolution sem EVOLUTION_API_KEY; com ela, a po
   assert.match(withKey.stdout, /host_ip: 127\.0\.0\.1\s+target: 8080\s+published: "8085"/);
 });
 
-test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho, as imagens têm versão fixa e o Storage tem backup", () => {
+test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho com log de tamanho limitado, as imagens têm versão fixa e o Storage tem backup", () => {
   const STORAGE = { STORAGE_S3_ENDPOINT: "https://ref.supabase.co/storage/v1/s3", STORAGE_S3_REGION: "sa-east-1", STORAGE_S3_ACCESS_KEY_ID: "id", STORAGE_S3_SECRET_ACCESS_KEY: "segredo", STORAGE_S3_BUCKET: "cardapio", STORAGE_S3_WHATSAPP_BUCKET: "whatsapp-media" };
   // deploy/.env only exists on the VM, and older Compose (the CI's) wants the env_file to exist even with
   // --no-env-resolution: an empty one for the duration of the check, never touching a real one.
@@ -84,7 +84,7 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
     if (created) rmSync(envFile);
   }
   assert.equal(r.status, 0, r.stderr);
-  type Service = { image: string; restart: string; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
+  type Service = { image: string; restart: string; logging?: unknown; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
   const services: Record<string, Service> = JSON.parse(r.stdout).services;
   const published = Object.entries(services).flatMap(([name, s]) => (s.ports ?? []).map((p) => `${name} ${p.published}/${p.protocol}`));
   assert.deepEqual(published, ["caddy 80/tcp", "caddy 443/tcp"]);
@@ -98,6 +98,7 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
   assert.equal(storage.environment?.RCLONE_CONFIG_SUPABASE_SECRET_ACCESS_KEY, STORAGE.STORAGE_S3_SECRET_ACCESS_KEY);
   for (const [name, s] of Object.entries(services)) {
     assert.equal(s.restart, "unless-stopped", name);
+    assert.deepEqual(s.logging, { driver: "json-file", options: { "max-size": "10m", "max-file": "5" } }, `${name}: log com teto`);
     if (name !== "api") assert.match(s.image, /:v?\d+\.\d+(\.\d+)?(-[\w.]+)?$/,`${name}: ${s.image}`); // the API's base is pinned in its Dockerfile
   }
   for (const from of readFileSync("apps/api/Dockerfile", "utf8").match(/^FROM \S+/gm) ?? []) assert.match(from, /:\d+\.\d+\.\d+-/, from);
