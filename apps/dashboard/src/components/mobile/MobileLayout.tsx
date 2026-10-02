@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { App } from "@capacitor/app";
 import { type LiveData, buildNotifs, useLiveData } from "../../lib/live";
 import { api } from "../../lib/api";
@@ -136,11 +136,13 @@ export function MobileLayout() {
           }}
         >
           {isRoot ? (
-            <div
+            <Link
+              to="/"
+              aria-label="MesaPronta: início"
               style={{
-                width: 38,
-                height: 38,
-                flex: "0 0 38px",
+                width: 44,
+                height: 44,
+                flex: "0 0 44px",
                 borderRadius: 11,
                 background: "var(--brand)",
                 color: "var(--brandInk)",
@@ -149,11 +151,12 @@ export function MobileLayout() {
                 justifyContent: "center",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontWeight: 600,
-                fontSize: 14
+                fontSize: 14,
+                textDecoration: "none"
               }}
             >
               MP
-            </div>
+            </Link>
           ) : (
             <button
               type="button"

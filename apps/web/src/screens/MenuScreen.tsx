@@ -165,6 +165,9 @@ export default function MenuScreen() {
   // A category the restaurant just created (still without dishes) stays out of the customer's menu.
   const categoryNav = (variant: "pill" | "vibrant" | "text") => <CategoryNav categories={categories.filter((c) => items.some((i) => i.categoryId === c.id))} active={activeCategory} onPick={setActiveCategory} variant={variant} />;
   const bottomSpacer = <div style={{ height: isMesa ? 116 : 104 }} />;
+  // Checklist 17: the restaurant's logo brings the menu back to its top.
+  const toTop = () => document.querySelector(".screen .scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+  const toTopLabel = `${restaurant.name}: voltar ao topo do cardápio`;
   const logoCircle = (size: number, radius: number) =>
     logo ? (
       <img src={logo} alt="" style={{ width: size, height: size, borderRadius: radius, objectFit: "cover", display: "block" }} />
@@ -262,7 +265,7 @@ export default function MenuScreen() {
         <div style={{ background: "var(--vibHead)", borderRadius: "0 0 var(--vibHeadR) var(--vibHeadR)", paddingBottom: "var(--vibHeadPad)" }}>
           <div style={{ padding: "calc(var(--pad) + 4px) var(--pad) 0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ flex: "none", width: 44, height: 44, borderRadius: 18, background: "#FCF7D3", color: "#732009", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "var(--t-b)", letterSpacing: "-.02em", overflow: "hidden" }}>{logoCircle(44, 18)}</div>
+              <button type="button" onClick={toTop} aria-label={toTopLabel} style={{ flex: "none", width: 44, height: 44, borderRadius: 18, background: "#FCF7D3", color: "#732009", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "var(--t-b)", letterSpacing: "-.02em", overflow: "hidden" }}>{logoCircle(44, 18)}</button>
               {isMesa && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 13px", borderRadius: 999, background: "rgba(252,247,211,.16)", border: "1px solid rgba(252,247,211,.46)", color: "#FCF7D3", fontWeight: 600, fontSize: "var(--t-s)" }}>
                   <i className="fa-solid fa-qrcode" style={{ fontSize: "var(--i-s)" }} />Mesa {tableNumber}
@@ -344,7 +347,7 @@ export default function MenuScreen() {
     content = (
       <div className="scroll no-scrollbar">
         <div style={{ position: "sticky", top: 0, zIndex: 3, display: "flex", alignItems: "center", gap: 12, padding: "12px var(--pad)", background: "var(--glass)", backdropFilter: "saturate(180%) blur(22px)", borderBottom: "1px solid var(--line)" }}>
-          <div style={{ flex: "none", width: 38, height: 38, borderRadius: 14, background: "var(--pri)", color: "var(--priInk)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "var(--t-s)", letterSpacing: "-.01em", overflow: "hidden" }}>{logoCircle(38, 14)}</div>
+          <button type="button" onClick={toTop} aria-label={toTopLabel} style={{ flex: "none", width: 44, height: 44, borderRadius: 16, background: "var(--pri)", color: "var(--priInk)", border: 0, padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "var(--t-s)", letterSpacing: "-.01em", overflow: "hidden" }}>{logoCircle(44, 16)}</button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 600, fontSize: "var(--t-b)", lineHeight: 1.2, letterSpacing: "-.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{restaurant.name}</div>
             <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 7, fontWeight: 500, fontSize: "var(--t-xs)", color: "var(--ink2)" }}>
@@ -386,7 +389,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "0 var(--pad)" }}>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: -30 }}>
-            <div style={{ width: 66, height: 66, borderRadius: "var(--r-elevated)", background: "var(--pri)", border: "3px solid var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--priInk)", font: "700 20px var(--font)", letterSpacing: "-.02em", overflow: "hidden" }}>{logoCircle(66, 24)}</div>
+            <button type="button" onClick={toTop} aria-label={toTopLabel} style={{ width: 66, height: 66, borderRadius: "var(--r-elevated)", background: "var(--pri)", border: "3px solid var(--bg)", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--priInk)", font: "700 20px var(--font)", letterSpacing: "-.02em", overflow: "hidden" }}>{logoCircle(66, 24)}</button>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 999, background: "var(--surf)", border: "1px solid var(--line)", font: "600 var(--t-s) var(--font)" }}>
               <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--i-s)", color: "var(--good)" }} />Aberto agora
             </div>

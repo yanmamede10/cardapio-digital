@@ -192,5 +192,23 @@ for (const theme of ["light", "dark"] as const) {
       }
       await guest.close();
     });
+
+    test("17 · o logo leva ao início: no painel, à tela inicial do papel; no cardápio, ao topo do cardápio", async ({ page, request, browser }) => {
+      await loginAs(page, request, "dono@chapa27.example");
+      await page.goto("/mesas");
+      await page.getByRole("link", { name: "MesaPronta: início" }).click();
+      await expect(page).toHaveURL(/:5274\/$/);
+      await expect(page).toHaveTitle(/^Central de Pedidos · /);
+      // The cardápio at a table: scrolled down, the restaurant's logo brings the menu back to its top.
+      const token = await staffToken(request, "dono@chapa27.example");
+      const guest = await browser.newPage({ viewport: page.viewportSize()! });
+      await guest.goto(await tableUrl(request, token, "chapa27", 24));
+      const scroller = guest.locator(".scroll").first();
+      await expect(guest.getByText("Clássico", { exact: true }).first()).toBeVisible();
+      await scroller.evaluate((el) => el.scrollTo(0, 900));
+      await guest.getByRole("button", { name: /voltar ao topo do cardápio/ }).click();
+      await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
+      await guest.close();
+    });
   });
 }

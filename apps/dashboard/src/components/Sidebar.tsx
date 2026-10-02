@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { NAV_GROUPS, canSee, moduleByKey, moduleForPath } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { logout } from "../lib/api";
@@ -57,7 +57,8 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
         height: "100vh"
       }}
     >
-      <div style={{ padding: "22px 22px 18px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line)" }}>
+      {/* Checklist 17: the logo goes home — "/" is each role's first screen (homePath). */}
+      <Link to="/" aria-label="MesaPronta: início" style={{ padding: "22px 22px 18px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line)", color: "inherit", textDecoration: "none" }}>
         <div
           style={{
             width: 34,
@@ -81,7 +82,7 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
             Gestão
           </div>
         </div>
-      </div>
+      </Link>
 
       <nav style={{ padding: "14px 12px 18px", display: "flex", flexDirection: "column", gap: 2, flex: 1, overflowY: "auto" }}>
         {NAV_GROUPS.map((g) => {
