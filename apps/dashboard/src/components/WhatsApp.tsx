@@ -133,7 +133,7 @@ export function MediaButtons({ onSend, onError }: { onSend: (file: Blob, name: s
         <button type="button" aria-label="Descartar gravação" onClick={() => stop(false)} style={btn}>
           <i className="fa-solid fa-trash" style={{ fontSize: 15 }} />
         </button>
-        <button type="button" aria-label="Enviar gravação" onClick={() => stop(true)} style={{ ...btn, background: "var(--alert)", borderColor: "var(--alert)", color: "#fff", width: "auto", flex: "0 0 auto", padding: "0 12px", display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600 }}>
+        <button type="button" aria-label="Enviar gravação" onClick={() => stop(true)} style={{ ...btn, background: "var(--alert)", borderColor: "var(--alert)", color: "var(--alertInk)", width: "auto", flex: "0 0 auto", padding: "0 12px", display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600 }}>
           <i className="fa-solid fa-circle" style={{ fontSize: 9 }} />
           Gravando · enviar
         </button>

@@ -19,6 +19,8 @@
   --ok: #3F6B4A;
   --warn: #775214; /* 4.6:1 as text, also on its own 18% tint (status pills); was #A5711C */
   --alert: #9E2A10;
+  /* Text on --alert (badges, the voice-note send button): white here, 7.5:1. */
+  --alertInk: #FFFFFF;
 
   --glassBg: rgba(255, 253, 241, .72);
   --glassBd: rgba(207, 199, 169, .55);
@@ -52,6 +54,8 @@
   --ok: #6E9B78;
   --warn: #C79B4A;
   --alert: #CE6E54; /* 4.6:1 (was #C7583A); sec and neutral nudged for the same reason */
+  /* White on this --alert is 3.5:1: text on it is the dark background, 5.5:1. */
+  --alertInk: #020304;
 
   --glassBg: rgba(13, 15, 16, .68);
   --glassBd: rgba(255, 255, 255, .08);

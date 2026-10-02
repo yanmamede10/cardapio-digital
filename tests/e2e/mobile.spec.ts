@@ -179,3 +179,25 @@ test("a barra de abas fica sempre na tela, mesmo com a lista rolada até o fim",
     await expect(page.getByRole("button", { name: "Mais" }).last()).toBeInViewport();
   }
 });
+
+test.describe("tema escuro", () => {
+  test.use({ theme: "dark" });
+  test("o selo de pedidos novos da Central é legível no tema escuro (contraste de pelo menos 4,5:1)", async ({ page, api }) => {
+    const item = (await api<{ id: string; soldOut: boolean }[]>("GET", `/api/restaurants/${R}/items`)).find((i) => !i.soldOut)!;
+    const order = await api("POST", "/api/orders", { mode: "delivery", restaurantId: R, lines: [{ itemId: item.id, quantity: 1, notes: "", selectedOptions: [] }] }); // a pending one: the badge shows
+    await page.goto("/mesas");
+    const badge = page.locator("nav button").first().locator(".mono");
+    await expect(badge).toBeVisible({ timeout: 15_000 });
+    const ratio = await badge.evaluate((el) => {
+      const lum = (rgb: string) => {
+        const [r, g, b] = (rgb.match(/\d+/g) ?? []).slice(0, 3).map((v) => Number(v) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const s = getComputedStyle(el);
+      const [hi, lo] = [lum(s.color), lum(s.backgroundColor)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    });
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
+    await api("POST", `/api/orders/${order.id}/reject`);
+  });
+});

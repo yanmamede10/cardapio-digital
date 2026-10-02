@@ -326,7 +326,7 @@ export function MobileLayout() {
                       height: 17,
                       borderRadius: 20,
                       background: "var(--alert)",
-                      color: "#fff",
+                      color: "var(--alertInk)",
                       fontSize: 9.5,
                       fontWeight: 600,
                       display: "flex",

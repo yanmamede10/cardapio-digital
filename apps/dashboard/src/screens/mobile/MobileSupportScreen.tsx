@@ -97,7 +97,7 @@ export default function MobileSupportScreen() {
                   <span style={{ fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "1px 8px", background: st.bg, color: st.fg }}>{st.label}</span>
                   <span style={{ fontSize: 11, color: "var(--ink3)", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.assignee || "Não atribuído"}</span>
                   {t.unreadCount > 0 && (
-                    <span className="mono" style={{ minWidth: 17, height: 17, borderRadius: 20, background: "var(--alert)", color: "#fff", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
+                    <span className="mono" style={{ minWidth: 17, height: 17, borderRadius: 20, background: "var(--alert)", color: "var(--alertInk)", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
                       {t.unreadCount}
                     </span>
                   )}
