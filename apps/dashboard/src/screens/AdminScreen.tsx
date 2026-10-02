@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import type { AdminRestaurant, RestaurantStatus } from "@cardapio/shared";
-import { BASE_URL } from "../lib/api";
+import { ApiError, BASE_URL } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { Segmented } from "../components/Segmented";
@@ -51,7 +51,12 @@ export default function AdminScreen() {
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
   const call: AdminCall = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-    const res = await fetch(`${BASE_URL}/api/admin${path}`, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` } });
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}/api/admin${path}`, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` } });
+    } catch {
+      throw new ApiError(0, ""); // offline: the browser's own "Failed to fetch" isn't for people
+    }
     const body = await res.json().catch(() => null);
     if (res.status === 401) {
       signOut("Chave de administrador inválida");
@@ -62,7 +67,7 @@ export default function AdminScreen() {
     } catch {
       // ignore — works for this page load
     }
-    if (!res.ok) throw new Error(body?.error ?? `Erro ${res.status}`);
+    if (!res.ok) throw new ApiError(res.status, body?.error ?? `Erro ${res.status}`);
     return body as T;
   };
 
@@ -162,7 +167,7 @@ function RestaurantList({ call }: { call: AdminCall }) {
       setForm(null);
       notify(`${created.name} cadastrado como pendente`);
     } catch (e) {
-      notify(signUpErrorText((e as Error).message, "Não foi possível cadastrar"));
+      notify(signUpErrorText((e as ApiError).detail, "Não foi possível cadastrar"));
     }
   };
 

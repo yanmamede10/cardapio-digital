@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { PAYMENT_MODE_LABEL, PLAN_MODULES, ROLE_LABEL, TAX_REGIME_LABEL, type AdminRestaurantDetail, type PlanModule, type StaffMember } from "@cardapio/shared";
+import type { ApiError } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { moduleLabel } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
@@ -39,7 +40,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
         setForm(formOf(d));
         setPlan({ price: String(d.planPrice), day: String(d.planDueDay) });
       })
-      .catch((e: Error) => setError(e.message.includes("not found") ? "Restaurante não encontrado." : e.message));
+      .catch((e: ApiError) => setError(e.detail.includes("not found") ? "Restaurante não encontrado." : e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -60,7 +61,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       setForm(formOf(updated));
       notify("Dados salvos");
     } catch (e) {
-      notify(signUpErrorText((e as Error).message, "Não foi possível salvar"));
+      notify(signUpErrorText((e as ApiError).detail, "Não foi possível salvar"));
     }
   };
 
@@ -84,7 +85,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       setR(updated);
       notify("Mensalidade salva");
     } catch (e) {
-      notify((e as Error).message.includes("planDueDay") ? "O vencimento é um dia de 1 a 28" : "Informe um valor válido para a mensalidade");
+      notify((e as ApiError).detail.includes("planDueDay") ? "O vencimento é um dia de 1 a 28" : "Informe um valor válido para a mensalidade");
     }
   };
 

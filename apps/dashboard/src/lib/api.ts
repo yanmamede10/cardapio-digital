@@ -37,6 +37,7 @@ import type {
   XmlImportRequest,
   FinanceSummary
 } from "@cardapio/shared";
+import { readableError } from "@cardapio/shared";
 
 export const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
 const SESSION_STORAGE_KEY = "cardapio.dashboard.session";
@@ -83,11 +84,14 @@ function setSession(next: StaffSession | null) {
   }
 }
 
+/** `message` is for people, in Portuguese (checklist 13); `detail` is the API's own text, for code that tells errors apart. */
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
-    super(message);
+  detail: string;
+  constructor(status: number, detail: string) {
+    super(readableError(status, detail));
     this.status = status;
+    this.detail = detail;
   }
 }
 

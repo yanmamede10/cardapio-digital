@@ -145,5 +145,52 @@ for (const theme of ["light", "dark"] as const) {
       await guest.close();
       await call("POST", `${P}/tables/26/close`, { paymentMethod: "Cartão" }); // table 26 free again
     });
+
+    test("13 · erros em português claro: rede, validação, login, permissão (403), conflito (409), limite (429) e servidor", async ({ page, request, browser }) => {
+      // The dashboard's login, failing every way the API (or the network) can fail it.
+      await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session"));
+      await page.goto("/");
+      await page.getByLabel("E-mail").fill(`ninguem-${Date.now()}@checklist.example`); // 5 misses lock an account: a new one each run
+      await page.getByLabel("Senha").fill("senha-errada");
+      const shows = async (text: string) => {
+        await page.getByRole("button", { name: "Entrar" }).click();
+        await expect(page.getByText(text)).toBeVisible();
+      };
+      await shows("E-mail ou senha incorretos."); // the real API's 401 "invalid credentials"
+      const answer = async (status: number, error: string) => {
+        await page.unroute("**/api/auth/login");
+        await page.route("**/api/auth/login", (r) => r.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error }) }));
+      };
+      await answer(400, "email and password are required");
+      await shows("Confira os dados informados e tente de novo.");
+      await answer(429, "Too many requests"); // a proxy's own 429
+      await shows("Muitas tentativas em pouco tempo. Aguarde um pouco e tente de novo.");
+      await answer(500, "internal error");
+      await shows("Algo deu errado no servidor. Tente novamente em instantes.");
+      await page.unroute("**/api/auth/login");
+      await page.route("**/api/auth/login", (r) => r.abort("internetdisconnected"));
+      await shows("Não foi possível conectar ao servidor. Tente novamente.");
+      await expect(page.getByText(/invalid|credentials|required|Erro \d|internal|Failed to fetch/)).toHaveCount(0);
+
+      // The cardápio: sending the round fails with a 403, then a 409 (answered here; nothing reaches the kitchen).
+      const token = await staffToken(request, "dono@chapa27.example");
+      const items: { name: string; optionGroups: unknown[]; soldOut: boolean }[] = await (await request.get(`${API}/api/restaurants/chapa27/items`)).json();
+      const dish = items.find((i) => !i.optionGroups.length && !i.soldOut)!;
+      const guest = await browser.newPage({ viewport: page.viewportSize()! });
+      await guest.goto(await tableUrl(request, token, "chapa27", 25));
+      await guest.getByRole("button", { name: `Adicionar ${dish.name} ao pedido` }).first().click();
+      await guest.getByRole("button", { name: /Ver carrinho/ }).click();
+      await guest.getByRole("button", { name: /Enviar pedido para a cozinha/ }).click();
+      for (const [status, error, text] of [
+        [403, "forbidden: restaurant mismatch", "Você não tem permissão para fazer isso."],
+        [409, "order is not pending", "Isso mudou enquanto você olhava. Atualize a página e confira."]
+      ] as const) {
+        await guest.unroute("**/api/orders");
+        await guest.route("**/api/orders", (r) => (r.request().method() === "POST" ? r.fulfill({ status, contentType: "application/json", body: JSON.stringify({ error }) }) : r.continue()));
+        await guest.getByRole("button", { name: /Confirmar e enviar para a cozinha/ }).click();
+        await expect(guest.locator(".toast")).toContainText(text);
+      }
+      await guest.close();
+    });
   });
 }

@@ -139,7 +139,7 @@ export function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
       await changePassword(current, next);
       onDone();
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : "";
+      const msg = err instanceof ApiError ? err.detail : "";
       setError(
         msg.includes("current password") ? "A senha provisória não confere."
         : msg.includes("at least") ? `A senha nova precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`
