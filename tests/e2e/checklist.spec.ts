@@ -18,6 +18,13 @@ for (const theme of ["light", "dark"] as const) {
       }
     });
 
+    test("6 · o cardápio tem meta description (o que aparece na busca e na prévia do link)", async ({ page }) => {
+      await page.goto(WEB);
+      const description = await page.locator('meta[name="description"]').getAttribute("content");
+      expect(description?.length ?? 0).toBeGreaterThan(50);
+      expect(description!.length).toBeLessThanOrEqual(160);
+    });
+
     test("5 · título da aba específico em cada tela: \"<tela> · <restaurante>\" no painel e no cardápio", async ({ page, request, browser }, info) => {
       const mobile = info.project.name === "mobile";
       await loginAs(page, request, "dono@chapa27.example");
