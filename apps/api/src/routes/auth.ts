@@ -2,9 +2,9 @@ import { randomBytes } from "node:crypto";
 import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { serializeStaff } from "../lib/serialize.js";
-import { hashPassword, requireStaffWithProvisionalPassword, signStaffToken, verifyPassword } from "../lib/auth.js";
+import { hashPassword, requireStaffWithProvisionalPassword, tokenFor, verifyPassword } from "../lib/auth.js";
 import { passwordAttempt, passwordFailed, tooMany } from "../lib/rateLimit.js";
-import { MIN_PASSWORD_LENGTH, type StaffRole } from "@cardapio/shared";
+import { MIN_PASSWORD_LENGTH } from "@cardapio/shared";
 
 export const authRouter = asyncRouter();
 /** What a login without an account (or without a password yet) is checked against: a random password nobody knows. */
@@ -27,7 +27,7 @@ authRouter.post("/login", async (req, res) => {
   }
   if (staff.restaurant.status !== "ativo") return res.status(403).json({ error: "restaurant is not active" });
 
-  const token = signStaffToken({ staffId: staff.id, restaurantId: staff.restaurantId, role: staff.role as StaffRole });
+  const token = tokenFor(staff);
   res.json({ token, staff: serializeStaff(staff), mustChangePassword: staff.mustChangePassword });
 });
 
@@ -52,6 +52,7 @@ authRouter.post("/password", requireStaffWithProvisionalPassword, async (req, re
   }
   if (typeof newPassword !== "string" || newPassword.length < MIN_PASSWORD_LENGTH) return res.status(400).json({ error: `password must be at least ${MIN_PASSWORD_LENGTH} characters` });
   if (newPassword === currentPassword) return res.status(400).json({ error: "new password must differ from the current one" });
-  await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(newPassword), mustChangePassword: false } });
-  res.json({ ok: true });
+  // Every other session of this login stops (F-2); this device gets a new token and stays in.
+  const updated = await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(newPassword), mustChangePassword: false, sessionVersion: { increment: 1 } } });
+  res.json({ ok: true, token: tokenFor(updated) });
 });

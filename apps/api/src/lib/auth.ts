@@ -14,6 +14,8 @@ export interface StaffTokenPayload {
   staffId: string;
   restaurantId: string;
   role: StaffRole;
+  /** The login's session version when signed (StaffMember.sessionVersion); tokens from before F-2 have none: 0. */
+  sv?: number;
 }
 
 export function hashPassword(password: string): string {
@@ -33,6 +35,10 @@ export function verifyPassword(password: string, stored: string): boolean {
 export function signStaffToken(payload: StaffTokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_TTL });
 }
+
+/** A staff member's token at their login's current session version (login, and a password changed by its own owner). */
+export const tokenFor = (s: { id: string; restaurantId: string; role: string; sessionVersion: number }) =>
+  signStaffToken({ staffId: s.id, restaurantId: s.restaurantId, role: s.role as StaffRole, sv: s.sessionVersion });
 
 /** The staff id in a valid, unexpired token, without touching the database (the rate limit's key); null otherwise. */
 export function staffIdOf(authorization: string | undefined): string | null {
@@ -74,11 +80,12 @@ function staffGuard(allowProvisional: boolean) {
     prisma.staffMember
       .findUnique({
         where: { id: payload.staffId },
-        select: { role: true, restaurantId: true, mustChangePassword: true, restaurant: { select: { status: true, planModulesJson: true } } }
+        select: { role: true, restaurantId: true, mustChangePassword: true, sessionVersion: true, restaurant: { select: { status: true, planModulesJson: true } } }
       })
       .then((s) => {
-        if (!s || s.restaurant.status !== "ativo") return res.status(401).json({ error: "session revoked" });
-        // A reset also stops sessions opened before it: nothing but the password change until it's replaced.
+        // A password changed or reset since this token was signed ends it (F-2): its version is behind the login's.
+        if (!s || s.restaurant.status !== "ativo" || (payload.sv ?? 0) !== s.sessionVersion) return res.status(401).json({ error: "session revoked" });
+        // A provisional password (sign-up or reset) opens a session that can do nothing but replace it.
         if (s.mustChangePassword && !allowProvisional) return res.status(403).json({ error: "password change required" });
         req.staff = { staffId: payload.staffId, restaurantId: s.restaurantId, role: s.role as StaffRole, modules: JSON.parse(s.restaurant.planModulesJson) };
         next();

@@ -385,6 +385,8 @@ model StaffMember {
   passwordHash String   @default("")
   // Provisional password from the super admin (sign-up or reset): the next login must replace it first.
   mustChangePassword Boolean @default(false)
+  // Bumped by every password change or reset: tokens signed with an older one stop at the next request (F-2).
+  sessionVersion     Int     @default(0)
   role         String
   invitedAt    DateTime @default(now())
 }

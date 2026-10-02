@@ -65,5 +65,5 @@ export async function firstLogin(email: string, provisional: string, newPassword
   const token = (await call("POST", "/api/auth/login", { body: { email, password: provisional } })).body.token as string;
   const res = await call("POST", "/api/auth/password", { token, body: { currentPassword: provisional, newPassword } });
   if (res.status !== 200) throw new Error(`password change failed: ${JSON.stringify(res.body)}`);
-  return token;
+  return res.body.token as string; // the change ends the provisional session: the dashboard keeps the token it gets back (F-2)
 }

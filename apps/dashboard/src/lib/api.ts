@@ -178,8 +178,9 @@ export async function refreshSession() {
 }
 
 export async function changePassword(currentPassword: string, newPassword: string) {
-  await request<{ ok: true }>("/api/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) });
-  if (session) setSession({ ...session, mustChangePassword: false });
+  // The change ends every other session of this login (F-2): this device keeps going with the token it gets back.
+  const { token } = await request<{ ok: true; token: string }>("/api/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) });
+  if (session) setSession({ ...session, token, mustChangePassword: false });
 }
 
 export function logout() {
@@ -338,8 +339,12 @@ export const api = {
   getStaff: () => request<StaffMember[]>(`/api/restaurants/${RESTAURANT_ID}/staff`),
   inviteStaff: (payload: { name: string; email: string; role: StaffRole; password: string }) =>
     request<StaffMember>(`/api/restaurants/${RESTAURANT_ID}/staff`, { method: "POST", body: JSON.stringify(payload) }),
-  updateStaff: (staffId: string, payload: { name?: string; email?: string; role?: StaffRole; password?: string }) =>
-    request<StaffMember>(`/api/restaurants/${RESTAURANT_ID}/staff/${staffId}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  updateStaff: async (staffId: string, payload: { name?: string; email?: string; role?: StaffRole; password?: string }) => {
+    const saved = await request<StaffMember & { token?: string }>(`/api/restaurants/${RESTAURANT_ID}/staff/${staffId}`, { method: "PATCH", body: JSON.stringify(payload) });
+    // The Dono changed their own password: their other devices drop (F-2), this one keeps going with the new token.
+    if (saved.token && session) setSession({ ...session, token: saved.token });
+    return saved;
+  },
   getFiscal: () => request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`),
   updateFiscal: (payload: Partial<FiscalInfo>) =>
     request<FiscalInfo>(`/api/restaurants/${RESTAURANT_ID}/fiscal`, { method: "PATCH", body: JSON.stringify(payload) }),

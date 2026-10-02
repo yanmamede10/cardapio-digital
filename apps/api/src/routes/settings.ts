@@ -1,7 +1,7 @@
 import { asyncRouter } from "../lib/router.js";
 import { LEVEL, MIN_PASSWORD_LENGTH, ROLE_LEVEL, type FiscalInfo, type OperatingHoursRow, type PaymentMode, type RestaurantProfile, type StaffRole, type TaxRegime } from "@cardapio/shared";
 import { prisma } from "../db.js";
-import { hashPassword, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
+import { hashPassword, requireOwnRestaurant, requireMinRole, requireStaff, tokenFor } from "../lib/auth.js";
 import { serializeFiscal, serializeHours, serializeProfile, serializeStaff } from "../lib/serialize.js";
 import { imageUrlAllowed } from "../lib/storage.js";
 
@@ -136,10 +136,12 @@ settingsRouter.patch("/:id/staff/:staffId", ...ownerGuard, async (req, res) => {
       ...(body.name !== undefined ? { name: body.name.trim() } : {}),
       ...(email ? { email } : {}),
       ...(body.role !== undefined ? { role: body.role } : {}),
-      ...(body.password ? { passwordHash: hashPassword(body.password) } : {})
+      // A new password ends every session of that login at its next request (F-2).
+      ...(body.password ? { passwordHash: hashPassword(body.password), sessionVersion: { increment: 1 } } : {})
     }
   });
-  res.json(serializeStaff(staff));
+  // The Dono changing their own password stays in on this device: a new token, as when anyone changes their own (auth.ts).
+  res.json({ ...serializeStaff(staff), ...(body.password && staff.id === req.staff!.staffId ? { token: tokenFor(staff) } : {}) });
 });
 
 settingsRouter.get("/:id/fiscal", ...ownerGuard, async (req, res) => {

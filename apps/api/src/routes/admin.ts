@@ -174,7 +174,8 @@ adminRouter.post("/restaurants/:id/staff/:staffId/reset-password", async (req, r
   const staff = await prisma.staffMember.findFirst({ where: { id: req.params.staffId, restaurantId: req.params.id } });
   if (!staff) return res.status(404).json({ error: "staff member not found" });
   const password = provisionalPassword();
-  await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(password), mustChangePassword: true } });
+  // Every session of that login stops at its next request (F-2) — for good, not just until the provisional one is replaced.
+  await prisma.staffMember.update({ where: { id: staff.id }, data: { passwordHash: hashPassword(password), mustChangePassword: true, sessionVersion: { increment: 1 } } });
   res.json({ password });
 });
 

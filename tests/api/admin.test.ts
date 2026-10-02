@@ -146,7 +146,7 @@ describe("super admin · resetar senha", () => {
     assert.equal(reset.status, 200);
     assert.ok(reset.body.password.length >= 12);
     const pwd = reset.body.password as string;
-    assert.equal((await tables(before.body.token)).status, 403, "sessão aberta antes do reset para");
+    assert.equal((await tables(before.body.token)).status, 401, "sessão aberta antes do reset cai na hora (F-2)");
     assert.equal((await login("segredo1")).status, 401, "senha antiga não vale mais");
 
     const t = await login(pwd);
@@ -158,8 +158,10 @@ describe("super admin · resetar senha", () => {
     assert.equal((await change("errada", "nova-senha-1")).status, 400);
     assert.equal((await change(pwd, "123")).status, 400, "curta");
     assert.equal((await change(pwd, pwd)).status, 400, "igual à provisória");
-    assert.equal((await change(pwd, "nova-senha-1")).status, 200);
-    assert.equal((await tables(tok)).status, 200, "trocou: o mesmo token volta a valer");
+    const changed = await change(pwd, "nova-senha-1");
+    assert.equal(changed.status, 200);
+    assert.equal((await tables(changed.body.token)).status, 200, "trocou: este aparelho segue, com o token novo (F-2)");
+    assert.deepEqual([(await tables(tok)).status, (await tables(before.body.token)).status], [401, 401], "os tokens de antes não voltam");
     assert.equal((await login("nova-senha-1")).body.mustChangePassword, false);
   });
 
