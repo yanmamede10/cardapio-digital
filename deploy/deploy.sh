@@ -17,6 +17,7 @@ case "${1:-}" in
     exit 1 ;;
 esac
 [ -f deploy/.env ] || { echo "Falta deploy/.env: cp deploy/.env.example deploy/.env e preencha." >&2; exit 1; }
+chmod 600 deploy/.env # the database password and every key: readable by this user only, whatever it was created with
 
 case "${1:-}" in
   seed-demo)

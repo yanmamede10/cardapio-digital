@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
 import { after, test } from "node:test";
@@ -256,5 +256,22 @@ test("logo, capa ou foto acima de 8 MB: 413 com o motivo (antes, 500 \"internal 
     form.append("file", new Blob([big], { type: "image/png" }), "grande.png");
     const res = await fetch(`${process.env.API_URL ?? "http://localhost:4200"}${path}`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
     assert.deepEqual([res.status, (await res.json()).error], [413, "file too large — limit is 8 MB"], path);
+  }
+});
+
+test("deploy.sh deixa o deploy/.env legível só pelo dono (600), mesmo que tenha sido criado com 644", { skip: process.platform === "win32" && "o NTFS não guarda o modo do arquivo; roda no CI (Linux)" }, (t) => {
+  const envFile = "deploy/.env";
+  if (existsSync(envFile)) return t.skip("já existe um deploy/.env nesta máquina: não mexo nele");
+  writeFileSync(envFile, "", { mode: 0o644 });
+  chmodSync(envFile, 0o644);
+  try {
+    const env = { ...process.env };
+    delete env.SEED_DEMO_PASSWORD; // seed-demo then stops right after the .env check, before any docker command
+    const r = spawnSync("bash", ["deploy/deploy.sh", "seed-demo"], { env, encoding: "utf8" });
+    assert.equal(r.status, 1);
+    assert.match(r.stderr, /Defina a senha dos logins do Chapa 27/);
+    assert.equal((statSync(envFile).mode & 0o777).toString(8), "600");
+  } finally {
+    rmSync(envFile);
   }
 });
