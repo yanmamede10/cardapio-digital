@@ -38,6 +38,7 @@ import type {
   FinanceSummary
 } from "@cardapio/shared";
 import { readableError } from "@cardapio/shared";
+import { shrinkImage } from "./image";
 
 export const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
 const SESSION_STORAGE_KEY = "cardapio.dashboard.session";
@@ -254,9 +255,9 @@ export const api = {
   duplicateItem: (itemId: string) =>
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/duplicate`, { method: "POST" }),
   deleteItem: (itemId: string) => request<void>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}`, { method: "DELETE" }),
-  uploadItemImage: (itemId: string, file: File) => {
+  uploadItemImage: async (itemId: string, file: File) => {
     const form = new FormData();
-    form.append("file", file);
+    form.append("file", await shrinkImage(file, 1200));
     return upload<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items/${itemId}/image`, form);
   },
   moveItem: (itemId: string, direction: "up" | "down") =>
@@ -362,10 +363,10 @@ export const api = {
   updateAppearanceDraft: (payload: Partial<{ template: MenuTemplateId; brandColor: string; logoUrl: string | null; coverPhotos: string[] }>) =>
     request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/draft`, { method: "PATCH", body: JSON.stringify(payload) }),
   publishAppearance: () => request<AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/publish`, { method: "POST" }),
-  uploadAppearanceFile: (kind: "logo" | "cover", file: File) => {
+  uploadAppearanceFile: async (kind: "logo" | "cover", file: File) => {
     const form = new FormData();
     form.append("kind", kind);
-    form.append("file", file);
+    form.append("file", await (kind === "logo" ? shrinkImage(file, 512, true) : shrinkImage(file, 1600)));
     return upload<{ url: string } & AppearanceState>(`/api/restaurants/${RESTAURANT_ID}/appearance/upload`, form);
   }
 };

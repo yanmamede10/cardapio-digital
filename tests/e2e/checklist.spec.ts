@@ -334,5 +334,57 @@ for (const theme of ["light", "dark"] as const) {
       await expect(mail("dono@chapa27.example")).toBeVisible();
       await expect(mail("dono@chapa27.example")).toHaveText("dono@chapa27.example");
     });
+
+    test("10 · a foto do prato sai do painel reduzida e comprimida: uma de 3000 px e alguns MB chega com até 1200 px e poucas centenas de KB", async ({ page, request }, info) => {
+      const mobile = info.project.name === "mobile";
+      const items: { id: string; name: string }[] = await (await request.get(`${API}/api/restaurants/chapa27/items`)).json();
+      const dish = items[0];
+      await loginAs(page, request, "dono@chapa27.example");
+      await page.goto(mobile ? `/cardapio/${dish.id}/editar` : "/cardapio");
+      // A phone photo, made by the browser: 3000 × 2250, JPEG at 95%, with grain (grain is what makes photos heavy).
+      const original = Buffer.from(await page.evaluate(async () => {
+        const c = Object.assign(document.createElement("canvas"), { width: 3000, height: 2250 });
+        const g = c.getContext("2d")!;
+        const grad = g.createLinearGradient(0, 0, 3000, 2250);
+        grad.addColorStop(0, "#8a4b2a");
+        grad.addColorStop(1, "#f2d39b");
+        g.fillStyle = grad;
+        g.fillRect(0, 0, 3000, 2250);
+        const px = g.getImageData(0, 0, 3000, 2250);
+        for (let i = 0; i < px.data.length; i += 4) {
+          const n = (Math.random() - 0.5) * 36;
+          px.data[i] += n;
+          px.data[i + 1] += n;
+          px.data[i + 2] += n;
+        }
+        g.putImageData(px, 0, 0);
+        const blob = await new Promise<Blob>((done) => c.toBlob((b) => done(b!), "image/jpeg", 0.95));
+        const url = await new Promise<string>((done) => Object.assign(new FileReader(), { onload: (e: ProgressEvent<FileReader>) => done(String(e.target!.result)) }).readAsDataURL(blob));
+        return url.slice(url.indexOf(",") + 1);
+      }), "base64");
+      expect(original.length).toBeGreaterThan(2_000_000);
+      // What the dashboard sends (the test API has no public bucket: the upload is answered here).
+      let sent: Buffer | null = null;
+      await page.route("**/items/*/image", async (route) => {
+        sent = route.request().postDataBuffer();
+        await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "file storage is not configured" }) });
+      });
+      if (!mobile) await page.getByRole("button", { name: `Organizar ${dish.name}` }).first().click();
+      await page.locator('input[type=file][accept^="image/"]').first().setInputFiles({ name: "IMG_2041.jpg", mimeType: "image/jpeg", buffer: original });
+      await expect.poll(() => sent?.length ?? 0, { timeout: 15_000 }).toBeGreaterThan(0);
+      const body = sent!;
+      const boundary = body.subarray(0, body.indexOf("\r\n")).toString();
+      const part = body.indexOf('name="file"');
+      const start = body.indexOf("\r\n\r\n", part) + 4;
+      const file = body.subarray(start, body.indexOf(`\r\n${boundary}`, start));
+      expect(body.subarray(part, start).toString()).toContain("Content-Type: image/jpeg");
+      expect(file.length).toBeLessThan(600_000);
+      const [width, height] = await page.evaluate(async (b64) => {
+        const bmp = await createImageBitmap(await (await fetch(`data:image/jpeg;base64,${b64}`)).blob());
+        return [bmp.width, bmp.height];
+      }, file.toString("base64"));
+      expect(Math.max(width, height)).toBe(1200);
+      expect(width / height).toBeCloseTo(3000 / 2250, 2);
+    });
   });
 }
