@@ -180,3 +180,16 @@ test("restaurante inativo (ou pendente) não recebe pedido de delivery; reativad
   await whileInactive(async () => assert.equal((await order()).status, 404));
   assert.equal((await order()).status, 201);
 });
+
+test("toda resposta da API sai com cabeçalhos de segurança e sem X-Powered-By (sucesso, 404, erro e o webhook)", async () => {
+  const API = process.env.API_URL ?? "http://localhost:4200";
+  for (const [method, path] of [["GET", "/api/health"], ["GET", "/api/nao-existe"], ["POST", "/api/whatsapp/webhook"], ["GET", `/api/restaurants/${R}/items`]]) {
+    const res = await fetch(`${API}${path}`, { method });
+    const label = `${method} ${path} (${res.status})`;
+    assert.equal(res.headers.get("x-powered-by"), null, label);
+    assert.equal(res.headers.get("x-content-type-options"), "nosniff", label);
+    assert.equal(res.headers.get("x-frame-options"), "DENY", label);
+    assert.equal(res.headers.get("content-security-policy"), "default-src 'none'; frame-ancestors 'none'", label);
+    assert.equal(res.headers.get("referrer-policy"), "no-referrer", label);
+  }
+});

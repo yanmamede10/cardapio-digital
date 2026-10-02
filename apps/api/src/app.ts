@@ -26,6 +26,13 @@ import { rateLimit } from "./lib/rateLimit.js";
 process.env.TZ = process.env.APP_TZ || "America/Sao_Paulo";
 
 const app = express();
+app.disable("x-powered-by");
+// Every answer is JSON for the apps: nothing here renders as a page, gets framed or sniffed into another type. Set here, not
+// in the Caddyfile, so dev and the tests get them too.
+app.use((_req, res, next) => {
+  res.set({ "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'", "Referrer-Policy": "no-referrer" });
+  next();
+});
 
 // CORS_ORIGINS = comma-separated frontend origins (the dashboard and cardápio .vercel.app URLs).
 // Unset → open to any origin, which keeps local dev and the Capacitor Android builds working.
