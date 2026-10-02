@@ -70,7 +70,8 @@ test("docker compose não monta a Evolution sem EVOLUTION_API_KEY; com ela, a po
   assert.match(withKey.stdout, /host_ip: 127\.0\.0\.1\s+target: 8080\s+published: "8085"/);
 });
 
-test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho e as imagens têm versão fixa", () => {
+test("compose de produção: só o Caddy publica portas (80 e 443), a API confia só nele, tudo reinicia sozinho, as imagens têm versão fixa e o Storage tem backup", () => {
+  const STORAGE = { STORAGE_S3_ENDPOINT: "https://ref.supabase.co/storage/v1/s3", STORAGE_S3_REGION: "sa-east-1", STORAGE_S3_ACCESS_KEY_ID: "id", STORAGE_S3_SECRET_ACCESS_KEY: "segredo", STORAGE_S3_BUCKET: "cardapio", STORAGE_S3_WHATSAPP_BUCKET: "whatsapp-media" };
   // deploy/.env only exists on the VM, and older Compose (the CI's) wants the env_file to exist even with
   // --no-env-resolution: an empty one for the duration of the check, never touching a real one.
   const envFile = "deploy/.env";
@@ -78,7 +79,7 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
   if (created) writeFileSync(envFile, "");
   let r;
   try {
-    r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres" }, encoding: "utf8" });
+    r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres", ...STORAGE }, encoding: "utf8" });
   } finally {
     if (created) rmSync(envFile);
   }
@@ -90,6 +91,11 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
   assert.equal(services.api.environment?.TRUSTED_PROXY, services.caddy.networks?.default?.ipv4_address);
   assert.ok(services.api.healthcheck, "healthcheck na API");
   assert.equal(services.evolution.image, "evoapicloud/evolution-api:v2.3.7", "a mesma do dev");
+  // BKP-01: the buckets, with the API's own S3 keys, into deploy/backups/storage.
+  const storage = services["storage-backup"] as Service & { volumes: { source: string; target: string }[] };
+  assert.deepEqual(storage.volumes.map((v) => [v.source.replace(/\\/g, "/").split("/").slice(-3).join("/"), v.target]), [["deploy/backups/storage", "/backups"]]);
+  assert.equal(storage.environment?.BUCKETS, "cardapio whatsapp-media");
+  assert.equal(storage.environment?.RCLONE_CONFIG_SUPABASE_SECRET_ACCESS_KEY, STORAGE.STORAGE_S3_SECRET_ACCESS_KEY);
   for (const [name, s] of Object.entries(services)) {
     assert.equal(s.restart, "unless-stopped", name);
     if (name !== "api") assert.match(s.image, /:v?\d+\.\d+(\.\d+)?(-[\w.]+)?$/,`${name}: ${s.image}`); // the API's base is pinned in its Dockerfile

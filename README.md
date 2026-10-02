@@ -178,7 +178,7 @@ Cada app tem um `.env.example`. Copie para `.env` no mesmo diretório.
 Os dois fronts vão para a Vercel como SPA (`vercel.json` de cada um), com `VITE_API_URL=https://<IP-da-VM>`. A API roda numa VM da Oracle Cloud (Ampere A1, ARM64, 2 OCPUs, 12 GB, São Paulo) com Docker Compose; banco e Storage ficam num projeto Supabase de produção (sa-east-1). Por que assim, os riscos e o plano de saída: [ADR 0010](docs/adr/0010-vm-com-docker-compose.md).
 
 ```
-deploy/docker-compose.prod.yml  Caddy (único com portas: 80 e 443) → API; Evolution 2.3.7 + o Postgres dela; backup diário
+deploy/docker-compose.prod.yml  Caddy (único com portas: 80 e 443) → API; Evolution 2.3.7 + o Postgres dela; backup diário do banco e do Storage
 deploy/Caddyfile                HTTPS pelo IP (Let's Encrypt) e proxy só para a API
 deploy/deploy.sh                deploy, rollback e o seed de demonstração
 deploy/.env.example             todas as variáveis de produção, comentadas → deploy/.env no servidor (fora do git)
@@ -232,13 +232,13 @@ O Let's Encrypt emite certificado para endereço IP só no perfil `shortlived`, 
 | volume `caddy_config` | configuração ativa do Caddy |
 | volume `evolution_db` | o banco interno da Evolution: instâncias, as sessões do WhatsApp (tabela `Session`; sem ele, é preciso escanear o QR de novo) e mensagens |
 | volume `evolution_instances` | arquivos por instância da Evolution |
-| pasta `deploy/backups/` do clone | os backups diários do banco |
+| pasta `deploy/backups/` do clone | os backups diários do banco e, em `storage/`, a cópia dos arquivos do Storage |
 
 Os volumes ficam em `/var/lib/docker/volumes/cardapio_<nome>/_data`. Sobrevivem a `deploy/deploy.sh` (`up -d --build`) e à reinicialização da VM; só `docker compose … down -v` os apaga. A prova está no plano de testes ("Rodada D").
 
 ### Backup e restauração
 
-O serviço `backup` (`postgres:17.11`, o mesmo major do Supabase) roda `pg_dump --format=custom --schema=public` uma vez por dia, depois das 04:00 de São Paulo, em `deploy/backups/cardapio-AAAA-MM-DD.dump` (compactado), e guarda os 7 mais novos. Ele confere de hora em hora, então reiniciar não pula um dia. O dump tem o schema e os dados do app (inclusive o histórico de migrações), não os arquivos do Storage (fotos e mídia do WhatsApp ficam no Supabase Storage). Copie os backups para fora da VM de vez em quando: `scp <vm>:cardapio-digital/deploy/backups/*.dump .`
+O serviço `backup` (`postgres:17.11`, o mesmo major do Supabase) roda `pg_dump --format=custom --schema=public` uma vez por dia, depois das 04:00 de São Paulo, em `deploy/backups/cardapio-AAAA-MM-DD.dump` (compactado), e guarda os 7 mais novos. Ele confere de hora em hora, então reiniciar não pula um dia. O dump tem o schema e os dados do app (inclusive o histórico de migrações), não os arquivos do Storage: esses têm o seu próprio backup (abaixo, "Arquivos do Storage"). Copie os backups para fora da VM de vez em quando; os arquivos são de root e só ele lê (600), então pela SSH com `sudo`: `ssh <vm> "sudo tar -C cardapio-digital/deploy -czf - backups" > backups-$(date +%F).tgz` (o banco e o Storage juntos).
 
 Restaurar num banco **vazio** (um projeto Supabase novo, ou um Postgres descartável para conferir um backup), antes de qualquer migração:
 
@@ -249,3 +249,20 @@ docker compose -f deploy/docker-compose.prod.yml run --rm backup \
 ```
 
 `--schema=public` restaura o que está dentro do schema, não o `CREATE SCHEMA public` (todo banco novo já tem um, e o `pg_restore` pararia nele). Depois, com o `deploy/.env` apontando para o banco restaurado, `deploy/deploy.sh` (as migrações já estão lá; os buckets são recriados). Prova feita com o projeto Supabase de testes; as contagens estão no plano de testes ("Rodada D").
+
+#### Arquivos do Storage
+
+O serviço `storage-backup` (`rclone/rclone:1.75.1`) copia os dois buckets — `cardapio` (logo, capas e fotos dos pratos) e o privado do WhatsApp (fotos e áudios dos clientes) — para `deploy/backups/storage/<bucket>/`, uma vez por dia, depois das 04:00, com as chaves S3 que a API já usa (`STORAGE_S3_*` do `deploy/.env`). A cópia é incremental: só baixa o que é novo ou mudou (mesmo tamanho e data = pulado) e nunca apaga aqui o que foi apagado lá. Mesmas permissões do dump (pastas 700, arquivos 600, de root); `deploy/backups/storage/.ultima-copia` diz o dia da última cópia completa, e o log (`… logs storage-backup`) a quantidade de arquivos por bucket.
+
+Copiar agora, sem esperar o dia seguinte: `docker compose -f deploy/docker-compose.prod.yml exec storage-backup rm /backups/.ultima-copia && docker compose -f deploy/docker-compose.prod.yml restart storage-backup`.
+
+Restaurar nos buckets do `deploy/.env` (num projeto novo, depois do `deploy/deploy.sh`, que cria os buckets vazios). O tipo de cada arquivo vai explícito, pela extensão: os buckets só aceitam os tipos da lista deles, e o rclone da imagem não sabe o tipo de `.ogg`, `.m4a` e afins:
+
+```sh
+docker compose -f deploy/docker-compose.prod.yml run --rm --entrypoint sh storage-backup -c '
+for t in png:image/png jpg:image/jpeg webp:image/webp ogg:audio/ogg mp3:audio/mpeg m4a:audio/mp4 aac:audio/aac webm:audio/webm; do
+  for b in $BUCKETS; do rclone copy "/backups/$b" "supabase:$b" --include "*.${t%%:*}" --header-upload "Content-Type: ${t#*:}"; done
+done'
+```
+
+Os nomes dos arquivos são os mesmos, então as URLs gravadas no banco (fotos) e as chaves das mensagens (WhatsApp) voltam a valer se o `STORAGE_PUBLIC_URL` for o mesmo; num projeto novo, o endereço muda, e as fotos precisam ser trocadas no banco ou enviadas de novo pelo painel. Prova (cópia, segunda cópia incremental e restauração) com o projeto Supabase de testes: plano de testes, "Rodada E".

@@ -6,7 +6,8 @@
 #   caddy_data           certificates, their keys and the ACME account
 #   evolution_db         Evolution's store: its instances, the WhatsApp sessions (table Session) and messages
 #   evolution_instances  Evolution's per-instance files
-# The app's data is in Supabase; its daily dump lands in deploy/backups (the backup service below).
+# The app's data is in Supabase; its daily dump lands in deploy/backups (the backup service below), and a daily copy of the
+# Storage buckets in deploy/backups/storage (storage-backup).
 name: cardapio
 services:
   caddy:
@@ -103,6 +104,45 @@ services:
               ls -1t /backups/cardapio-*.dump | tail -n +8 | xargs -r rm -f
             else
               rm -f "$$f.tmp"; echo "backup: pg_dump falhou, nova tentativa em 1 h" >&2
+            fi
+          fi
+          sleep 3600
+        done
+
+  # Daily copy of the two Storage buckets (logo, capas e fotos dos pratos; fotos e áudios do WhatsApp) to deploy/backups/storage,
+  # one folder per bucket, with the S3 keys the API already uses. Incremental: rclone copy only downloads what is new or changed
+  # (same size and date = skipped), and never deletes here what was deleted there. Same schedule and permissions as the dump
+  # above. Run once by hand, or restore: README "Backup e restauração".
+  # ponytail: deleted objects stay here forever; prune deploy/backups/storage by hand if the VM's disk ever gets tight.
+  storage-backup:
+    image: rclone/rclone:1.75.1
+    restart: unless-stopped
+    environment:
+      RCLONE_CONFIG: "" # no config file: the remote "supabase" is these variables
+      RCLONE_CONFIG_SUPABASE_TYPE: s3
+      RCLONE_CONFIG_SUPABASE_PROVIDER: Other
+      RCLONE_CONFIG_SUPABASE_ENDPOINT: ${STORAGE_S3_ENDPOINT:?set STORAGE_S3_ENDPOINT in deploy/.env}
+      RCLONE_CONFIG_SUPABASE_REGION: ${STORAGE_S3_REGION:?set STORAGE_S3_REGION in deploy/.env}
+      RCLONE_CONFIG_SUPABASE_ACCESS_KEY_ID: ${STORAGE_S3_ACCESS_KEY_ID:?set STORAGE_S3_ACCESS_KEY_ID in deploy/.env}
+      RCLONE_CONFIG_SUPABASE_SECRET_ACCESS_KEY: ${STORAGE_S3_SECRET_ACCESS_KEY:?set STORAGE_S3_SECRET_ACCESS_KEY in deploy/.env}
+      RCLONE_CONFIG_SUPABASE_FORCE_PATH_STYLE: "true"
+      BUCKETS: ${STORAGE_S3_BUCKET:?set STORAGE_S3_BUCKET in deploy/.env} ${STORAGE_S3_WHATSAPP_BUCKET:?set STORAGE_S3_WHATSAPP_BUCKET in deploy/.env}
+      TZ: America/Sao_Paulo
+    volumes: [./backups/storage:/backups]
+    entrypoint: [sh, -c]
+    command:
+      - |
+        umask 077 # the customers' WhatsApp photos and voice notes are in there
+        while true; do
+          today=$$(date +%F)
+          if [ "$$(cat /backups/.ultima-copia 2>/dev/null)" != "$$today" ] && [ "$$(date +%H)" -ge 4 ]; then
+            ok=1
+            for b in $$BUCKETS; do rclone copy "supabase:$$b" "/backups/$$b" --use-server-modtime --log-level NOTICE || ok=0; done
+            if [ "$$ok" = 1 ]; then
+              echo "$$today" > /backups/.ultima-copia
+              for b in $$BUCKETS; do echo "storage-backup: $$b, $$(find "/backups/$$b" -type f 2>/dev/null | wc -l) arquivos"; done
+            else
+              echo "storage-backup: a cópia falhou, nova tentativa em 1 h" >&2
             fi
           fi
           sleep 3600
