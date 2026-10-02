@@ -404,7 +404,12 @@ test("\"Para levar\" pelo QR: fica na comanda da mesa e na base do serviço, mar
   const central = (await call("GET", `${P}/orders`, { token: kitchen })).body as { id: string; takeaway: boolean }[];
   assert.deepEqual([first.id, second.id, here.id].map((id) => central.find((o) => o.id === id)!.takeaway), [true, true, false], "a Central vê a marca");
 
-  assert.equal((await post(true, "delivery")).body.takeaway, false, "delivery não tem \"para levar\"");
+  await setModules([...DEMO_MODULES, "delivery"], D); // the Chapa 27 has no Delivery (F-6): on just for this check
+  try {
+    assert.equal((await post(true, "delivery")).body.takeaway, false, "delivery não tem \"para levar\"");
+  } finally {
+    await setModules(DEMO_MODULES, D);
+  }
   const byWaiter = await call("POST", `${P}/tables/22/orders`, { token: waiter, body: { lines: [kids], takeaway: true } });
   assert.equal(byWaiter.body.takeaway, false, "nem o pedido lançado pelo garçom");
   await close(22);
