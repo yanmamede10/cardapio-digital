@@ -9,7 +9,7 @@ import ItemDetailScreen from "./screens/ItemDetailScreen";
 import MenuScreen from "./screens/MenuScreen";
 import OrderStatusScreen from "./screens/OrderStatusScreen";
 import ReviewScreen from "./screens/ReviewScreen";
-import TableEntryScreen from "./screens/TableEntryScreen";
+import TableEntryScreen, { NotFound } from "./screens/TableEntryScreen";
 import { Toast } from "./components/Toast";
 
 /** Opened from a table's QR (or its tablet), the app is that table's menu: the delivery screens (restaurant list, delivery
@@ -33,7 +33,7 @@ export default function App() {
         <Route path="/review" element={<ReviewScreen />} />
         <Route path="/order/:orderId" element={<OrderStatusScreen />} />
         <Route path="/history" element={<NotAtATable><HistoryScreen /></NotAtATable>} />
-        <Route path="*" element={<NotAtATable><DiscoveryScreen /></NotAtATable>} />
+        <Route path="*" element={<NotAtATable><NotFound /></NotAtATable>} />
       </Routes>
       <Toast />
     </div>

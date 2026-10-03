@@ -1,9 +1,10 @@
 import { a11yProblems } from "./a11y";
-import { DEMO_MODULES, asSuperAdmin, expect, loginAs, setModules, test } from "./fixtures";
+import { DEMO_MODULES, asSuperAdmin, expect, loginAs, setModules, staffToken, tableUrl, test } from "./fixtures";
 
 // UX-05: an address nobody knows gets a page that says so, instead of a silent jump to the start — the dashboard logged in
-// (A1–A4 of the design), the Super Admin and logged out (B1–B4). Desktop and phone (Playwright projects), both themes; each
-// 404 also goes through axe and the 44 × 44 targets (tests/e2e/a11y.ts).
+// (A1–A4 of the design), the Super Admin, logged out (B1–B4) and the customer's cardápio outside a table (C1–C4). Desktop and
+// phone (Playwright projects), both themes; each 404 also goes through axe and the 44 × 44 targets (tests/e2e/a11y.ts).
+const WEB = "http://localhost:5273";
 const R = "Chapa 27 Burgers";
 const LOST = "/pagina-que-nao-existe";
 const TITLE = "Esta página não existe";
@@ -84,6 +85,33 @@ for (const theme of ["light", "dark"] as const) {
         await expect(page.getByText(TITLE), path).toHaveCount(0);
         expect(new URL(page.url()).pathname, path).toBe(path);
       }
+    });
+
+    test("U-3 · cardápio: link inexistente fora da mesa mostra \"Link não encontrado\"; na mesa volta ao cardápio da mesa; QR inválido continua em \"Mesa não encontrada\"", async ({ browser, request, page }, info) => {
+      const phone = info.project.name === "mobile";
+      const device = { viewport: page.viewportSize()!, colorScheme: theme, isMobile: phone, hasTouch: phone };
+      // Outside a table (a link someone sent, a typo): the 404 of the cardápio.
+      const outside = await browser.newContext(device);
+      const guest = await outside.newPage();
+      await guest.goto(`${WEB}/link-que-nao-existe`);
+      await expect(guest.getByRole("heading", { name: "Link não encontrado" })).toBeVisible();
+      await expect(guest.getByText("Para fazer seu pedido, escaneie o QR code da mesa ou chame um atendente.")).toBeVisible();
+      await expect(guest).toHaveTitle("Link não encontrado · Cardápio Digital");
+      expect(await a11yProblems(guest, "cardápio /link-que-nao-existe")).toEqual([]);
+      // A QR that doesn't exist is another screen, unchanged.
+      await guest.goto(`${WEB}/t/codigo-que-nao-existe`);
+      await expect(guest.getByText("Mesa não encontrada. Confira o código do QR ou chame um atendente.")).toBeVisible();
+      await expect(guest.getByText("Link não encontrado")).toHaveCount(0);
+      await outside.close();
+      // At a table: a wrong link goes back to that table's menu, as before.
+      const atTable = await browser.newContext(device);
+      const diner = await atTable.newPage();
+      await diner.goto(await tableUrl(request, await staffToken(request, "dono@chapa27.example"), "chapa27", 4));
+      await expect(diner).toHaveURL(/\/r\/chapa27\/menu$/);
+      await diner.goto(`${WEB}/link-que-nao-existe`);
+      await expect(diner).toHaveURL(/\/r\/chapa27\/menu$/);
+      await expect(diner.getByText("Link não encontrado")).toHaveCount(0);
+      await atTable.close();
     });
   });
 }
