@@ -77,6 +77,9 @@ for (const theme of ["light", "dark"] as const) {
         expect(href, "nenhum link sai do app").toMatch(/^\//);
         await page.goto(href);
         await expect.poll(() => new URL(page.url()).pathname, `${href}: abre a sua tela, não cai no redirecionamento`).toBe(href);
+        // UX-05: a broken link no longer jumps to the start, it stays on its address with the 404: that must not be it.
+        await expect(page.locator("nav").first(), href).toBeVisible();
+        await expect(page.getByText("Esta página não existe"), `${href}: não é a página 404`).toHaveCount(0);
       }
       // The QR's link: the table's code opens that table's menu.
       const token = await staffToken(request, "dono@chapa27.example");
@@ -450,7 +453,7 @@ for (const theme of ["light", "dark"] as const) {
       expect(width / height).toBeCloseTo(3000 / 2250, 2);
     });
 
-    test("8 · QR antigo ou inválido: mensagem clara na tela; endereço desconhecido volta ao início (ainda não há página 404)", async ({ page, request }) => {
+    test("8 · QR antigo ou inválido: mensagem clara na tela; endereço desconhecido mostra a página 404 (UX-05)", async ({ page, request }) => {
       const token = await staffToken(request, "dono@chapa27.example");
       const old = await tableUrl(request, token, "chapa27", 19);
       // "Gerar novo QR" (the Dono's): the printed one stops working.
@@ -460,11 +463,12 @@ for (const theme of ["light", "dark"] as const) {
         await expect(page.getByText("Mesa não encontrada. Confira o código do QR ou chame um atendente.")).toBeVisible();
         await expect(page).toHaveTitle("Mesa não encontrada · Cardápio Digital");
       }
-      // No 404 screen yet (it needs one): an unknown address lands on each app's start, never on a blank page.
+      // An unknown address says so where it is (UX-05; every role and the Super Admin in nao-encontrada.spec.ts), never a blank page.
       await loginAs(page, request, "dono@chapa27.example");
       await page.goto("/pagina-que-nao-existe");
-      await expect.poll(() => new URL(page.url()).pathname).toBe("/");
-      await expect(page).toHaveTitle(/^Central de Pedidos · /);
+      await expect(page.getByText("Esta página não existe")).toBeVisible();
+      expect(new URL(page.url()).pathname).toBe("/pagina-que-nao-existe");
+      await expect(page).toHaveTitle(/^Página não encontrada · /);
     });
 
     test("15 · sem navegação para tela sempre vazia: sem o módulo Delivery, a Central não oferece o filtro Mesa/Delivery", async ({ page, request }) => {

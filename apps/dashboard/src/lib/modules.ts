@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { createRoutesFromChildren, matchRoutes } from "react-router-dom";
 import { LEVEL, PLAN_MODULES, SUPPORT_ROLES, roleLevel, type StaffRole } from "@cardapio/shared";
 import { getSession } from "./api";
 
@@ -58,6 +60,9 @@ export const moduleLabel = (key: string) => MODULES.find((m) => m.key === key)?.
 
 /** Where "/" lands: Central de Pedidos, or the first screen this user sees when it's off. */
 export const homePath = () => (canSee(MODULES[0]) ? "/" : MODULES.find(canSee)?.path ?? "/");
+
+/** UX-05: whether the router knows this address — matched against the app's own <Route> list, not a copy of it. */
+export const knownPath = (screens: ReactNode, pathname: string) => matchRoutes(createRoutesFromChildren(screens), pathname) !== null;
 
 /** "/" is the landing module, so it only matches exactly. */
 export function moduleForPath(pathname: string): ModuleDef {

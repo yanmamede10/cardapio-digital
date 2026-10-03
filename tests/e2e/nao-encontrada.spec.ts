@@ -1,0 +1,72 @@
+import { a11yProblems } from "./a11y";
+import { DEMO_MODULES, asSuperAdmin, expect, loginAs, setModules, test } from "./fixtures";
+
+// UX-05: an address nobody knows gets a page that says so, instead of a silent jump to the start — the dashboard logged in
+// (A1–A4 of the design) and the Super Admin. Desktop and phone (Playwright projects), both themes; each 404 also goes through
+// axe and the 44 × 44 targets (tests/e2e/a11y.ts).
+const R = "Chapa 27 Burgers";
+const LOST = "/pagina-que-nao-existe";
+const TITLE = "Esta página não existe";
+
+for (const theme of ["light", "dark"] as const) {
+  test.describe(`tema ${theme === "light" ? "claro" : "escuro"}`, () => {
+    test.use({ theme });
+
+    test("U-1 · logado: rota inexistente mostra a 404 para cada papel — título da aba, nada ativo no menu, e o botão leva ao início do papel", async ({ page, request }, info) => {
+      test.setTimeout(120_000);
+      const mobile = info.project.name === "mobile";
+      const current = page.locator('nav [aria-current="page"]'); // the active item of the sidebar (desktop) or of the tab bar (phone)
+      // The role's start (homePath): the Central for every role; with Pedidos, Cardápio and Mesas off, the first screen that role sees.
+      const noFloor = DEMO_MODULES.filter((m) => !["pedidos", "cardapio", "mesas"].includes(m));
+      const cases: [string, string[], string][] = [
+        ["dono", DEMO_MODULES, "/"],
+        ["gerente", DEMO_MODULES, "/"],
+        ["garcom", DEMO_MODULES, "/"],
+        ["cozinha", DEMO_MODULES, "/"],
+        ["dono", noFloor, "/promocoes"],
+        ["gerente", noFloor, "/promocoes"],
+        ["garcom", noFloor, "/atendimento"]
+      ];
+      const problems: string[] = [];
+      try {
+        for (const [user, modules, home] of cases) {
+          const who = `${user} (${home})`;
+          await setModules(request, modules, "chapa27");
+          await loginAs(page, request, `${user}@chapa27.example`); // the last session put in wins
+          await page.goto(LOST);
+          await expect(page.getByText(TITLE), who).toBeVisible();
+          expect(new URL(page.url()).pathname, `${who}: fica no endereço digitado`).toBe(LOST);
+          await expect(page, who).toHaveTitle(`Página não encontrada · ${R}`);
+          await expect(page.getByText("Página não encontrada", { exact: true }), `${who}: cabeçalho`).toBeVisible();
+          if (mobile) await expect(page.getByText(R, { exact: true }), `${who}: subtítulo`).toBeVisible();
+          await expect(current, `${who}: nada ativo no menu`).toHaveCount(0);
+          problems.push(...(await a11yProblems(page, `${who} ${LOST}`)));
+          await page.getByRole("link", { name: "Voltar ao início" }).click();
+          await expect.poll(() => new URL(page.url()).pathname, `${who}: início do papel`).toBe(home);
+          await expect(current, `${who}: no início, o menu marca a tela`).toHaveCount(1);
+        }
+      } finally {
+        await setModules(request, DEMO_MODULES, "chapa27");
+      }
+      expect(problems).toEqual([]);
+    });
+
+    test("U-1 · Super Admin: rota inexistente em /admin mostra a 404 e volta ao início do Super Admin", async ({ page }) => {
+      await asSuperAdmin(page);
+      await page.goto("/admin/pagina-que-nao-existe");
+      await expect(page.getByText(TITLE)).toBeVisible();
+      await expect(page).toHaveTitle("Página não encontrada · Super Admin");
+      expect(await a11yProblems(page, "/admin/pagina-que-nao-existe")).toEqual([]);
+      await page.getByRole("link", { name: "Voltar ao início" }).click();
+      await expect.poll(() => new URL(page.url()).pathname).toBe("/admin");
+      await expect(page.getByRole("heading", { name: "Restaurantes" })).toBeVisible();
+    });
+
+    test("U-1 · rota restrita para o papel (cozinha em /config) não cai na 404", async ({ page, request }) => {
+      await loginAs(page, request, "cozinha@chapa27.example");
+      await page.goto("/config");
+      await expect(page).toHaveTitle(`Configurações · ${R}`);
+      await expect(page.getByText(TITLE)).toHaveCount(0);
+    });
+  });
+}

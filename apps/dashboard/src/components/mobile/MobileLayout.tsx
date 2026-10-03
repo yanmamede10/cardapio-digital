@@ -58,7 +58,7 @@ function tabForPath(pathname: string): string {
   return "mais";
 }
 
-export function MobileLayout() {
+export function MobileLayout({ notFound }: { notFound: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { staffName, staffRole, notify } = useDashboardState();
@@ -69,8 +69,10 @@ export function MobileLayout() {
   useEffect(() => {
     api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {});
   }, []);
+  // UX-05: an address the router doesn't know has no screen to name itself: the header says so.
+  const screen = notFound ? "Página não encontrada" : header?.title ?? "";
+  const subtitle = notFound ? restaurantName : header?.subtitle ?? "";
   // Checklist 5: the tab (and the Android task switcher) says which screen and which restaurant.
-  const screen = header?.title ?? "";
   useEffect(() => {
     if (screen) document.title = restaurantName ? `${screen} · ${restaurantName}` : screen;
   }, [screen, restaurantName]);
@@ -94,7 +96,7 @@ export function MobileLayout() {
   }));
 
   const isRoot = ROOT_PATHS.includes(location.pathname);
-  const activeTab = tabForPath(location.pathname);
+  const activeTab = notFound ? null : tabForPath(location.pathname); // a 404 is no tab's — tabForPath would say "mais"
   const showTabs = !header?.hideTabs;
 
   // React Router's client-side history isn't reliably followed by Capacitor's
@@ -168,8 +170,8 @@ export function MobileLayout() {
             </button>
           )}
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{header?.title ?? ""}</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{header?.subtitle ?? ""}</div>
+            <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{screen}</div>
+            <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
           </div>
           <button
             type="button"
@@ -309,6 +311,7 @@ export function MobileLayout() {
               <button
                 key={t.key}
                 type="button"
+                aria-current={active ? "page" : undefined}
                 onClick={() => navigate(t.path)}
                 style={{
                   flex: 1,

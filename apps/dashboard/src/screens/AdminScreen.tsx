@@ -4,6 +4,7 @@ import type { AdminRestaurant, RestaurantStatus } from "@cardapio/shared";
 import { ApiError, BASE_URL } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
+import { EmptyState } from "../components/EmptyState";
 import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
 import { Toast } from "../components/Toast";
@@ -45,9 +46,11 @@ export default function AdminScreen() {
   const { pathname } = useLocation();
   const billing = pathname.startsWith("/admin/mensalidades");
   const detailId = pathname.match(/^\/admin\/restaurantes\/([^/]+)/)?.[1];
+  // UX-05: anything else under /admin is a 404, with or without the key — the list used to stand in for it.
+  const notFound = !billing && !detailId && !/^\/admin\/?$/.test(pathname);
   useEffect(() => {
-    document.title = `${!key ? "Entrar" : billing ? "Mensalidades" : detailId ? "Restaurante" : "Restaurantes"} · Super Admin`;
-  }, [key, billing, detailId]);
+    document.title = `${notFound ? "Página não encontrada" : !key ? "Entrar" : billing ? "Mensalidades" : detailId ? "Restaurante" : "Restaurantes"} · Super Admin`;
+  }, [notFound, key, billing, detailId]);
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
   const call: AdminCall = async <T,>(path: string, init?: RequestInit): Promise<T> => {
@@ -86,7 +89,7 @@ export default function AdminScreen() {
       <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 600, letterSpacing: "-.015em" }}>{billing ? "Mensalidades" : "Restaurantes"}</h1>
+            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 600, letterSpacing: "-.015em" }}>{notFound ? "Página não encontrada" : billing ? "Mensalidades" : "Restaurantes"}</h1>
             <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
               MesaPronta · Plataforma
             </div>
@@ -109,7 +112,18 @@ export default function AdminScreen() {
             </button>
           )}
         </div>
-        {!key ? (
+        {notFound ? (
+          <EmptyState
+            icon="fa-link-slash"
+            title="Esta página não existe"
+            sub="O endereço pode ter sido digitado errado ou a página mudou de lugar."
+            action={
+              <Link to="/admin" className="btn btn-primary">
+                Voltar ao início
+              </Link>
+            }
+          />
+        ) : !key ? (
           <form
             className="card"
             style={{ padding: 18, maxWidth: 420, display: "flex", flexDirection: "column", gap: 12 }}

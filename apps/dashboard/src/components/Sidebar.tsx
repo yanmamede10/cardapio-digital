@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { NAV_GROUPS, canSee, moduleByKey, moduleForPath } from "../lib/modules";
+import { Link, NavLink } from "react-router-dom";
+import { NAV_GROUPS, canSee, moduleByKey, type ModuleDef } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { logout } from "../lib/api";
 
@@ -35,9 +35,9 @@ function Badge({ n }: { n?: number }) {
   );
 }
 
-export function Sidebar({ badges }: { badges: Record<string, number> }) {
+/** `current`: the page's module (Layout's), none on a 404. */
+export function Sidebar({ badges, current }: { badges: Record<string, number>; current?: ModuleDef }) {
   const { theme, toggleTheme } = useDashboardState();
-  const current = moduleForPath(useLocation().pathname);
   // Sections the user opened/closed by hand; untouched ones follow the default in the render below.
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
@@ -97,7 +97,7 @@ export function Sidebar({ badges }: { badges: Record<string, number> }) {
               </NavLink>
             );
           }
-          const active = mods.find((m) => m.key === current.key);
+          const active = mods.find((m) => m.key === current?.key);
           // Open by default for Operação (the day-to-day screens) and for whichever section holds the current page.
           const isOpen = open[g.label] ?? (g.label === "Operação" || !!active);
           const badgeSum = mods.reduce((t, m) => t + (badges[m.key] || 0), 0);
