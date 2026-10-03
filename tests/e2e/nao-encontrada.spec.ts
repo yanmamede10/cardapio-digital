@@ -2,8 +2,8 @@ import { a11yProblems } from "./a11y";
 import { DEMO_MODULES, asSuperAdmin, expect, loginAs, setModules, test } from "./fixtures";
 
 // UX-05: an address nobody knows gets a page that says so, instead of a silent jump to the start — the dashboard logged in
-// (A1–A4 of the design) and the Super Admin. Desktop and phone (Playwright projects), both themes; each 404 also goes through
-// axe and the 44 × 44 targets (tests/e2e/a11y.ts).
+// (A1–A4 of the design), the Super Admin and logged out (B1–B4). Desktop and phone (Playwright projects), both themes; each
+// 404 also goes through axe and the 44 × 44 targets (tests/e2e/a11y.ts).
 const R = "Chapa 27 Burgers";
 const LOST = "/pagina-que-nao-existe";
 const TITLE = "Esta página não existe";
@@ -67,6 +67,23 @@ for (const theme of ["light", "dark"] as const) {
       await page.goto("/config");
       await expect(page).toHaveTitle(`Configurações · ${R}`);
       await expect(page.getByText(TITLE)).toHaveCount(0);
+    });
+
+    test("U-2 · sem login: rota inexistente mostra o cartão com \"Entrar\"; rota válida vai para o login", async ({ page }) => {
+      await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session")); // runs after the fixture's: logged out
+      await page.goto(LOST);
+      await expect(page.getByRole("heading", { name: TITLE })).toBeVisible();
+      await expect(page).toHaveTitle("Página não encontrada · MesaPronta Gestão");
+      expect(await a11yProblems(page, `sem login ${LOST}`)).toEqual([]);
+      await page.getByRole("link", { name: "Entrar" }).click();
+      await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+      await expect(page.getByLabel("E-mail")).toBeVisible();
+      for (const path of ["/mesas", "/config"]) {
+        await page.goto(path);
+        await expect(page.getByLabel("E-mail"), `${path}: login`).toBeVisible();
+        await expect(page.getByText(TITLE), path).toHaveCount(0);
+        expect(new URL(page.url()).pathname, path).toBe(path);
+      }
     });
   });
 }

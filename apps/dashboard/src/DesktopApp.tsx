@@ -18,7 +18,7 @@ import LaunchOrderScreen from "./screens/LaunchOrderScreen";
 import { homePath, knownPath } from "./lib/modules";
 
 /** The desktop's screens: the router's list, and what knownPath checks an address against (UX-05). */
-const desktopScreens = () => (
+export const desktopScreens = () => (
   <>
     <Route path="/" element={homePath() === "/" ? <OrdersScreen /> : <Navigate to={homePath()} replace />} />
     <Route path="/pedidos" element={<Navigate to="/" replace />} />

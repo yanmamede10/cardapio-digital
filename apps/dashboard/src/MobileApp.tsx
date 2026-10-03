@@ -29,7 +29,7 @@ import { MobileSalonScreen } from "./screens/SettingsSalonTab";
 import { homePath, knownPath } from "./lib/modules";
 
 /** The phone's screens: the router's list, and what knownPath checks an address against (UX-05). */
-const mobileScreens = () => (
+export const mobileScreens = () => (
   <>
     <Route path="/" element={homePath() === "/" ? <MobileOrdersScreen /> : <Navigate to={homePath()} replace />} />
     <Route path="/mesas" element={<MobileTablesScreen />} />
