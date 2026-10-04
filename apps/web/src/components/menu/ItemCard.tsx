@@ -4,9 +4,19 @@ import { brl } from "../../lib/format";
 
 type Variant = "grid" | "wide" | "tile" | "row" | "gallery";
 
-/** Real photo overrides the repeating-pattern placeholder background set by the .photo-placeholder class. */
+/** Real photo overrides the repeating-pattern placeholder background set by the .photo-placeholder class (dish page). */
 export function photoStyle(item: MenuItem): CSSProperties {
   return item.imageUrl ? { backgroundImage: `url(${item.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : {};
+}
+
+/** G-6: a dish photo in the menu, over the .photo-placeholder box (which keeps its own size: nothing moves). As a CSS
+ *  background every photo loaded at once; as an <img loading="lazy"> only those near the screen do — except the first
+ *  dish's (`eager`), which may be the largest thing on screen (LCP). width/height: the photos' 4:3 (checklist 10). */
+function Photo({ item, eager }: { item: MenuItem; eager?: boolean }) {
+  if (!item.imageUrl) return null;
+  // fetchpriority: React 18 doesn't type it (React 19 does, as fetchPriority); lower case, it goes to the DOM as is.
+  const priority = eager ? { fetchpriority: "high" } : {};
+  return <img src={item.imageUrl} alt="" width={1200} height={900} loading={eager ? "eager" : "lazy"} decoding="async" {...priority} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />;
 }
 
 interface Props {
@@ -21,6 +31,8 @@ interface Props {
   /** row only — Minimalista puts name/line-fill/price on one baseline; Editorial stacks name → desc → price. */
   rowLayout?: "stacked" | "inline";
   /** gallery only — masonry card height, cycled by the caller from a fixed height list. */
+  /** The first dish on screen: its photo loads right away, not lazily (G-6). */
+  eager?: boolean;
   photoHeight?: string;
 }
 
@@ -75,14 +87,15 @@ function GhostQuickAdd({ item, onQuickAdd }: { item: MenuItem; onQuickAdd?: () =
 }
 
 /** The one item-card component every template composes from — only the container/photo/text arrangement changes. */
-export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescription = true, rowLayout = "stacked", photoHeight }: Props) {
+export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescription = true, rowLayout = "stacked", photoHeight, eager }: Props) {
   const dim = item.soldOut ? 0.55 : 1;
 
   if (variant === "grid") {
     return (
       <div className="card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", opacity: dim, flex: width ? "none" : undefined, width }}>
         <div onClick={onOpen} style={{ cursor: "pointer" }}>
-          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)", ...photoStyle(item) }}>
+          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)" }}>
+            <Photo item={item} eager={eager} />
             <TagBadge item={item} />
             {item.soldOut && soldOutBadge}
           </div>
@@ -106,7 +119,8 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
   if (variant === "wide") {
     return (
       <div className="card" style={{ overflow: "hidden", display: "flex", alignItems: "stretch", cursor: "pointer", opacity: dim }}>
-        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", flex: "none", width: "calc(var(--photo) * .95)", ...photoStyle(item) }}>
+        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", flex: "none", width: "calc(var(--photo) * .95)" }}>
+          <Photo item={item} eager={eager} />
           {item.soldOut && (
             <div style={{ position: "absolute", inset: 0, background: "rgba(2,3,4,.42)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <i className="fa-solid fa-ban" style={{ fontSize: "var(--i-m)", color: "#FCF7D3" }} />
@@ -133,7 +147,8 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
     return (
       <div style={{ background: "var(--surf)", border: "1px solid var(--line)", borderRadius: "var(--r-standard)", overflow: "hidden", display: "flex", flexDirection: "column", cursor: "pointer", opacity: dim, boxShadow: "0 18px 40px rgba(2,3,4,.26)" }}>
         <div onClick={onOpen}>
-          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)", ...photoStyle(item) }}>
+          <div className="photo-placeholder" style={{ position: "relative", height: "var(--photo)" }}>
+            <Photo item={item} eager={eager} />
             <TagBadge item={item} />
             {item.soldOut && soldOutBadge}
           </div>
@@ -152,7 +167,8 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
   if (variant === "gallery") {
     return (
       <div style={{ position: "relative", breakInside: "avoid", marginBottom: 12, borderRadius: 20, overflow: "hidden", cursor: "pointer", opacity: dim, background: "var(--surf2)", boxShadow: "var(--shadow-card)" }}>
-        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", height: photoHeight, ...photoStyle(item) }}>
+        <div onClick={onOpen} className="photo-placeholder" style={{ position: "relative", height: photoHeight }}>
+          <Photo item={item} eager={eager} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(2,3,4,.80),rgba(2,3,4,.16) 52%,rgba(2,3,4,0))" }} />
           <TagBadge item={item} />
           {item.soldOut && (

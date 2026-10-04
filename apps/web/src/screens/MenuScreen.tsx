@@ -195,8 +195,8 @@ export default function MenuScreen() {
           <div style={{ fontWeight: 500, fontSize: "var(--t-xs)", letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink2)" }}>escolhas da casa</div>
         </div>
         <div className="no-scrollbar" style={{ marginTop: 12, display: "flex", gap: 14, overflowX: "auto", padding: "0 var(--pad) 4px" }}>
-          {featured.map((it) => (
-            <ItemCard key={it.id} item={it} variant="grid" width="calc(var(--photo) * 2)" showDescription={false} onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
+          {featured.map((it, i) => (
+            <ItemCard key={it.id} item={it} eager={i === 0} variant="grid" width="calc(var(--photo) * 2)" showDescription={false} onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
 
@@ -283,8 +283,8 @@ export default function MenuScreen() {
         </div>
 
         <div style={{ padding: "18px var(--pad) 0", display: "grid", gridTemplateColumns: "repeat(var(--cols), minmax(0,1fr))", gap: 14 }}>
-          {visibleItems.map((it) => (
-            <ItemCard key={it.id} item={it} variant="tile" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
+          {visibleItems.map((it, i) => (
+            <ItemCard key={it.id} item={it} eager={i === 0} variant="tile" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -354,7 +354,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "14px var(--pad) 0", columnCount: "var(--cols)" as unknown as number, columnGap: 12 }}>
           {visibleItems.map((it, i) => (
-            <ItemCard key={it.id} item={it} variant="gallery" photoHeight={`${GALLERY_HEIGHTS[i % GALLERY_HEIGHTS.length]}px`} onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} eager={i === 0} variant="gallery" photoHeight={`${GALLERY_HEIGHTS[i % GALLERY_HEIGHTS.length]}px`} onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -415,8 +415,8 @@ export default function MenuScreen() {
         <div className="no-scrollbar" style={{ marginTop: 18, display: "flex", gap: 8, overflowX: "auto", padding: "0 var(--pad) 2px" }}>{categoryNav("pill")}</div>
 
         <div style={{ padding: "16px var(--pad) 0", display: "grid", gridTemplateColumns: "repeat(var(--cols), minmax(0,1fr))", gap: 14 }}>
-          {visibleItems.map((it) => (
-            <ItemCard key={it.id} item={it} variant="grid" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
+          {visibleItems.map((it, i) => (
+            <ItemCard key={it.id} item={it} eager={i === 0} variant="grid" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}

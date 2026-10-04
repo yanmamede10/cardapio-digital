@@ -527,5 +527,33 @@ for (const theme of ["light", "dark"] as const) {
         await setModules(request, DEMO_MODULES, "chapa27");
       }
     });
+
+    test("G-6 · fotos do cardápio são <img> lazy com tamanho fixo, a do primeiro prato carrega já; a caixa da foto não muda de tamanho", async ({ browser, request, page }, info) => {
+      const phone = info.project.name === "mobile";
+      const ctx = await browser.newContext({ viewport: page.viewportSize()!, colorScheme: theme, isMobile: phone, hasTouch: phone });
+      // No seed has dish photos (no licence): every Chapa 27 dish gets one here, in the browser only.
+      const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+      await ctx.route("**/g6-foto.png", (r) => r.fulfill({ contentType: "image/png", body: png }));
+      await ctx.route(/\/api\/restaurants\/chapa27\/items$/, async (r) => {
+        const res = await r.fetch();
+        await r.fulfill({ response: res, json: (await res.json()).map((i: object) => ({ ...i, imageUrl: `${WEB}/g6-foto.png` })) });
+      });
+      const g = await ctx.newPage();
+      await g.goto(await tableUrl(request, await staffToken(request, "dono@chapa27.example"), "chapa27", 6));
+      const photos = g.locator(".photo-placeholder > img");
+      await expect(photos.first()).toBeVisible();
+      const all = await photos.evaluateAll((imgs) => imgs.map((i) => [i.getAttribute("loading"), i.getAttribute("fetchpriority"), i.getAttribute("width"), i.getAttribute("height")].join(" ")));
+      expect(all.length).toBeGreaterThan(10);
+      expect(all[0]).toBe("eager high 1200 900");
+      expect(new Set(all.slice(1))).toEqual(new Set(["lazy  1200 900"]));
+      // Not a CSS background any more (every one of those loaded at once), and the box keeps the size it had without a photo.
+      const box = await g.evaluate(() => {
+        const boxes = [...document.querySelectorAll<HTMLElement>(".photo-placeholder")].filter((b) => b.querySelector("img"));
+        return { backgrounds: boxes.filter((b) => b.style.backgroundImage).length, height: boxes[0].getBoundingClientRect().height, photo: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--photo")) };
+      });
+      expect(box.backgrounds).toBe(0);
+      expect(box.height).toBe(box.photo);
+      await ctx.close();
+    });
   });
 }
