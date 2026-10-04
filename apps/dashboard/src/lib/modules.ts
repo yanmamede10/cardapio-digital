@@ -61,6 +61,13 @@ export const moduleLabel = (key: string) => MODULES.find((m) => m.key === key)?.
 /** Where "/" lands: Central de Pedidos, or the first screen this user sees when it's off. */
 export const homePath = () => (canSee(MODULES[0]) ? "/" : MODULES.find(canSee)?.path ?? "/");
 
+/** G-3: the menu's rule (canSee) for a typed address — a module's screen or one below it (/config/perfil); "/" and the
+ *  addresses of no module pass ("/" already sends to homePath; an unknown one is a 404, UX-05). */
+export function routeAllowed(pathname: string) {
+  const m = MODULES.find((m) => m.path !== "/" && (pathname === m.path || pathname.startsWith(`${m.path}/`)));
+  return !m || canSee(m);
+}
+
 /** UX-05: whether the router knows this address — matched against the app's own <Route> list, not a copy of it. */
 export const knownPath = (screens: ReactNode, pathname: string) => matchRoutes(createRoutesFromChildren(screens), pathname) !== null;
 

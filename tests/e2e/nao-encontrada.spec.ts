@@ -63,10 +63,11 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByRole("heading", { name: "Restaurantes" })).toBeVisible();
     });
 
-    test("U-1 · rota restrita para o papel (cozinha em /config) não cai na 404", async ({ page, request }) => {
+    test("U-1/G-3 · rota restrita para o papel (cozinha em /config) redireciona para o início do papel, não cai na 404", async ({ page, request }) => {
       await loginAs(page, request, "cozinha@chapa27.example");
       await page.goto("/config");
-      await expect(page).toHaveTitle(`Configurações · ${R}`);
+      await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+      await expect(page).toHaveTitle(`Central de Pedidos · ${R}`);
       await expect(page.getByText(TITLE)).toHaveCount(0);
     });
 
@@ -176,3 +177,31 @@ for (const theme of ["light", "dark"] as const) {
     });
   });
 }
+
+// G-3: the route guard — every role × every module screen typed in the address bar, desktop and phone. The role's screens
+// open; the others go to the role's start ("/", the Central for all four with the Chapa 27's plan). Waiting for the screen's
+// header first: the guard decides before the layout draws, so by then the address is final.
+test("G-3 · rota restrita acessada pelo endereço redireciona ao início do papel; as permitidas abrem", async ({ page, request }, info) => {
+  test.setTimeout(240_000);
+  const phone = info.project.name === "mobile";
+  // The Chapa 27 (DEMO_MODULES) has no Emissão Fiscal: closed to every role, the Dono included.
+  const screens = ["/cardapio", "/mesas", "/mesas/qr", "/promocoes", "/atendimento", "/produtos", "/relatorios", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/financeiro", "/emissao-fiscal", "/config", ...(phone ? ["/config/perfil", "/promocoes/novo"] : [])];
+  const allowed: Record<string, string[]> = {
+    dono: screens.filter((p) => p !== "/emissao-fiscal"),
+    gerente: screens.filter((p) => p !== "/emissao-fiscal" && !p.startsWith("/config")),
+    garcom: ["/cardapio", "/mesas", "/mesas/qr", "/atendimento"],
+    cozinha: ["/cardapio", "/mesas", "/mesas/qr"]
+  };
+  const wrong: string[] = [];
+  for (const [user, open] of Object.entries(allowed)) {
+    await loginAs(page, request, `${user}@chapa27.example`); // the last session put in wins
+    for (const path of screens) {
+      await page.goto(path);
+      await expect(page.locator("header").first(), `${user} ${path}`).toBeVisible();
+      const expected = open.includes(path) ? path : "/";
+      const got = new URL(page.url()).pathname;
+      if (got !== expected) wrong.push(`${user} ${path} → ${got} (esperado ${expected})`);
+    }
+  }
+  expect(wrong).toEqual([]);
+});

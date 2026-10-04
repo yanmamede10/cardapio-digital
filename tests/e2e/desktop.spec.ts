@@ -51,8 +51,8 @@ test("módulo desligado some do menu; sem Central de Pedidos a tela inicial é o
     await expect(nav).toContainText("Contas a Pagar");
     await expect(nav).toContainText("Atendimento"); // Operação is open by default
     for (const off of ["Central de Pedidos", "Promoções", "Emissão Fiscal"]) await expect(nav).not.toContainText(off);
-    await page.goto("/emissao-fiscal"); // typed URL: the API says no
-    await expect(page.getByText("Você não tem permissão para acessar a Emissão Fiscal.")).toBeVisible();
+    await page.goto("/emissao-fiscal"); // typed URL of a module that's off: back to the start (G-3; the API says no anyway)
+    await expect(page).toHaveURL(/\/cardapio$/);
   } finally {
     await setModules(request, SEED_MODULES);
   }

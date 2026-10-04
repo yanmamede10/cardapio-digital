@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "./lib/useIsMobile";
 import { SESSION_ENDED, getSession, refreshSession } from "./lib/api";
-import { knownPath } from "./lib/modules";
+import { homePath, knownPath, routeAllowed } from "./lib/modules";
 import DesktopApp, { desktopScreens } from "./DesktopApp";
 import MobileApp, { mobileScreens } from "./MobileApp";
 import LoginScreen, { ChangePasswordScreen } from "./screens/LoginScreen";
@@ -69,5 +69,8 @@ export default function App() {
   }
   if (!ready) return null;
   if (getSession()?.mustChangePassword) return <ChangePasswordScreen onDone={() => passwordChanged((n) => n + 1)} />;
+  // G-3: the one route guard, for both apps: a typed address of a screen the menu doesn't offer this role (or this plan)
+  // goes to the role's start. The API still refuses the data either way.
+  if (!routeAllowed(pathname)) return <Navigate to={homePath()} replace />;
   return isMobile ? <MobileApp /> : <DesktopApp />;
 }
