@@ -19,6 +19,8 @@ export interface Restaurant {
   reopensAt: string | null;
   promoLabel: string | null;
   coverLabel: string;
+  /** Has the Delivery module: without it and without a table, the cardápio is only for looking (G-2). */
+  delivery: boolean;
 }
 
 export interface MenuCategory {

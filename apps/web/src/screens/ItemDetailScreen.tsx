@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IconButton } from "../components/IconButton";
 import { photoStyle } from "../components/menu/ItemCard";
+import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
@@ -19,12 +20,17 @@ export default function ItemDetailScreen() {
   const [item, setItem] = useState<MenuItem | null>(null);
   usePageTitle(item?.name ?? "", restaurantId);
   const [draft, setDraft] = useState<ItemDraft | null>(null);
+  // G-2: outside a table, ordering needs the restaurant's Delivery module; without it the dish is only for looking.
+  const { mode } = useApp();
+  const [delivers, setDelivers] = useState<boolean | null>(null);
+  const canOrder = mode === "table" || delivers === true;
 
   useEffect(() => {
     api.getItem(restaurantId, itemId).then((it) => {
       setItem(it);
       setDraft(defaultDraft(it));
     });
+    if (mode !== "table") api.getRestaurant(restaurantId).then((r) => setDelivers(r.delivery)).catch(() => setDelivers(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId, itemId]);
 
@@ -105,6 +111,7 @@ export default function ItemDetailScreen() {
             </div>
           ))}
 
+          {canOrder && (<>
           <div style={{ marginTop: 22 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
               <i className="fa-solid fa-pen" style={{ fontSize: "var(--i-s)", color: "var(--ink2)" }} />Observações
@@ -145,18 +152,33 @@ export default function ItemDetailScreen() {
             </div>
             <div style={{ font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>Unidade {brl(unit)}</div>
           </div>
+          </>)}
           <div style={{ height: 20 }} />
         </div>
         <div style={{ height: 104 }} />
       </div>
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px var(--pad) calc(12px + var(--safe))", background: "linear-gradient(to top,var(--bg) 55%,rgba(0,0,0,0))", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)" }}>
-        <button className="btn-primary" onClick={addToCart} style={{ justifyContent: "space-between" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-            <i className="fa-solid fa-basket-shopping" style={{ fontSize: "var(--i-m)" }} />Adicionar ao carrinho
-          </span>
-          <span style={{ fontWeight: 700 }}>{brl(unit * draft.qty)}</span>
-        </button>
+        {canOrder ? (
+          <button className="btn-primary" onClick={addToCart} style={{ justifyContent: "space-between" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+              <i className="fa-solid fa-basket-shopping" style={{ fontSize: "var(--i-m)" }} />Adicionar ao carrinho
+            </span>
+            <span style={{ fontWeight: 700 }}>{brl(unit * draft.qty)}</span>
+          </button>
+        ) : (
+          delivers === false && <OrderAtTheTable />
+        )}
       </div>
+    </div>
+  );
+}
+
+/** G-2: what a cardápio that's only for looking says instead of the cart (menu, dish). */
+export function OrderAtTheTable() {
+  return (
+    <div role="note" style={{ display: "flex", gap: 11, alignItems: "center", padding: "16px 18px", borderRadius: "var(--r-standard)", background: "var(--surf)", border: "1px solid var(--line)" }}>
+      <i className="fa-solid fa-qrcode" style={{ fontSize: "var(--i-m)", color: "var(--acc)" }} />
+      <div style={{ font: "600 var(--t-b) var(--font)" }}>Para pedir, use o QR da sua mesa.</div>
     </div>
   );
 }

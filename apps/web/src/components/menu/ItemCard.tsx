@@ -13,7 +13,8 @@ interface Props {
   item: MenuItem;
   variant: Variant;
   onOpen: () => void;
-  onQuickAdd: () => void;
+  /** None: the cardápio is only for looking (G-2) — no add button. */
+  onQuickAdd?: () => void;
   /** grid only — Moderno's horizontal "Destaques" strip pins a width and drops the description. */
   width?: string;
   showDescription?: boolean;
@@ -40,8 +41,9 @@ function TagBadge({ item }: { item: MenuItem }) {
   );
 }
 
-function SolidQuickAdd({ item, onQuickAdd, size = "var(--fab)" }: { item: MenuItem; onQuickAdd: () => void; size?: string }) {
+function SolidQuickAdd({ item, onQuickAdd, size = "var(--fab)" }: { item: MenuItem; onQuickAdd?: () => void; size?: string }) {
   if (item.soldOut) return <span style={{ flex: "none", font: "500 var(--t-xs) var(--font)", color: "var(--ink2)", letterSpacing: ".06em" }}>indisponível</span>;
+  if (!onQuickAdd) return null;
   return (
     <button
       type="button"
@@ -56,8 +58,8 @@ function SolidQuickAdd({ item, onQuickAdd, size = "var(--fab)" }: { item: MenuIt
   );
 }
 
-function GhostQuickAdd({ item, onQuickAdd }: { item: MenuItem; onQuickAdd: () => void }) {
-  if (item.soldOut) return null;
+function GhostQuickAdd({ item, onQuickAdd }: { item: MenuItem; onQuickAdd?: () => void }) {
+  if (item.soldOut || !onQuickAdd) return null;
   return (
     <button
       type="button"
@@ -163,7 +165,7 @@ export function ItemCard({ item, variant, onOpen, onQuickAdd, width, showDescrip
               <div style={{ font: "600 var(--t-b)/1.22 var(--font)", letterSpacing: "-.015em", color: "#FFF7EC", textWrap: "pretty" }}>{item.name}</div>
               <div style={{ marginTop: 5, font: "600 var(--t-s) var(--font)", color: "#F0E4C4" }}>{brl(item.price)}</div>
             </div>
-            {!item.soldOut && (
+            {!item.soldOut && onQuickAdd && (
               <button type="button" title="Adicionar" aria-label={`Adicionar ${item.name} ao pedido`} onClick={onQuickAdd} className="tap" style={{ flex: "none", width: "var(--fab)", height: "var(--fab)", borderRadius: 999, border: "none", cursor: "pointer", background: "var(--priInk)", color: "var(--pri)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <i className="fa-solid fa-plus" style={{ fontSize: "var(--i-m)" }} />
               </button>

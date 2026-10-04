@@ -6,6 +6,7 @@ import { BottomBar } from "../components/FloatingControls";
 import { IconButton } from "../components/IconButton";
 import { CategoryNav } from "../components/menu/CategoryNav";
 import { ItemCard } from "../components/menu/ItemCard";
+import { OrderAtTheTable } from "./ItemDetailScreen";
 import { MenuSkeleton } from "../components/Skeletons";
 import { useApp } from "../context/AppContext";
 import { useCart } from "../context/CartContext";
@@ -92,6 +93,9 @@ export default function MenuScreen() {
     );
   }
 
+  // G-2: outside a table and without the Delivery module the cardápio is only for looking — dishes and prices, no add
+  // buttons, no cart, no checkout, and where to order instead. (The API refuses that delivery order anyway: 403.)
+  const readOnly = !isMesa && !restaurant.delivery;
   const brandVars = { "--pri": appearance.brandColor, "--priInk": onColor(appearance.brandColor) } as CSSProperties;
   const cover = appearance.coverPhotos[0];
   const coverStyle: CSSProperties = cover ? { backgroundImage: `url(${cover})`, backgroundSize: "cover", backgroundPosition: "center" } : {};
@@ -101,10 +105,10 @@ export default function MenuScreen() {
     <IconButton icon={theme === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon"} onClick={toggleTheme} title="Alternar tema" glass style={right ? { marginLeft: "auto" } : undefined} />
   );
 
-  /** Guest-name field (mesa) — identical in every template, just placed in different headers. Delivery had the address
-   *  switcher here; a customer's addresses aren't public any more (G-1). */
+  /** Guest-name field (mesa) or, read-only, where to order (G-2) — identical in every template, just placed in different
+   *  headers. Delivery had the address switcher here; a customer's addresses aren't public any more (G-1). */
   const EntryContextRow = () =>
-    isDelivery ? null : (
+    readOnly ? <OrderAtTheTable /> : isDelivery ? null : (
       <div style={{ display: "flex", gap: 11, alignItems: "center", padding: "16px 18px", borderRadius: "var(--r-standard)", background: "var(--surf)", border: "1px solid var(--line)" }}>
         <i className="fa-solid fa-user" style={{ fontSize: "var(--i-m)", color: "var(--acc)" }} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -192,7 +196,7 @@ export default function MenuScreen() {
         </div>
         <div className="no-scrollbar" style={{ marginTop: 12, display: "flex", gap: 14, overflowX: "auto", padding: "0 var(--pad) 4px" }}>
           {featured.map((it) => (
-            <ItemCard key={it.id} item={it} variant="grid" width="calc(var(--photo) * 2)" showDescription={false} onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} variant="grid" width="calc(var(--photo) * 2)" showDescription={false} onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
 
@@ -200,7 +204,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "16px var(--pad) 0", display: "flex", flexDirection: "column", gap: 12 }}>
           {visibleItems.map((it) => (
-            <ItemCard key={it.id} item={it} variant="wide" onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} variant="wide" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -214,6 +218,8 @@ export default function MenuScreen() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 500, fontSize: "var(--t-xs)", letterSpacing: ".16em", textTransform: "uppercase", color: "var(--ink2)" }}>
               {isMesa ? (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><i className="fa-solid fa-qrcode" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />mesa {tableNumber}</span>
+              ) : readOnly ? (
+                <span>cardápio</span>
               ) : (
                 <span>entrega · {restaurant.etaMinMinutes}–{restaurant.etaMaxMinutes} min</span>
               )}
@@ -234,7 +240,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "8px var(--pad) 0" }}>
           {visibleItems.map((it) => (
-            <ItemCard key={it.id} item={it} variant="row" rowLayout="inline" onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} variant="row" rowLayout="inline" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -278,7 +284,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "18px var(--pad) 0", display: "grid", gridTemplateColumns: "repeat(var(--cols), minmax(0,1fr))", gap: 14 }}>
           {visibleItems.map((it) => (
-            <ItemCard key={it.id} item={it} variant="tile" onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} variant="tile" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -317,7 +323,7 @@ export default function MenuScreen() {
               <div style={{ fontWeight: 500, fontSize: "var(--t-xs)", letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)" }}>{visibleItems.length} {visibleItems.length === 1 ? "item" : "itens"}</div>
             </div>
             {visibleItems.map((it) => (
-              <ItemCard key={it.id} item={it} variant="row" rowLayout="stacked" onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+              <ItemCard key={it.id} item={it} variant="row" rowLayout="stacked" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
             ))}
             {bottomSpacer}
           </div>
@@ -348,7 +354,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "14px var(--pad) 0", columnCount: "var(--cols)" as unknown as number, columnGap: 12 }}>
           {visibleItems.map((it, i) => (
-            <ItemCard key={it.id} item={it} variant="gallery" photoHeight={`${GALLERY_HEIGHTS[i % GALLERY_HEIGHTS.length]}px`} onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} variant="gallery" photoHeight={`${GALLERY_HEIGHTS[i % GALLERY_HEIGHTS.length]}px`} onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -387,7 +393,7 @@ export default function MenuScreen() {
             <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />Hoje 11:00 – 23:00
           </div>
 
-          {isDelivery && (
+          {isDelivery && !readOnly && (
             <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />Entrega em <b style={{ color: "var(--ink)" }}>{restaurant.etaMinMinutes}–{restaurant.etaMaxMinutes} min</b>
@@ -410,7 +416,7 @@ export default function MenuScreen() {
 
         <div style={{ padding: "16px var(--pad) 0", display: "grid", gridTemplateColumns: "repeat(var(--cols), minmax(0,1fr))", gap: 14 }}>
           {visibleItems.map((it) => (
-            <ItemCard key={it.id} item={it} variant="grid" onOpen={() => openItem(it)} onQuickAdd={() => quickAdd(it)} />
+            <ItemCard key={it.id} item={it} variant="grid" onOpen={() => openItem(it)} onQuickAdd={readOnly ? undefined : () => quickAdd(it)} />
           ))}
         </div>
         {bottomSpacer}
@@ -421,7 +427,7 @@ export default function MenuScreen() {
   return (
     <div className="screen" style={brandVars}>
       {content}
-      <BottomBar />
+      {!readOnly && <BottomBar />}
     </div>
   );
 }

@@ -65,7 +65,8 @@ export function serializeRestaurant(r: Restaurant): ApiRestaurant {
     isOpen: r.isOpen,
     reopensAt: r.reopensAt,
     promoLabel: r.promoLabel,
-    coverLabel: r.coverLabel
+    coverLabel: r.coverLabel,
+    delivery: (JSON.parse(r.planModulesJson) as string[]).includes("delivery")
   };
 }
 

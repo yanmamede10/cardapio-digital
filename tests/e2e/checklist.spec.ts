@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
-import { adminApi, asSuperAdmin, expect, loginAs, loginFreshOwner, newRestaurant, staffToken, tableUrl, test } from "./fixtures";
+import { a11yProblems } from "./a11y";
+import { DEMO_MODULES, adminApi, asSuperAdmin, expect, loginAs, loginFreshOwner, newRestaurant, setModules, staffToken, tableUrl, test } from "./fixtures";
 
 // The UI checklist (items 1–20), on desktop and phone, light and dark — the UX-03 way. Each test names its item.
 const WEB = "http://localhost:5273";
@@ -480,6 +481,51 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByText(/Nenhum pedido|Recebido|RECEBIDO/i).first()).toBeVisible();
       await expect(delivery).toHaveCount(0);
       await expect(page.getByRole("button", { name: /^Mesa \d/ })).toHaveCount(0); // "Mesa" alone would equal "Todos"
+    });
+
+    test("G-2 · cardápio sem mesa e sem Delivery é só consulta: pratos e preços, sem adicionar, sem carrinho, com o aviso; com mesa e com Delivery, o fluxo de sempre", async ({ browser, request, page }, info) => {
+      test.setTimeout(120_000);
+      const phone = info.project.name === "mobile";
+      const device = { viewport: page.viewportSize()!, colorScheme: theme, isMobile: phone, hasTouch: phone };
+      const notice = (p: Page) => p.getByText("Para pedir, use o QR da sua mesa.");
+      const add = (p: Page) => p.getByRole("button", { name: /^Adicionar .+ ao pedido$/ });
+      // The Chapa 27 has no Delivery (DEMO_MODULES): opened outside a table, its cardápio is only for looking.
+      const look = await browser.newContext(device);
+      const g = await look.newPage();
+      await g.goto(`${WEB}/r/chapa27/menu`);
+      await expect(notice(g)).toBeVisible();
+      await expect(g.getByText("Cheddar & Bacon", { exact: true }).first()).toBeVisible();
+      await expect(g.getByText(/38,90/).first()).toBeVisible();
+      await expect(add(g)).toHaveCount(0);
+      await expect(g.getByRole("button", { name: /Ver carrinho/ })).toHaveCount(0);
+      await expect(g.getByText(/\d+–\d+ min/)).toHaveCount(0); // no delivery time ("25–40 min") where there's no delivery
+      expect(await a11yProblems(g, "cardápio só para consulta")).toEqual([]);
+      await g.getByText("Cheddar & Bacon", { exact: true }).first().click();
+      await expect(notice(g)).toBeVisible();
+      await expect(g.getByRole("button", { name: /Adicionar ao carrinho/ })).toHaveCount(0);
+      expect(await a11yProblems(g, "prato só para consulta")).toEqual([]);
+      await look.close();
+      // At a table: as always.
+      const table = await browser.newContext(device);
+      const t = await table.newPage();
+      await t.goto(await tableUrl(request, await staffToken(request, "dono@chapa27.example"), "chapa27", 5));
+      await expect(add(t).first()).toBeVisible();
+      await expect(notice(t)).toHaveCount(0);
+      await table.close();
+      // With Delivery: the delivery flow as always.
+      await setModules(request, [...DEMO_MODULES, "delivery"], "chapa27");
+      try {
+        const home = await browser.newContext(device);
+        const d = await home.newPage();
+        await d.goto(`${WEB}/r/chapa27/menu`);
+        await expect(add(d).first()).toBeVisible();
+        await expect(notice(d)).toHaveCount(0);
+        await add(d).first().click();
+        await expect(d.getByRole("button", { name: /Ver carrinho/ })).toBeVisible();
+        await home.close();
+      } finally {
+        await setModules(request, DEMO_MODULES, "chapa27");
+      }
     });
   });
 }
