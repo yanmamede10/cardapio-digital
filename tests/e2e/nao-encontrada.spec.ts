@@ -70,6 +70,46 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByText(TITLE)).toHaveCount(0);
     });
 
+    test("U-4 · desktop: rota que só existe no celular abre a tela equivalente do desktop, não a 404", async ({ page, request }, info) => {
+      test.skip(info.project.name === "mobile", "no celular essas rotas são telas próprias");
+      const nav = page.locator("nav").first();
+      // Every route of mobileScreens that desktopScreens doesn't have → the desktop screen above it; /mais → the role's start.
+      const phoneOnly: [string, string][] = [
+        ["/mesas/12", "/mesas"],
+        ["/cardapio/qualquer-prato/editar", "/cardapio"],
+        ["/atendimento/qualquer-conversa", "/atendimento"],
+        ["/promocoes/novo", "/promocoes"],
+        ["/config/perfil", "/config"],
+        ["/config/horarios", "/config"],
+        ["/config/equipe", "/config"],
+        ["/config/fiscal", "/config"],
+        ["/config/whatsapp", "/config"],
+        ["/config/salao", "/config"],
+        ["/mais", "/"]
+      ];
+      await loginAs(page, request, "dono@chapa27.example");
+      for (const [from, to] of phoneOnly) {
+        await page.goto(from);
+        await expect.poll(() => new URL(page.url()).pathname, from).toBe(to);
+        await expect(nav, from).toBeVisible();
+        await expect(page.getByText(TITLE), `${from}: não é a 404`).toHaveCount(0);
+      }
+      try {
+        // /mais is the role's start, not "/": with Pedidos, Cardápio and Mesas off, the Administrador's is Promoções.
+        await setModules(request, DEMO_MODULES.filter((m) => !["pedidos", "cardapio", "mesas"].includes(m)), "chapa27");
+        await loginAs(page, request, "gerente@chapa27.example");
+        await page.goto("/mais");
+        await expect.poll(() => new URL(page.url()).pathname).toBe("/promocoes");
+      } finally {
+        await setModules(request, DEMO_MODULES, "chapa27");
+      }
+      // Logged out, the same rule: a phone route is a known address, so it gets the login, not the 404 card.
+      await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session"));
+      await page.goto("/mesas/12");
+      await expect(page.getByLabel("E-mail")).toBeVisible();
+      await expect(page.getByText(TITLE)).toHaveCount(0);
+    });
+
     test("U-2 · sem login: rota inexistente mostra o cartão com \"Entrar\"; rota válida vai para o login", async ({ page }) => {
       await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session")); // runs after the fixture's: logged out
       await page.goto(LOST);

@@ -16,6 +16,7 @@ import FiscalScreen from "./screens/FiscalScreen";
 import FinanceOverviewScreen from "./screens/FinanceOverviewScreen";
 import LaunchOrderScreen from "./screens/LaunchOrderScreen";
 import { homePath, knownPath } from "./lib/modules";
+import { mobileScreens } from "./MobileApp";
 
 /** The desktop's screens: the router's list, and what knownPath checks an address against (UX-05). */
 export const desktopScreens = () => (
@@ -43,24 +44,33 @@ export const desktopScreens = () => (
 export default function DesktopApp() {
   const { pathname } = useLocation();
   const screens = desktopScreens();
+  // U-4: a phone-only screen (mobileScreens: /mesas/12, /config/perfil, /mais…) opens the desktop screen above it ("/" is the
+  // role's start); only an address neither list knows is a 404.
+  const phoneOnly = !knownPath(screens, pathname) && knownPath(mobileScreens(), pathname);
+  let above = pathname;
+  while (phoneOnly && above !== "/" && !knownPath(screens, above)) above = above.replace(/\/[^/]*$/, "") || "/";
   return (
     <Routes>
-      <Route element={<Layout notFound={!knownPath(screens, pathname)} />}>
+      <Route element={<Layout notFound={!knownPath(screens, pathname) && !phoneOnly} />}>
         {screens}
         {/* UX-05: an unknown address says so, inside the dashboard, instead of jumping to the start. */}
         <Route
           path="*"
           element={
-            <EmptyState
-              icon="fa-link-slash"
-              title="Esta página não existe"
-              sub="O endereço pode ter sido digitado errado ou a página mudou de lugar."
-              action={
-                <Link to={homePath()} className="btn btn-primary">
-                  Voltar ao início
-                </Link>
-              }
-            />
+            phoneOnly ? (
+              <Navigate to={above} replace />
+            ) : (
+              <EmptyState
+                icon="fa-link-slash"
+                title="Esta página não existe"
+                sub="O endereço pode ter sido digitado errado ou a página mudou de lugar."
+                action={
+                  <Link to={homePath()} className="btn btn-primary">
+                    Voltar ao início
+                  </Link>
+                }
+              />
+            )
           }
         />
       </Route>

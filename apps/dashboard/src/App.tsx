@@ -15,8 +15,10 @@ export default function App() {
   const [, passwordChanged] = useState(0);
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
-  // UX-05: logged out, an address the router doesn't know (the same screen list it routes with) gets the 404 card, not the login.
-  const lost = !loggedIn && !isAdmin && !knownPath(isMobile ? mobileScreens() : desktopScreens(), pathname);
+  // UX-05: logged out, an address the router doesn't know (the same screen lists it routes with) gets the 404 card, not the
+  // login. The desktop also knows the phone's screens (U-4: it opens its own screen for them).
+  const known = knownPath(mobileScreens(), pathname) || (!isMobile && knownPath(desktopScreens(), pathname));
+  const lost = !loggedIn && !isAdmin && !known;
   useEffect(() => {
     if (lost) document.title = "Página não encontrada · MesaPronta Gestão";
   }, [lost]);
