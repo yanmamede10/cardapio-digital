@@ -22,7 +22,7 @@ export default function MenuScreen() {
   const { restaurantId = "" } = useParams();
   usePageTitle("Cardápio", restaurantId);
   const navigate = useNavigate();
-  const { mode, tableNumber, guestName, setGuestName, setActiveRestaurant, theme, toggleTheme, tableSession, addressId } = useApp();
+  const { mode, tableNumber, guestName, setGuestName, setActiveRestaurant, theme, toggleTheme, tableSession } = useApp();
   const { addLine } = useCart();
   const { showToast } = useToast();
 
@@ -31,7 +31,6 @@ export default function MenuScreen() {
   const [items, setItems] = useState<MenuItem[] | null>(null);
   const [appearance, setAppearance] = useState<PublicAppearance>(DEFAULT_APPEARANCE);
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
-  const [addressLabel, setAddressLabel] = useState("");
 
   const isMesa = mode === "table";
   const isDelivery = !isMesa;
@@ -61,14 +60,6 @@ export default function MenuScreen() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
-
-  useEffect(() => {
-    if (mode !== "delivery") return;
-    api.getAddresses().then((list) => {
-      const def = list.find((a) => a.id === addressId) || list.find((a) => a.isDefault) || list[0];
-      if (def) setAddressLabel(def.detail);
-    });
-  }, [mode, addressId]);
 
   const visibleItems = useMemo(
     () => (items || []).filter((it) => activeCategory === "Todos" || it.categoryId === activeCategory),
@@ -110,20 +101,10 @@ export default function MenuScreen() {
     <IconButton icon={theme === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon"} onClick={toggleTheme} title="Alternar tema" glass style={right ? { marginLeft: "auto" } : undefined} />
   );
 
-  /** Address switcher (delivery) / guest-name field (mesa) — identical in every template, just placed in different headers. */
+  /** Guest-name field (mesa) — identical in every template, just placed in different headers. Delivery had the address
+   *  switcher here; a customer's addresses aren't public any more (G-1). */
   const EntryContextRow = () =>
-    isDelivery ? (
-      <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "16px 18px", borderRadius: "var(--r-standard)", background: "var(--surf)", border: "1px solid var(--line)" }}>
-        <i className="fa-solid fa-location-dot" style={{ fontSize: "var(--i-m)", color: "var(--acc)" }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="mono-label">entregar em</div>
-          <div style={{ marginTop: 3, font: "600 var(--t-b) var(--font)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{addressLabel}</div>
-        </div>
-        <button type="button" onClick={() => navigate("/checkout")} style={{ border: "1px solid var(--line)", background: "transparent", color: "var(--acc)", cursor: "pointer", borderRadius: 999, padding: "8px 13px", font: "600 var(--t-s) var(--font)" }}>
-          Trocar
-        </button>
-      </div>
-    ) : (
+    isDelivery ? null : (
       <div style={{ display: "flex", gap: 11, alignItems: "center", padding: "16px 18px", borderRadius: "var(--r-standard)", background: "var(--surf)", border: "1px solid var(--line)" }}>
         <i className="fa-solid fa-user" style={{ fontSize: "var(--i-m)", color: "var(--acc)" }} />
         <div style={{ flex: 1, minWidth: 0 }}>

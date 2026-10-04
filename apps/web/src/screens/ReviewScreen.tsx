@@ -1,4 +1,4 @@
-import { couponDiscount, type Address } from "@cardapio/shared";
+import { couponDiscount } from "@cardapio/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
@@ -11,12 +11,11 @@ import { brl } from "../lib/format";
 export default function ReviewScreen() {
   const navigate = useNavigate();
   const {
-    mode, tableNumber, tableCode, guestName, restaurantId, addressId, paymentMethodId, couponCode, coupon,
+    mode, tableNumber, tableCode, guestName, restaurantId, paymentMethodId, couponCode, coupon,
     registerTableOrder
   } = useApp();
   const { lines, subtotal, count, clear } = useCart();
   const { showToast } = useToast();
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [restaurantFee, setRestaurantFee] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   // At the table the order ends with one of two choices: eat here or take away (still on the table's bill).
@@ -26,12 +25,10 @@ export default function ReviewScreen() {
 
   useEffect(() => {
     if (!isMesa) {
-      api.getAddresses().then(setAddresses);
       if (restaurantId) api.getRestaurant(restaurantId).then((r) => setRestaurantFee(r.deliveryFee));
     }
   }, [isMesa, restaurantId]);
 
-  const selectedAddress = addresses.find((a) => a.id === addressId);
   const fee = isMesa ? 0 : restaurantFee;
   const discount = !isMesa && coupon ? couponDiscount(coupon, subtotal) : 0;
   const total = subtotal + fee - discount;
@@ -48,7 +45,6 @@ export default function ReviewScreen() {
         tableCode: isMesa ? tableCode ?? undefined : undefined,
         takeaway: isMesa ? takeaway : undefined,
         guestName: isMesa ? guestName || undefined : undefined,
-        addressId: isMesa ? undefined : addressId ?? undefined,
         paymentMethodId: isMesa ? undefined : paymentMethodId ?? undefined,
         couponCode: isMesa ? undefined : couponCode ?? undefined,
         lines: lines.map((l) => ({
@@ -105,8 +101,8 @@ export default function ReviewScreen() {
             <i className="fa-solid fa-location-dot" style={{ fontSize: "var(--i-m)", color: "var(--acc)", marginTop: 2 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="mono-label">entrega</div>
-              <div style={{ marginTop: 5, font: "600 var(--t-m) var(--font)" }}>{`${selectedAddress?.label ?? ""} · 30–40 min`}</div>
-              <div style={{ marginTop: 3, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>{selectedAddress?.detail}</div>
+              {/* G-1: no address here — a customer's addresses aren't public any more (staff only). */}
+              <div style={{ marginTop: 5, font: "600 var(--t-m) var(--font)" }}>30–40 min</div>
             </div>
           </div>
         )}

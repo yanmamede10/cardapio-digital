@@ -19,7 +19,6 @@ interface AppState {
   guestName: string;
   theme: Theme;
   tableSession: TableSession;
-  addressId: string | null;
   paymentMethodId: string | null;
   couponCode: string | null;
   /** The applied coupon's rule (from /api/coupons/apply): the checkout shows its discount with couponDiscount. */
@@ -33,7 +32,6 @@ interface AppContextValue extends AppState {
   toggleTheme: () => void;
   registerTableOrder: (total: number, orderId: string) => void;
   setWaiterCalled: (called: boolean) => void;
-  setAddressId: (id: string) => void;
   setPaymentMethodId: (id: string) => void;
   setCoupon: (code: string | null, coupon: AppState["coupon"]) => void;
 }
@@ -52,7 +50,6 @@ function loadInitialState(): AppState {
     theme: (localStorage.getItem(THEME_KEY) as Theme | null) ||
       (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
     tableSession: { rounds: 0, tableTotal: 0, waiterCalled: false, lastOrderId: null },
-    addressId: null,
     paymentMethodId: null,
     couponCode: null,
     coupon: null
@@ -78,10 +75,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [state.theme]);
 
   useEffect(() => {
-    const { mode, tableNumber, tableCode, restaurantId, guestName, tableSession, addressId, paymentMethodId } = state;
+    const { mode, tableNumber, tableCode, restaurantId, guestName, tableSession, paymentMethodId } = state;
     sessionStorage.setItem(
       SESSION_STATE_KEY,
-      JSON.stringify({ mode, tableNumber, tableCode, restaurantId, guestName, tableSession, addressId, paymentMethodId })
+      JSON.stringify({ mode, tableNumber, tableCode, restaurantId, guestName, tableSession, paymentMethodId })
     );
   }, [state]);
 
@@ -117,10 +114,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, tableSession: { ...s.tableSession, waiterCalled: called } }));
   }, []);
 
-  const setAddressId = useCallback((id: string) => {
-    setState((s) => ({ ...s, addressId: id }));
-  }, []);
-
   const setPaymentMethodId = useCallback((id: string) => {
     setState((s) => ({ ...s, paymentMethodId: id }));
   }, []);
@@ -138,7 +131,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleTheme,
       registerTableOrder,
       setWaiterCalled,
-      setAddressId,
       setPaymentMethodId,
       setCoupon
     }),
@@ -150,7 +142,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleTheme,
       registerTableOrder,
       setWaiterCalled,
-      setAddressId,
       setPaymentMethodId,
       setCoupon
     ]

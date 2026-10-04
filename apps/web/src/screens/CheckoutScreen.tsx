@@ -1,4 +1,4 @@
-import { couponDiscount, type Address, type PaymentMethod, type Restaurant } from "@cardapio/shared";
+import { couponDiscount, type PaymentMethod, type Restaurant } from "@cardapio/shared";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ScreenHeader } from "../components/ScreenHeader";
@@ -9,10 +9,9 @@ import { brl } from "../lib/format";
 
 export default function CheckoutScreen() {
   const navigate = useNavigate();
-  const { mode, restaurantId, addressId, setAddressId, paymentMethodId, setPaymentMethodId, coupon, setCoupon } = useApp();
+  const { mode, restaurantId, paymentMethodId, setPaymentMethodId, coupon, setCoupon } = useApp();
   const { subtotal, lines } = useCart();
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [payments, setPayments] = useState<PaymentMethod[]>([]);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [couponInput, setCouponInput] = useState("");
@@ -23,13 +22,6 @@ export default function CheckoutScreen() {
       navigate("/review", { replace: true });
       return;
     }
-    api.getAddresses().then((list) => {
-      setAddresses(list);
-      if (!addressId) {
-        const def = list.find((a) => a.isDefault) || list[0];
-        if (def) setAddressId(def.id);
-      }
-    });
     api.getPaymentMethods().then((list) => {
       setPayments(list);
       if (!paymentMethodId && list[0]) setPaymentMethodId(list[0].id);
@@ -54,27 +46,9 @@ export default function CheckoutScreen() {
   return (
     <div className="screen">
       <ScreenHeader title="Pagamento" onBack={() => navigate("/cart")} />
+      {/* G-1: no "Endereço de entrega" list — a customer's addresses aren't public any more (staff only). */}
       <div className="scroll no-scrollbar" style={{ padding: "16px var(--pad) 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
-          <i className="fa-solid fa-location-dot" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Endereço de entrega
-        </div>
-        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-          {addresses.map((a) => {
-            const selected = addressId === a.id;
-            return (
-              <div key={a.id} onClick={() => setAddressId(a.id)} className={`option-row${selected ? " option-row--selected" : ""}`}>
-                <div className={`mark mark--round${selected ? " mark--selected" : ""}`}>{selected && <i className="fa-solid fa-circle" />}</div>
-                <i className={a.icon} style={{ fontSize: "var(--i-m)", color: "var(--ink2)" }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ font: "600 var(--t-b) var(--font)" }}>{a.label}</div>
-                  <div style={{ marginTop: 2, font: "400 var(--t-s) var(--font)", color: "var(--ink2)" }}>{a.detail}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 9, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>
           <i className="fa-solid fa-credit-card" style={{ fontSize: "var(--i-s)", color: "var(--acc)" }} />Forma de pagamento
         </div>
         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>

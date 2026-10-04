@@ -1,5 +1,4 @@
 import type {
-  Address,
   CouponResult,
   CreateOrderRequest,
   MenuCategory,
@@ -75,7 +74,6 @@ export const api = {
   getItem: (restaurantId: string, itemId: string) =>
     request<MenuItem>(`/api/restaurants/${restaurantId}/items/${itemId}`),
   resolveTable: (tableCode: string) => request<TableResolveResponse>(`/api/tables/${tableCode}`),
-  getAddresses: () => request<Address[]>("/api/addresses"),
   getPaymentMethods: () => request<PaymentMethod[]>("/api/payment-methods"),
   applyCoupon: (restaurantId: string, code: string) =>
     request<CouponResult>("/api/coupons/apply", { method: "POST", body: JSON.stringify({ restaurantId, code }) }),

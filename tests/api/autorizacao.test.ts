@@ -22,7 +22,6 @@ const PUBLIC = [
   "GET /api/restaurants/:id/items/:itemId",
   "GET /api/restaurants/:id/appearance",
   "GET /api/tables/:tableCode",
-  "GET /api/addresses/",
   "GET /api/payment-methods/",
   "POST /api/coupons/apply",
   "POST /api/orders/",
@@ -34,6 +33,8 @@ const PUBLIC = [
 const WEBHOOK = ["POST /api/whatsapp/webhook/"];
 /** The caller's own login (any role, provisional password included): nothing of another restaurant to reach. */
 const SELF = ["GET /api/auth/me", "POST /api/auth/password"];
+/** Any staff role, no :id to swap: the token's restaurant decides what comes back (G-1: the addresses of its orders). */
+const OWN = ["GET /api/addresses/"];
 /** The super admin key (Bearer); no staff token passes. */
 const SUPER_ADMIN = [
   "GET /api/admin/restaurants",
@@ -184,7 +185,7 @@ const send = (route: string, token?: string) => {
 };
 
 test("toda rota registrada está numa lista do teste (pública, webhook, própria, super admin ou equipe com papel e módulo)", () => {
-  const known = [...PUBLIC, ...WEBHOOK, ...SELF, ...SUPER_ADMIN, ...Object.keys(STAFF)];
+  const known = [...PUBLIC, ...WEBHOOK, ...SELF, ...OWN, ...SUPER_ADMIN, ...Object.keys(STAFF)];
   const routes = registeredRoutes();
   assert.ok(routes.length >= 100, `só ${routes.length} rotas encontradas`);
   assert.deepEqual(routes.filter((r) => !known.includes(r)), [], "rota nova: diga quem pode chamá-la neste teste");
@@ -193,7 +194,7 @@ test("toda rota registrada está numa lista do teste (pública, webhook, própri
 
 test("sem credencial: 401 em toda rota que não é pública; as públicas respondem sem token", async () => {
   const wrong: string[] = [];
-  for (const route of [...WEBHOOK, ...SELF, ...SUPER_ADMIN, ...Object.keys(STAFF)]) {
+  for (const route of [...WEBHOOK, ...SELF, ...OWN, ...SUPER_ADMIN, ...Object.keys(STAFF)]) {
     const { status } = await send(route);
     if (status !== 401) wrong.push(`${route} → ${status}`);
   }
@@ -202,6 +203,17 @@ test("sem credencial: 401 em toda rota que não é pública; as públicas respon
     if (status === 401 || status === 403 || status >= 500) wrong.push(`${route} (pública) → ${status}`);
   }
   assert.deepEqual(wrong, []);
+});
+
+test("G-1 (SEG-09): endereços só para a equipe, e só os dos pedidos do próprio restaurante", async () => {
+  assert.equal((await call("GET", "/api/addresses")).status, 401);
+  // fogo's delivery orders (seed) went to Casa and Trabalho; the Chapa 27 (no delivery) has none of its own.
+  const fogo = await call("GET", "/api/addresses", { token: ROLE_TOKENS.kitchen });
+  assert.equal(fogo.status, 200);
+  assert.deepEqual(fogo.body.map((a: { id: string }) => a.id).sort(), ["addr-casa", "addr-trabalho"]);
+  const chapa = await call("GET", "/api/addresses", { token: otherRestaurant });
+  assert.equal(chapa.status, 200);
+  assert.deepEqual(chapa.body, [], "a equipe da Chapa 27 não vê os endereços dos pedidos do fogo");
 });
 
 test("token de staff não passa nas rotas do super admin", async () => {

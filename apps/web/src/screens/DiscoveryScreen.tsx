@@ -29,30 +29,18 @@ const SORTS = [
 export default function DiscoveryScreen() {
   const navigate = useNavigate();
   usePageTitle("Restaurantes");
-  const { mode, restaurantId, theme, toggleTheme, addressId, setAddressId } = useApp();
+  const { mode, restaurantId, theme, toggleTheme } = useApp();
   const { showToast } = useToast();
 
   const [query, setQuery] = useState("");
   const [cuisine, setCuisine] = useState("Todos");
   const [sort, setSort] = useState("near");
   const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null);
-  const [addressLabel, setAddressLabel] = useState("Escolha um endereço");
 
   // Table mode has no discovery — bounce straight back to the resolved table's menu.
   useEffect(() => {
     if (mode === "table" && restaurantId) navigate(`/r/${restaurantId}/menu`, { replace: true });
   }, [mode, restaurantId, navigate]);
-
-  useEffect(() => {
-    api.getAddresses().then((list) => {
-      const def = list.find((a) => a.id === addressId) || list.find((a) => a.isDefault) || list[0];
-      if (def) {
-        if (!addressId) setAddressId(def.id);
-        setAddressLabel(def.detail);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -78,20 +66,8 @@ export default function DiscoveryScreen() {
   return (
     <div className="screen">
       <div style={{ flex: "none", padding: "calc(var(--pad) - 2px) var(--pad)", background: "var(--glass)", backdropFilter: "saturate(180%) blur(22px)", WebkitBackdropFilter: "saturate(180%) blur(22px)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 12 }}>
-        <button
-          type="button"
-          onClick={() => navigate("/checkout")}
-          style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10, border: "none", background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)" }}
-        >
-          <i className="fa-solid fa-location-dot" style={{ fontSize: "var(--i-m)", color: "var(--acc)" }} />
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="mono-label" style={{ display: "block" }}>entregar em</span>
-            <span style={{ display: "block", marginTop: 2, font: "600 var(--t-b) var(--font)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {addressLabel}
-            </span>
-          </span>
-          <i className="fa-solid fa-chevron-down" style={{ fontSize: "var(--i-s)", color: "var(--ink2)" }} />
-        </button>
+        {/* G-1: no "entregar em": a customer's addresses aren't public any more (staff only). */}
+        <h1 style={{ flex: 1, minWidth: 0, margin: 0, font: "600 var(--t-m) var(--font)", letterSpacing: "-.015em" }}>Restaurantes</h1>
         <IconButton icon={theme === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon"} onClick={toggleTheme} title="Alternar tema" />
         <IconButton icon="fa-solid fa-user" onClick={() => navigate("/history")} title="Minha conta" />
       </div>
