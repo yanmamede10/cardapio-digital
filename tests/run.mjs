@@ -3,6 +3,7 @@
 // Everything points at the container through DATABASE_URL; the real (Supabase) database is never touched — except by
 // `npm run carga -- supabase`, which runs the load test against apps/api/.env's database (the Supabase test project).
 import { execSync, spawn } from "node:child_process";
+import { connect } from "node:net";
 import { fileURLToPath } from "node:url";
 import C from "./load/cenario.mjs";
 
@@ -39,6 +40,17 @@ const kill = (p) => {
   } catch {} // already gone
 };
 
+// G-7: an API left over from an earlier run (or anything else) on :4200 would answer the health check below in place of this
+// run's — old code, another database. Refuse before touching anything (the teardown below would take that run's database).
+const portTaken = await new Promise((resolve) => {
+  const socket = connect({ port: Number(env.PORT), host: "localhost" });
+  socket.once("connect", () => (socket.destroy(), resolve(true))).once("error", () => resolve(false));
+});
+if (portTaken) {
+  console.error(`A porta ${env.PORT} está ocupada (uma API que sobrou de outra execução?). Encerre o processo nessa porta e rode de novo.`);
+  process.exit(1);
+}
+
 let api;
 const servers = [];
 let failed = false;
@@ -73,6 +85,7 @@ try {
     try {
       if ((await fetch(`${env.API_URL}/api/health`)).ok) break;
     } catch {}
+    if (api.exitCode !== null) throw new Error(`A API de teste não conseguiu ocupar a porta ${env.PORT} (veja o erro acima).`);
     if (i > 60) throw new Error("API de teste não subiu");
     await sleep(500);
   }
