@@ -584,3 +584,25 @@ test("Pedir de novo: o carrinho vem com o preço e a disponibilidade de hoje e d
     await api("PATCH", `/api/restaurants/${R}/items/${gone.item.id}/sold-out`, { soldOut: false });
   }
 });
+
+test("G-4 · PIX via sistema pausado: Configurações → Financeiro não oferece o modo; quem já está nele continua como hoje", async ({ page, api }) => {
+  const P = `/api/restaurants/${R}`;
+  const open = async () => {
+    await page.goto("/config");
+    await page.locator("main").getByRole("button", { name: "Financeiro", exact: true }).click();
+    await expect(page.getByText("Não é necessário abrir subconta").or(page.getByText("O dinheiro cai direto na conta do seu restaurante"))).toBeVisible();
+  };
+  // Maquininha própria (the seed's): no choice of mode at all — it would be a single option. Its bill close: checklist 14.
+  await open();
+  await expect(page.getByText("PIX via sistema")).toHaveCount(0);
+  await expect(page.getByText("Não é necessário abrir subconta")).toBeVisible();
+  // Already on PIX via sistema (no data migrated): the screen as before, and it can switch back.
+  await api("PATCH", `${P}/payment-mode`, { paymentMode: "sistema" });
+  try {
+    await open();
+    await expect(page.getByText("PIX via sistema")).toBeVisible();
+    await expect(page.getByText("Maquininha própria")).toBeVisible();
+  } finally {
+    await api("PATCH", `${P}/payment-mode`, { paymentMode: "maquininha_propria" });
+  }
+});

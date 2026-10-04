@@ -83,6 +83,9 @@ export default function PaymentSubaccountTab() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* G-4: PIX via the system is paused — the choice only shows for a restaurant already on it (it keeps working, and can
+          switch back); for the others it would be one option, so the section goes. */}
+      {paymentMode === "sistema" && (
       <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>Como vocês recebem pagamento no balcão?</div>
@@ -99,6 +102,7 @@ export default function PaymentSubaccountTab() {
           ]}
         />
       </section>
+      )}
 
       {paymentMode !== "sistema" && (
         <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "flex-start" }}>
