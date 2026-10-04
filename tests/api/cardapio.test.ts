@@ -57,10 +57,9 @@ test("G-5: prato sem categoria → 400 em português, não 500; categoria de out
     ["PATCH", `${P}/items/${item}`, { shortDescription: 5 }],
     ["PATCH", `${P}/items/${item}`, { longDescription: 5 }],
     ["PATCH", `${P}/items/${item}`, { scheduleLabel: 5 }],
-    ["POST", `${P}/items/${item}/move`, { direction: 5 }],
     ["POST", `${P}/categories`, {}],
-    ["PATCH", `${P}/categories/${cat}`, { name: null }],
-    ["POST", `${P}/categories/${cat}/move`, {}]
+    ["PATCH", `${P}/categories/${cat}`, { name: null }]
+    // Not the two "move" routes: any direction but "up" moves down (200, not 500) — probing them reorders the demo menu.
   ];
   const errors: string[] = [];
   for (const [method, path, body] of probes) {
