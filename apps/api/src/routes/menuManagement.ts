@@ -18,6 +18,16 @@ const MAX_NAME_LENGTH = 80;
 const MAX_SHORT_DESCRIPTION_LENGTH = 200;
 const MAX_LONG_DESCRIPTION_LENGTH = 500;
 
+/** G-5: a field of the wrong kind (or a null) went on to Prisma and came back as a 500 "internal error". */
+function typeError(body: Record<string, unknown>): string | null {
+  for (const f of ["categoryId", "productId", "name", "shortDescription", "longDescription", "scheduleLabel"]) {
+    if (body[f] !== undefined && typeof body[f] !== "string") return `${f} must be text`;
+  }
+  if (body.price !== undefined && typeof body.price !== "number") return "price must be a number";
+  if (body.soldOut !== undefined && typeof body.soldOut !== "boolean") return "soldOut must be true or false";
+  return null;
+}
+
 function textFieldError(body: { name?: string; shortDescription?: string; longDescription?: string }): string | null {
   if (body.name !== undefined && body.name.length > MAX_NAME_LENGTH) return `name must be at most ${MAX_NAME_LENGTH} characters`;
   if (body.shortDescription !== undefined && body.shortDescription.length > MAX_SHORT_DESCRIPTION_LENGTH) {
@@ -74,8 +84,10 @@ async function itemsFor(restaurantId: string) {
 
 menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
   const body = req.body as UpsertMenuItemRequest;
-  const fieldError = textFieldError(body) ?? (await extrasError(req.params.id, body.extras));
+  const fieldError = typeError(req.body) ?? textFieldError(body) ?? (await extrasError(req.params.id, body.extras));
   if (fieldError) return res.status(400).json({ error: fieldError });
+  // G-5: without a category Prisma threw, and the dashboard got a 500 "internal error".
+  if (!body.categoryId) return res.status(400).json({ error: "Escolha a categoria do prato." });
   const category = await prisma.menuCategory.findUnique({ where: { id: body.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(400).json({ error: "unknown category" });
 
@@ -116,7 +128,7 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
 
 menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res) => {
   const body = req.body as Partial<UpsertMenuItemRequest> & { soldOut?: boolean };
-  const fieldError = textFieldError(body) ?? (await extrasError(req.params.id, body.extras));
+  const fieldError = typeError(req.body) ?? textFieldError(body) ?? (await extrasError(req.params.id, body.extras));
   if (fieldError) return res.status(400).json({ error: fieldError });
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });

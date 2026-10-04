@@ -30,6 +30,46 @@ test("cozinha e garçom marcam Esgotado/Disponível; o cliente não consegue ped
   assert.equal((await call("PATCH", `${P}/items/fogo-burger/sold-out`, { token: tokens.garcom, body: { soldOut: true } })).status, 404, "prato de outro restaurante");
 });
 
+test("G-5: prato sem categoria → 400 em português, não 500; categoria de outro restaurante recusada; nenhum campo faltando ou de tipo errado vira 500", async () => {
+  const dono = { token: tokens.dono };
+  const cat = (await call("GET", `${P}/categories`)).body[0].id as string;
+  const dish = { name: `Prato ${uid()}`, price: 10 };
+  const noCategory = await call("POST", `${P}/items`, { ...dono, body: dish });
+  assert.deepEqual([noCategory.status, noCategory.body.error], [400, "Escolha a categoria do prato."]);
+  const otherRestaurant = await call("POST", `${P}/items`, { ...dono, body: { ...dish, categoryId: "fogo-cat-1" } });
+  assert.equal(otherRestaurant.status, 400);
+  // The same route and its siblings, with each field missing or of the wrong kind: refused (4xx), never "internal error".
+  const item = (await items())[0].id;
+  const probes: [string, string, unknown][] = [
+    ["POST", `${P}/items`, {}],
+    ["POST", `${P}/items`, { ...dish, categoryId: 123 }],
+    ["POST", `${P}/items`, { categoryId: cat, productId: 123 }],
+    ["POST", `${P}/items`, { categoryId: cat, name: 5, price: 10 }],
+    ["POST", `${P}/items`, { categoryId: cat, name: "X", price: "dez" }],
+    ["POST", `${P}/items`, { ...dish, categoryId: cat, shortDescription: 5 }],
+    ["POST", `${P}/items`, { ...dish, categoryId: cat, longDescription: 5 }],
+    ["POST", `${P}/items`, { ...dish, categoryId: cat, scheduleLabel: 5 }],
+    ["POST", `${P}/items`, { ...dish, categoryId: cat, extras: "x" }],
+    ["PATCH", `${P}/items/${item}`, { categoryId: 123 }],
+    ["PATCH", `${P}/items/${item}`, { name: 5 }],
+    ["PATCH", `${P}/items/${item}`, { price: "dez" }],
+    ["PATCH", `${P}/items/${item}`, { soldOut: "sim" }],
+    ["PATCH", `${P}/items/${item}`, { shortDescription: 5 }],
+    ["PATCH", `${P}/items/${item}`, { longDescription: 5 }],
+    ["PATCH", `${P}/items/${item}`, { scheduleLabel: 5 }],
+    ["POST", `${P}/items/${item}/move`, { direction: 5 }],
+    ["POST", `${P}/categories`, {}],
+    ["PATCH", `${P}/categories/${cat}`, { name: null }],
+    ["POST", `${P}/categories/${cat}/move`, {}]
+  ];
+  const errors: string[] = [];
+  for (const [method, path, body] of probes) {
+    const { status } = await call(method, path, { ...dono, body });
+    if (status >= 500) errors.push(`${method} ${path.replace(P, "")} ${JSON.stringify(body)} → ${status}`);
+  }
+  assert.deepEqual(errors, []);
+});
+
 test("Funcionário não edita o resto do prato", async () => {
   const kids = await byName("Kids");
   for (const who of ["garcom", "cozinha"]) {
