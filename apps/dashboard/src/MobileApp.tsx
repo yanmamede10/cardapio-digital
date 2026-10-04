@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, createRoutesFromChildren, matchRoutes, useLocation } from "react-router-dom";
 import { MobileLayout } from "./components/mobile/MobileLayout";
 import { MobileEmptyState } from "./components/mobile/MobileEmptyState";
 import MobileOrdersScreen from "./screens/mobile/MobileOrdersScreen";
@@ -27,6 +27,7 @@ import { MobileWhatsAppScreen } from "./screens/SettingsWhatsAppTab";
 import { MobileLaunchOrderScreen } from "./screens/LaunchOrderScreen";
 import { MobileSalonScreen } from "./screens/SettingsSalonTab";
 import { homePath, knownPath } from "./lib/modules";
+import { desktopScreens } from "./DesktopApp";
 
 /** The phone's screens: the router's list, and what knownPath checks an address against (UX-05). */
 export const mobileScreens = () => (
@@ -63,24 +64,30 @@ export const mobileScreens = () => (
 export default function MobileApp() {
   const { pathname } = useLocation();
   const screens = mobileScreens();
+  // U-5: a desktop-only address (desktopScreens: /pedidos, /configuracoes) does what the desktop does with it; only an
+  // address neither list knows is a 404.
+  // ponytail: both are redirects on the desktop today; a desktop-only screen would want U-4's "phone screen above it" here.
+  const desktopOnly = knownPath(screens, pathname) ? undefined : matchRoutes(createRoutesFromChildren(desktopScreens()), pathname)?.pop()?.route.element;
   return (
     <Routes>
-      <Route element={<MobileLayout notFound={!knownPath(screens, pathname)} />}>
+      <Route element={<MobileLayout notFound={!knownPath(screens, pathname) && !desktopOnly} />}>
         {screens}
         {/* UX-05: an unknown address says so, inside the dashboard, instead of jumping to the start. */}
         <Route
           path="*"
           element={
-            <MobileEmptyState
-              icon="fa-link-slash"
-              title="Esta página não existe"
-              sub="O endereço pode ter sido digitado errado ou a página mudou de lugar."
-              action={
-                <Link to={homePath()} className="btn btn-primary" style={{ marginTop: 6, padding: "11px 20px", fontSize: 14 }}>
-                  Voltar ao início
-                </Link>
-              }
-            />
+            desktopOnly ?? (
+              <MobileEmptyState
+                icon="fa-link-slash"
+                title="Esta página não existe"
+                sub="O endereço pode ter sido digitado errado ou a página mudou de lugar."
+                action={
+                  <Link to={homePath()} className="btn btn-primary" style={{ marginTop: 6, padding: "11px 20px", fontSize: 14 }}>
+                    Voltar ao início
+                  </Link>
+                }
+              />
+            )
           }
         />
       </Route>

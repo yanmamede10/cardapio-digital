@@ -110,6 +110,27 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByText(TITLE)).toHaveCount(0);
     });
 
+    test("U-5 · celular: rota que só existe no desktop abre a tela equivalente do celular, não a 404", async ({ page, request }, info) => {
+      test.skip(info.project.name !== "mobile", "no desktop essas rotas são do próprio desktop");
+      // Every route of desktopScreens that mobileScreens doesn't have → where the desktop sends it.
+      const desktopOnly: [string, string][] = [
+        ["/pedidos", "/"],
+        ["/configuracoes", "/config"]
+      ];
+      await loginAs(page, request, "dono@chapa27.example");
+      for (const [from, to] of desktopOnly) {
+        await page.goto(from);
+        await expect.poll(() => new URL(page.url()).pathname, from).toBe(to);
+        await expect(page.locator("nav").first(), from).toBeVisible();
+        await expect(page.getByText(TITLE), `${from}: não é a 404`).toHaveCount(0);
+      }
+      // Logged out, the same rule: a desktop route is a known address on the phone too, so it gets the login, not the 404 card.
+      await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session"));
+      await page.goto("/configuracoes");
+      await expect(page.getByLabel("E-mail")).toBeVisible();
+      await expect(page.getByText(TITLE)).toHaveCount(0);
+    });
+
     test("U-2 · sem login: rota inexistente mostra o cartão com \"Entrar\"; rota válida vai para o login", async ({ page }) => {
       await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session")); // runs after the fixture's: logged out
       await page.goto(LOST);
