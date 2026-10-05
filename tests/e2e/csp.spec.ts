@@ -26,7 +26,7 @@ test.describe.configure({ timeout: 240_000 });
 test.beforeAll(async () => {
   for (const [app, port] of Object.entries(APPS)) {
     const env = { ...process.env, VITE_API_URL: `http://localhost:${port}`, VITE_CUSTOMER_APP_URL: `http://localhost:${APPS.web}` };
-    execSync("npx vite build --outDir dist/csp --emptyOutDir --logLevel warn", { cwd: `apps/${app}`, env, stdio: "inherit" });
+    execSync("npx vite build --base / --outDir dist/csp --emptyOutDir --logLevel warn", { cwd: `apps/${app}`, env, stdio: "inherit" });
     const dir = `apps/${app}/dist/csp`;
     const headers = vercelHeaders(app);
     const server = createServer((req, res) => {
