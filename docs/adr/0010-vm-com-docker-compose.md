@@ -1,6 +1,6 @@
 # 10. Produção numa VM com Docker Compose (Caddy, API, Evolution)
 
-Aceita · 01/10/2026
+Aceita · 01/10/2026 · os fronts saíram da Vercel para o Caddy desta VM: [ADR 11](0011-fronts-no-caddy.md)
 
 ## Contexto
 A API precisa de um processo sempre ligado: os limites de requisição ficam na memória do processo (ADR 9), a Evolution (WhatsApp) precisa de um servidor com Docker e entrega mensagens por webhook, e o banco responde ~5× mais rápido com conexões persistentes no modo sessão do pooler do que no modo transação que uma função serverless exige (C-4, plano de testes). Na Vercel, o WhatsApp responde 503 e os limites por IP não funcionam. No PC do restaurante, atrás de um túnel da Cloudflare, tudo depende de um computador de balcão ficar ligado.

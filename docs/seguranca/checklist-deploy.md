@@ -1,4 +1,4 @@
-# Checklist de segurança do deploy (VM Oracle + Supabase + Vercel)
+# Checklist de segurança do deploy (VM Oracle + Supabase)
 
 Para o primeiro deploy na VM e para revisar depois de qualquer mudança na pilha. Cada item diz como conferir. O passo a passo do deploy está no README ("Deploy"); as razões, na [ADR 0010](../adr/0010-vm-com-docker-compose.md); os achados, em [auditoria-2026-10.md](auditoria-2026-10.md).
 
@@ -6,7 +6,7 @@ Para o primeiro deploy na VM e para revisar depois de qualquer mudança na pilha
 
 - [ ] **Conta Pay As You Go com orçamento e alerta** (ADR 0010): Billing & Cost Management → Budgets, alerta por e-mail a qualquer gasto.
 - [ ] **MFA** no login da Oracle e só as pessoas que precisam na tenancy.
-- [ ] **IP público reservado** para a instância (um IP efêmero muda se ela for recriada, e os fronts e o APK apontam para ele).
+- [ ] **IP público reservado** para a instância (um IP efêmero muda se ela for recriada, e os QR impressos e o APK apontam para ele).
 - [ ] **Security List / NSG:** entrada só TCP 80 e 443 de `0.0.0.0/0` e TCP 22 **só do IP de quem administra** (não de `0.0.0.0/0`). Nenhuma outra porta.
 - [ ] **SSH só com chave:** `sudo sshd -T | grep -E "passwordauthentication|permitrootlogin"` → `passwordauthentication no`, `permitrootlogin no` (o padrão das imagens da Oracle).
 - [ ] **Firewall do sistema** igual à Security List: `sudo iptables -L INPUT -n` (Ubuntu da Oracle) ou `sudo firewall-cmd --list-all` (Oracle Linux) — 22, 80 e 443.
@@ -17,9 +17,8 @@ Para o primeiro deploy na VM e para revisar depois de qualquer mudança na pilha
 
 - [ ] Copiado de `deploy/.env.example`, fora do git (`git status` não o mostra; o `.gitignore` cobre).
 - [ ] **Permissão 600:** `stat -c '%a %U' deploy/.env` → `600 <usuário do deploy>`. O `deploy/deploy.sh` aplica a cada execução (SEG-A15).
-- [ ] `NODE_ENV=production` (a API se recusa a subir em produção sem `JWT_SECRET` de 32+ e sem `CORS_ORIGINS`, e com `SUPER_ADMIN_KEY` curta).
+- [ ] `NODE_ENV=production` (a API se recusa a subir em produção sem `JWT_SECRET` de 32+ e com `SUPER_ADMIN_KEY` curta; o `CORS_ORIGINS` vem do Compose).
 - [ ] Segredos gerados na hora, nunca reaproveitados do dev: `JWT_SECRET` (`openssl rand -base64 48`), `SUPER_ADMIN_KEY` (`openssl rand -base64 32`), `EVOLUTION_API_KEY` e `WHATSAPP_WEBHOOK_SECRET` (`openssl rand -hex 32`).
-- [ ] `CORS_ORIGINS` = as duas URLs exatas da Vercel (sem barra no fim) e `https://localhost` só se o APK do painel for usado.
 - [ ] `DATABASE_URL` e `DIRECT_URL` = pooler do Supabase em modo **sessão** (porta 5432), usuário `postgres.<ref>`; a senha do banco é a do projeto de produção.
 - [ ] `STORAGE_S3_*` = um par de chaves S3 criado em Storage → S3 Connection (não a `service_role`), e os buckets `cardapio` e `whatsapp-media`.
 
@@ -41,12 +40,14 @@ No SQL Editor do projeto de produção, depois do primeiro `deploy/deploy.sh` (q
 - [ ] **MFA** na conta do Supabase e só as pessoas que precisam na organização.
 - [ ] **Backups do Supabase** (plano): sabido o que o plano guarda; o backup da VM (seção 6) é o nosso.
 
-## 4. Fronts na Vercel
+## 4. Fronts no Caddy ([ADR 0011](../adr/0011-fronts-no-caddy.md))
 
-- [ ] `VITE_API_URL=https://<IP da VM>` nos dois projetos, redeploy feito.
-- [ ] **Cabeçalhos de segurança no ar** (SEG-A05): `curl -sI https://<painel>.vercel.app | grep -iE "content-security-policy|x-content-type-options|referrer-policy|x-frame-options"` → os quatro; o mesmo no cardápio.
-- [ ] Abrir o painel e o cardápio no navegador com o console aberto: nenhuma mensagem "Refused to … Content Security Policy" (o `npm test` prova com o build local; isto confere o da Vercel).
-- [ ] **MFA** na conta da Vercel; proteção dos previews (Deployment Protection) ligada, para os previews não ficarem abertos.
+- [ ] `PUBLIC_URL` no `deploy/.env` = `https://<IP da VM>` (sem barra no fim), e nenhuma linha `PUBLIC_IP` ou `CORS_ORIGINS` sobrando de antes (o Compose define o CORS: `PUBLIC_URL` e `https://localhost`).
+- [ ] **Cabeçalhos de segurança no ar** (SEG-A05): `curl -sI https://<IP>/ | grep -iE "content-security-policy|x-content-type-options|referrer-policy|x-frame-options"` → os quatro; o mesmo em `https://<IP>/painel/`.
+- [ ] **Cache:** `curl -sI https://<IP>/painel/ | grep -i cache-control` → `no-cache`; o `.js` que esse `index.html` carrega (`/painel/assets/index-….js`) → `public, max-age=31536000, immutable`.
+- [ ] **Rotas internas:** `https://<IP>/painel/mesas` recarregado abre o painel; o QR de uma mesa abre o cardápio (`/t/<código>`).
+- [ ] Abrir o painel e o cardápio no navegador com o console aberto: nenhuma mensagem "Refused to … Content Security Policy" (o `npm test` prova com a pilha local; isto confere a da VM).
+- [ ] **QR:** Mesas → QR das mesas mostra `https://<IP>/t/…` (o `PUBLIC_URL`), também no APK.
 
 ## 5. Depois do `deploy/deploy.sh`
 
@@ -54,8 +55,8 @@ No SQL Editor do projeto de produção, depois do primeiro `deploy/deploy.sh` (q
 - [ ] **Cabeçalhos da API** (SEG-A09): `curl -sI https://<IP>/api/health` mostra `x-content-type-options: nosniff`, `x-frame-options: DENY`, `content-security-policy: default-src 'none'; frame-ancestors 'none'`, `referrer-policy: no-referrer`, e **não** mostra `x-powered-by`.
 - [ ] **Certificado do Let's Encrypt para o IP:** `echo | openssl s_client -connect <IP>:443 2>/dev/null | openssl x509 -noout -issuer -dates -ext subjectAltName` → emissor Let's Encrypt, SAN `IP Address:<IP>`.
 - [ ] **Só o Caddy publica portas:** `docker compose -f deploy/docker-compose.prod.yml ps --format '{{.Service}} {{.Ports}}'` → só `caddy` com `80` e `443`. Na VM, `sudo ss -tlnp` → 22, 80 e 443 (e nada da Evolution, 8080, nem da API, 4100).
-- [ ] **A Evolution não responde de fora:** `curl -s -m 5 http://<IP>:8080` → sem resposta; `curl -s https://<IP>/manager` → 404 da API.
-- [ ] **Super admin:** a chave funciona em `/admin` do painel; uma chave errada → "invalid admin key".
+- [ ] **A Evolution não responde de fora:** `curl -s -m 5 http://<IP>:8080` → sem resposta; `curl -s https://<IP>/manager` → o `index.html` do cardápio (o Caddy não tem rota para a Evolution).
+- [ ] **Super admin:** a chave funciona em `/painel/admin`; uma chave errada → "invalid admin key".
 - [ ] **Seed de demonstração** com a senha digitada uma vez (`SEED_DEMO_PASSWORD='…' deploy/deploy.sh seed-demo`), senha guardada num cofre; o seed de dev é recusado (`deploy/deploy.sh seed` → "Recusado").
 
 ## 6. Backups

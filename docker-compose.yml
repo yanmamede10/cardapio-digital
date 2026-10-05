@@ -1,4 +1,4 @@
-# WhatsApp for Atendimento via Evolution API (unofficial, Baileys), on the machine that runs the API. Never on Vercel.
+# WhatsApp for Atendimento via Evolution API (unofficial, Baileys), on the machine that runs the API.
 #   docker compose --env-file apps/api/.env up -d   → http://localhost:8085 (manager UI at /manager), this machine only
 #   docker compose --env-file apps/api/.env down    → stops; `down -v` also wipes the WhatsApp sessions and Evolution's own database
 # --env-file: the key comes from the API's own .env (EVOLUTION_API_KEY), so both always agree; without it compose refuses to start.

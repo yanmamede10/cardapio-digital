@@ -35,7 +35,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
 | `e2e:dialogos` | `tests/e2e/dialogos.spec.ts` (acessibilidade de diálogos, folhas e formulários; desktop e celular × 2 temas) |
-| `e2e:csp` | `tests/e2e/csp.spec.ts` (os dois apps no build de produção com os cabeçalhos do `vercel.json`) |
+| `e2e:caddy` | `tests/e2e/caddy.spec.ts` (a pilha de produção nesta máquina: o Caddy com os dois fronts e a API, `CADDY_TLS=internal`) |
 | `carga` | `tests/load/pico.mjs` (casa cheia), `tests/load/cardapio.mjs` (Lighthouse), `tests/load/painel.spec.ts` (pedido → Central nas telas) |
 | **M** | manual (roteiro abaixo) |
 
@@ -50,7 +50,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"); 05/10/2026 para os fronts no Caddy, num endereço só (seção 4.21). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -449,7 +449,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | SEG-22 | Login não revela quem tem conta | — | 4 logins com e-mail inexistente × 4 com senha errada de uma conta | Tempos parecidos (antes: 4,2 ms × 66,7 ms) | api:seguranca | ✅ corrigido (SEG-A12) |
 | SEG-23 | Upload acima de 8 MB | Dono | Capa e foto do prato com 8 MB + 8 bytes | 413 "file too large — limit is 8 MB" (antes 500) | api:seguranca | ✅ corrigido (SEG-A14) |
 | SEG-24 | `deploy/.env` só do dono | — | `deploy/.env` criado com 644; `deploy/deploy.sh seed-demo` sem senha | Sai pedindo a senha e o `.env` fica 600 | api:seguranca (Linux/CI) | ✅ corrigido (SEG-A15) |
-| SEG-25 | CSP e cabeçalhos dos fronts | — | Os dois apps no build de produção com os cabeçalhos do `vercel.json`: login, 12 telas do Dono, Super Admin; lista, cardápio, prato e mesa pelo QR; um `<script>` injetado | Nada bloqueado pela CSP; o script injetado não roda | e2e:csp | ✅ corrigido (SEG-A05) |
+| SEG-25 | CSP e cabeçalhos dos fronts | — | Os dois apps como o Caddy da pilha local os serve (build de produção, cabeçalhos do `deploy/Caddyfile`, que eram os do `vercel.json`): login, 12 telas do Dono, Super Admin; lista, cardápio, prato e mesa pelo QR; um `<script>` injetado | Nada bloqueado pela CSP; o script injetado não roda | e2e:caddy | ✅ corrigido (SEG-A05; pelo Caddy desde 05/10) |
 
 ### 4.19 Histórico do pedido (OBS)
 
@@ -469,12 +469,27 @@ Lido direto do banco de teste (`OrderEvent`): não há tela nem rota para ele.
 | DESC-01 | Só restaurante com Delivery na lista | Super Admin, cliente | Desligar o módulo Delivery do restaurante; abrir a lista e buscar pelo nome; pedir delivery | Some da lista e da busca; o pedido de delivery é recusado ("Este restaurante não recebe pedidos de delivery pelo app."); religado, volta | api:descoberta | ✅ (novo, E-6) |
 | DESC-02 | Sem Delivery, a mesa segue | cliente, Garçom | Módulo desligado: cardápio público, QR da mesa (e o tablet), aceite, Lançar pedido | Tudo como antes | api:descoberta | ✅ (novo, E-6) |
 | DESC-03 | Dinheiro igual nos dois apps | — | `brl` de -10; 1340,5; -0,001 | "-R$ 10,00", "R$ 1.340,50", "R$ 0,00"; o cardápio e o painel usam o mesmo (`@cardapio/shared`) | api:moeda | ✅ corrigido (E-7: o cardápio mostrava "R$ -10,00" e "R$ 1340,50") |
-| DESC-04 | Sem destaques fixos | cliente | Tela inicial do delivery; o bundle de produção do cardápio | Nenhum destaque inventado; nenhum nome de restaurante do banco no código | e2e:csp | ✅ corrigido (F-5: "Fogo & Nó" e "Forno di Napoli" estavam no código) |
+| DESC-04 | Sem destaques fixos | cliente | Tela inicial do delivery; o bundle de produção do cardápio (o que o Caddy serve) | Nenhum destaque inventado; nenhum nome de restaurante do banco no código | e2e:caddy | ✅ corrigido (F-5: "Fogo & Nó" e "Forno di Napoli" estavam no código) |
 | DESC-05 | Delivery desligado por padrão | Super Admin | Cadastrar restaurante e ativar; seed de demonstração | Nasce com todos os módulos menos Delivery e não aparece na lista até o Super Admin ligar; a Chapa 27 do seed sem Delivery; os restaurantes que já existiam não mudam | api:admin, api:seed | ✅ (novo, F-6) |
 | CUP-01 | Cupom que não existe | cliente | "abc" no Pagamento; pedido com ele | "Cupom não encontrado neste restaurante."; o pedido não é criado | api:cupom | ✅ corrigido (F-1, SEG-A01: antes, qualquer texto dava 10%) |
 | CUP-02 | Cupom cadastrado em Promoções | cliente | 15%, R$ 7,50 e R$ 9.999 de desconto num pedido de delivery | Desconto exatamente o do cupom, sobre o subtotal e nunca maior que ele; gravado no pedido com o código; o uso é contado | api:cupom | ✅ (novo, F-1) |
 | CUP-03 | Desconto enviado pelo aparelho | cliente | Pedido com `discount`, `discountPercent`, `total` e `subtotal` forjados | Ignorados: o servidor calcula | api:cupom | ✅ (novo, F-1) |
 | CUP-04 | Regras de Promoções | cliente | Cupom pausado, expirado, só para mesa, de combo, esgotado, de outro restaurante; dois pedidos com o último uso | Cada um recusado com o motivo; do último uso, só um pedido leva | api:cupom | ✅ (novo, F-1; combo fica para decisão) |
+
+### 4.21 Fronts no Caddy, num endereço só (FRONT)
+
+A pilha de produção nesta máquina (`tests/e2e/caddy.spec.ts`): o `caddy` (com os dois fronts construídos na imagem por `deploy/caddy.Dockerfile`) e a `api` do `deploy/docker-compose.prod.yml`, `CADDY_TLS=internal`, `PUBLIC_URL=https://127.0.0.1`, a partir de uma cópia do repositório com um `deploy/.env` próprio. A API dela não tem banco; no navegador, as chamadas de `/api` das telas vão para a API de teste (:4200) por `page.route`. Decisão: [ADR 0011](../adr/0011-fronts-no-caddy.md).
+
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
+| --- | --- | --- | --- | --- | --- | --- |
+| FRONT-01 | Um endereço, três caminhos | — | `GET /`, `/painel/`, `/api/health`, `/api/nao-existe`; o mesmo por HTTP | `/` o cardápio, `/painel/` o painel (assets em `/painel/assets/`), `/api/health` 200 com a CSP da própria API, 404 em JSON; HTTP → 308 para HTTPS; certificado válido para o IP, sem SNI | e2e:caddy | ✅ (novo, Caddy-6) |
+| FRONT-02 | Rota interna recarregada | — | `/painel/mesas`, `/painel/admin/mensalidades`, `/painel/rota-que-nao-existe`; `/t/<código>`, `/r/<id>/menu`, `/history`; `/painel` sem barra | O `index.html` do próprio app (nunca 404 nem o outro app); `/painel` → 301 `/painel/`; no navegador, `/painel/mesas` recarregado abre a tela Mesas | e2e:caddy | ✅ (novo, Caddy-6) |
+| FRONT-03 | Cabeçalhos e cache | — | `index.html` e o `.js` de `assets/` de cada app; um asset que não existe | CSP, `nosniff`, `Referrer-Policy`, `X-Frame-Options` em todos; o `.js` com `public, max-age=31536000, immutable` e gzip; `index.html` com `no-cache`; o asset inexistente devolve o index, com `no-cache` | e2e:caddy | ✅ (novo, Caddy-6) |
+| FRONT-04 | CORS e IP do cliente pelo Caddy | — | `Origin` = `PUBLIC_URL`, `https://localhost`, outro site; 51 logins, cada um com outro `CF-Connecting-IP` forjado | Libera os dois primeiros, não o terceiro; o 51º login → 429 (o Caddy sobrescreve o cabeçalho, todos contam para o mesmo IP) | e2e:caddy | ✅ (novo, Caddy-6) |
+| FRONT-05 | QR com o `PUBLIC_URL` | Dono | Mesas → QR de uma mesa no painel servido pelo Caddy, e no build do APK (`--mode android`) servido em outra origem | O link é `PUBLIC_URL/t/<código>` nos dois, nunca a origem da página; o APK chama a API só em `PUBLIC_URL` | e2e:caddy | ✅ (novo, Caddy-6) |
+| FRONT-06 | Sem endereço no bundle | — | `deploy/caddy.Dockerfile` com `PUBLIC_URL=https://203.0.113.10`; procurar `localhost`, `4100`, `4200`, o IP, `vercel` nos `.js` | Cardápio: nenhum; painel: só o IP, uma vez, no link do QR. O build do APK: a API e o QR no IP, sem `localhost` nem `10.0.2.2` | M | ✅ M (05/10) |
+| FRONT-07 | Build dos fronts em ARM64 e x86-64 | — | `deploy/caddy.Dockerfile` nativo (x86-64) e `docker buildx build --platform linux/arm64` (emulado) | Os dois saem; `uname -m` = `aarch64` no ARM64; os mesmos hashes de bundle nos dois; 1 min 32 s emulado | M | ✅ M (05/10) |
+| FRONT-08 | Uma variável no Compose | — | `docker compose -f deploy/docker-compose.prod.yml config` | `PUBLIC_URL` no Caddy e no argumento do build; `CORS_ORIGINS` da API = `PUBLIC_URL,https://localhost`; `FROM` com versão fixa nos dois Dockerfiles | api:seguranca | ✅ (novo, Caddy-4/5) |
 
 ## 5. Só com aparelho na mão
 

@@ -12,9 +12,6 @@ apps/api/prisma/dev.db-journal
 .idea/
 .claude/
 
-# Vercel CLI local link/build output
-.vercel/
-
 # Playwright artifacts (npm test)
 test-results/
 playwright-report/
