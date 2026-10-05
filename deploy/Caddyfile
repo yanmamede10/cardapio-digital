@@ -1,5 +1,6 @@
-# Caddy on the VM (deploy/docker-compose.prod.yml): HTTPS at https://<PUBLIC_IP>, in front of the API only. Evolution is never
-# proxied. HTTP → HTTPS is Caddy's automatic redirect. Variables come from deploy/.env.
+# Caddy on the VM (deploy/docker-compose.prod.yml): HTTPS at https://<PUBLIC_IP>, everything on one address — the cardápio
+# (apps/web) at /, the dashboard at /painel/, the API at /api/. Evolution is never proxied. HTTP → HTTPS is Caddy's automatic
+# redirect. Variables come from deploy/.env.
 #   PUBLIC_IP   the VM's public IPv4: the site address and the certificate's subject
 #   CADDY_TLS   letsencrypt (default): a Let's Encrypt certificate for the IP (the "shortlived" profile, ~160 h — the only one
 #               Let's Encrypt issues for IPs), renewed by Caddy on its own; internal: Caddy's local CA, to test on a dev machine
@@ -34,5 +35,18 @@
 			# the address that connected here, whatever the visitor sent in this header.
 			header_up CF-Connecting-IP {remote_host}
 		}
+	}
+	# The two fronts, built into this Caddy's image: the dashboard under /painel/, the cardápio at the root. An address the
+	# app routes by itself (a reload of /painel/mesas, a table's /t/<code>) has no file: it gets its own app's index.html.
+	redir /painel /painel/ permanent
+	handle_path /painel/* {
+		root * /srv/painel
+		try_files {path} /index.html
+		file_server
+	}
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
 	}
 }
