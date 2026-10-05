@@ -26,6 +26,28 @@
 	tls internal
 }
 
+# One front's files, from the root its handle sets. The security headers are the ones each app's vercel.json had (the API sends
+# its own: apps/api/src/app.ts). Caching: a file in Vite's assets/ is named by its content's hash, so it never changes — kept
+# a year; the rest, index.html first, is checked again on every visit (no-cache: revalidated, 304 if unchanged), so a deploy
+# shows up at once. A missing assets/ file falls back to index.html like any other path, and is not kept.
+(front) {
+	encode zstd gzip
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+		?Cache-Control no-cache
+	}
+	@asset {
+		path /assets/*
+		file
+	}
+	header @asset Cache-Control "public, max-age=31536000, immutable"
+	try_files {path} /index.html
+	file_server
+}
+
 {$PUBLIC_URL} {
 	import tls_{$CADDY_TLS:letsencrypt}
 	# Every API route is already under /api/ (apps/api/src/app.ts): the path goes through as is. What depends on it doesn't
@@ -43,12 +65,10 @@
 	redir /painel /painel/ permanent
 	handle_path /painel/* {
 		root * /srv/painel
-		try_files {path} /index.html
-		file_server
+		import front
 	}
 	handle {
 		root * /srv/web
-		try_files {path} /index.html
-		file_server
+		import front
 	}
 }
