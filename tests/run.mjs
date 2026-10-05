@@ -95,7 +95,7 @@ try {
     // At the root (--base /): the painel's /painel/ is Caddy's.
     console.log("▸ cardápio (:5273) e painel (:5274) construídos");
     for (const [app, port] of [["web", "5273"], ["dashboard", "5274"]]) {
-      execSync("npx vite build --base / --outDir dist/carga --emptyOutDir --logLevel warn", { cwd: `${ROOT}apps/${app}`, env: { ...env, VITE_API_URL: env.API_URL, VITE_CUSTOMER_APP_URL: "http://localhost:5273" }, stdio: "inherit" });
+      execSync("npx vite build --base / --outDir dist/carga --emptyOutDir --logLevel warn", { cwd: `${ROOT}apps/${app}`, env: { ...env, VITE_API_URL: env.API_URL, VITE_PUBLIC_URL: "http://localhost:5273" }, stdio: "inherit" });
       servers.push(start(["vite", "preview", "--outDir", "dist/carga", "--port", port, "--strictPort"], `${ROOT}apps/${app}`));
     }
     // The full house (tests/load/pico.mjs) and, once it's full, the menu in Lighthouse and order → Central on real screens.

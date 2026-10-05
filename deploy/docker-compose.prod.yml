@@ -17,13 +17,17 @@ x-logging: &logging
 services:
   # Caddy 2.11.4 with the cardápio and the dashboard built in (deploy/caddy.Dockerfile), built here like the API.
   caddy:
-    build: { context: .., dockerfile: deploy/caddy.Dockerfile }
+    build:
+      context: ..
+      dockerfile: deploy/caddy.Dockerfile
+      # The tables' QR codes, built into the dashboard, point at it.
+      args: { PUBLIC_URL: "${PUBLIC_URL:?set PUBLIC_URL in deploy/.env (https://<the VM's public IPv4>)}" }
     image: cardapio-caddy
     restart: unless-stopped
     logging: *logging
     ports: ["80:80", "443:443"]
     environment:
-      PUBLIC_IP: ${PUBLIC_IP:?set PUBLIC_IP in deploy/.env (the VM's public IPv4)}
+      PUBLIC_URL: ${PUBLIC_URL:?set PUBLIC_URL in deploy/.env (https://<the VM's public IPv4>)}
       CADDY_TLS: ${CADDY_TLS:-letsencrypt}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
@@ -46,6 +50,8 @@ services:
       TRUSTED_PROXY: 172.30.0.2
       EVOLUTION_API_URL: http://evolution:8080
       WHATSAPP_WEBHOOK_URL: http://api:4100/api/whatsapp/webhook
+      # The fronts' origin (Caddy serves them and the API on PUBLIC_URL) and the dashboard's inside the APK.
+      CORS_ORIGINS: ${PUBLIC_URL},https://localhost
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4100/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
       interval: 10s

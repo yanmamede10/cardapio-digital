@@ -40,7 +40,11 @@ import type {
 import { readableError } from "@cardapio/shared";
 import { shrinkImage } from "./image";
 
-export const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
+// Where the API is. The APK's page is https://localhost, so it calls the server's public address (VITE_PUBLIC_URL, deploy/.env's
+// PUBLIC_URL). A browser build calls /api on its own origin — Caddy serves the dashboard and the API on the same address — so no
+// address goes into its bundle; VITE_API_URL points the dev server and the tests at a local API (.env.development).
+export const BASE_URL =
+  import.meta.env.MODE === "android" ? (import.meta.env.VITE_PUBLIC_URL as string) : ((import.meta.env.VITE_API_URL as string | undefined) ?? "");
 const SESSION_STORAGE_KEY = "cardapio.dashboard.session";
 
 export interface StaffSession {

@@ -4,6 +4,7 @@ dist/
 .env*
 !.env.android
 !.env.example
+!.env.development
 
 apps/api/prisma/dev.db
 apps/api/prisma/dev.db-journal

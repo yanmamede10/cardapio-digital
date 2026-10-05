@@ -1,13 +1,15 @@
-# Caddy on the VM (deploy/docker-compose.prod.yml): HTTPS at https://<PUBLIC_IP>, everything on one address — the cardápio
+# Caddy on the VM (deploy/docker-compose.prod.yml): HTTPS at PUBLIC_URL, everything on one address — the cardápio
 # (apps/web) at /, the dashboard at /painel/, the API at /api/. Evolution is never proxied. HTTP → HTTPS is Caddy's automatic
 # redirect. Variables come from deploy/.env.
-#   PUBLIC_IP   the VM's public IPv4: the site address and the certificate's subject
+#   PUBLIC_URL  https://<the VM's public IPv4>, or https://<domain> once there is one (docs/adr/0011-fronts-no-caddy.md): the
+#               site address and the certificate's subject. PUBLIC_HOST, its host alone, is set from it as Caddy starts
+#               (deploy/caddy.Dockerfile).
 #   CADDY_TLS   letsencrypt (default): a Let's Encrypt certificate for the IP (the "shortlived" profile, ~160 h — the only one
 #               Let's Encrypt issues for IPs), renewed by Caddy on its own; internal: Caddy's local CA, to test on a dev machine
 {
 	# A browser opening https://<IP> sends no SNI, and inside the container Caddy would look the certificate up by the
 	# container's own address. This answers those handshakes with the IP's certificate.
-	default_sni {$PUBLIC_IP}
+	default_sni {$PUBLIC_HOST}
 	# Only matters for CADDY_TLS=internal: there's no system trust store to install the local CA into.
 	skip_install_trust
 }
@@ -24,7 +26,7 @@
 	tls internal
 }
 
-{$PUBLIC_IP} {
+{$PUBLIC_URL} {
 	import tls_{$CADDY_TLS:letsencrypt}
 	# Every API route is already under /api/ (apps/api/src/app.ts): the path goes through as is. What depends on it doesn't
 	# change: the healthcheck and Evolution's webhook call the API inside the compose network, and photo and media URLs are

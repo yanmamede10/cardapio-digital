@@ -20,7 +20,7 @@ export default defineConfig({
       command: "npx vite --port 5274 --strictPort",
       cwd: "apps/dashboard",
       url: "http://localhost:5274",
-      env: { VITE_API_URL: "http://localhost:4200", VITE_CUSTOMER_APP_URL: "http://localhost:5273" },
+      env: { VITE_API_URL: "http://localhost:4200", VITE_PUBLIC_URL: "http://localhost:5273" },
       reuseExistingServer: false,
       timeout: 120_000
     },

@@ -35,7 +35,8 @@ app.use((_req, res, next) => {
   next();
 });
 
-// CORS_ORIGINS = comma-separated frontend origins (the dashboard and cardápio .vercel.app URLs).
+// CORS_ORIGINS = comma-separated frontend origins. On the VM the compose sets them: PUBLIC_URL (Caddy serves the fronts on the
+// API's own address) and https://localhost (the dashboard inside the APK).
 // Unset → open to any origin, which keeps local dev and the Capacitor Android builds working.
 const origins = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean);
 app.use(cors(origins?.length ? { origin: origins } : undefined));

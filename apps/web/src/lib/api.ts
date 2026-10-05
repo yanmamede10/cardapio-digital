@@ -12,7 +12,9 @@ import type {
 import { readableError } from "@cardapio/shared";
 import { getSessionId, getTableCode } from "./session";
 
-const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || "http://localhost:4100";
+// The API on this page's own origin (Caddy serves the cardápio and the API on the same address), so no address goes into the
+// bundle. VITE_API_URL points the dev server, the tests and the Android dev build at a local API (.env.development, .env.android).
+const BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
 
 /** `message` is for people, in Portuguese (checklist 13); `detail` is the API's own text, for code that tells errors apart. */
 export class ApiError extends Error {

@@ -7,8 +7,9 @@ import { api, getSession } from "../lib/api";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { useMobileScreen } from "../components/mobile/MobileLayout";
 
-const CUSTOMER_APP = (import.meta.env.VITE_CUSTOMER_APP_URL as string) || "http://localhost:5173";
-export const tableLink = (code: string) => `${CUSTOMER_APP}/t/${code}`;
+// The cardápio at the server's public address (deploy/.env's PUBLIC_URL, built in as VITE_PUBLIC_URL), never this page's own
+// origin: inside the APK that is https://localhost.
+export const tableLink = (code: string) => `${import.meta.env.VITE_PUBLIC_URL as string}/t/${code}`;
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** The QR as inline SVG: black modules on white, with the 4-module quiet zone phone cameras expect. */

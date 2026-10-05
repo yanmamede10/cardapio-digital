@@ -79,7 +79,7 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
   if (created) writeFileSync(envFile, "");
   let r;
   try {
-    r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_IP: "203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres", ...STORAGE }, encoding: "utf8" });
+    r = spawnSync("docker", ["compose", "-f", "deploy/docker-compose.prod.yml", "config", "--format", "json", "--no-env-resolution"], { env: { ...process.env, PUBLIC_URL: "https://203.0.113.10", EVOLUTION_API_KEY: "k".repeat(64), DIRECT_URL: "postgresql://u:p@db.invalid:5432/postgres", ...STORAGE }, encoding: "utf8" });
   } finally {
     if (created) rmSync(envFile);
   }
@@ -89,6 +89,10 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
   const published = Object.entries(services).flatMap(([name, s]) => (s.ports ?? []).map((p) => `${name} ${p.published}/${p.protocol}`));
   assert.deepEqual(published, ["caddy 80/tcp", "caddy 443/tcp"]);
   assert.equal(services.api.environment?.TRUSTED_PROXY, services.caddy.networks?.default?.ipv4_address);
+  // One address in deploy/.env: Caddy's site, the QR codes built into the dashboard, and CORS (it plus the APK's page).
+  assert.equal(services.caddy.environment?.PUBLIC_URL, "https://203.0.113.10");
+  assert.deepEqual((services.caddy.build as { args?: Record<string, string> }).args, { PUBLIC_URL: "https://203.0.113.10" });
+  assert.equal(services.api.environment?.CORS_ORIGINS, "https://203.0.113.10,https://localhost");
   assert.ok(services.api.healthcheck, "healthcheck na API");
   assert.equal(services.evolution.image, "evoapicloud/evolution-api:v2.3.7", "a mesma do dev");
   // BKP-01: the buckets, with the API's own S3 keys, into deploy/backups/storage.
