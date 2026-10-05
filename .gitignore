@@ -20,3 +20,6 @@ playwright-report/
 
 # Daily database dumps on the VM (deploy/docker-compose.prod.yml, service backup)
 deploy/backups/
+
+# Firebase config of the dashboard APK (kept local)
+apps/dashboard/android/app/google-services.json
