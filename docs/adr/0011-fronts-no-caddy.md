@@ -43,7 +43,7 @@ Não há domínio ainda. O endereço público é o IP reservado da VM, e ele fic
 4. **`deploy/deploy.sh`.** O painel é reconstruído com o link novo dos QR, o CORS segue o `PUBLIC_URL` e o Caddy pede o certificado do domínio ao Let's Encrypt (continua no perfil `shortlived`, renovado sozinho; tirar o `profile shortlived` do Caddyfile volta aos 90 dias, e é opcional).
 5. **Confira de fora:** `curl -sI https://<domínio>/` (200, com `content-security-policy`), `curl -s https://<domínio>/api/health` (`{"ok":true}`), `https://<domínio>/painel/` no navegador.
 6. **APK novo:** `VITE_PUBLIC_URL=https://<domínio> npm run build:android --workspace apps/dashboard` e o `gradlew assembleDebug` (README "APK do painel"). Instale nos aparelhos do restaurante.
-7. **Reimprima todos os QR:** no painel, Mesas → QR das mesas → Imprimir. Os códigos das mesas não mudam, só o endereço; os impressos com o IP vão para o lixo.
+7. **Reimprima todos os QR:** no painel, Mesas → Imprimir QR → Imprimir. Os códigos das mesas não mudam, só o endereço; os impressos com o IP vão para o lixo.
 8. Com domínio, vale ligar `Strict-Transport-Security` no Caddyfile (em IP o navegador ignora). Não está ligado hoje.
 
 Se o IP mudar sem domínio (instância recriada sem IP reservado), são os mesmos passos 2 a 7 com o IP novo.
