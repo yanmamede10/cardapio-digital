@@ -25,9 +25,14 @@
 
 {$PUBLIC_IP} {
 	import tls_{$CADDY_TLS:letsencrypt}
-	reverse_proxy api:4100 {
-		# The client IP the API's rate limit uses (apps/api/src/lib/rateLimit.ts, TRUSTED_PROXY = this container): always
-		# the address that connected here, whatever the visitor sent in this header.
-		header_up CF-Connecting-IP {remote_host}
+	# Every API route is already under /api/ (apps/api/src/app.ts): the path goes through as is. What depends on it doesn't
+	# change: the healthcheck and Evolution's webhook call the API inside the compose network, and photo and media URLs are
+	# Supabase Storage's.
+	handle /api/* {
+		reverse_proxy api:4100 {
+			# The client IP the API's rate limit uses (apps/api/src/lib/rateLimit.ts, TRUSTED_PROXY = this container): always
+			# the address that connected here, whatever the visitor sent in this header.
+			header_up CF-Connecting-IP {remote_host}
+		}
 	}
 }
