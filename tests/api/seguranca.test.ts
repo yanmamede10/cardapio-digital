@@ -84,7 +84,7 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
     if (created) rmSync(envFile);
   }
   assert.equal(r.status, 0, r.stderr);
-  type Service = { image: string; restart: string; logging?: unknown; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
+  type Service = { image: string; build?: unknown; restart: string; logging?: unknown; ports?: { published: string; protocol: string }[]; healthcheck?: unknown; environment?: Record<string, string>; networks?: Record<string, { ipv4_address?: string } | null> };
   const services: Record<string, Service> = JSON.parse(r.stdout).services;
   const published = Object.entries(services).flatMap(([name, s]) => (s.ports ?? []).map((p) => `${name} ${p.published}/${p.protocol}`));
   assert.deepEqual(published, ["caddy 80/tcp", "caddy 443/tcp"]);
@@ -99,9 +99,10 @@ test("compose de produção: só o Caddy publica portas (80 e 443), a API confia
   for (const [name, s] of Object.entries(services)) {
     assert.equal(s.restart, "unless-stopped", name);
     assert.deepEqual(s.logging, { driver: "json-file", options: { "max-size": "10m", "max-file": "5" } }, `${name}: log com teto`);
-    if (name !== "api") assert.match(s.image, /:v?\d+\.\d+(\.\d+)?(-[\w.]+)?$/,`${name}: ${s.image}`); // the API's base is pinned in its Dockerfile
+    if (!s.build) assert.match(s.image, /:v?\d+\.\d+(\.\d+)?(-[\w.]+)?$/,`${name}: ${s.image}`); // the built ones (API, Caddy): pinned in their Dockerfiles
   }
-  for (const from of readFileSync("apps/api/Dockerfile", "utf8").match(/^FROM \S+/gm) ?? []) assert.match(from, /:\d+\.\d+\.\d+-/, from);
+  for (const file of ["apps/api/Dockerfile", "deploy/caddy.Dockerfile"])
+    for (const from of readFileSync(file, "utf8").match(/^FROM \S+/gm) ?? []) assert.match(from, /:\d+\.\d+\.\d+-/, `${file}: ${from}`);
 });
 
 test("sem X-Session-Id válido nenhuma chamada devolve pedidos (nem a antiga sessão \"anonymous\")", async () => {

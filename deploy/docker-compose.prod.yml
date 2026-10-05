@@ -15,8 +15,10 @@ x-logging: &logging
   options: { max-size: 10m, max-file: "5" }
 
 services:
+  # Caddy 2.11.4 with the cardápio and the dashboard built in (deploy/caddy.Dockerfile), built here like the API.
   caddy:
-    image: caddy:2.11.4-alpine
+    build: { context: .., dockerfile: deploy/caddy.Dockerfile }
+    image: cardapio-caddy
     restart: unless-stopped
     logging: *logging
     ports: ["80:80", "443:443"]

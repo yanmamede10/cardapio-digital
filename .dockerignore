@@ -1,14 +1,12 @@
-# Build context of apps/api/Dockerfile (the repo root): the API, packages/shared and the workspaces' package.json files.
+# Build context of apps/api/Dockerfile and deploy/caddy.Dockerfile (the repo root): the three apps, packages/shared and the
+# workspaces' package.json files. Each Dockerfile copies only what it builds.
 **/node_modules
 **/dist
 **/.env
 **/.env.*
 .git
 apps/api/prisma/dev.db*
-apps/dashboard/*
-!apps/dashboard/package.json
-apps/web/*
-!apps/web/package.json
+apps/*/android
 deploy
 docs
 tests
