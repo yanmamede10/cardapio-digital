@@ -342,6 +342,8 @@ export default function MobileProductsScreen() {
           draft={draft}
           setDraft={setDraft}
           products={products}
+          categories={categories}
+          onCategoriesChanged={setCategories}
           onSaved={(saved) => {
             setDraft(null);
             notify(`${saved.name} ${draft.id ? "atualizado" : "cadastrado"} no Catálogo`);

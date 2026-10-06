@@ -85,7 +85,15 @@ for (const theme of ["light", "dark"] as const) {
         ["Produtos: item com Ajustar estoque", async (p) => {
           await goto(p, "/produtos");
           await p.getByRole("button", { name: new RegExp(pao.name) }).click();
-          await expect(p.getByText("Ajustar estoque")).toBeVisible();
+          await p.getByRole("button", { name: "Ajustar estoque" }).click();
+          await expect(p.getByRole("button", { name: "Registrar entrada" })).toBeVisible();
+        }],
+        ["Produtos: Novo item com erros e Tributação aberta", async (p) => {
+          await goto(p, "/produtos");
+          await p.getByRole("button", { name: "Novo item" }).first().click();
+          await p.getByRole("button", { name: "Criar item" }).click();
+          await p.getByRole("button", { name: /Tributação/ }).click();
+          await expect(p.getByText("Corrija 2 campos para salvar.")).toBeVisible();
         }],
         ["Produtos: Nova categoria", async (p) => {
           await goto(p, "/produtos");
@@ -279,7 +287,7 @@ test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e
   type Case = [string, () => Promise<Locator>, string[], boolean?];
   const cases: Case[] = phone
     ? [
-        ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), ["Fechar", "Cancelar"], false],
+        ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), ["Cancelar"], false], // whole screen: Cancelar in the top bar, no X (J-4)
         ["Adicionar prato (folha)", async () => (await goto("/cardapio"), await tap("Adicionar prato"), dialog("Adicionar prato ao cardápio")), ["Fechar"]],
         ["Novo lançamento (folha)", async () => (await goto("/contas-a-pagar"), await tap("Novo lançamento"), dialog("Novo lançamento")), ["Cancelar"]],
         ["Quitar conta (folha)", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), ["Cancelar"]]

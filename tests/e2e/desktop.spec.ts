@@ -94,21 +94,21 @@ test("cadastro de produto composto soma o custo e trava o campo", async ({ page,
   const { pao, blend, s } = await burgerKit(api);
   await page.goto("/produtos");
   await page.getByRole("button", { name: "Novo item" }).click();
-  await page.getByPlaceholder("Ex.: Hambúrguer da casa").fill(`X-Burger ${s}`);
+  await page.getByPlaceholder("Ex.: X-Salada").fill(`X-Burger ${s}`);
   await page.locator("label", { hasText: "Preço de venda" }).locator("input").fill("35");
   await page.getByRole("switch").click();
   await page.getByLabel("Produto ou insumo").first().fill(pao.name);
   await page.getByLabel("Quantidade").first().fill("1");
-  await page.getByRole("button", { name: "Adicionar item" }).click();
+  await page.getByRole("button", { name: "Adicionar componente" }).click();
   await page.getByLabel("Produto ou insumo").nth(1).fill(blend.name);
   await page.getByLabel("Quantidade").nth(1).fill("0,15");
 
   const drawer = page.locator(".drawer-panel");
-  await expect(drawer).toContainText("Somado automaticamente");
+  await expect(drawer).toContainText("Calculado pela ficha técnica");
   await expect(drawer.getByText("R$ 8,00").first()).toBeVisible();
   await expect(drawer.locator("label", { hasText: "Custo" }).locator("input")).toHaveCount(0); // locked: no manual cost input
 
-  await page.getByRole("button", { name: "Salvar item" }).click();
+  await page.getByRole("button", { name: "Criar item" }).click();
   await expect(toast(page)).toContainText(`X-Burger ${s} cadastrado`);
   await expect(page.getByRole("button", { name: new RegExp(`X-Burger ${s}`) })).toContainText("Ficha técnica");
 });
@@ -496,13 +496,14 @@ plain("Produtos: contagem de estoque define o estoque e aparece em Movimentaçõ
   await loginAs(page, request, "gerente@chapa27.example");
   await page.goto("/produtos");
   await page.getByRole("button", { name: /Água com gás 500 ml/ }).click();
+  await page.getByRole("button", { name: "Ajustar estoque" }).click();
   await page.getByRole("button", { name: "Contagem" }).click();
   await page.getByLabel("Quantidade do ajuste").fill("24");
   await page.getByLabel("Motivo do ajuste").fill("Inventário de sábado");
   await page.getByRole("button", { name: "Registrar contagem" }).click();
   await expect(page.locator(".toast-bubble")).toContainText("Estoque de Água com gás 500 ml: 24 un");
   // It moved: the unit is locked, and the form says why (A-1.3).
-  await expect(page.getByLabel("Unidade de medida")).toBeDisabled();
+  await expect(page.getByRole("combobox", { name: /^Unidade/ })).toBeDisabled();
   await expect(page.getByText("A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto.")).toBeVisible();
   await page.getByRole("button", { name: "Cancelar" }).click();
   await page.getByRole("button", { name: "Movimentações" }).click();
@@ -732,4 +733,57 @@ plain("J-3 · Produtos de um restaurante sem nenhum item: o estado vazio cadastr
   await expect(toast(page)).toContainText("Categoria Carnes criada");
   await expect(page.getByRole("button", { name: "Carnes 0", exact: true })).toBeVisible();
   await expect(page.getByText("Nenhum item nesta categoria ainda.")).toBeVisible();
+});
+
+// J-4 (UX-07 · 3a–3g): the cadastro in a sheet — 720 px up to 28 px from the top, sections, errors on the fields, "Nova
+// categoria" right there (Criar e usar), Tributação folded with its summary, the opening stock, type and unit locked.
+test("J-4 · cadastro em folha: seções, erros nos campos, Nova categoria ali mesmo, Tributação recolhida, saldo inicial e tipo/unidade travados", async ({ page }) => {
+  const s = uid();
+  await page.goto("/produtos");
+  await page.getByRole("button", { name: "Novo item" }).click();
+  const sheet = page.getByRole("dialog", { name: "Novo item" });
+  await expect(sheet).toBeVisible();
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {})))); // dcScaleIn: measure after it
+  const box = (await sheet.boundingBox())!;
+  expect([Math.round(box.width), Math.round(box.y)]).toEqual([720, 28]);
+  for (const t of ["Dados", "Preço e custo", "Estoque", "Ficha técnica"]) await expect(sheet.getByText(t, { exact: true })).toBeVisible();
+  await expect(sheet.getByText("Item novo", { exact: true })).toBeVisible();
+  const trib = sheet.getByRole("button", { name: /Tributação/ });
+  await expect(trib).toHaveAttribute("aria-expanded", "false");
+  await expect(trib).toContainText("Não preenchida");
+  await expect(sheet.getByPlaceholder("0000.00.00")).toHaveCount(0);
+
+  await sheet.getByRole("button", { name: "Criar item" }).click();
+  await expect(sheet.getByRole("alert")).toHaveText("Corrija 2 campos para salvar.");
+  await expect(sheet).toContainText("Informe o nome do item.");
+  await expect(sheet).toContainText("Informe o preço de venda.");
+
+  await sheet.getByRole("button", { name: "Nova categoria" }).click();
+  const cat = page.getByRole("dialog", { name: "Nova categoria" });
+  await expect(cat).toContainText("Fica selecionada neste item. Vale também para o Cardápio.");
+  await cat.getByLabel("Nome da categoria").fill(`Águas ${s}`);
+  await cat.getByRole("button", { name: "Criar e usar" }).click();
+  await expect(cat).toBeHidden();
+  await expect(sheet.getByRole("combobox", { name: /^Categoria/ }).locator("option:checked")).toHaveText(`Águas ${s}`);
+
+  await sheet.getByPlaceholder("Ex.: X-Salada").fill(`Água ${s}`);
+  await sheet.locator("label", { hasText: "Preço de venda" }).locator("input").fill("6");
+  await sheet.locator("label", { hasText: "Custo inicial" }).locator("input").fill("1,90");
+  await expect(sheet.getByText("68,3%")).toBeVisible();
+  await sheet.locator("label", { hasText: "Saldo inicial" }).locator("input").fill("48");
+  await trib.click();
+  await sheet.getByPlaceholder("0000.00.00").fill("2201.10.00");
+  await expect(trib).toContainText("Preenchida");
+  await sheet.getByRole("button", { name: "Criar item" }).click();
+  await expect(toast(page)).toContainText(`Água ${s} cadastrado`);
+  await expect(page.getByRole("button", { name: new RegExp(`^Águas ${s} 1$`) })).toBeVisible(); // in its category
+  await expect(page.getByRole("button", { name: new RegExp(`Água ${s}`) })).toContainText("48 un");
+
+  await page.getByRole("button", { name: new RegExp(`Água ${s}`) }).click();
+  const edit = page.getByRole("dialog", { name: `Água ${s}` });
+  await expect(edit.getByRole("combobox", { name: /^Unidade/ })).toBeDisabled(); // the opening stock was its first movement
+  await expect(edit).toContainText("O tipo não muda depois de criado.");
+  await expect(edit.getByText("Sem alterações")).toBeVisible();
+  await edit.getByPlaceholder("Ex.: X-Salada").fill(`Água ${s} gelada`);
+  await expect(edit.getByText("Alterações não salvas")).toBeVisible();
 });

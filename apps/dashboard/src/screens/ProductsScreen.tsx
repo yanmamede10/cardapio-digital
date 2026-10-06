@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { PRODUCT_UNITS, type MenuCategory, type Product, type ProductType, type StockMovement, type UpsertProductRequest, type XmlImportRequest } from "@cardapio/shared";
+import { NO_CATEGORY, PRODUCT_UNITS, type MenuCategory, type Product, type ProductType, type StockMovement, type UpsertProductRequest, type XmlImportRequest } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { brl, dayMonth, localIso } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
@@ -25,9 +25,13 @@ export interface Draft {
   taxRate: string;
   composed: boolean;
   lines: { name: string; qty: string }[];
+  /** null = Sem categoria (J-1). */
+  categoryId: string | null;
+  /** Saldo inicial of a new item (an Entrada manual after it's created). */
+  stock: string;
 }
 
-export const EMPTY_DRAFT: Draft = { id: null, name: "", type: "produto", unit: "un", price: "", cost: "", ncm: "", cst: "", taxRate: "", composed: false, lines: [] };
+export const EMPTY_DRAFT: Draft = { id: null, name: "", type: "produto", unit: "un", price: "", cost: "", ncm: "", cst: "", taxRate: "", composed: false, lines: [], categoryId: null, stock: "" };
 
 /** "1.234,5" and "0.35" both parse — a comma means pt-BR decimals, otherwise the dot is the decimal point. */
 const num = (s: string) => Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s) || 0;
@@ -55,7 +59,9 @@ export const draftOf = (p: Product): Draft => ({
   cst: p.cst,
   taxRate: decimal(p.taxRate),
   composed: p.composed,
-  lines: p.components.map((c) => ({ name: c.name, qty: decimal(c.quantity) }))
+  lines: p.components.map((c) => ({ name: c.name, qty: decimal(c.quantity) })),
+  categoryId: p.categoryId,
+  stock: ""
 });
 
 export function stockStatus(p: Product) {
@@ -201,7 +207,7 @@ export default function ProductsScreen() {
   const { shown, groups, filtered, chips } = catalogGroups(products, categories, filter);
   const set = (patch: Partial<CatalogFilter>) => setFilter({ ...filter, ...patch });
   const toggle = (id: string) => setClosed(closed.includes(id) ? closed.filter((x) => x !== id) : [...closed, id]);
-  const newItem = () => setDraft({ ...EMPTY_DRAFT });
+  const newItem = () => setDraft({ ...EMPTY_DRAFT, categoryId: filter.cat || null }); // the chip's category, if one is on
   const shownMovements = movements.filter((m) => movementMatch(m, movFilter));
 
   const xmlInput = (
@@ -450,6 +456,8 @@ export default function ProductsScreen() {
           draft={draft}
           setDraft={setDraft}
           products={products}
+          categories={categories}
+          onCategoriesChanged={setCategories}
           onSaved={(saved) => {
             setDraft(null);
             notify(`${saved.name} ${draft.id ? "atualizado" : "cadastrado"} no Catálogo`);
@@ -492,11 +500,33 @@ function CatalogRow({ p, onOpen }: { p: Product; onOpen: () => void }) {
 }
 
 const ADJUST_HINT = { in: "Chegou mercadoria sem nota", out: "Perda, quebra ou consumo interno", count: "Contei o estoque: fica exatamente esta quantidade" } as const;
+const label = { fontSize: 12, fontWeight: 500, color: "var(--ink2)" } as const;
+const help = { fontSize: 12, color: "var(--ink2)", lineHeight: 1.45 } as const;
+const fieldError = (message: string | null) =>
+  message && (
+    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: "var(--alert)" }}>
+      <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: 11 }} />
+      {message}
+    </span>
+  );
+/** One section of the cadastro (UX-07 · 3): a title and, after the first, a line above. */
+function Section({ title, first, children }: { title: string; first?: boolean; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, ...(first ? {} : { paddingTop: 22, borderTop: "1px solid var(--line)" }) }}>
+      <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.01em" }}>{title}</div>
+      {children}
+    </div>
+  );
+}
 
+/** Cadastro de Produto/Insumo (UX-07 · 3a–3g, 4b): a sheet with Dados, Preço e custo, Estoque, Ficha técnica and Tributação
+ *  (folded, with a summary: the Chapa 27 issues no invoices). Cancelar and Salvar always in sight. */
 export function ProductForm({
   draft,
   setDraft,
   products,
+  categories,
+  onCategoriesChanged,
   onSaved,
   onAdjusted,
   onError
@@ -504,14 +534,34 @@ export function ProductForm({
   draft: Draft;
   setDraft: (d: Draft | null) => void;
   products: Product[];
+  /** The Cardápio's list (J-1): the item's category is one of them, or none. */
+  categories: MenuCategory[];
+  onCategoriesChanged: (list: MenuCategory[]) => void;
   onSaved: (p: Product) => void;
   /** After an Ajustar estoque (the form stays open, the list refreshes). */
   onAdjusted: (p: Product) => void;
   onError: (msg: string) => void;
 }) {
+  const [initial] = useState(draft); // "Alterações não salvas" compares with what the sheet opened with
   const [saving, setSaving] = useState(false);
+  const [tried, setTried] = useState(false); // after a Criar item/Salvar with problems, the fields say which
+  const [adjusting, setAdjusting] = useState(false);
+  const [taxOpen, setTaxOpen] = useState(false);
   const [adj, setAdj] = useState({ kind: "in" as keyof typeof ADJUST_HINT, qty: "", reason: "" });
   const current = draft.id ? products.find((p) => p.id === draft.id) : undefined;
+  const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
+  // "Nova categoria" right here (3f): the new one comes back selected.
+  const newCategory = useCategoryDialog({
+    categories,
+    help: "Fica selecionada neste item. Vale também para o Cardápio.",
+    confirm: "Criar e usar",
+    itemsIn: () => [],
+    notify: onError,
+    onChanged: (list, created) => {
+      onCategoriesChanged(list);
+      if (created) set({ categoryId: created.id });
+    }
+  });
   const adjust = async () => {
     if (!current || !adj.qty) return;
     setSaving(true);
@@ -524,7 +574,6 @@ export function ProductForm({
       setSaving(false);
     }
   };
-  const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
   const isProduto = draft.type === "produto";
   const composed = isProduto && draft.composed;
   // One level of composition: composed products can't be components (the API enforces it too).
@@ -535,11 +584,18 @@ export function ProductForm({
   });
   const autoCost = lines.reduce((t, l) => t + l.cost, 0);
   const setLine = (i: number, patch: Partial<Draft["lines"][number]>) => set({ lines: draft.lines.map((l, j) => (i === j ? { ...l, ...patch } : l)) });
+  const cost = composed ? autoCost : num(draft.cost);
+  const margin = num(draft.price) > 0 ? `${(((num(draft.price) - cost) / num(draft.price)) * 100).toFixed(1).replace(".", ",")}%` : "—";
+  const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
+  const errors = { name: draft.name.trim() ? null : "Informe o nome do item.", price: isProduto && !(num(draft.price) > 0) ? "Informe o preço de venda." : null };
+  const problems = tried ? Object.values(errors).filter(Boolean).length : 0;
+  const taxFilled = !!(draft.ncm.trim() || draft.cst.trim() || num(draft.taxRate));
 
   const save = async () => {
-    if (!draft.name.trim()) return onError("Informe o nome do item");
+    setTried(true);
+    if (errors.name || errors.price) return;
     if (composed && (lines.some((l) => !l.match || num(l.qty) <= 0) || lines.length === 0)) {
-      return onError("Revise a composição: cada linha precisa de um item do Catálogo e quantidade");
+      return onError("Revise a ficha técnica: cada componente precisa de um item do Catálogo e quantidade");
     }
     const payload: UpsertProductRequest = {
       name: draft.name.trim(),
@@ -551,11 +607,15 @@ export function ProductForm({
       cst: draft.cst.trim(),
       taxRate: num(draft.taxRate),
       composed,
-      components: composed ? lines.map((l) => ({ componentId: l.match!.id, quantity: num(l.qty) })) : []
+      components: composed ? lines.map((l) => ({ componentId: l.match!.id, quantity: num(l.qty) })) : [],
+      categoryId: draft.categoryId
     };
     setSaving(true);
     try {
-      onSaved(draft.id ? await api.updateProduct(draft.id, payload) : await api.createProduct(payload));
+      let saved = draft.id ? await api.updateProduct(draft.id, payload) : await api.createProduct(payload);
+      // Saldo inicial: an entry like any other (the history shows where the stock came from).
+      if (!draft.id && !composed && num(draft.stock) > 0) saved = await api.adjustStock(saved.id, "in", num(draft.stock), "Saldo inicial");
+      onSaved(saved);
     } catch (err) {
       onError(err instanceof ApiError ? err.message : "Não foi possível salvar o item");
     } finally {
@@ -563,170 +623,219 @@ export function ProductForm({
     }
   };
 
-  const money = (value: string, onChange: (v: string) => void, label: string) => (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span className="field-label">{label}</span>
+  const money = (value: string, onChange: (v: string) => void, text: string, error: string | null = null) => (
+    <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+      <span style={label}>{text}</span>
       <div style={{ position: "relative" }}>
-        <span className="mono" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink3)" }}>
+        <span className="mono" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink2)" }}>
           R$
         </span>
-        <input className="field mono" inputMode="decimal" placeholder="0,00" value={value} onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ""))} style={{ paddingLeft: 44, fontWeight: 600 }} />
+        <input className="field mono" inputMode="decimal" placeholder="0,00" aria-invalid={!!error} value={value} onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ""))} style={{ paddingLeft: 44, fontWeight: 600, ...(error ? { border: "1.5px solid var(--alert)" } : {}) }} />
+      </div>
+      {fieldError(error)}
+    </label>
+  );
+  const withUnit = (value: string, onChange: (v: string) => void, text: string) => (
+    <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+      <span style={label}>{text}</span>
+      <div style={{ position: "relative" }}>
+        <input className="field mono" inputMode="decimal" placeholder="0" value={value} onChange={(e) => onChange(e.target.value.replace(/[^0-9.,]/g, ""))} style={{ paddingRight: 44, fontWeight: 600 }} />
+        <span className="mono" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink2)" }}>
+          {draft.unit}
+        </span>
       </div>
     </label>
   );
+  const locked = { ...label, display: "flex", alignItems: "center", gap: 6 } as const;
+  const grid3 = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 14, alignItems: "start" } as const;
 
   return (
     <SlideOver
-      title={draft.id ? draft.name || "Editar item" : "Novo item"}
-      subtitle="Produtos · Catálogo"
-      width={520}
+      title={draft.id ? current?.name ?? draft.name : "Novo item"}
+      subtitle={draft.id ? TYPE_LABEL[draft.type] : "Produtos · Catálogo"}
       onClose={() => setDraft(null)}
-      footer={
-        <>
-          <div style={{ flex: 1 }} />
-          <button type="button" className="btn btn-outline" onClick={() => setDraft(null)}>
-            Cancelar
-          </button>
-          <button type="button" className="btn btn-primary" disabled={saving} onClick={save}>
-            Salvar item
-          </button>
-        </>
-      }
+      sheet={{ saveLabel: draft.id ? "Salvar" : "Criar item", onSave: save, saving, dirty, status: draft.id ? (dirty ? "Alterações não salvas" : "Sem alterações") : "Item novo" }}
     >
-      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <span className="field-label">Nome</span>
-        <input className="field" value={draft.name} maxLength={80} placeholder={isProduto ? "Ex.: Hambúrguer da casa" : "Ex.: Pão brioche"} onChange={(e) => set({ name: e.target.value })} />
-      </label>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 14, alignItems: "end" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span className="field-label">Tipo</span>
-          {draft.id ? (
-            <div className="field" style={{ color: "var(--ink2)" }} title="O tipo não muda depois do cadastro">
-              {TYPE_LABEL[draft.type]}
-            </div>
-          ) : (
-            <Segmented
-              value={draft.type}
-              onChange={(type) => set({ type })}
-              options={[
-                { value: "produto", label: "Produto" },
-                { value: "insumo", label: "Insumo" }
-              ]}
-            />
-          )}
-        </div>
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span className="field-label">Unidade de medida</span>
-          {/* Once stock moved, the history and the fichas técnicas are in this unit: it can't change (the API refuses too). */}
-          <select className="field" value={draft.unit} disabled={!!current?.unitLocked} aria-describedby={current?.unitLocked ? "unit-locked" : undefined} onChange={(e) => set({ unit: e.target.value })}>
-            {PRODUCT_UNITS.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      {current?.unitLocked && (
-        <div id="unit-locked" style={{ fontSize: 12.5, color: "var(--ink2)", marginTop: -6 }}>
-          A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto.
+      {problems > 0 && (
+        <div role="alert" style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 14px", borderRadius: 12, background: "color-mix(in srgb, var(--alert) 14%, var(--surface))", color: "var(--alert)", fontSize: 13, fontWeight: 500 }}>
+          <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: 14 }} />
+          Corrija {problems === 1 ? "1 campo" : `${problems} campos`} para salvar.
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Valores</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 14 }}>
-          {isProduto && money(draft.price, (price) => set({ price }), "Preço de venda")}
+      <Section title="Dados" first>
+        <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          <span style={label}>Nome</span>
+          <input className="field" value={draft.name} maxLength={80} placeholder={isProduto ? "Ex.: X-Salada" : "Ex.: Pão brioche"} aria-invalid={tried && !!errors.name} onChange={(e) => set({ name: e.target.value })} style={tried && errors.name ? { border: "1.5px solid var(--alert)" } : undefined} />
+          {tried && fieldError(errors.name)}
+        </label>
+        <div style={grid3}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <span style={locked}>
+              Tipo{draft.id && <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />}
+            </span>
+            {draft.id ? (
+              <div className="field" style={{ background: "var(--surface3)", color: "var(--ink2)" }}>
+                {TYPE_LABEL[draft.type]}
+              </div>
+            ) : (
+              <Segmented
+                value={draft.type}
+                onChange={(type) => set({ type })}
+                options={[
+                  { value: "produto", label: "Produto" },
+                  { value: "insumo", label: "Insumo" }
+                ]}
+              />
+            )}
+          </div>
+          <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <span style={locked}>
+              Unidade{current?.unitLocked && <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />}
+            </span>
+            {/* Once stock moved, the history and the fichas técnicas are in this unit: it can't change (the API refuses too). */}
+            <select className="field" value={draft.unit} disabled={!!current?.unitLocked} aria-describedby={current?.unitLocked ? "unit-locked" : undefined} onChange={(e) => set({ unit: e.target.value })} style={current?.unitLocked ? { background: "var(--surface3)", color: "var(--ink2)" } : undefined}>
+              {PRODUCT_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <span style={label}>Categoria</span>
+              <select className="field" value={draft.categoryId ?? ""} onChange={(e) => set({ categoryId: e.target.value || null })}>
+                <option value="">{NO_CATEGORY}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" onClick={newCategory.create} style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 5, border: 0, background: "transparent", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, color: "var(--brandText)" }}>
+              <i className="fa-solid fa-plus" style={{ fontSize: 10 }} />
+              Nova categoria
+            </button>
+          </div>
+        </div>
+        {draft.id && (
+          <div id="unit-locked" style={{ display: "flex", gap: 8, alignItems: "baseline", ...help }}>
+            <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />
+            <span>
+              O tipo não muda depois de criado.{current?.unitLocked && " A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto."}
+            </span>
+          </div>
+        )}
+      </Section>
+
+      <Section title={isProduto ? "Preço e custo" : "Custo"}>
+        <div style={grid3}>
+          {isProduto && money(draft.price, (price) => set({ price }), "Preço de venda", tried ? errors.price : null)}
           {composed ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <span className="field-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                Custo <i className="fa-solid fa-lock" style={{ fontSize: 10 }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <span style={locked}>
+                Custo <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />
               </span>
               <div className="field mono" style={{ background: "var(--surface3)", color: "var(--ink2)", fontWeight: 600 }}>
                 {brl(autoCost)}
               </div>
             </div>
           ) : (
-            money(draft.cost, (cost) => set({ cost }), "Custo")
+            money(draft.cost, (c) => set({ cost: c }), draft.id ? (isProduto ? "Custo" : "Custo médio") : "Custo inicial")
+          )}
+          {isProduto && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <span style={label}>Margem</span>
+              <div className="mono" style={{ minHeight: 44, display: "flex", alignItems: "center", fontSize: 15, fontWeight: 600, color: margin !== "—" && cost > num(draft.price) ? "var(--alert)" : "var(--ok)" }}>
+                {margin}
+              </div>
+            </div>
           )}
         </div>
-        {composed && (
-          <div style={{ fontSize: 12, color: "var(--ink3)" }}>
-            Somado automaticamente pela composição abaixo (quantidade × custo médio atual de cada item). Para mudar o custo, ajuste os itens ou as quantidades.
-          </div>
-        )}
-      </div>
+        <div style={help}>
+          {composed
+            ? "Calculado pela ficha técnica com o custo médio de cada componente."
+            : draft.id
+              ? "Muda sozinho a cada entrada de nota (média ponderada). Corrija aqui se precisar."
+              : "Depois da primeira entrada de estoque, o custo passa a ser a média das entradas."}
+        </div>
+      </Section>
 
-      {current && !current.composed && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 16, border: "1px solid var(--line)", background: "var(--surface2)" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>Ajustar estoque</div>
-            <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>
-              Atual: <span className="mono" style={{ fontWeight: 600, color: current.stock < 0 ? "var(--alert)" : "var(--ink)" }}>{qty(current.stock)} {current.unit}</span>
+      <Section title="Estoque">
+        {composed ? (
+          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: 13, color: "var(--ink2)" }}>
+            <i className="fa-solid fa-diagram-project" aria-hidden="true" style={{ fontSize: 14 }} />
+            <span style={{ flex: 1 }}>Sem saldo próprio. Cada venda baixa os componentes da ficha técnica.</span>
+          </div>
+        ) : !current ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14 }}>
+            {withUnit(draft.stock, (stock) => set({ stock }), "Saldo inicial")}
+            {/* EST-04 (not built yet): "Avisar quando o saldo chegar a · opcional" goes in this column. */}
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={label}>Saldo atual</span>
+              <span className="mono" style={{ fontSize: 15, fontWeight: 600, color: current.stock < 0 ? "var(--alert)" : "var(--ink)" }}>
+                {qty(current.stock)} {current.unit}
+              </span>
+              <StatusPill p={current} />
+              {/* EST-04: the "Abaixo do aviso" pill and the warning field go here. */}
+              <span style={{ flex: 1 }} />
+              <button type="button" className="btn btn-outline" aria-expanded={adjusting} onClick={() => setAdjusting(!adjusting)}>
+                <i className="fa-solid fa-arrow-right-arrow-left" aria-hidden="true" style={{ fontSize: 12 }} />
+                Ajustar estoque
+              </button>
             </div>
-          </div>
-          <Segmented
-            value={adj.kind}
-            onChange={(kind) => setAdj({ ...adj, kind })}
-            options={[
-              { value: "in", label: "Entrada" },
-              { value: "out", label: "Saída" },
-              { value: "count", label: "Contagem" }
-            ]}
-          />
-          <div style={{ fontSize: 12, color: "var(--ink3)" }}>{ADJUST_HINT[adj.kind]}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 10 }}>
-            <input className="field mono" inputMode="decimal" placeholder={`Qtd. (${current.unit})`} aria-label="Quantidade do ajuste" value={adj.qty} onChange={(e) => setAdj({ ...adj, qty: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ background: "var(--surface)" }} />
-            <input className="field" maxLength={80} placeholder="Motivo (opcional)" aria-label="Motivo do ajuste" value={adj.reason} onChange={(e) => setAdj({ ...adj, reason: e.target.value })} style={{ background: "var(--surface)" }} />
-          </div>
-          <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start" }} disabled={saving || !adj.qty} onClick={adjust}>
-            Registrar {adj.kind === "count" ? "contagem" : adj.kind === "in" ? "entrada" : "saída"}
-          </button>
-        </div>
-      )}
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Tributação</div>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr)", gap: 12 }}>
-          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="field-label">NCM</span>
-            <input inputMode="numeric" className="field mono" maxLength={20} placeholder="0000.00.00" value={draft.ncm} onChange={(e) => set({ ncm: e.target.value })} />
-          </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="field-label">CST / CSOSN</span>
-            <input inputMode="numeric" className="field mono" maxLength={20} placeholder="102" value={draft.cst} onChange={(e) => set({ cst: e.target.value })} />
-          </label>
-          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="field-label">Alíquota %</span>
-            <input className="field mono" inputMode="decimal" placeholder="0" value={draft.taxRate} onChange={(e) => set({ taxRate: e.target.value.replace(/[^0-9.,]/g, "") })} />
-          </label>
-        </div>
-      </div>
+            {adjusting && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 16, borderRadius: 16, border: "1px solid var(--line)", background: "var(--surface2)" }}>
+                <Segmented
+                  value={adj.kind}
+                  onChange={(kind) => setAdj({ ...adj, kind })}
+                  options={[
+                    { value: "in", label: "Entrada" },
+                    { value: "out", label: "Saída" },
+                    { value: "count", label: "Contagem" }
+                  ]}
+                />
+                <div style={help}>{ADJUST_HINT[adj.kind]}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 10 }}>
+                  <input className="field mono" inputMode="decimal" placeholder={`Qtd. (${current.unit})`} aria-label="Quantidade do ajuste" value={adj.qty} onChange={(e) => setAdj({ ...adj, qty: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ background: "var(--surface)" }} />
+                  <input className="field" maxLength={80} placeholder="Motivo (opcional)" aria-label="Motivo do ajuste" value={adj.reason} onChange={(e) => setAdj({ ...adj, reason: e.target.value })} style={{ background: "var(--surface)" }} />
+                </div>
+                <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start" }} disabled={saving || !adj.qty} onClick={adjust}>
+                  Registrar {adj.kind === "count" ? "contagem" : adj.kind === "in" ? "entrada" : "saída"}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </Section>
 
       {isProduto && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: 16, borderRadius: 16, border: "1px solid var(--line)", background: "var(--surface2)" }}>
+        <Section title="Ficha técnica">
           <button
             type="button"
             role="switch"
             aria-checked={composed}
             onClick={() => set({ composed: !draft.composed, lines: !draft.composed && draft.lines.length === 0 ? [{ name: "", qty: "" }] : draft.lines })}
-            style={{ display: "flex", alignItems: "center", gap: 14, border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)" }}
+            style={{ display: "flex", alignItems: "center", gap: 14, border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)", font: "inherit" }}
           >
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: 13.5, fontWeight: 600 }}>Este item é composto por outros produtos/insumos?</span>
-              <span style={{ display: "block", fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>
-                {composed ? "Sem estoque próprio: cada venda baixa o estoque dos itens da composição." : "Desligado: o item tem estoque próprio, controlado em Movimentações."}
-              </span>
+              <span style={{ display: "block", fontSize: 14, fontWeight: 500 }}>Produto composto</span>
+              <span style={{ display: "block", ...help }}>Montado com insumos. Custo e baixa de estoque passam a vir da ficha técnica.</span>
             </span>
-            <span className="toggle-track" style={{ background: composed ? "var(--ok)" : "var(--line2)" }}>
-              <span className="toggle-knob" style={{ left: composed ? 16 : 2 }} />
+            <span className="toggle-track" style={{ width: 44, height: 26, flex: "0 0 44px", background: composed ? "var(--ok)" : "var(--line2)" }}>
+              <span className="toggle-knob" style={{ top: 3, width: 20, height: 20, left: composed ? 21 : 3 }} />
             </span>
           </button>
 
           {composed && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <div className="comp-line comp-head">
-                {["Produto ou insumo", "Qtd.", "", "Custo", ""].map((h, i) => (
+                {["Componente", "Qtd.", "", "Custo", ""].map((h, i) => (
                   <div key={i} className="field-label" style={{ textAlign: h === "Custo" ? "right" : undefined }}>
                     {h}
                   </div>
@@ -752,18 +861,18 @@ export function ProductForm({
                     onChange={(e) => setLine(i, { qty: e.target.value.replace(/[^0-9.,]/g, "") })}
                     style={{ padding: "9px 10px", fontSize: 13, background: "var(--surface)" }}
                   />
-                  <div style={{ fontSize: 12, color: "var(--ink3)" }}>{l.match?.unit}</div>
+                  <div style={{ fontSize: 12, color: "var(--ink2)" }}>{l.match?.unit}</div>
                   <div className="mono" style={{ fontSize: 12.5, fontWeight: 600, textAlign: "right" }}>
                     {l.match && num(l.qty) ? brl(l.cost) : "—"}
                   </div>
                   <button
                     type="button"
                     title="Remover"
-                    aria-label="Remover item da composição"
+                    aria-label="Remover componente"
                     onClick={() => set({ lines: draft.lines.filter((_, j) => j !== i) })}
-                    style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink3)", cursor: "pointer", display: "grid", placeItems: "center" }}
+                    style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink2)", cursor: "pointer", display: "grid", placeItems: "center" }}
                   >
-                    <i className="fa-solid fa-minus" style={{ fontSize: 11 }} />
+                    <i className="fa-solid fa-xmark" style={{ fontSize: 12 }} />
                   </button>
                 </div>
               ))}
@@ -781,18 +890,54 @@ export function ProductForm({
                   style={{ display: "flex", alignItems: "center", gap: 7, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--brandText)" }}
                 >
                   <i className="fa-solid fa-plus" style={{ fontSize: 12 }} />
-                  Adicionar item
+                  Adicionar componente
                 </button>
                 <div style={{ flex: 1 }} />
-                <div style={{ fontSize: 12, color: "var(--ink3)" }}>Total</div>
+                <div style={help}>Custo da ficha</div>
                 <div className="mono" style={{ fontSize: 14, fontWeight: 600 }}>
                   {brl(autoCost)}
                 </div>
               </div>
             </div>
           )}
-        </div>
+        </Section>
       )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+        <button type="button" aria-expanded={taxOpen} onClick={() => setTaxOpen(!taxOpen)} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, border: 0, background: "transparent", padding: 0, cursor: "pointer", font: "inherit", color: "var(--ink)", textAlign: "left" }}>
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 600, letterSpacing: "-.01em" }}>Tributação</span>
+            <span style={{ display: "block", ...help }}>NCM, CST/CSOSN e alíquota · usada só na emissão de nota fiscal</span>
+          </span>
+          <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>{taxFilled ? "Preenchida" : "Não preenchida"}</span>
+          <i className={`fa-solid ${taxOpen ? "fa-chevron-up" : "fa-chevron-down"}`} aria-hidden="true" style={{ fontSize: 11, color: "var(--ink2)" }} />
+        </button>
+        {taxOpen && (
+          <>
+            <div style={grid3}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={label}>NCM</span>
+                <input inputMode="numeric" className="field mono" maxLength={20} placeholder="0000.00.00" value={draft.ncm} onChange={(e) => set({ ncm: e.target.value })} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={label}>CST/CSOSN</span>
+                <input inputMode="numeric" className="field mono" maxLength={20} placeholder="102" value={draft.cst} onChange={(e) => set({ cst: e.target.value })} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <span style={label}>Alíquota</span>
+                <div style={{ position: "relative" }}>
+                  <input className="field mono" inputMode="decimal" placeholder="0,00" value={draft.taxRate} onChange={(e) => set({ taxRate: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ paddingRight: 36 }} />
+                  <span className="mono" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink2)" }}>
+                    %
+                  </span>
+                </div>
+              </label>
+            </div>
+            <div style={help}>Preencha quando o restaurante passar a emitir nota fiscal ou se o contador pedir.</div>
+          </>
+        )}
+      </div>
+      {newCategory.dialog}
     </SlideOver>
   );
 }

@@ -1,59 +1,70 @@
 import type { ReactNode } from "react";
+import { useIsMobile } from "../lib/useIsMobile";
 
 interface Props {
   title: string;
   subtitle: string;
   onClose: () => void;
-  footer: ReactNode;
+  /** The drawer's own footer (Cupom). A sheet draws its own from `sheet`. */
+  footer?: ReactNode;
   children: ReactNode;
+  width?: number;
+  /** UX-07 · 3: a sheet instead of the side drawer — 720 px, up to 28 px from the top, the status and Cancelar/Salvar always in
+   *  the footer; on the phone the whole screen, with Cancelar and Salvar in the top bar (4b). */
+  sheet?: { saveLabel: string; onSave: () => void; saving?: boolean; dirty: boolean; status: string };
 }
 
-/** Right-hand slide-over panel used by the product and coupon editors. */
-export function SlideOver({ title, subtitle, onClose, footer, children, width }: Props & { width?: number }) {
+const bar = { position: "sticky", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", zIndex: 2 } as const;
+const textButton = { minWidth: 88, border: 0, background: "transparent", padding: "0 10px", cursor: "pointer", font: "inherit", fontSize: 16, color: "var(--brandText)" } as const;
+
+/** Right-hand slide-over panel used by the coupon editor; the product cadastro opens it as a sheet. */
+export function SlideOver({ title, subtitle, onClose, footer, children, width, sheet }: Props) {
+  const phone = useIsMobile();
   return (
-    <div className="drawer-overlay">
-      <div className="drawer-panel" style={width ? { width } : undefined}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 12,
-            padding: "20px 24px",
-            borderBottom: "1px solid var(--glassBd)",
-            position: "sticky",
-            top: 0,
-            background: "var(--glassBg)",
-            backdropFilter: "var(--blur)",
-            WebkitBackdropFilter: "var(--blur)",
-            zIndex: 2
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>
-            <div style={{ fontSize: 12, color: "var(--ink3)", marginTop: 2 }}>{subtitle}</div>
+    <div className={`drawer-overlay${sheet ? " sheet" : ""}`}>
+      <div className={`drawer-panel${sheet ? " sheet" : ""}`} role="dialog" aria-modal="true" aria-label={title} style={width && !sheet ? { width } : undefined}>
+        {sheet && phone ? (
+          <div style={{ ...bar, top: 0, display: "flex", alignItems: "center", padding: "6px 8px", minHeight: 52, borderBottom: "1px solid var(--glassBd)" }}>
+            <button type="button" onClick={onClose} style={{ ...textButton, textAlign: "left" }}>
+              Cancelar
+            </button>
+            <div style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 16, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+            <button type="button" onClick={sheet.onSave} disabled={sheet.saving} style={{ ...textButton, textAlign: "right", fontWeight: 600 }}>
+              {sheet.saveLabel}
+            </button>
           </div>
-          <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar">
-            <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
-          </button>
-        </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "22px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+        ) : (
+          <div style={{ ...bar, top: 0, display: "flex", alignItems: "center", gap: 12, padding: sheet ? "16px 16px 16px 32px" : "20px 24px", borderBottom: "1px solid var(--glassBd)" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: sheet ? 17 : 16, fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>
+              <div style={{ fontSize: 12.5, color: sheet ? "var(--ink2)" : "var(--ink3)", marginTop: sheet ? 0 : 2 }}>{subtitle}</div>
+            </div>
+            <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar" style={sheet ? { borderRadius: "50%" } : undefined}>
+              <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
+            </button>
+          </div>
+        )}
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: sheet ? (phone ? "20px 16px 32px" : "24px 32px 36px") : "22px 24px", display: "flex", flexDirection: "column", gap: sheet ? 24 : 20 }}>
           {children}
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            padding: "16px 24px",
-            borderTop: "1px solid var(--glassBd)",
-            position: "sticky",
-            bottom: 0,
-            background: "var(--glassBg)",
-            backdropFilter: "var(--blur)",
-            WebkitBackdropFilter: "var(--blur)"
-          }}
-        >
-          {footer}
-        </div>
+        {!(sheet && phone) && (
+          <div style={{ ...bar, bottom: 0, display: "flex", alignItems: "center", gap: 10, padding: sheet ? "14px 24px 14px 32px" : "16px 24px", borderTop: "1px solid var(--glassBd)" }}>
+            {sheet ? (
+              <>
+                {sheet.dirty && <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--brandText)" }} />}
+                <span style={{ flex: 1, fontSize: 12.5, color: "var(--ink2)" }}>{sheet.status}</span>
+                <button type="button" className="btn btn-outline" onClick={onClose}>
+                  Cancelar
+                </button>
+                <button type="button" className="btn btn-primary" disabled={sheet.saving} onClick={sheet.onSave}>
+                  {sheet.saveLabel}
+                </button>
+              </>
+            ) : (
+              footer
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

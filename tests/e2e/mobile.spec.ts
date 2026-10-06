@@ -86,6 +86,21 @@ test("J-3 · Produtos no celular: cartões por categoria, busca, tipo e o … da
   await expect(page.getByRole("button", { name: /^Lanches \d+$/ })).toBeVisible();
 });
 
+// J-4 (UX-07 · 4b): on the phone the cadastro takes the whole screen, Cancelar and Salvar in the top bar, no X.
+test("J-4 · cadastro no celular em tela cheia, com Cancelar e Criar item na barra de cima", async ({ page }) => {
+  await page.goto("/produtos");
+  await page.getByRole("button", { name: "Novo item" }).click();
+  const sheet = page.getByRole("dialog", { name: "Novo item" });
+  await expect(sheet).toBeVisible();
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {})))); // dcScaleIn: measure after it
+  const box = (await sheet.boundingBox())!;
+  expect([box.x, box.y, box.width, box.height].map(Math.round)).toEqual([0, 0, 390, 844]);
+  for (const name of ["Cancelar", "Criar item"]) expect((await sheet.getByRole("button", { name, exact: true }).boundingBox())!.y).toBeLessThan(60);
+  await expect(sheet.getByRole("button", { name: "Fechar" })).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Cancelar" }).click();
+  await expect(sheet).toBeHidden();
+});
+
 test("cadastro de produto no celular: a busca da composição ocupa a linha inteira", async ({ page }) => {
   await page.goto("/produtos");
   await page.getByRole("button", { name: "Novo item" }).click();
