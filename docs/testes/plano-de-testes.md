@@ -31,6 +31,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 | `api:cupom` | `tests/api/cupom.test.ts` (cupom do delivery pelas regras de Promoções) |
 | `api:sessoes` | `tests/api/sessoes.test.ts` (troca e reset de senha encerram as sessões) |
 | `api:fechado` | `tests/api/fechado.test.ts` (pedido de comanda paga não muda de status) |
+| `api:categoria` | `tests/api/categoria.test.ts` (a categoria mora no produto: migração 9m, cardápio público, 409, outro restaurante) |
 | `e2e:fluxo` | `tests/e2e/fluxo-critico.spec.ts` |
 | `e2e:varredura` | `tests/e2e/varredura.spec.ts` (3 tamanhos × 2 temas) |
 | `e2e:desktop` / `e2e:mobile` | `tests/e2e/desktop.spec.ts` / `tests/e2e/mobile.spec.ts` |
@@ -50,7 +51,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"); 05/10/2026 para os fronts no Caddy, num endereço só (seção 4.21). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"); 05/10/2026 para os fronts no Caddy, num endereço só (seção 4.21); 06/10/2026 para a rodada J, Produtos no padrão do Cardápio (UX-07: categoria no produto, Catálogo por categoria, cadastro em folha; casos EST-18 a EST-24 e CAR-15 a CAR-17; seção 7, "Rodada J"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -279,6 +280,13 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | EST-16 | Prato excluído do Cardápio com a comanda aberta | Adm | Vender 1, excluir o prato, fechar | A baixa acontece (pão −1, blend −0,15) | api:estoque | ✅ corrigido (B23) |
 | EST-17 | Unidade travada depois de movimentar | Adm | Produto em kg com uma entrada; trocar para g | API 409 "A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto."; na tela o campo fica desabilitado com esse texto; sem movimentação, a troca é livre | api:estoque, e2e:desktop | ✅ corrigido (A-01) |
 | EST-12 | Lista grande | Adm | 150 produtos | Tela abre e filtra | api:grandes, M | ✅ + M (0,6 s) |
+| EST-18 | Catálogo por categoria | Adm | Produtos → Catálogo | Uma seção por categoria, na ordem do Cardápio, com a contagem; "Sem categoria" no fim (fixa); "Só insumos · não aparece no cardápio do cliente" na categoria só de insumos; a linha abre o cadastro | e2e:desktop, e2e:mobile | ✅ |
+| EST-19 | Busca, tipo e categoria | Adm | "cheesecake"; "picanha de sirí"; Insumos; chip Bebidas | Só o que bate, "1 de N itens"; sem resultado: "Nenhum item com “…”" e Limpar busca; o segmentado e o chip filtram | e2e:desktop, e2e:mobile | ✅ |
+| EST-20 | Recolher e ordenar categorias | Adm | Clicar no título de Hambúrgueres; arrastar Porções para cima (também pelo teclado: Espaço, ↑, Espaço); no celular, … → Ordenar categorias | A seção recolhe e volta; a ordem nova vale no Cardápio e no cardápio do cliente | e2e:desktop, e2e:mobile | ✅ |
+| EST-21 | Catálogo vazio | Dono novo | Restaurante sem item | "Seu catálogo ainda está vazio" com Cadastrar primeiro item e Criar categoria | e2e:desktop | ✅ |
+| EST-22 | Cadastro em folha | Adm | Novo item → Criar item sem nada; preencher; Saldo inicial 48 | Folha de 720 px a 28 px do topo; "Corrija 2 campos para salvar." com o erro em Nome e em Preço de venda; Margem calculada; o saldo inicial entra como "Entrada manual: Saldo inicial" | e2e:desktop | ✅ |
+| EST-23 | Tipo e unidade travados, Tributação recolhida | Adm | Editar um item que já movimentou | Tipo travado; unidade desabilitada com o motivo; Tributação fechada com "Preenchida"/"Não preenchida"; rodapé "Sem alterações" / "Alterações não salvas" | e2e:desktop, e2e:dialogos | ✅ |
+| EST-24 | Nova categoria no cadastro e no celular | Adm | No cadastro, "Nova categoria" → Criar e usar; no celular, Novo item | A categoria nova fica selecionada no item; no celular, tela cheia com Cancelar e Criar item na barra de cima | e2e:desktop, e2e:mobile | ✅ |
 
 ### 4.8 Cardápio no painel (CAR)
 
@@ -292,11 +300,14 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | CAR-06 | Remover do cardápio | Adm | Remover (confirma) | Some do cardápio; continua no catálogo | e2e:mobile | ✅ |
 | CAR-07 | Reordenar | Adm | Arrastar categoria/prato | Ordem salva e igual no cliente | M | ✅ M |
 | CAR-09 | Adicional com baixa de estoque | Adm | Organizar prato → Bacon extra → "Baixa: Bacon em fatias (kg)" 0,03 | Vender 2 Clássicos com Bacon extra e fechar baixa 0,06 kg de bacon; vínculo inválido (produto composto, outro restaurante, quantidade 0) → 400 | api:cardapio | ✅ |
-| CAR-10 | Criar, renomear e excluir categoria | Adm | Nova categoria "Combos"; renomear; excluir | Aparece vazia ("Nenhum prato nesta categoria"); renomeia; exclui | api:cardapio, e2e:desktop | ✅ |
-| CAR-11 | Categoria com pratos não é excluída | Adm | Excluir "Sobremesas" | "Mova ou remova os pratos desta categoria antes" | api:cardapio, e2e:desktop | ✅ |
+| CAR-10 | Criar, renomear e excluir categoria | Adm | Nova categoria "Combos"; renomear; excluir | Na caixa do design (não mais o prompt do navegador): nome vazio ou repetido deixa o botão desativado; Enter confirma, Esc cancela; aparece vazia ("Nenhum prato nesta categoria"); renomeia; exclui | api:cardapio, e2e:desktop | ✅ (J-2) |
+| CAR-11 | Categoria com itens não é excluída | Adm | Excluir "Sobremesas"; excluir uma categoria só com insumo | A caixa diz "Esta categoria tem 4 itens…" e lista os pratos, sem botão Excluir; a só com insumo: API 409 "A categoria X tem 1 item. Mova para outra categoria antes de excluir." | api:categoria, e2e:desktop | ✅ (J-1, J-2) |
 | CAR-12 | Nome de categoria repetido, vazio ou longo | Adm | "combos da casa" (já existe), "", 41 caracteres | 409 / 400 / 400 | api:cardapio | ✅ |
 | CAR-13 | Restaurante novo começa pelas categorias | Dono novo | Cardápio vazio | "Criar primeira categoria" | M | ✅ M |
-| CAR-14 | Categoria vazia não aparece para o cliente | cliente | Criar categoria sem pratos | Cardápio do cliente não mostra a categoria | M | ✅ M |
+| CAR-14 | Categoria vazia não aparece para o cliente | cliente | Criar categoria sem pratos; outra só com um insumo | Cardápio do cliente não mostra nenhuma das duas (a API já não as manda) | api:categoria, M | ✅ |
+| CAR-15 | A categoria mora no produto | Adm | Mudar a categoria do Kids no Catálogo; depois no Organizar prato | O prato muda de seção no Cardápio e no cliente; o Organizar prato muda o produto no Catálogo; sem categoria, o prato vai para "Sem categoria" | api:categoria | ✅ (J-1) |
+| CAR-16 | Categoria de outro restaurante | Adm | Produto com a categoria de outro restaurante (criar e editar) | 400; editar sem mandar a categoria mantém a dele | api:categoria | ✅ (J-1) |
+| CAR-17 | Migração 9m | — | Banco na 9l com prato com categoria, prato sem produto e produto em dois pratos; rodar a 9m | Produto com a categoria do prato (a do primeiro, se em dois); prato sem produto ganha um (nome, preço, produto, un); a coluna sai do prato; categoria com item não se apaga nem direto no banco | api:categoria | ✅ (J-1) |
 | CAR-08 | Foto do prato | Adm | Enviar foto | Sem Storage configurado: aviso de erro; com Storage: aparece | M (hospedado) | ✅ M sem Storage · ⏳ com Storage |
 
 ### 4.9 Contas a pagar e a receber (FIN)
@@ -793,3 +804,19 @@ As decisões pendentes da auditoria (`docs/seguranca/auditoria-2026-10.md`, seç
 
 **`npm test` antes do push** (nesta máquina): API 166 passaram, 0 falharam, 1 pulado (o do `deploy.sh`, só Linux); telas 93 passaram, 0 falharam, 1 pulado (o de sempre). A primeira execução achou o UX-06 (1 falha no celular, tema escuro); corrigido e rodado de novo. CI: ver a execução do último commit da rodada.
 
+### Rodada J (06/10/2026): Produtos no padrão do Cardápio (UX-07)
+
+O desenho "UX-07-08 Produtos Catalogo" implementado em itens, cada um com teste que falhava antes ([ADR 0012](../adr/0012-categoria-mora-no-produto.md)):
+
+| Item | O que mudou | Casos | Antes → depois |
+| --- | --- | --- | --- |
+| J-1 | A categoria mora no produto (`Product.categoryId`); uma lista de categorias para Cardápio e Catálogo; o cliente só vê categoria com prato; excluir só vazia (409 com quantos) | CAR-11, CAR-14 a CAR-17 | `categoria.test.ts`: 4 de 5 falhavam (o 5º é a guarda "cardápio igual ao de antes") → 5 de 5 |
+| J-2 | Caixa de categoria (criar, renomear, excluir) no lugar do prompt/confirm | CAR-10, CAR-11 | e2e "J-2 ·": 2 de 2 falhavam (nenhuma caixa abria) → 2 de 2 |
+| J-3 | Catálogo por categoria: busca, chips, tipo, seções recolhíveis, arrastar, estados vazios; celular com o "…" da categoria | EST-18 a EST-21 | e2e "J-3 ·": 3 de 3 falhavam → 3 de 3 |
+| J-4 | Cadastro em folha: seções, erros nos campos, Nova categoria ali mesmo, unidade travada, Tributação recolhida, saldo inicial; tela cheia no celular | EST-22 a EST-24 | e2e "J-4 ·": 2 de 2 falhavam → 2 de 2 |
+
+**Supabase de testes (06/10/2026):** antes da 9m, 0 de 102 pratos sem produto; a 9m criou 0 produtos e 102 produtos receberam a categoria do prato. Nenhum produto estava em dois pratos.
+
+**Fora do escopo, registrado e não corrigido:** na aba Movimentações, o selo "Saída" (`pill("sec")`) tem contraste 2,38:1 no tema claro e 4,47:1 no escuro (precisa de 4,5:1); a varredura só abre a aba Catálogo, e o passo do `dialogos.spec` que abria Movimentações saiu junto com o popover de Filtros do Catálogo.
+
+**Não feito nesta rodada:** EST-04 (alerta de estoque: selo "Abaixo do aviso", faixa e campo "Avisar quando o saldo chegar a") não existe ainda — o lugar está marcado no código do Catálogo e do cadastro; "Mover e excluir" (desenho 2d) — para excluir, mova os itens antes.
