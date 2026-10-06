@@ -207,7 +207,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
       )}
 
       {reviewing && (
-        <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setReviewing(false)}>
+        <div className="modal-overlay">
           <div className="modal-panel" role="dialog" aria-label="Revisar pedido" style={{ maxWidth: 520 }}>
             <div style={{ padding: "18px 20px 8px", fontSize: 16, fontWeight: 600 }}>Pedido da Mesa {String(table).padStart(2, "0")}</div>
             <div style={{ padding: "0 20px 12px", display: "flex", flexDirection: "column", overflowY: "auto" }}>

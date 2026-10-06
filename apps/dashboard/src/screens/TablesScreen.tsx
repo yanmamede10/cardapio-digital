@@ -476,7 +476,7 @@ export default function TablesScreen() {
         />
       ) : (
         pixTarget && (
-          <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setPixTarget(null)}>
+          <div className="modal-overlay">
             <div className="modal-panel" style={{ maxWidth: 400 }}>
               <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--glassBd)" }}>
                 <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-.015em" }}>Fechar {pixTarget.title}</div>

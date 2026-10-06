@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { a11yProblems } from "./a11y";
 import { ADMIN_KEY, burgerKit, expect, newTable, R, test, uid } from "./fixtures";
 
@@ -219,3 +219,91 @@ for (const theme of ["light", "dark"] as const) {
     });
   });
 }
+
+// I-2 (UX-08): no modal, side panel or bottom sheet closes on a click on its background — only its own X, Cancelar or
+// Continuar — and what was typed stays. The phone's action sheets, the filter popovers and Lançar pedido's dish options
+// still close outside: they have no other way out.
+test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e o que foi digitado continua lá; o X e o Cancelar fecham", async ({ page, api }, info) => {
+  test.setTimeout(240_000);
+  const phone = info.project.name === "mobile";
+  const items = await api<{ id: string; name: string; soldOut: boolean; optionGroups: unknown[] }[]>("GET", `${P}/items`);
+  const plain = items.find((i) => !i.soldOut && i.optionGroups.length === 0)!;
+  const bill = await api("POST", `${P}/finance-entries`, { kind: "payable", description: `Gás ${uid()}`, amount: 10, dueDate: new Date().toLocaleDateString("sv-SE"), status: "pending" });
+  const open = await newTable(api); // an open comanda, on the map
+  await api("POST", `${P}/tables/${open.number}/orders`, { lines: [line(plain.id)] });
+  const grid = await api<{ gridSize: number; tables: { gridRow: number | null; gridCol: number | null }[] }>("GET", `${P}/salon-grid`);
+  const taken = new Set(grid.tables.map((t) => `${t.gridRow},${t.gridCol}`));
+  const cell = Array.from({ length: grid.gridSize ** 2 }, (_, i) => [Math.floor(i / grid.gridSize), i % grid.gridSize]).find(([r, c]) => !taken.has(`${r},${c}`))!;
+  await api("PATCH", `${P}/tables/${open.number}/position`, { gridRow: cell[0], gridCol: cell[1] });
+  const pixMode = (mode: string) => api("PATCH", `${P}/payment-mode`, { paymentMode: mode });
+
+  const goto = async (path: string) => {
+    await page.goto(path);
+    await expect(page.locator(".skeleton")).toHaveCount(0, { timeout: 8_000 });
+  };
+  const tap = (name: string | RegExp) => page.getByRole("button", { name }).first().click();
+  const drawer = page.locator(".drawer-panel");
+  const dialog = (name: string) => page.getByRole("dialog", { name });
+  const fechar = async () => {
+    await goto("/mesas");
+    await page.locator(`button[title^="Mesa ${String(open.number).padStart(2, "0")} ·"]`).first().click();
+    await tap("Fechar conta");
+    return page.locator(".modal-panel");
+  };
+  // [what, how it opens (returns the panel), the buttons that close it, whether it has a background to click (a full-width
+  // panel on the phone doesn't)]
+  type Case = [string, () => Promise<Locator>, string[], boolean?];
+  const cases: Case[] = phone
+    ? [
+        ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), ["Fechar", "Cancelar"], false],
+        ["Adicionar prato (folha)", async () => (await goto("/cardapio"), await tap("Adicionar prato"), dialog("Adicionar prato ao cardápio")), ["Fechar"]],
+        ["Novo lançamento (folha)", async () => (await goto("/contas-a-pagar"), await tap("Novo lançamento"), dialog("Novo lançamento")), ["Cancelar"]],
+        ["Quitar conta (folha)", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), ["Cancelar"]]
+      ]
+    : [
+        ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), ["Fechar", "Cancelar"]],
+        ["Cupom", async () => (await goto("/promocoes"), await tap("Novo cupom"), drawer), ["Fechar", "Cancelar"]],
+        ["Adicionar prato", async () => (await goto("/cardapio"), await tap("Adicionar prato"), dialog("Adicionar prato ao cardápio")), ["Fechar"]],
+        ["Organizar prato", async () => (await goto("/cardapio"), await tap(`Organizar ${plain.name}`), drawer), ["Fechar", "Cancelar"]],
+        ["Novo lançamento", async () => (await goto("/contas-a-pagar"), await tap("Novo lançamento"), dialog("Novo lançamento")), ["Cancelar"]],
+        ["Quitar conta", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), ["Cancelar"]],
+        ["Lançar pedido: Revisar pedido", async () => (await goto(`/mesas/${open.number}/pedido`), await tap(`Adicionar ${plain.name}`), await tap(/Revisar e enviar/), dialog("Revisar pedido")), ["Continuar"]],
+        ["Mesas: Fechar conta (maquininha)", fechar, ["Cancelar"]],
+        ["Mesas: cobrança PIX", async () => (await pixMode("sistema"), await fechar()), ["Fechar"]],
+        ["Aparência: Pré-visualizar", async () => (await goto("/config"), await tap("Aparência"), await tap("Pré-visualizar"), page.locator(".modal-panel")), ["Fechar"]]
+      ];
+  async function quitar() {
+    await page.locator("main div", { hasText: bill.description }).filter({ has: page.getByRole("button", { name: "Quitar" }) }).last().getByRole("button", { name: "Quitar" }).click();
+  }
+
+  try {
+    for (const [name, openIt, closers, background = true] of cases) {
+      for (const closer of closers) {
+        const panel = await openIt();
+        await expect(panel, name).toBeVisible();
+        if (background) {
+          const field = panel.locator("input:is([type=text],[type=search],:not([type])), textarea, select").first();
+          let typed: string | null = null;
+          if (await field.count()) {
+            if ((await field.evaluate((e) => e.tagName)) === "SELECT") {
+              const current = await field.inputValue();
+              await field.selectOption((await field.locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value))).find((v) => v !== current)!);
+            } else await field.fill("I-2 digitado");
+            typed = await field.inputValue();
+          }
+          await page.mouse.click(5, 5); // the dimmed background, outside the panel
+          await expect.soft(panel, `${name}: clicar no fundo não fecha`).toBeVisible();
+          if (!(await panel.isVisible())) continue; // closed: on to the next one, so every failing panel is listed
+          if (typed !== null) await expect(field, `${name}: o que foi digitado continua lá`).toHaveValue(typed);
+        }
+        await panel.getByRole("button", { name: closer, exact: true }).first().click();
+        await expect(panel, `${name}: ${closer} fecha`).toBeHidden();
+      }
+    }
+  } finally {
+    await pixMode("maquininha_propria");
+    await api("POST", `${P}/tables/${open.number}/close`, { paymentMethod: "Cartão" });
+    await api("PATCH", `${P}/tables/${open.number}/position`, { gridRow: null, gridCol: null });
+    await api("DELETE", `${P}/finance-entries/${bill.id}`);
+  }
+});

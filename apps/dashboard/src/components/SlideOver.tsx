@@ -11,7 +11,7 @@ interface Props {
 /** Right-hand slide-over panel used by the product and coupon editors. */
 export function SlideOver({ title, subtitle, onClose, footer, children, width }: Props & { width?: number }) {
   return (
-    <div className="drawer-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="drawer-overlay">
       <div className="drawer-panel" style={width ? { width } : undefined}>
         <div
           style={{

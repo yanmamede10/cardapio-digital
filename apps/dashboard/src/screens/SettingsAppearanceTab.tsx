@@ -477,7 +477,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
       </section>
 
       {previewOpen && (
-        <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setPreviewOpen(false)}>
+        <div className="modal-overlay">
           <div className="modal-panel" style={{ maxWidth: 560 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 22px", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderBottom: "1px solid var(--glassBd)" }}>
               <div style={{ minWidth: 0, flex: 1 }}>

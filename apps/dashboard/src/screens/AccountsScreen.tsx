@@ -209,7 +209,7 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
   };
 
   return (
-    <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-panel" role="dialog" aria-label="Novo lançamento" style={{ maxWidth: 480 }}>
         <div style={{ padding: "20px 24px 4px" }}>
           <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Novo lançamento</div>
@@ -312,7 +312,7 @@ export function PayModal({ entry, onClose, onPaid }: { entry: FinanceEntry; onCl
   };
 
   return (
-    <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-panel" role="dialog" aria-label="Quitar conta" style={{ maxWidth: 420 }}>
         <div style={{ padding: "20px 24px 4px", fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Quitar conta</div>
         <div style={{ padding: "18px 24px 22px", display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>

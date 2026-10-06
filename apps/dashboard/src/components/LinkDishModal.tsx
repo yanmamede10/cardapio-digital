@@ -35,7 +35,7 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
   const rows = (products ?? []).filter((p) => p.type === "produto" && (!query || p.name.toLowerCase().includes(query)));
 
   return (
-    <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="modal-overlay">
       <div className="modal-panel" role="dialog" aria-label="Adicionar prato ao cardápio" style={{ maxWidth: 520 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "20px 24px 4px" }}>
           <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>Adicionar prato ao cardápio</div>

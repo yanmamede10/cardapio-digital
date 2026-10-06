@@ -343,8 +343,8 @@ export default function MenuScreen() {
       )}
 
       {drawer && (
-        <div className="drawer-overlay" onClick={() => setDrawer(null)}>
-          <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="drawer-overlay">
+          <div className="drawer-panel">
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 24px", borderBottom: "1px solid var(--glassBd)", position: "sticky", top: 0, background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>Organizar prato</div>
