@@ -21,6 +21,8 @@ export interface Restaurant {
   coverLabel: string;
   /** Has the Delivery module: without it and without a table, the cardápio is only for looking (G-2). */
   delivery: boolean;
+  /** Configurações → Horários, on GET /api/restaurants/:id only (I-1). */
+  hours?: OperatingHoursRow[];
 }
 
 export interface MenuCategory {

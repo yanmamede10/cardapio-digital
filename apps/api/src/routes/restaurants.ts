@@ -1,7 +1,7 @@
 import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
-import { serializeMenuItem, serializeOrder, serializeRestaurant } from "../lib/serialize.js";
+import { serializeHours, serializeMenuItem, serializeOrder, serializeRestaurant } from "../lib/serialize.js";
 
 export const restaurantsRouter = asyncRouter();
 
@@ -45,7 +45,9 @@ export const activeRestaurant = (id: string) => prisma.restaurant.findFirst({ wh
 restaurantsRouter.get("/:id", async (req, res) => {
   const r = await activeRestaurant(req.params.id);
   if (!r) return res.status(404).json({ error: "restaurant not found" });
-  res.json(serializeRestaurant(r));
+  // I-1: the cardápio shows "Aberto agora" and today's hours from Configurações → Horários (public, like the menu).
+  const hours = await prisma.operatingHour.findMany({ where: { restaurantId: r.id } });
+  res.json({ ...serializeRestaurant(r), hours: serializeHours(hours) });
 });
 
 restaurantsRouter.get("/:id/categories", async (req, res) => {

@@ -14,6 +14,7 @@ import { useToast } from "../context/ToastContext";
 import { api } from "../lib/api";
 import { usePageTitle } from "../lib/title";
 import { brl, formatRating } from "../lib/format";
+import { openingNow } from "../lib/hours";
 import { computeSelectedOptions, computeUnitPrice, defaultDraft } from "../lib/itemDraft";
 
 const DEFAULT_APPEARANCE: PublicAppearance = { template: "classico", brandColor: "#732009", logoUrl: null, coverPhotos: [], publishedAt: null };
@@ -100,6 +101,8 @@ export default function MenuScreen() {
   const cover = appearance.coverPhotos[0];
   const coverStyle: CSSProperties = cover ? { backgroundImage: `url(${cover})`, backgroundSize: "cover", backgroundPosition: "center" } : {};
   const logo = appearance.logoUrl;
+  // I-1: open now and today's hours from Configurações → Horários; null (none registered) shows neither.
+  const hours = openingNow(restaurant.hours ?? []);
 
   const themeButton = (right?: boolean) => (
     <IconButton icon={theme === "dark" ? "fa-solid fa-sun" : "fa-solid fa-moon"} onClick={toggleTheme} title="Alternar tema" glass style={right ? { marginLeft: "auto" } : undefined} />
@@ -173,15 +176,21 @@ export default function MenuScreen() {
             {themeButton(true)}
           </div>
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "0 var(--pad) 20px", display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 7, padding: "6px 12px", borderRadius: 999, background: "rgba(252,247,211,.94)", color: "#24160F", fontWeight: 600, fontSize: "var(--t-xs)", letterSpacing: ".1em", textTransform: "uppercase" }}>
-              <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--i-s)", color: "#2F7A4F" }} />aberto agora
-            </div>
+            {hours && (
+              <div style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 7, padding: "6px 12px", borderRadius: 999, background: "rgba(252,247,211,.94)", color: "#24160F", fontWeight: 600, fontSize: "var(--t-xs)", letterSpacing: ".1em", textTransform: "uppercase" }}>
+                <i className={hours.open ? "fa-solid fa-circle-check" : "fa-solid fa-circle-xmark"} style={{ fontSize: "var(--i-s)", color: hours.open ? "#2F7A4F" : "#732009" }} />{hours.open ? "aberto agora" : "fechado"}
+              </div>
+            )}
             <div style={{ fontWeight: 700, fontSize: "calc(var(--t-xl) * 1.14)", lineHeight: 1.04, letterSpacing: "-.03em", color: "#FFF7EC" }}>{restaurant.name}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", color: "#F0E4C4", fontWeight: 500, fontSize: "var(--t-s)" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><i className="fa-solid fa-star" style={{ fontSize: "var(--i-s)", color: "#CD8C52" }} /><b style={{ color: "#FFF7EC" }}>{formatRating(restaurant.rating)}</b>({restaurant.reviewCount})</span>
               <span>{restaurant.cuisine}</span>
-              <span style={{ opacity: 0.55 }}>·</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />11:00 – 23:00</span>
+              {hours && (
+                <>
+                  <span style={{ opacity: 0.55 }}>·</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />{hours.today}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -223,8 +232,12 @@ export default function MenuScreen() {
               ) : (
                 <span>entrega · {restaurant.etaMinMinutes}–{restaurant.etaMaxMinutes} min</span>
               )}
-              <span style={{ opacity: 0.45 }}>·</span>
-              <span>aberto</span>
+              {hours && (
+                <>
+                  <span style={{ opacity: 0.45 }}>·</span>
+                  <span>{hours.open ? "aberto" : "fechado"}</span>
+                </>
+              )}
             </div>
             <div style={{ marginTop: 14, fontWeight: 700, fontSize: "calc(var(--t-xl) * 1.34)", lineHeight: 1.02, letterSpacing: "-.04em", textWrap: "pretty" }}>{restaurant.name}</div>
             <div style={{ marginTop: 12, fontWeight: 400, fontSize: "var(--t-b)", lineHeight: 1.55, color: "var(--ink2)" }}>{restaurant.cuisine} · {formatRating(restaurant.rating)} de 5 em {restaurant.reviewCount} avaliações</div>
@@ -271,8 +284,12 @@ export default function MenuScreen() {
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontWeight: 500, fontSize: "var(--t-s)", color: "#F2E3BE" }}>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><i className="fa-solid fa-star" style={{ fontSize: "var(--i-s)", color: "#FCF7D3" }} /><b style={{ color: "#FCF7D3" }}>{formatRating(restaurant.rating)}</b>({restaurant.reviewCount})</span>
               <span>{restaurant.cuisine}</span>
-              <span style={{ opacity: 0.55 }}>·</span>
-              <span>11:00 – 23:00</span>
+              {hours && (
+                <>
+                  <span style={{ opacity: 0.55 }}>·</span>
+                  <span>{hours.today}</span>
+                </>
+              )}
             </div>
           </div>
           <div className="no-scrollbar" style={{ marginTop: 20, display: "flex", gap: 8, overflowX: "auto", padding: "0 var(--pad) 2px" }}>{categoryNav("vibrant")}</div>
@@ -378,9 +395,11 @@ export default function MenuScreen() {
           {/* relative: the cover above is positioned, so without it the logo row paints under the cover (H-1). */}
           <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: -30 }}>
             <button type="button" onClick={toTop} aria-label={toTopLabel} style={{ width: 66, height: 66, borderRadius: "var(--r-elevated)", background: "var(--pri)", border: "3px solid var(--bg)", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--priInk)", font: "700 20px var(--font)", letterSpacing: "-.02em", overflow: "hidden" }}>{logoCircle(66, 24)}</button>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 999, background: "var(--surf)", border: "1px solid var(--line)", font: "600 var(--t-s) var(--font)" }}>
-              <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--i-s)", color: "var(--good)" }} />Aberto agora
-            </div>
+            {hours && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 999, background: "var(--surf)", border: "1px solid var(--line)", font: "600 var(--t-s) var(--font)" }}>
+                <i className={hours.open ? "fa-solid fa-circle-check" : "fa-solid fa-circle-xmark"} style={{ fontSize: "var(--i-s)", color: hours.open ? "var(--good)" : "var(--ink2)" }} />{hours.open ? "Aberto agora" : "Fechado"}
+              </div>
+            )}
           </div>
           <div style={{ marginTop: 12, font: "700 var(--t-xl) var(--font)", letterSpacing: "-.025em" }}>{restaurant.name}</div>
           <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
@@ -390,9 +409,11 @@ export default function MenuScreen() {
             <span style={{ opacity: 0.5 }}>·</span>
             <span>{restaurant.cuisine}</span>
           </div>
-          <div style={{ marginTop: 7, display: "flex", alignItems: "center", gap: 7, font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
-            <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />Hoje 11:00 – 23:00
-          </div>
+          {hours && (
+            <div style={{ marginTop: 7, display: "flex", alignItems: "center", gap: 7, font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>
+              <i className="fa-solid fa-clock" style={{ fontSize: "var(--i-s)" }} />{hours.today}
+            </div>
+          )}
 
           {isDelivery && !readOnly && (
             <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", font: "500 var(--t-s) var(--font)", color: "var(--ink2)" }}>

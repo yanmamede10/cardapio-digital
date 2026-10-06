@@ -644,3 +644,23 @@ test("H-2 · listas, tabelas e painéis ocupam a largura útil como o Cardápio 
     await setModules(request, DEMO_MODULES, "chapa27");
   }
 });
+
+test("I-1 · o cardápio mostra o horário cadastrado da Chapa 27 (Configurações → Horários) e se está aberto agora, no horário de São Paulo", async ({ browser, request, page }, info) => {
+  const phone = info.project.name === "mobile";
+  const url = await tableUrl(request, await staffToken(request, "dono@chapa27.example"), "chapa27", 9);
+  // The seed: closed on Monday; lunch 11:30 – 15:00 and dinner 18:00 – 23:30 the other days. The phone's clock is fixed.
+  for (const [when, badge, today] of [
+    ["2026-10-06T12:00:00-03:00", "Aberto agora", "Hoje 11:30 – 15:00 · 18:00 – 23:30"], // Tuesday, at lunch
+    ["2026-10-06T16:00:00-03:00", "Fechado", "Hoje 11:30 – 15:00 · 18:00 – 23:30"], // between lunch and dinner
+    ["2026-10-05T12:00:00-03:00", "Fechado", "Fechado hoje"] // Monday
+  ]) {
+    const ctx = await browser.newContext({ viewport: page.viewportSize()!, isMobile: phone, hasTouch: phone, timezoneId: "Europe/Lisbon" });
+    await ctx.clock.setFixedTime(new Date(when));
+    const g = await ctx.newPage();
+    await g.goto(url);
+    await expect(g.getByText(today, { exact: true }), when).toBeVisible();
+    await expect(g.getByText(badge, { exact: true }), when).toBeVisible();
+    await expect(g.getByText(/11:00 – 23:00/)).toHaveCount(0);
+    await ctx.close();
+  }
+});
