@@ -702,8 +702,12 @@ plain("J-3 · Produtos: Catálogo por categoria com busca, chips, tipo, seções
     await page.getByRole("button", { name: "Reordenar categoria Porções" }).focus();
     await page.keyboard.press("Space");
     await expect(porcoes).toHaveCSS("opacity", "0.6"); // picked up
-    await page.keyboard.press("ArrowUp");
-    await expect(porcoes).toHaveAttribute("style", /translate3d\(0px, -\d+px/); // above Hambúrgueres
+    // The sensor takes a frame to listen after the pick-up (the sections fold meanwhile): ↑ again until it moves. Above the
+    // first place there is nothing, so an extra ↑ changes nothing.
+    await expect(async () => {
+      await page.keyboard.press("ArrowUp");
+      await expect(porcoes).toHaveAttribute("style", /translate3d\(0px, -\d+px/, { timeout: 500 }); // above Hambúrgueres
+    }).toPass({ timeout: 10_000 });
     await page.keyboard.press("Space");
     await expect(toast(page)).toContainText("Categoria Porções movida para cima");
     await expect.poll(order).toEqual(["Porções", "Hambúrgueres", "Bebidas", "Sobremesas"]);
