@@ -247,8 +247,8 @@ textarea.field-mobile {
 /* UX-07: a dialog's buttons at the bottom right; on the phone, full width and stacked, the main one on top (2a–2d, 4c). */
 .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 24px 20px; border-top: 1px solid var(--line); }
 /* Destructive: tinted, not filled — white on the dark theme's --alert is under 4.5:1 (UX-07 handoff). */
-.btn-danger { background: color-mix(in srgb, var(--alert) 14%, var(--surface)); color: var(--alert); }
-.btn-danger:hover { background: color-mix(in srgb, var(--alert) 22%, var(--surface)); }
+.btn-danger { background: color-mix(in srgb, var(--alert) 12%, var(--surface)); color: var(--alert); } /* 4.9:1 dark, 6.3:1 light */
+.btn-danger:hover { box-shadow: inset 0 0 0 1.5px var(--alert); } /* a ring, not a darker fill: that would drop under 4.5:1 */
 
 /* UX-07 · 3: the cadastro as a sheet — 720 px (reading width) up to 28 px from the top; its header and footer stay, the
    middle scrolls. On the phone, the whole screen. */

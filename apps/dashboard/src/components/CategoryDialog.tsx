@@ -1,6 +1,7 @@
-import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
+import { useId, useState, type FormEvent, type ReactNode } from "react";
 import type { MenuCategory } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
+import { useBack } from "../lib/back";
 
 /** What the box does (UX-07 · 2a–2d). For "delete", items = the names this screen knows are in the category (dishes in the
  *  Cardápio; produtos and insumos in Produtos); the API counts everything and answers 409 when the screen didn't know. */
@@ -34,16 +35,7 @@ export function CategoryDialog({
     mode.kind === "delete" && mode.items.length ? { text: `Esta categoria tem ${plural(mode.items.length)}. Mova os itens para outra categoria antes de excluir.`, names: mode.items } : null
   );
 
-  useEffect(() => {
-    // Capture, and stop there: opened over the cadastro (3f), Esc closes only this box.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      onClose();
-    };
-    document.addEventListener("keydown", onKey, true);
-    return () => document.removeEventListener("keydown", onKey, true);
-  }, [onClose]);
+  useBack(onClose); // Esc (and the Android back) cancels; opened over the cadastro (3f), only this box closes
 
   const trimmed = name.trim();
   const self = mode.kind === "rename" ? mode.category.id : null;

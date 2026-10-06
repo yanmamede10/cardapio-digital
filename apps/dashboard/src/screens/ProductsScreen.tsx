@@ -654,6 +654,7 @@ export function ProductForm({
       title={draft.id ? current?.name ?? draft.name : "Novo item"}
       subtitle={draft.id ? TYPE_LABEL[draft.type] : "Produtos · Catálogo"}
       onClose={() => setDraft(null)}
+      discardName={draft.id ? current?.name ?? draft.name : undefined}
       sheet={{ saveLabel: draft.id ? "Salvar" : "Criar item", onSave: save, saving, dirty, status: draft.id ? (dirty ? "Alterações não salvas" : "Sem alterações") : "Item novo" }}
     >
       {problems > 0 && (

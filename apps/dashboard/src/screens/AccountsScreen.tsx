@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Modal } from "../components/Modal";
 import { PAYMENT_METHODS, type FinanceEntry, type FinanceEntryKind } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { brl, dayMonth, shortDate, todayIso } from "../lib/format";
@@ -196,6 +197,8 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
   const { notify } = useDashboardState();
   const payable = kind === "payable";
   const [form, setForm] = useState({ amount: "", description: "", dueDate: todayIso(), status: "pending" as "pending" | "paid", more: false, category: "", costCenter: "" });
+  const [initial] = useState(form);
+  const dirty = (["amount", "description", "dueDate", "status", "category", "costCenter"] as const).some((k) => form[k] !== initial[k]); // "Mais opções" open isn't a change
 
   const save = async () => {
     if (!num(form.amount) || !form.description.trim()) return notify("Preencha valor e descrição");
@@ -209,8 +212,9 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-panel" role="dialog" aria-label="Novo lançamento" style={{ maxWidth: 480 }}>
+    <Modal label="Novo lançamento" dirty={dirty} onClose={onClose} style={{ maxWidth: 480 }}>
+      {(close) => (
+      <>
         <div style={{ padding: "20px 24px 4px" }}>
           <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Novo lançamento</div>
           <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>{payable ? "Contas a pagar" : "Contas a receber"}</div>
@@ -283,15 +287,16 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
           )}
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", padding: "18px 24px 22px", borderTop: "1px solid var(--line)" }}>
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button type="button" className="btn btn-outline" onClick={close}>
             Cancelar
           </button>
           <button type="button" className="btn btn-primary" onClick={save}>
             Salvar lançamento
           </button>
         </div>
-      </div>
-    </div>
+      </>
+      )}
+    </Modal>
   );
 }
 
@@ -300,6 +305,7 @@ export function PayModal({ entry, onClose, onPaid }: { entry: FinanceEntry; onCl
   const { notify } = useDashboardState();
   const [paidOn, setPaidOn] = useState(todayIso());
   const [method, setMethod] = useState("PIX");
+  const dirty = paidOn !== todayIso() || method !== "PIX";
 
   const confirm = async () => {
     try {
@@ -312,8 +318,9 @@ export function PayModal({ entry, onClose, onPaid }: { entry: FinanceEntry; onCl
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-panel" role="dialog" aria-label="Quitar conta" style={{ maxWidth: 420 }}>
+    <Modal label="Quitar conta" dirty={dirty} name={entry.description} onClose={onClose} style={{ maxWidth: 420 }}>
+      {(close) => (
+      <>
         <div style={{ padding: "20px 24px 4px", fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Quitar conta</div>
         <div style={{ padding: "18px 24px 22px", display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)" }}>
@@ -348,14 +355,15 @@ export function PayModal({ entry, onClose, onPaid }: { entry: FinanceEntry; onCl
           </label>
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", padding: "18px 24px 22px", borderTop: "1px solid var(--line)" }}>
-          <button type="button" className="btn btn-outline" onClick={onClose}>
+          <button type="button" className="btn btn-outline" onClick={close}>
             Cancelar
           </button>
           <button type="button" className="btn btn-primary" onClick={confirm}>
             Confirmar quitação
           </button>
         </div>
-      </div>
-    </div>
+      </>
+      )}
+    </Modal>
   );
 }

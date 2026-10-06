@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Coupon, CouponChannel, CouponKind, MenuItem } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { brl, fmtDate } from "../lib/format";
@@ -36,6 +36,7 @@ export default function PromotionsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [drawer, setDrawer] = useState<Draft | null>(null);
+  const drawerStart = useRef(""); // what Novo cupom opened with (UX-08)
 
   const reload = () =>
     api
@@ -67,7 +68,11 @@ export default function PromotionsScreen() {
     [coupons]
   );
 
-  const openNew = () => setDrawer({ ...EMPTY_DRAFT, validUntil: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10) });
+  const openNew = () => {
+    const d = { ...EMPTY_DRAFT, validUntil: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10) };
+    drawerStart.current = JSON.stringify(d);
+    setDrawer(d);
+  };
 
   const toggleActive = async (c: Coupon) => {
     try {
@@ -228,16 +233,17 @@ export default function PromotionsScreen() {
           title="Novo cupom"
           subtitle="Publicado imediatamente ao salvar"
           onClose={() => setDrawer(null)}
-          footer={
+          dirty={JSON.stringify(drawer) !== drawerStart.current}
+          footer={(close) => (
             <>
               <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
                 Criar cupom
               </button>
-              <button type="button" className="btn btn-outline" onClick={() => setDrawer(null)}>
+              <button type="button" className="btn btn-outline" onClick={close}>
                 Cancelar
               </button>
             </>
-          }
+          )}
         >
           <Field label="Código">
             <input className="field mono" style={{ textTransform: "uppercase" }} value={drawer.code} onChange={(e) => setDrawer({ ...drawer, code: e.target.value })} placeholder="Ex.: VERAO25" />

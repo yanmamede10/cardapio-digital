@@ -504,6 +504,17 @@ A pilha de produção nesta máquina (`tests/e2e/caddy.spec.ts`): o `caddy` (com
 | FRONT-09 | `deploy/deploy.sh` de ponta a ponta | Dono, cliente | Um clone deste repositório no papel da VM, `deploy/.env` com `PUBLIC_URL=https://127.0.0.1`, `CADDY_TLS=internal` e um Postgres 17.11 descartável no lugar do Supabase (os buckets em branco, para o `db:deploy` pular o Storage); `deploy/deploy.sh`, `deploy/deploy.sh seed-demo`; Chrome de verdade, sem interceptar nada | "No ar: 1f8bfcb …" com as 6 imagens no ar; login do dono do Chapa 27 pelo Caddy; 30 itens em `/api/restaurants/chapa27/items`; `/painel/mesas` antes do login → login pela tela → Mesas; o QR da Mesa 01 mostra `https://127.0.0.1/t/…` e, aberto no celular, cai no cardápio da mesa; nenhum erro de console nem de API; `PUBLIC_HOST=127.0.0.1` no contêiner do Caddy; `down -v` sem sobras | M | ✅ M (05/10) |
 | FRONT-10 | APK do painel com o `PUBLIC_URL` | — | `VITE_PUBLIC_URL=https://203.0.113.10 npm run build:android --workspace apps/dashboard` e `./gradlew assembleDebug` (JDK do Android Studio) | `cap sync` com esquema `https` e `cleartext: false`; o APK (4,5 MB) traz o `index.html` na raiz (`/assets/…`), a API e o QR no `PUBLIC_URL`, nenhum `10.0.2.2` nem `localhost`; `npm run build:android` sem a variável volta o modo de dev | M | ✅ M (05/10) |
 
+### 4.22 Cadastros: fechar sem perder o que foi digitado (UX-08)
+
+Vale para Produto/Insumo, Cupom, Organizar prato, Novo lançamento e Quitar conta (desktop e celular; no celular, Cupom e Organizar prato são telas: o Cancelar, a seta do topo e o voltar do Android). Adicionar prato salva a cada "Adicionar": fecha sempre direto. A caixa de categoria (J-2) fecha com Esc sem perguntar.
+
+| ID | Caso | Papel | Passos e dados | Esperado | Auto | Resultado |
+| --- | --- | --- | --- | --- | --- | --- |
+| UX8-01 | Clicar fora não fecha | Adm | Abrir; digitar; clicar no fundo escurecido | Continua aberto, com o que foi digitado | e2e:dialogos (I-2, J-5) | ✅ |
+| UX8-02 | Sem alteração fecha direto | Adm | Abrir e apertar Esc; abrir e tocar no X/Cancelar | Fecha, sem perguntar | e2e:dialogos (J-5) | ✅ |
+| UX8-03 | Com alteração pergunta | Adm | Digitar; Esc; depois X/Cancelar | "Descartar alterações?" (Descartar / Continuar editando); Continuar editando mantém o digitado; Descartar fecha | e2e:dialogos (J-5) | ✅ |
+| UX8-04 | Voltar do Android | Adm | No APK: digitar num cadastro e tocar em voltar | A mesma pergunta; sem alteração, fecha (sem sair da tela) | M (aparelho) — o caminho é o mesmo do Esc (`lib/back.ts`) | ⏳ |
+
 ## 5. Só com aparelho na mão
 
 - Tablet Android pelo Capacitor (`apps/web` e `apps/dashboard`): instalar o APK, girar para paisagem, botão voltar do Android, teclado cobrindo campos, rede Wi-Fi caindo e voltando no meio do serviço.
@@ -814,6 +825,7 @@ O desenho "UX-07-08 Produtos Catalogo" implementado em itens, cada um com teste 
 | J-2 | Caixa de categoria (criar, renomear, excluir) no lugar do prompt/confirm | CAR-10, CAR-11 | e2e "J-2 ·": 2 de 2 falhavam (nenhuma caixa abria) → 2 de 2 |
 | J-3 | Catálogo por categoria: busca, chips, tipo, seções recolhíveis, arrastar, estados vazios; celular com o "…" da categoria | EST-18 a EST-21 | e2e "J-3 ·": 3 de 3 falhavam → 3 de 3 |
 | J-4 | Cadastro em folha: seções, erros nos campos, Nova categoria ali mesmo, unidade travada, Tributação recolhida, saldo inicial; tela cheia no celular | EST-22 a EST-24 | e2e "J-4 ·": 2 de 2 falhavam → 2 de 2 |
+| J-5 | "Descartar alterações?" num lugar só: o componente comum de modal (novo, `components/Modal.tsx`) e a `SlideOver`; Esc e o voltar do Android pelo mesmo caminho | UX8-01 a UX8-04 | e2e "J-5 ·": falhava (Esc não fazia nada; X/Cancelar fechavam com o digitado) → passa |
 
 **Supabase de testes (06/10/2026):** antes da 9m, 0 de 102 pratos sem produto; a 9m criou 0 produtos e 102 produtos receberam a categoria do prato. Nenhum produto estava em dois pratos.
 

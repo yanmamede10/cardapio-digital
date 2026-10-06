@@ -95,6 +95,13 @@ for (const theme of ["light", "dark"] as const) {
           await p.getByRole("button", { name: /Tributação/ }).click();
           await expect(p.getByText("Corrija 2 campos para salvar.")).toBeVisible();
         }],
+        ["Produtos: Descartar alterações?", async (p) => {
+          await goto(p, "/produtos");
+          await p.getByRole("button", { name: "Novo item" }).first().click();
+          await p.getByPlaceholder("Ex.: X-Salada").fill("Pão de fermentação natural");
+          await p.keyboard.press("Escape");
+          await expect(p.getByRole("alertdialog", { name: "Descartar alterações?" })).toBeVisible();
+        }],
         ["Produtos: Nova categoria", async (p) => {
           await goto(p, "/produtos");
           await p.getByRole("button", { name: "Nova categoria" }).first().click();
@@ -329,6 +336,10 @@ test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e
           if (typed !== null) await expect(field, `${name}: o que foi digitado continua lá`).toHaveValue(typed);
         }
         await panel.getByRole("button", { name: closer, exact: true }).first().click();
+        // J-5: with something typed, the guarded ones ask first — Descartar.
+        const ask = page.getByRole("alertdialog", { name: "Descartar alterações?" });
+        await expect.poll(async () => (await ask.isVisible()) || !(await panel.isVisible())).toBe(true);
+        if (await ask.isVisible()) await ask.getByRole("button", { name: "Descartar" }).click();
         await expect(panel, `${name}: ${closer} fecha`).toBeHidden();
       }
     }
@@ -336,6 +347,75 @@ test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e
     await pixMode("maquininha_propria");
     await api("POST", `${P}/tables/${open.number}/close`, { paymentMethod: "Cartão" });
     await api("PATCH", `${P}/tables/${open.number}/position`, { gridRow: null, gridCol: null });
+    await api("DELETE", `${P}/finance-entries/${bill.id}`);
+  }
+});
+
+// J-5 (UX-08): one guard, in the common Modal and SlideOver (components/Modal.tsx). With nothing changed, Esc and X/Cancelar
+// close at once; with a change they ask "Descartar alterações?" — Continuar editando keeps what was typed, Descartar closes.
+// The Android back button takes the same path as Esc (lib/back.ts, MobileLayout); the background never closes (I-2).
+test("J-5 · com alteração, Esc e X/Cancelar perguntam Descartar alterações? e Continuar editando mantém o digitado; sem alteração fecham direto", async ({ page, api }, info) => {
+  test.setTimeout(240_000);
+  const phone = info.project.name === "mobile";
+  const items = await api<{ id: string; name: string; soldOut: boolean }[]>("GET", `${P}/items`);
+  const dish = items.find((i) => !i.soldOut)!;
+  const bill = await api("POST", `${P}/finance-entries`, { kind: "payable", description: `Água ${uid()}`, amount: 10, dueDate: new Date().toLocaleDateString("sv-SE"), status: "pending" });
+  const goto = async (path: string) => {
+    await page.goto(path);
+    await expect(page.locator(".skeleton")).toHaveCount(0, { timeout: 8_000 });
+  };
+  const tap = (name: string | RegExp) => page.getByRole("button", { name }).first().click();
+  const drawer = page.locator(".drawer-panel");
+  const dialog = (name: string) => page.getByRole("dialog", { name });
+  const quitar = () => page.locator("main div", { hasText: bill.description }).filter({ has: page.getByRole("button", { name: "Quitar" }) }).last().getByRole("button", { name: "Quitar" }).click();
+  // [what, how it opens (returns the panel), the field to change, the button that closes it]
+  type Case = [string, () => Promise<Locator>, (panel: Locator) => Locator, string];
+  const cases: Case[] = [
+    ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), (p) => p.getByPlaceholder("Ex.: X-Salada"), phone ? "Cancelar" : "Fechar"],
+    ["Novo lançamento", async () => (await goto("/contas-a-pagar"), await tap("Novo lançamento"), dialog("Novo lançamento")), (p) => p.getByPlaceholder(/Fornecedor/), "Cancelar"],
+    ["Quitar conta", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), (p) => p.locator("select").first(), "Cancelar"],
+    ...(phone
+      ? []
+      : ([
+          ["Cupom", async () => (await goto("/promocoes"), await tap("Novo cupom"), drawer), (p) => p.getByPlaceholder("Ex.: VERAO25"), "Fechar"],
+          ["Organizar prato", async () => (await goto("/cardapio"), await tap(`Organizar ${dish.name}`), drawer), (p) => p.locator("textarea"), "Cancelar"]
+        ] as Case[]))
+  ];
+  const ask = page.getByRole("alertdialog", { name: "Descartar alterações?" });
+  try {
+    for (const [name, open, field, closer] of cases) {
+      let panel = await open();
+      await expect(panel, name).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(panel, `${name}: sem alteração, Esc fecha direto`).toBeHidden();
+      panel = await open();
+      await panel.getByRole("button", { name: closer, exact: true }).first().click();
+      await expect(panel, `${name}: sem alteração, ${closer} fecha direto`).toBeHidden();
+      await expect(ask).toHaveCount(0);
+
+      panel = await open();
+      const input = field(panel);
+      if ((await input.evaluate((e) => e.tagName)) === "SELECT") {
+        const current = await input.inputValue();
+        await input.selectOption((await input.locator("option").evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value))).find((v) => v !== current)!);
+      } else await input.fill("J-5 digitado");
+      const typed = await input.inputValue();
+      await page.keyboard.press("Escape");
+      await expect(ask, `${name}: com alteração, Esc pergunta`).toBeVisible();
+      await expect(ask).toContainText("não serão salvas");
+      await ask.getByRole("button", { name: "Continuar editando" }).click();
+      await expect(ask).toBeHidden();
+      await expect(input, `${name}: Continuar editando mantém o digitado`).toHaveValue(typed);
+      if (!(phone && name === "Produto/Insumo")) {
+        await page.mouse.click(5, 5); // the background (a whole-screen sheet on the phone has none)
+        await expect(panel, `${name}: clicar fora não fecha`).toBeVisible();
+      }
+      await panel.getByRole("button", { name: closer, exact: true }).first().click();
+      await expect(ask, `${name}: com alteração, ${closer} pergunta`).toBeVisible();
+      await ask.getByRole("button", { name: "Descartar" }).click();
+      await expect(panel, `${name}: Descartar fecha`).toBeHidden();
+    }
+  } finally {
     await api("DELETE", `${P}/finance-entries/${bill.id}`);
   }
 });

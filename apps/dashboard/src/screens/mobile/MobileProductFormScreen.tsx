@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useDiscardGuard } from "../../components/Modal";
 import { useNavigate, useParams } from "react-router-dom";
 import { NO_CATEGORY, type MenuCategory, type MenuItem } from "@cardapio/shared";
 import { api } from "../../lib/api";
@@ -56,6 +57,15 @@ export default function MobileProductFormScreen() {
       notify("Não foi possível enviar a foto");
     }
   };
+
+  // UX-08: Cancelar, the header's back arrow and the Android back ask before losing what was changed (once the dish loaded).
+  const fields = JSON.stringify([desc, categoryId, extras, schedule]);
+  const [start, setStart] = useState<string | null>(null);
+  useEffect(() => {
+    if (item && start === null) setStart(fields);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item]);
+  const guard = useDiscardGuard(start !== null && fields !== start, () => navigate(-1), item?.name);
 
   const save = async () => {
     if (!item) return;
@@ -213,13 +223,14 @@ export default function MobileProductFormScreen() {
       </section>
 
       <div style={{ display: "flex", gap: 9 }}>
-        <button type="button" onClick={() => navigate(-1)} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+        <button type="button" onClick={guard.request} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
           Cancelar
         </button>
         <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
           Salvar prato
         </button>
       </div>
+      {guard.confirm}
     </div>
   );
 }

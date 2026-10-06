@@ -4,6 +4,7 @@ import type { MenuCategory, MenuItem, Product } from "@cardapio/shared";
 import { api } from "../lib/api";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
+import { Modal } from "./Modal";
 
 /** "Adicionar prato ao cardápio": links an existing catalog Produto into a category — the Cardápio never creates products. */
 export function LinkDishModal({ categories, items, onClose, onLinked }: { categories: MenuCategory[]; items: MenuItem[]; onClose: () => void; onLinked: () => void }) {
@@ -35,11 +36,13 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
   const rows = (products ?? []).filter((p) => p.type === "produto" && (!query || p.name.toLowerCase().includes(query)));
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-panel" role="dialog" aria-label="Adicionar prato ao cardápio" style={{ maxWidth: 520 }}>
+    // Each Adicionar saves at once: nothing is left unsaved, so it always closes without asking.
+    <Modal label="Adicionar prato ao cardápio" onClose={onClose} style={{ maxWidth: 520 }}>
+      {(close) => (
+      <>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "20px 24px 4px" }}>
           <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>Adicionar prato ao cardápio</div>
-          <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={onClose}>
+          <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
             <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
           </button>
         </div>
@@ -91,11 +94,12 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
           <button type="button" onClick={() => navigate("/produtos")} style={{ border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: 12.5, fontWeight: 500, color: "var(--brandText)", flex: 1, textAlign: "left" }}>
             Não encontrou? Cadastre em Produtos → Catálogo
           </button>
-          <button type="button" className="btn btn-primary" onClick={onClose}>
+          <button type="button" className="btn btn-primary" onClick={close}>
             Concluir
           </button>
         </div>
-      </div>
-    </div>
+      </>
+      )}
+    </Modal>
   );
 }

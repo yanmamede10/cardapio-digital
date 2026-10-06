@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDiscardGuard } from "../../components/Modal";
 import { useNavigate } from "react-router-dom";
 import type { CouponChannel, CouponKind, MenuItem } from "@cardapio/shared";
 import { api } from "../../lib/api";
@@ -31,6 +32,11 @@ export default function MobileCouponFormScreen() {
   const toggleCombo = (id: string) => setComboSel((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const comboPrice = Math.round(items.filter((i) => comboSel.includes(i.id)).reduce((a, i) => a + i.price, 0) * 0.85 * 100) / 100;
+
+  // UX-08: Cancelar, the header's back arrow and the Android back ask before losing what was typed.
+  const fields = JSON.stringify([code, kind, value, validUntil, channel, usageLimit, comboSel]);
+  const [start] = useState(fields);
+  const guard = useDiscardGuard(fields !== start, () => navigate(-1));
 
   const save = async () => {
     if (!code.trim()) {
@@ -149,13 +155,14 @@ export default function MobileCouponFormScreen() {
       </section>
 
       <div style={{ display: "flex", gap: 9 }}>
-        <button type="button" onClick={() => navigate(-1)} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+        <button type="button" onClick={guard.request} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
           Cancelar
         </button>
         <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
           Criar cupom
         </button>
       </div>
+      {guard.confirm}
     </div>
   );
 }

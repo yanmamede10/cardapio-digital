@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { App } from "@capacitor/app";
+import { back } from "../../lib/back";
 import { type LiveData, buildNotifs, useLiveData } from "../../lib/live";
 import { api } from "../../lib/api";
 import { initialsOf } from "../../lib/format";
@@ -108,6 +109,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
   isRootRef.current = isRoot;
   useEffect(() => {
     const listener = App.addListener("backButton", () => {
+      if (back()) return; // an open sheet or box (or a form screen with changes) handles it first (UX-08)
       if (isRootRef.current) App.exitApp();
       else navigateRef.current(-1);
     });
@@ -162,7 +164,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
           ) : (
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() => back() || navigate(-1)}
               aria-label="Voltar"
               style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
             >

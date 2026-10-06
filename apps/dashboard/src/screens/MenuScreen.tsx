@@ -21,6 +21,7 @@ import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
 import { LinkDishModal } from "../components/LinkDishModal";
+import { SlideOver } from "../components/SlideOver";
 import { useCategoryDialog } from "../components/CategoryDialog";
 
 interface DraftExtra {
@@ -92,6 +93,9 @@ export default function MenuScreen() {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("Todas");
   const [drawer, setDrawer] = useState<Draft | null>(null);
+  // What Organizar prato opened with (UX-08); the photo is saved on its own, so it isn't a change to discard.
+  const drawerStart = useRef("");
+  const snap = (d: Draft) => JSON.stringify({ ...d, imageUrl: null });
   const [linking, setLinking] = useState(false);
   const [stockItems, setStockItems] = useState<Product[]>([]); // what an adicional can take from stock
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -131,8 +135,12 @@ export default function MenuScreen() {
     if (canEdit) api.listProducts().then((p) => setStockItems(p.filter((x) => !x.composed))).catch(() => {});
   }, [canEdit]);
 
+  const openDrawer = (d: Draft) => {
+    drawerStart.current = snap(d);
+    setDrawer(d);
+  };
   const openEdit = (m: MenuItem) =>
-    setDrawer({
+    openDrawer({
       id: m.id,
       productId: m.productId ?? null,
       name: m.name,
@@ -331,20 +339,24 @@ export default function MenuScreen() {
       )}
 
       {drawer && (
-        <div className="drawer-overlay">
-          <div className="drawer-panel">
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "20px 24px", borderBottom: "1px solid var(--glassBd)", position: "sticky", top: 0, background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em" }}>Organizar prato</div>
-                <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>
-                  {drawer.name} · {brl(drawer.price)}
-                </div>
-              </div>
-              <button type="button" title="Fechar" aria-label="Fechar" className="icon-btn" onClick={() => setDrawer(null)}>
-                <i className="fa-solid fa-xmark" style={{ fontSize: 18, lineHeight: 1 }} />
+        <SlideOver
+          title="Organizar prato"
+          subtitle={`${drawer.name} · ${brl(drawer.price)}`}
+          onClose={() => setDrawer(null)}
+          dirty={snap(drawer) !== drawerStart.current}
+          discardName={drawer.name}
+          footer={(close) => (
+            <>
+              <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
+                Salvar prato
               </button>
-            </div>
-            <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", gap: 20 }}>
+              <button type="button" className="btn btn-outline" onClick={close}>
+                Cancelar
+              </button>
+            </>
+          )}
+        >
+            <>
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
@@ -491,17 +503,8 @@ export default function MenuScreen() {
                   </label>
                 </div>
               </div>
-            </div>
-            <div style={{ marginTop: "auto", display: "flex", gap: 10, padding: "16px 24px", borderTop: "1px solid var(--glassBd)", position: "sticky", bottom: 0, background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)" }}>
-              <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={save}>
-                Salvar prato
-              </button>
-              <button type="button" className="btn btn-outline" onClick={() => setDrawer(null)}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
+            </>
+        </SlideOver>
       )}
 
       {linking && <LinkDishModal categories={categories} items={items} onClose={() => setLinking(false)} onLinked={reload} />}

@@ -1,12 +1,17 @@
 import type { ReactNode } from "react";
 import { useIsMobile } from "../lib/useIsMobile";
+import { useDiscardGuard } from "./Modal";
 
 interface Props {
   title: string;
   subtitle: string;
   onClose: () => void;
-  /** The drawer's own footer (Cupom). A sheet draws its own from `sheet`. */
-  footer?: ReactNode;
+  /** The drawer's own footer (Cupom); as a function it gets `close`, the guarded Cancelar. A sheet draws its own. */
+  footer?: ReactNode | ((close: () => void) => ReactNode);
+  /** Something changed: X, Cancelar, Esc and the Android back ask "Descartar alterações?" (UX-08). A sheet says it in `sheet`. */
+  dirty?: boolean;
+  /** For "As alterações em “…” não serão salvas." */
+  discardName?: string;
   children: ReactNode;
   width?: number;
   /** UX-07 · 3: a sheet instead of the side drawer — 720 px, up to 28 px from the top, the status and Cancelar/Salvar always in
@@ -18,14 +23,15 @@ const bar = { position: "sticky", background: "var(--glassBg)", backdropFilter: 
 const textButton = { minWidth: 88, border: 0, background: "transparent", padding: "0 10px", cursor: "pointer", font: "inherit", fontSize: 16, color: "var(--brandText)" } as const;
 
 /** Right-hand slide-over panel used by the coupon editor; the product cadastro opens it as a sheet. */
-export function SlideOver({ title, subtitle, onClose, footer, children, width, sheet }: Props) {
+export function SlideOver({ title, subtitle, onClose, footer, children, width, sheet, dirty, discardName }: Props) {
   const phone = useIsMobile();
+  const guard = useDiscardGuard(sheet?.dirty ?? !!dirty, onClose, discardName);
   return (
     <div className={`drawer-overlay${sheet ? " sheet" : ""}`}>
       <div className={`drawer-panel${sheet ? " sheet" : ""}`} role="dialog" aria-modal="true" aria-label={title} style={width && !sheet ? { width } : undefined}>
         {sheet && phone ? (
           <div style={{ ...bar, top: 0, display: "flex", alignItems: "center", padding: "6px 8px", minHeight: 52, borderBottom: "1px solid var(--glassBd)" }}>
-            <button type="button" onClick={onClose} style={{ ...textButton, textAlign: "left" }}>
+            <button type="button" onClick={guard.request} style={{ ...textButton, textAlign: "left" }}>
               Cancelar
             </button>
             <div style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 16, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
@@ -39,7 +45,7 @@ export function SlideOver({ title, subtitle, onClose, footer, children, width, s
               <div style={{ fontSize: sheet ? 17 : 16, fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>
               <div style={{ fontSize: 12.5, color: sheet ? "var(--ink2)" : "var(--ink3)", marginTop: sheet ? 0 : 2 }}>{subtitle}</div>
             </div>
-            <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar" style={sheet ? { borderRadius: "50%" } : undefined}>
+            <button type="button" className="icon-btn" onClick={guard.request} title="Fechar" aria-label="Fechar" style={sheet ? { borderRadius: "50%" } : undefined}>
               <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
             </button>
           </div>
@@ -53,19 +59,22 @@ export function SlideOver({ title, subtitle, onClose, footer, children, width, s
               <>
                 {sheet.dirty && <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--brandText)" }} />}
                 <span style={{ flex: 1, fontSize: 12.5, color: "var(--ink2)" }}>{sheet.status}</span>
-                <button type="button" className="btn btn-outline" onClick={onClose}>
+                <button type="button" className="btn btn-outline" onClick={guard.request}>
                   Cancelar
                 </button>
                 <button type="button" className="btn btn-primary" disabled={sheet.saving} onClick={sheet.onSave}>
                   {sheet.saveLabel}
                 </button>
               </>
+            ) : typeof footer === "function" ? (
+              footer(guard.request)
             ) : (
               footer
             )}
           </div>
         )}
       </div>
+      {guard.confirm}
     </div>
   );
 }
