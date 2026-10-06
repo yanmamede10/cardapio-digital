@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { MenuCategory, MenuItem } from "@cardapio/shared";
+import { NO_CATEGORY, type MenuCategory, type MenuItem } from "@cardapio/shared";
 import { api } from "../../lib/api";
 import { brl } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
@@ -41,7 +41,7 @@ export default function MobileProductFormScreen() {
       setCategories(cats);
       setItem(found);
       setDesc(found.shortDescription);
-      setCategoryId(found.categoryId);
+      setCategoryId(found.categoryId ?? "");
       setExtras(found.optionGroups.find((g) => g.id === "extra")?.options.map((o) => ({ name: o.label, price: o.priceDelta.toFixed(2).replace(".", ","), productId: o.productId, quantity: o.quantity })) || []);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,6 +148,7 @@ export default function MobileProductFormScreen() {
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Categoria</span>
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="field-mobile">
+            {!categoryId && <option value="">{NO_CATEGORY}</option>}
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

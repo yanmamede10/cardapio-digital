@@ -17,6 +17,11 @@ const MAX_TAX_CODE_LENGTH = 20;
 const isAmount = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n >= 0;
 
 async function productError(restaurantId: string, body: UpsertProductRequest, selfId?: string): Promise<string | null> {
+  // J-1: the category (shared with the Cardápio) must be one of this restaurant's; null = Sem categoria.
+  if (body.categoryId != null) {
+    if (typeof body.categoryId !== "string") return "categoryId must be text";
+    if ((await prisma.menuCategory.findUnique({ where: { id: body.categoryId } }))?.restaurantId !== restaurantId) return "unknown category";
+  }
   const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!name || name.length > MAX_NAME_LENGTH) return `name is required (max ${MAX_NAME_LENGTH} characters)`;
   if (body.type !== "produto" && body.type !== "insumo") return "type must be produto or insumo";
@@ -68,6 +73,7 @@ productsRouter.post("/:id/products", ...staffGuard, async (req, res) => {
       cst: body.cst.trim(),
       taxRate: body.taxRate,
       composed: !!body.composed,
+      categoryId: body.categoryId ?? null,
       components: body.composed ? { create: body.components.map((c) => ({ componentId: c.componentId, quantity: c.quantity })) } : undefined
     }
   });
@@ -104,6 +110,7 @@ productsRouter.patch("/:id/products/:productId", ...staffGuard, async (req, res)
         cst: body.cst.trim(),
         taxRate: body.taxRate,
         composed: !!body.composed,
+        ...(body.categoryId !== undefined ? { categoryId: body.categoryId } : {}),
         components: body.composed ? { create: body.components.map((c) => ({ componentId: c.componentId, quantity: c.quantity })) } : undefined
       }
     }),

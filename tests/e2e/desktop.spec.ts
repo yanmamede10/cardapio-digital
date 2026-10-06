@@ -445,7 +445,7 @@ plain("Cardápio: criar, renomear e excluir categoria; categoria nova aparece va
   await expect(page.locator(".toast-bubble")).toContainText("excluída");
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Excluir categoria Sobremesas" }).click();
-  await expect(page.locator(".toast-bubble")).toContainText("Mova ou remova os pratos");
+  await expect(page.locator(".toast-bubble")).toContainText("Sobremesas tem 4 itens");
 });
 
 plain("Produtos: contagem de estoque define o estoque e aparece em Movimentações", async ({ page, request }) => {

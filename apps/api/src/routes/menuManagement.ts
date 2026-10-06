@@ -4,7 +4,7 @@ import multer from "multer";
 import { LEVEL, type MenuItemOptionGroup, type UpsertMenuItemRequest } from "@cardapio/shared";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireMinRole, requireStaff } from "../lib/auth.js";
-import { serializeMenuItem } from "../lib/serialize.js";
+import { WITH_CATEGORY, serializeMenuItem } from "../lib/serialize.js";
 import { NOT_AN_IMAGE, PUBLIC_IMAGE_MAX_BYTES, imageKind, uploadPublicFile } from "../lib/storage.js";
 
 export const menuManagementRouter = asyncRouter();
@@ -12,6 +12,8 @@ export const menuManagementRouter = asyncRouter();
 // "/api/restaurants" mount point, and a path-based router.use() here would
 // also run for sibling routers' routes.
 const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("cardapio")];
+// J-1: one list of categories for the Cardápio and the Catálogo — either module manages it.
+const categoryGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADMINISTRADOR), requireModule("cardapio", "produtos")];
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: PUBLIC_IMAGE_MAX_BYTES } });
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_NAME_LENGTH = 80;
@@ -77,9 +79,9 @@ async function itemsFor(restaurantId: string) {
   const items = await prisma.menuItem.findMany({
     where: { restaurantId },
     orderBy: { sortOrder: "asc" },
-    include: { category: true }
+    include: WITH_CATEGORY
   });
-  return items.map((it) => serializeMenuItem(it, it.category.name));
+  return items.map(serializeMenuItem);
 }
 
 menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
@@ -93,14 +95,16 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
 
   // Desktop Cardápio links an existing catalog Produto. The mobile form still sends name/price
   // without a productId — it gets a Produto made for it so every dish stays catalog-backed.
+  // The category chosen here is the product's (J-1): it moves in the Catálogo too.
   let product;
   if (body.productId) {
     product = await prisma.product.findUnique({ where: { id: body.productId } });
     if (!product || product.restaurantId !== req.params.id || product.type !== "produto") return res.status(400).json({ error: "unknown product" });
     if (await prisma.menuItem.findFirst({ where: { productId: product.id } })) return res.status(409).json({ error: "este prato já está no cardápio" });
+    if (product.categoryId !== category.id) product = await prisma.product.update({ where: { id: product.id }, data: { categoryId: category.id } });
   } else {
     if (typeof body.name !== "string" || !body.name.trim() || typeof body.price !== "number") return res.status(400).json({ error: "productId or name and price are required" });
-    product = await prisma.product.create({ data: { restaurantId: req.params.id, name: body.name, type: "produto", unit: "un", price: body.price } });
+    product = await prisma.product.create({ data: { restaurantId: req.params.id, name: body.name, type: "produto", unit: "un", price: body.price, categoryId: category.id } });
   }
   const shortDescription = body.shortDescription ?? "";
 
@@ -109,7 +113,6 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
     data: {
       id: `${req.params.id}-${randomUUID()}`,
       restaurantId: req.params.id,
-      categoryId: body.categoryId,
       productId: product.id,
       name: product.name,
       shortDescription,
@@ -121,9 +124,9 @@ menuManagementRouter.post("/:id/items", ...staffGuard, async (req, res) => {
       ...(body.scheduleLabel ? { scheduleLabel: body.scheduleLabel } : {}),
       sortOrder: (last?.sortOrder ?? -1) + 1
     },
-    include: { category: true }
+    include: WITH_CATEGORY
   });
-  res.status(201).json(serializeMenuItem(item, item.category.name));
+  res.status(201).json(serializeMenuItem(item));
 });
 
 menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res) => {
@@ -136,12 +139,12 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
     return res.status(400).json({ error: "unknown category" });
   }
 
-  // Name/price belong to the catalog product (desktop edits them there). The mobile form still
-  // sends them here — write them through to the product and every dish linked to it.
-  if (existing.productId && (body.name !== undefined || body.price !== undefined)) {
+  // Name/price belong to the catalog product (desktop edits them there), and so does the category (J-1). The forms still
+  // send them here — write them through to the product and every dish linked to it.
+  if (existing.productId && (body.name !== undefined || body.price !== undefined || body.categoryId)) {
     const product = await prisma.product.update({
       where: { id: existing.productId },
-      data: { ...(body.name !== undefined ? { name: body.name } : {}), ...(body.price !== undefined ? { price: body.price } : {}) }
+      data: { ...(body.name !== undefined ? { name: body.name } : {}), ...(body.price !== undefined ? { price: body.price } : {}), ...(body.categoryId ? { categoryId: body.categoryId } : {}) }
     });
     await prisma.menuItem.updateMany({ where: { productId: product.id }, data: { name: product.name, price: product.price } });
   }
@@ -149,7 +152,6 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
   const item = await prisma.menuItem.update({
     where: { id: req.params.itemId },
     data: {
-      ...(body.categoryId ? { categoryId: body.categoryId } : {}),
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.shortDescription !== undefined ? { shortDescription: body.shortDescription } : {}),
       ...(body.longDescription !== undefined ? { longDescription: body.longDescription } : {}),
@@ -158,9 +160,9 @@ menuManagementRouter.patch("/:id/items/:itemId", ...staffGuard, async (req, res)
       ...(body.scheduleLabel !== undefined ? { scheduleLabel: body.scheduleLabel } : {}),
       ...(body.extras !== undefined ? { optionGroupsJson: withExtras(existing.optionGroupsJson, body.extras) } : {})
     },
-    include: { category: true }
+    include: WITH_CATEGORY
   });
-  res.json(serializeMenuItem(item, item.category.name));
+  res.json(serializeMenuItem(item));
 });
 
 // Esgotado/Disponível: any role — the kitchen is who knows the bacon ran out. Everything else on a dish is Administrador+.
@@ -169,8 +171,8 @@ menuManagementRouter.patch("/:id/items/:itemId/sold-out", requireStaff, requireO
   if (typeof soldOut !== "boolean") return res.status(400).json({ error: "soldOut must be true or false" });
   const existing = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
   if (!existing || existing.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
-  const item = await prisma.menuItem.update({ where: { id: existing.id }, data: { soldOut }, include: { category: true } });
-  res.json(serializeMenuItem(item, item.category.name));
+  const item = await prisma.menuItem.update({ where: { id: existing.id }, data: { soldOut }, include: WITH_CATEGORY });
+  res.json(serializeMenuItem(item));
 });
 
 menuManagementRouter.post("/:id/items/:itemId/image", ...staffGuard, upload.single("file"), async (req, res) => {
@@ -190,8 +192,8 @@ menuManagementRouter.post("/:id/items/:itemId/image", ...staffGuard, upload.sing
     return res.status(503).json({ error: "storage is not configured" });
   }
 
-  const item = await prisma.menuItem.update({ where: { id: req.params.itemId }, data: { imageUrl: url }, include: { category: true } });
-  res.status(201).json(serializeMenuItem(item, item.category.name));
+  const item = await prisma.menuItem.update({ where: { id: req.params.itemId }, data: { imageUrl: url }, include: WITH_CATEGORY });
+  res.status(201).json(serializeMenuItem(item));
 });
 
 menuManagementRouter.delete("/:id/items/:itemId", ...staffGuard, async (req, res) => {
@@ -209,7 +211,6 @@ menuManagementRouter.post("/:id/items/:itemId/duplicate", ...staffGuard, async (
     data: {
       id: `${req.params.id}-${randomUUID()}`,
       restaurantId: original.restaurantId,
-      categoryId: original.categoryId,
       productId: original.productId,
       name: `${original.name} (cópia)`,
       shortDescription: original.shortDescription,
@@ -223,20 +224,21 @@ menuManagementRouter.post("/:id/items/:itemId/duplicate", ...staffGuard, async (
       optionGroupsJson: original.optionGroupsJson,
       sortOrder: (last?.sortOrder ?? -1) + 1
     },
-    include: { category: true }
+    include: WITH_CATEGORY
   });
-  res.status(201).json(serializeMenuItem(copy, copy.category.name));
+  res.status(201).json(serializeMenuItem(copy));
 });
 
 menuManagementRouter.post("/:id/items/:itemId/move", ...staffGuard, async (req, res) => {
   const { direction } = req.body as { direction?: "up" | "down" };
-  const item = await prisma.menuItem.findUnique({ where: { id: req.params.itemId } });
+  const item = await prisma.menuItem.findUnique({ where: { id: req.params.itemId }, include: { product: true } });
   if (!item || item.restaurantId !== req.params.id) return res.status(404).json({ error: "item not found" });
 
-  const siblings = await prisma.menuItem.findMany({ where: { categoryId: item.categoryId }, orderBy: { sortOrder: "asc" } });
+  // The dishes of the same category — its product's (J-1); "Sem categoria" ones move among themselves.
+  const siblings = await prisma.menuItem.findMany({ where: { restaurantId: item.restaurantId, product: { categoryId: item.product?.categoryId ?? null } }, orderBy: { sortOrder: "asc" } });
   const index = siblings.findIndex((s) => s.id === item.id);
   const swapIndex = direction === "up" ? index - 1 : index + 1;
-  if (swapIndex >= 0 && swapIndex < siblings.length) {
+  if (index >= 0 && swapIndex >= 0 && swapIndex < siblings.length) {
     const other = siblings[swapIndex];
     await prisma.$transaction([
       prisma.menuItem.update({ where: { id: item.id }, data: { sortOrder: other.sortOrder } }),
@@ -246,7 +248,7 @@ menuManagementRouter.post("/:id/items/:itemId/move", ...staffGuard, async (req, 
   res.json(await itemsFor(req.params.id));
 });
 
-menuManagementRouter.post("/:id/categories/:categoryId/move", ...staffGuard, async (req, res) => {
+menuManagementRouter.post("/:id/categories/:categoryId/move", ...categoryGuard, async (req, res) => {
   const { direction } = req.body as { direction?: "up" | "down" };
   const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });
@@ -265,7 +267,7 @@ menuManagementRouter.post("/:id/categories/:categoryId/move", ...staffGuard, asy
 });
 
 // Categorias: a restaurant signed up by the super admin starts with none, and dishes need one. Names are unique per
-// restaurant (case-insensitive); only an empty category can be deleted (every dish belongs to one).
+// restaurant (case-insensitive); only an empty category (no produto, insumo or dish) can be deleted.
 const MAX_CATEGORY_LENGTH = 40;
 async function categoriesFor(restaurantId: string) {
   const categories = await prisma.menuCategory.findMany({ where: { restaurantId }, orderBy: { sortOrder: "asc" } });
@@ -279,7 +281,13 @@ async function categoryName(restaurantId: string, raw: unknown, exceptId?: strin
   return taken ? { status: 409, error: `já existe a categoria ${taken.name}` } : { name };
 }
 
-menuManagementRouter.post("/:id/categories", ...staffGuard, async (req, res) => {
+// The whole list, empty ones included (the public GET /:id/categories has only those with a dish). Any role: the kitchen
+// and the waiters open the Cardápio too (Esgotado).
+menuManagementRouter.get("/:id/categories/all", requireStaff, requireOwnRestaurant, requireModule("cardapio", "produtos"), async (req, res) => {
+  res.json(await categoriesFor(req.params.id));
+});
+
+menuManagementRouter.post("/:id/categories", ...categoryGuard, async (req, res) => {
   const checked = await categoryName(req.params.id, (req.body as { name?: unknown }).name);
   if ("error" in checked) return res.status(checked.status).json({ error: checked.error });
   const last = await prisma.menuCategory.findFirst({ where: { restaurantId: req.params.id }, orderBy: { sortOrder: "desc" } });
@@ -287,7 +295,7 @@ menuManagementRouter.post("/:id/categories", ...staffGuard, async (req, res) => 
   res.status(201).json(await categoriesFor(req.params.id));
 });
 
-menuManagementRouter.patch("/:id/categories/:categoryId", ...staffGuard, async (req, res) => {
+menuManagementRouter.patch("/:id/categories/:categoryId", ...categoryGuard, async (req, res) => {
   const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });
   const checked = await categoryName(req.params.id, (req.body as { name?: unknown }).name, category.id);
@@ -296,10 +304,14 @@ menuManagementRouter.patch("/:id/categories/:categoryId", ...staffGuard, async (
   res.json(await categoriesFor(req.params.id));
 });
 
-menuManagementRouter.delete("/:id/categories/:categoryId", ...staffGuard, async (req, res) => {
+menuManagementRouter.delete("/:id/categories/:categoryId", ...categoryGuard, async (req, res) => {
   const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });
-  if (await prisma.menuItem.count({ where: { categoryId: category.id } })) return res.status(409).json({ error: "mova ou remova os pratos desta categoria antes de excluí-la" });
+  // Produtos and insumos; a dish counts through its product.
+  const items = await prisma.product.count({ where: { categoryId: category.id } });
+  if (items) {
+    return res.status(409).json({ error: `A categoria ${category.name} tem ${items === 1 ? "1 item" : `${items} itens`}. Mova para outra categoria antes de excluir.`, items });
+  }
   await prisma.menuCategory.delete({ where: { id: category.id } });
   res.json(await categoriesFor(req.params.id));
 });

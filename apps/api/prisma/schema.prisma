@@ -104,15 +104,15 @@ model MenuCategory {
   name         String
   sortOrder    Int
 
-  items MenuItem[]
+  // J-1: one list for the Cardápio and the Catálogo — the category lives on the Product (insumos too); a dish shows its
+  // product's. The customer's menu lists only categories with a dish.
+  products Product[]
 }
 
 model MenuItem {
   id               String @id
   restaurantId     String
   restaurant       Restaurant   @relation(fields: [restaurantId], references: [id])
-  categoryId       String
-  category         MenuCategory @relation(fields: [categoryId], references: [id])
   name             String
   shortDescription String
   longDescription  String
@@ -149,6 +149,9 @@ model Product {
   taxRate      Float    @default(0)
   composed     Boolean  @default(false)
   createdAt    DateTime @default(now())
+  // Null = "Sem categoria". Restrict: only an empty category can be deleted (the API answers 409 first).
+  categoryId   String?
+  category     MenuCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
   components ProductComponent[] @relation("ProductComponents")
   usedIn     ProductComponent[] @relation("ComponentOf")

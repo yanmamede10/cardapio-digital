@@ -96,8 +96,9 @@ function staffGuard(allowProvisional: boolean) {
 
 /** Contracted-module gate (ADMIN-03), run after requireStaff (which loaded the restaurant's current modules). */
 export const hasModule = (req: Request, key: PlanModule) => !!req.staff?.modules.includes(key);
-export function requireModule(key: PlanModule) {
-  return (req: Request, res: Response, next: NextFunction) => (hasModule(req, key) ? next() : res.status(403).json({ error: "forbidden: module not contracted" }));
+/** Any of the keys passes: the categories serve both the Cardápio and the Catálogo (J-1). */
+export function requireModule(...keys: PlanModule[]) {
+  return (req: Request, res: Response, next: NextFunction) => (keys.some((k) => hasModule(req, k)) ? next() : res.status(403).json({ error: "forbidden: module not contracted" }));
 }
 
 /** Rejects if the :id route param doesn't match the authenticated staff's own restaurant. */

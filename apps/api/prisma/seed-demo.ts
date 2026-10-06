@@ -155,6 +155,7 @@ async function main() {
           cost: d.own?.cost ?? 0,
           stock: d.own?.stock ?? 0,
           composed: !!d.recipe,
+          categoryId,
           components: d.recipe ? { create: d.recipe.map(([name, quantity]) => ({ componentId: insumo.get(name)!, quantity })) } : undefined
         }
       });
@@ -162,7 +163,6 @@ async function main() {
         data: {
           id: `${R}-${sort}`,
           restaurantId: R,
-          categoryId,
           productId: product.id,
           name: d.name,
           shortDescription: d.desc,

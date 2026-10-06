@@ -1,7 +1,7 @@
 import { asyncRouter } from "../lib/router.js";
 import { prisma } from "../db.js";
 import { requireModule, requireOwnRestaurant, requireStaff } from "../lib/auth.js";
-import { serializeHours, serializeMenuItem, serializeOrder, serializeRestaurant } from "../lib/serialize.js";
+import { WITH_CATEGORY, serializeHours, serializeMenuItem, serializeOrder, serializeRestaurant } from "../lib/serialize.js";
 
 export const restaurantsRouter = asyncRouter();
 
@@ -53,8 +53,9 @@ restaurantsRouter.get("/:id", async (req, res) => {
 restaurantsRouter.get("/:id/categories", async (req, res) => {
   const restaurant = await activeRestaurant(req.params.id);
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
+  // Only categories with a dish: one just created, or with only insumos (J-1), stays out of the customer's menu.
   const categories = await prisma.menuCategory.findMany({
-    where: { restaurantId: req.params.id },
+    where: { restaurantId: req.params.id, products: { some: { menuItems: { some: {} } } } },
     orderBy: { sortOrder: "asc" }
   });
   res.json(
@@ -65,22 +66,22 @@ restaurantsRouter.get("/:id/categories", async (req, res) => {
 restaurantsRouter.get("/:id/items", async (req, res) => {
   const restaurant = await activeRestaurant(req.params.id);
   if (!restaurant) return res.status(404).json({ error: "restaurant not found" });
-  const { categoryId } = req.query as { categoryId?: string };
+  const { categoryId } = req.query as { categoryId?: unknown };
   const items = await prisma.menuItem.findMany({
-    where: { restaurantId: req.params.id, ...(categoryId ? { categoryId } : {}) },
+    where: { restaurantId: req.params.id, ...(typeof categoryId === "string" && categoryId ? { product: { categoryId } } : {}) },
     orderBy: { sortOrder: "asc" },
-    include: { category: true }
+    include: WITH_CATEGORY
   });
-  res.json(items.map((it) => serializeMenuItem(it, it.category.name)));
+  res.json(items.map(serializeMenuItem));
 });
 
 restaurantsRouter.get("/:id/items/:itemId", async (req, res) => {
   const item = await prisma.menuItem.findUnique({
     where: { id: req.params.itemId },
-    include: { category: true }
+    include: WITH_CATEGORY
   });
   if (!item || item.restaurantId !== req.params.id || !(await activeRestaurant(req.params.id))) {
     return res.status(404).json({ error: "item not found" });
   }
-  res.json(serializeMenuItem(item, item.category.name));
+  res.json(serializeMenuItem(item));
 });

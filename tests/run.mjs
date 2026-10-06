@@ -19,7 +19,8 @@ const env = { ...process.env, PORT: "4200", API_URL: "http://localhost:4200", TZ
 // (apps/api/src/lib/rateLimit.ts; tests/api/limites.test.ts reads the same number). The load test keeps the real one.
 if (only !== "carga") env.STAFF_PER_MINUTE = "3000";
 if (!supabase) {
-  Object.assign(env, { DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, SUPER_ADMIN_KEY: "test-admin-key" });
+  // TEST_DB_CONTAINER: tests/api/categoria.test.ts runs a migration on a second database in it (psql).
+  Object.assign(env, { DATABASE_URL: DB_URL, DIRECT_URL: DB_URL, SUPER_ADMIN_KEY: "test-admin-key", TEST_DB_CONTAINER: CONTAINER });
   // WhatsApp: the API talks to a fake Evolution that tests/api/whatsapp.test.ts serves on :4299 — no real Evolution needed.
   // Storage: the private WhatsApp bucket points at that same fake (it answers S3 PUTs too) with dummy keys; the public bucket
   // is blanked (set-but-empty beats apps/api/.env). No test ever reaches the real Supabase.

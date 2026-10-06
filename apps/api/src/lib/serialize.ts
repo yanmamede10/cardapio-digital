@@ -26,11 +26,13 @@ import type {
   TableStatus,
   WaiterCall as ApiWaiterCall
 } from "@cardapio/shared";
+import { NO_CATEGORY } from "@cardapio/shared";
 import type {
   Address,
   BillingCharge,
   Coupon,
   FinanceEntry,
+  MenuCategory,
   MenuItem,
   OperatingHour,
   Order,
@@ -70,12 +72,16 @@ export function serializeRestaurant(r: Restaurant): ApiRestaurant {
   };
 }
 
-export function serializeMenuItem(item: MenuItem, categoryName: string): ApiMenuItem {
+/** Include for every MenuItem read: its category is its product's (J-1). */
+export const WITH_CATEGORY = { product: { include: { category: true } } } as const;
+
+export function serializeMenuItem(item: MenuItem & { product: (Product & { category: MenuCategory | null }) | null }): ApiMenuItem {
+  const category = item.product?.category ?? null;
   return {
     id: item.id,
     restaurantId: item.restaurantId,
-    categoryId: item.categoryId,
-    categoryName,
+    categoryId: category?.id ?? null,
+    categoryName: category?.name ?? NO_CATEGORY,
     name: item.name,
     shortDescription: item.shortDescription,
     longDescription: item.longDescription,
@@ -323,6 +329,7 @@ export function serializeProduct(p: Product & { components: (ProductComponent & 
     taxRate: p.taxRate,
     composed: p.composed,
     components,
+    categoryId: p.categoryId,
     unitLocked: (p._count?.movements ?? 0) > 0
   };
 }

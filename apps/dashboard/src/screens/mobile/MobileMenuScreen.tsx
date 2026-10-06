@@ -10,7 +10,7 @@ import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
 import { MobileToggle } from "../../components/mobile/MobileToggle";
 import { ActionSheet } from "../../components/mobile/ActionSheet";
 import { LinkDishModal } from "../../components/LinkDishModal";
-import { categoryActions } from "../MenuScreen";
+import { categoryActions, withNoCategory } from "../MenuScreen";
 
 export default function MobileMenuScreen() {
   // Funcionário (garçom, cozinha) only flips Esgotado/Disponível; adding, editing and removing dishes is Administrador+.
@@ -37,7 +37,7 @@ export default function MobileMenuScreen() {
       setCategories(c);
       setItems(i);
       setLoaded(true);
-      setOpenCats((prev) => (prev.length ? prev : c.map((cat) => cat.id)));
+      setOpenCats((prev) => (prev.length ? prev : [...c.map((cat) => cat.id), ""]));
     });
 
   useEffect(() => {
@@ -50,7 +50,9 @@ export default function MobileMenuScreen() {
     return q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
   }, [items, query]);
 
-  const groups = categories.filter((c) => filtered.some((i) => i.categoryId === c.id)).map((c) => ({ cat: c, items: filtered.filter((i) => i.categoryId === c.id) }));
+  const groups = withNoCategory(categories, filtered)
+    .filter((c) => filtered.some((i) => (i.categoryId ?? "") === c.id))
+    .map((c) => ({ cat: c, items: filtered.filter((i) => (i.categoryId ?? "") === c.id) }));
 
   const toggleCat = (id: string) => setOpenCats((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 

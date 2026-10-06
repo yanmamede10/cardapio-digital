@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { LEVEL, type MenuCategory, type MenuItem, type Product } from "@cardapio/shared";
+import { LEVEL, NO_CATEGORY, type MenuCategory, type MenuItem, type Product } from "@cardapio/shared";
 import {
   DndContext,
   DragOverlay,
@@ -29,6 +29,11 @@ interface DraftExtra {
   productId: string;
   qty: string;
 }
+
+/** Dishes whose product has no category (J-1) are listed under this one, always last; it isn't dragged, renamed or deleted. */
+export const NO_CATEGORY_GROUP: MenuCategory = { id: "", restaurantId: "", name: NO_CATEGORY, sortOrder: Number.MAX_SAFE_INTEGER };
+/** The categories to group dishes by: the list, plus "Sem categoria" when some dish has none. */
+export const withNoCategory = (categories: MenuCategory[], items: MenuItem[]) => (items.some((i) => !i.categoryId) ? [...categories, NO_CATEGORY_GROUP] : categories);
 
 /** Nova / renomear / excluir categoria (prompt + confirm), shared by the desktop and phone Cardápio. */
 export function categoryActions(notify: (m: string) => void, onChanged: (list: MenuCategory[]) => void) {
@@ -119,9 +124,9 @@ export default function MenuScreen() {
 
   // Without a search or a category filter every category shows, empty ones too (a new one must be visible to fill).
   const showAll = !query.trim() && activeCat === "Todas";
-  const groups = categories
-    .filter((c) => showAll || filtered.some((m) => m.categoryId === c.id))
-    .map((c) => ({ cat: c, items: filtered.filter((m) => m.categoryId === c.id) }));
+  const groups = withNoCategory(categories, filtered)
+    .filter((c) => showAll || filtered.some((m) => (m.categoryId ?? "") === c.id))
+    .map((c) => ({ cat: c, items: filtered.filter((m) => (m.categoryId ?? "") === c.id) }));
 
   const openLink = () => setLinking(true);
   const cats = categoryActions(notify, () => reload());
@@ -137,7 +142,7 @@ export default function MenuScreen() {
       name: m.name,
       price: m.price,
       desc: m.shortDescription,
-      categoryId: m.categoryId,
+      categoryId: m.categoryId ?? "",
       lunch: "11:00 – 15:00",
       dinner: "18:00 – 23:00",
       extras:
@@ -238,7 +243,7 @@ export default function MenuScreen() {
     }
   };
 
-  const catPills = ["Todas", ...categories.map((c) => c.name)];
+  const catPills = ["Todas", ...withNoCategory(categories, items).map((c) => c.name)];
 
   if (loading) {
     return (
@@ -316,7 +321,7 @@ export default function MenuScreen() {
           <SortableContext items={groups.map((g) => catSortId(g.cat.id))} strategy={verticalListSortingStrategy}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {groups.map((g) => (
-                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit} onRename={() => cats.rename(g.cat)} onDelete={() => cats.remove(g.cat)}>
+                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit && g.cat !== NO_CATEGORY_GROUP} onRename={() => cats.rename(g.cat)} onDelete={() => cats.remove(g.cat)}>
                   <SortableContext items={g.items.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {g.items.map((m) => (
                       <ItemRow key={m.id} item={m} canEdit={canEdit} onToggleAvailable={() => toggleAvailable(m)} onUnlink={() => unlink(m)} onEdit={() => openEdit(m)} />
@@ -405,6 +410,7 @@ export default function MenuScreen() {
               <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span className="field-label">Categoria no cardápio</span>
                 <select className="field" value={drawer.categoryId} onChange={(e) => setDrawer({ ...drawer, categoryId: e.target.value })}>
+                  {!drawer.categoryId && <option value="">{NO_CATEGORY}</option>}
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -553,7 +559,7 @@ function ItemDragPreview({ name, price }: { name: string; price: string }) {
 }
 
 function CategorySection({ cat, count, canEdit, onRename, onDelete, children }: { cat: MenuCategory; count: number; canEdit: boolean; onRename: () => void; onDelete: () => void; children: ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: catSortId(cat.id) });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: catSortId(cat.id), disabled: cat === NO_CATEGORY_GROUP });
   const style: CSSProperties = { overflowX: "auto", transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
   return (
     <section ref={setNodeRef} style={style} className="card">

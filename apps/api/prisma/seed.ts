@@ -218,13 +218,12 @@ async function main() {
 
     for (const [ii, item] of menu.entries()) {
       const product = await prisma.product.create({
-        data: { id: `p-${p.id}-${item.id}`, restaurantId: p.id, name: item.name, type: "produto", unit: "un", price: item.price }
+        data: { id: `p-${p.id}-${item.id}`, restaurantId: p.id, name: item.name, type: "produto", unit: "un", price: item.price, categoryId: categoryIds[item.cat] }
       });
       await prisma.menuItem.create({
         data: {
           id: `${p.id}-${item.id}`,
           restaurantId: p.id,
-          categoryId: categoryIds[item.cat],
           productId: product.id,
           name: item.name,
           shortDescription: item.desc,

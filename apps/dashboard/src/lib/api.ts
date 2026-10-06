@@ -247,7 +247,10 @@ export const api = {
     request<{ ok: true }>(`/api/restaurants/${RESTAURANT_ID}/waiter-calls/${callId}/resolve`, { method: "POST" }),
 
   // Menu
-  listCategories: () => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories`),
+  /** Every category, empty ones too (the public list has only those with a dish). */
+  listCategories: () => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/all`),
+  /** The customer's list: only categories with a dish, no module needed (Lançar pedido). */
+  listMenuCategories: () => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories`),
   listItems: () => request<MenuItem[]>(`/api/restaurants/${RESTAURANT_ID}/items`),
   createItem: (payload: UpsertMenuItemRequest) =>
     request<MenuItem>(`/api/restaurants/${RESTAURANT_ID}/items`, { method: "POST", body: JSON.stringify(payload) }),

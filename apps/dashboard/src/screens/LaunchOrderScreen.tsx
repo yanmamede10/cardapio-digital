@@ -35,7 +35,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.listItems(), api.listCategories()])
+    Promise.all([api.listItems(), api.listMenuCategories()])
       .then(([i, c]) => {
         setItems(i);
         setCategories(c.filter((x) => i.some((it) => it.categoryId === x.id)));

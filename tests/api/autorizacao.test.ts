@@ -80,10 +80,12 @@ const STAFF: Record<string, Rule> = {
   "DELETE /api/restaurants/:id/items/:itemId": ["administrador", "cardapio"],
   "POST /api/restaurants/:id/items/:itemId/duplicate": ["administrador", "cardapio"],
   "POST /api/restaurants/:id/items/:itemId/move": ["administrador", "cardapio"],
-  "POST /api/restaurants/:id/categories/:categoryId/move": ["administrador", "cardapio"],
-  "POST /api/restaurants/:id/categories": ["administrador", "cardapio"],
-  "PATCH /api/restaurants/:id/categories/:categoryId": ["administrador", "cardapio"],
-  "DELETE /api/restaurants/:id/categories/:categoryId": ["administrador", "cardapio"],
+  // J-1: one list of categories for the Cardápio and the Catálogo — either module (both off: 403).
+  "GET /api/restaurants/:id/categories/all": ["funcionario", "cardapio|produtos"],
+  "POST /api/restaurants/:id/categories/:categoryId/move": ["administrador", "cardapio|produtos"],
+  "POST /api/restaurants/:id/categories": ["administrador", "cardapio|produtos"],
+  "PATCH /api/restaurants/:id/categories/:categoryId": ["administrador", "cardapio|produtos"],
+  "DELETE /api/restaurants/:id/categories/:categoryId": ["administrador", "cardapio|produtos"],
 
   "GET /api/restaurants/:id/coupons": ["administrador", "promocoes"],
   "POST /api/restaurants/:id/coupons": ["administrador", "promocoes"],

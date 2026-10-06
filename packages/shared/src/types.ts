@@ -52,10 +52,14 @@ export interface MenuItemOptionGroup {
   options: MenuItemOption[];
 }
 
+/** What a dish or catalog item without a category is listed under (J-1: the category lives on the Product). */
+export const NO_CATEGORY = "Sem categoria";
+
 export interface MenuItem {
   id: string;
   restaurantId: string;
-  categoryId: string;
+  /** Its product's category (J-1); null = NO_CATEGORY. */
+  categoryId: string | null;
   categoryName: string;
   name: string;
   shortDescription: string;
@@ -103,6 +107,8 @@ export interface Product {
   taxRate: number;
   composed: boolean;
   components: ProductComponentLine[];
+  /** Shared with the Cardápio (MenuCategory); null = NO_CATEGORY. */
+  categoryId: string | null;
   /** It has stock movements: its unit can no longer change (a new unit is a new product). */
   unitLocked?: boolean;
 }
@@ -118,6 +124,8 @@ export interface UpsertProductRequest {
   taxRate: number;
   composed: boolean;
   components: { componentId: string; quantity: number }[];
+  /** null = NO_CATEGORY; omitted on an edit = unchanged. */
+  categoryId?: string | null;
 }
 
 export interface StockMovement {
