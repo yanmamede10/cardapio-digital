@@ -429,23 +429,67 @@ plain("serviço de 10% desligado em Configurações → Salão some da comanda d
   }
 });
 
-plain("Cardápio: criar, renomear e excluir categoria; categoria nova aparece vazia para receber pratos", async ({ page, request }) => {
+// J-2 (UX-07 · 2a–2e): the Cardápio's category box replaces the browser's prompt and confirm (a browser box here would be
+// dismissed by Playwright and nothing would open). Empty name or one taken: the main button stays off; Enter confirms, Esc
+// cancels; with dishes, it says how many and which, and offers no Excluir.
+plain("J-2 · Cardápio: criar, renomear e excluir categoria na caixa do design; com pratos ela diz quantos e quais e não exclui", async ({ page, request }) => {
   await loginAs(page, request, "gerente@chapa27.example");
   await page.goto("/cardapio");
   const name = `Combos ${uid()}`;
-  page.once("dialog", (d) => d.accept(name));
   await page.getByRole("button", { name: "Nova categoria" }).click();
+  const create = page.getByRole("dialog", { name: "Nova categoria" });
+  await expect(create).toContainText("É a mesma lista do Catálogo de Produtos");
+  await expect(create.getByRole("button", { name: "Criar categoria" })).toBeDisabled();
+  await create.getByLabel("Nome da categoria").fill("sobremesas");
+  await expect(create).toContainText("Já existe uma categoria com esse nome");
+  await expect(create.getByRole("button", { name: "Criar categoria" })).toBeDisabled();
+  await page.mouse.click(5, 5); // the background does not close it (I-2)
+  await create.getByLabel("Nome da categoria").fill(name);
+  await create.getByLabel("Nome da categoria").press("Enter");
+  await expect(create).toBeHidden();
   await expect(page.locator(".toast-bubble")).toContainText(`Categoria ${name} criada`);
   await expect(page.getByText("Nenhum prato nesta categoria ainda").first()).toBeVisible();
-  page.once("dialog", (d) => d.accept(`${name} da Casa`));
+
+  const rename = page.getByRole("dialog", { name: "Renomear categoria" });
   await page.getByRole("button", { name: `Renomear categoria ${name}` }).click();
-  await expect(page.getByRole("button", { name: `Excluir categoria ${name} da Casa` })).toBeVisible();
-  page.once("dialog", (d) => d.accept());
+  await expect(rename.getByLabel("Nome da categoria")).toHaveValue(name);
+  await rename.getByLabel("Nome da categoria").fill("Mudei de ideia");
+  await page.keyboard.press("Escape");
+  await expect(rename).toBeHidden();
+  await expect(page.getByRole("button", { name: `Renomear categoria ${name}` })).toBeVisible();
+  await page.getByRole("button", { name: `Renomear categoria ${name}` }).click();
+  await rename.getByLabel("Nome da categoria").fill(`${name} da Casa`);
+  await rename.getByRole("button", { name: "Salvar" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText(`Categoria renomeada para ${name} da Casa`);
+
   await page.getByRole("button", { name: `Excluir categoria ${name} da Casa` }).click();
-  await expect(page.locator(".toast-bubble")).toContainText("excluída");
-  page.once("dialog", (d) => d.accept());
+  const empty = page.getByRole("dialog", { name: `Excluir “${name} da Casa”?` });
+  await expect(empty).toContainText("Ela sai do Catálogo e do Cardápio.");
+  await empty.getByRole("button", { name: "Excluir" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText(`Categoria ${name} da Casa excluída`);
+
   await page.getByRole("button", { name: "Excluir categoria Sobremesas" }).click();
-  await expect(page.locator(".toast-bubble")).toContainText("Sobremesas tem 4 itens");
+  const busy = page.getByRole("dialog", { name: "Excluir “Sobremesas”?" });
+  await expect(busy).toContainText("Esta categoria tem 4 itens. Mova os itens para outra categoria antes de excluir.");
+  await expect(busy.getByRole("listitem")).toHaveText(["Brownie com Sorvete", "Petit Gâteau", "Cheesecake de Frutas Vermelhas", "Sundae de Doce de Leite"]);
+  await expect(busy.getByRole("button", { name: "Excluir" })).toHaveCount(0);
+  await busy.getByRole("button", { name: "Entendi" }).click();
+  await expect(busy).toBeHidden();
+  await expect(page.getByRole("button", { name: "Excluir categoria Sobremesas" })).toBeVisible();
+});
+
+test("J-2 · Cardápio: categoria sem prato mas com insumo — a API recusa e a caixa mostra quantos itens tem", async ({ page, api }) => {
+  const name = `Molhos ${uid()}`;
+  const list = await api<{ id: string; name: string }[]>("POST", `/api/restaurants/${R}/categories`, { name });
+  const cat = list.find((c) => c.name === name)!;
+  await api("POST", `/api/restaurants/${R}/products`, { name: `Maionese ${uid()}`, type: "insumo", unit: "kg", price: 0, cost: 18, ncm: "", cst: "", taxRate: 0, composed: false, components: [], categoryId: cat.id });
+  await page.goto("/cardapio");
+  await page.getByRole("button", { name: `Excluir categoria ${name}` }).click();
+  const box = page.getByRole("dialog", { name: `Excluir “${name}”?` });
+  await box.getByRole("button", { name: "Excluir" }).click(); // the Cardápio sees no dish in it
+  await expect(box).toContainText(`A categoria ${name} tem 1 item. Mova para outra categoria antes de excluir.`);
+  await box.getByRole("button", { name: "Entendi" }).click();
+  await expect(page.getByRole("button", { name: `Excluir categoria ${name}` })).toBeVisible();
 });
 
 plain("Produtos: contagem de estoque define o estoque e aparece em Movimentações", async ({ page, request }) => {

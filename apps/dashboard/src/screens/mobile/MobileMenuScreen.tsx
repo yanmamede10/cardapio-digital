@@ -10,7 +10,8 @@ import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
 import { MobileToggle } from "../../components/mobile/MobileToggle";
 import { ActionSheet } from "../../components/mobile/ActionSheet";
 import { LinkDishModal } from "../../components/LinkDishModal";
-import { categoryActions, withNoCategory } from "../MenuScreen";
+import { MENU_CATEGORY_HELP, dishesIn, withNoCategory } from "../MenuScreen";
+import { useCategoryDialog } from "../../components/CategoryDialog";
 
 export default function MobileMenuScreen() {
   // Funcionário (garçom, cozinha) only flips Esgotado/Disponível; adding, editing and removing dishes is Administrador+.
@@ -31,7 +32,7 @@ export default function MobileMenuScreen() {
     fab: items.length > 0 && canEdit ? { label: "Adicionar prato", onClick: () => setLinking(true) } : undefined
   });
 
-  const cats = categoryActions(notify, () => reload());
+  const cats = useCategoryDialog({ categories, help: MENU_CATEGORY_HELP, itemsIn: dishesIn(items), notify, onChanged: () => reload() });
   const reload = () =>
     Promise.all([api.listCategories(), api.listItems()]).then(([c, i]) => {
       setCategories(c);
@@ -221,6 +222,7 @@ export default function MobileMenuScreen() {
         }
       />
       {linking && <LinkDishModal categories={categories} items={items} onClose={() => setLinking(false)} onLinked={reload} />}
+      {cats.dialog}
     </div>
   );
 }

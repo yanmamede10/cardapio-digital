@@ -15,12 +15,13 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ApiError, api } from "../lib/api";
+import { api } from "../lib/api";
 import { myLevel } from "../lib/modules";
 import { brl } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { EmptyState } from "../components/EmptyState";
 import { LinkDishModal } from "../components/LinkDishModal";
+import { useCategoryDialog } from "../components/CategoryDialog";
 
 interface DraftExtra {
   name: string;
@@ -35,30 +36,10 @@ export const NO_CATEGORY_GROUP: MenuCategory = { id: "", restaurantId: "", name:
 /** The categories to group dishes by: the list, plus "Sem categoria" when some dish has none. */
 export const withNoCategory = (categories: MenuCategory[], items: MenuItem[]) => (items.some((i) => !i.categoryId) ? [...categories, NO_CATEGORY_GROUP] : categories);
 
-/** Nova / renomear / excluir categoria (prompt + confirm), shared by the desktop and phone Cardápio. */
-export function categoryActions(notify: (m: string) => void, onChanged: (list: MenuCategory[]) => void) {
-  const run = async (p: Promise<MenuCategory[]>, done: string) => {
-    try {
-      onChanged(await p);
-      notify(done);
-    } catch (err) {
-      notify(err instanceof ApiError && err.status === 400 ? "Informe um nome de até 40 caracteres" : err instanceof ApiError ? err.message : "Não foi possível salvar a categoria");
-    }
-  };
-  return {
-    create: () => {
-      const name = window.prompt("Nome da nova categoria (ex.: Combos)");
-      if (name?.trim()) run(api.createCategory(name), `Categoria ${name.trim()} criada`);
-    },
-    rename: (c: MenuCategory) => {
-      const name = window.prompt(`Novo nome para a categoria ${c.name}`, c.name);
-      if (name?.trim() && name.trim() !== c.name) run(api.renameCategory(c.id, name), `Categoria renomeada para ${name.trim()}`);
-    },
-    remove: (c: MenuCategory) => {
-      if (window.confirm(`Excluir a categoria ${c.name}?`)) run(api.deleteCategory(c.id), `Categoria ${c.name} excluída`);
-    }
-  };
-}
+/** "Nova categoria" in the Cardápio (UX-07 · 2e): the same box as in Produtos, only this sentence changes. */
+export const MENU_CATEGORY_HELP = "É a mesma lista do Catálogo de Produtos. Aparece no cardápio do cliente quando tiver um prato.";
+/** The dishes on screen in a category: the delete box lists them (insumos and produtos off the menu, the API counts). */
+export const dishesIn = (items: MenuItem[]) => (c: MenuCategory) => items.filter((i) => i.categoryId === c.id).map((i) => i.name);
 
 /** "Organizar prato": name/price come from the catalog product and are read-only here. */
 interface Draft {
@@ -129,7 +110,7 @@ export default function MenuScreen() {
     .map((c) => ({ cat: c, items: filtered.filter((m) => (m.categoryId ?? "") === c.id) }));
 
   const openLink = () => setLinking(true);
-  const cats = categoryActions(notify, () => reload());
+  const cats = useCategoryDialog({ categories, help: MENU_CATEGORY_HELP, itemsIn: dishesIn(items), notify, onChanged: () => reload() });
 
   useEffect(() => {
     if (canEdit) api.listProducts().then((p) => setStockItems(p.filter((x) => !x.composed))).catch(() => {});
@@ -522,6 +503,7 @@ export default function MenuScreen() {
       )}
 
       {linking && <LinkDishModal categories={categories} items={items} onClose={() => setLinking(false)} onLinked={reload} />}
+      {cats.dialog}
     </div>
   );
 }

@@ -6,8 +6,8 @@ import { ADMIN_KEY, burgerKit, expect, newTable, R, test, uid } from "./fixtures
 // phone, as a screen of its own) gets the screen sweep's check — axe WCAG 2.1 A/AA + 44 × 44 targets (tests/e2e/a11y.ts) —
 // while it's open, on desktop and phone, light and dark. Logged in as fogo's Dono (fixtures.ts); what each one needs (an
 // order waiting for Aceitar, an open comanda, a pending bill) is made through the API first and undone at the end.
-// The browser's own confirm boxes (Gerar novo QR; Excluir mesa, categoria, conta, cupom) are drawn by the browser, out of
-// axe's reach: Gerar novo QR is checked for its text and dismissed.
+// The browser's own confirm boxes (Gerar novo QR; Excluir mesa, conta, cupom) are drawn by the browser, out of axe's
+// reach: Gerar novo QR is checked for its text and dismissed. The category box (J-2) is the app's own: checked here.
 const P = `/api/restaurants/${R}`;
 const pad = (n: number) => String(n).padStart(2, "0");
 const line = (itemId: string) => ({ itemId, quantity: 1, notes: "", selectedOptions: [] });
@@ -57,6 +57,19 @@ for (const theme of ["light", "dark"] as const) {
           await p.getByRole("button", { name: `Adicionar ${burgerName}` }).click();
           await p.getByRole("button", { name: /Revisar e enviar/ }).click();
           await dialog(p, "Revisar pedido");
+        }],
+        ["Cardápio: Nova categoria", async (p) => {
+          await goto(p, "/cardapio");
+          if (phone) await p.getByRole("button", { name: "Reordenar categorias" }).click();
+          await p.getByRole("button", { name: "Nova categoria" }).click();
+          await p.getByRole("dialog", { name: "Nova categoria" }).getByLabel("Nome da categoria").fill("Lanches"); // taken: the error under the field
+          await expect(p.getByText("Já existe uma categoria com esse nome")).toBeVisible();
+        }],
+        ["Cardápio: Excluir categoria com pratos", async (p) => {
+          await goto(p, "/cardapio");
+          if (phone) await p.getByRole("button", { name: "Reordenar categorias" }).click();
+          await p.getByRole("button", { name: "Excluir categoria Lanches" }).click();
+          await dialog(p, "Excluir “Lanches”?");
         }],
         ["Cardápio: Adicionar prato", async (p) => {
           await goto(p, "/cardapio");

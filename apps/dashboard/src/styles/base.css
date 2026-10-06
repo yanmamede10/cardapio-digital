@@ -244,12 +244,20 @@ textarea.field-mobile {
 .nav-row { background: transparent; min-height: 44px; }
 .nav-row:hover { background: var(--surface2); }
 
+/* UX-07: a dialog's buttons at the bottom right; on the phone, full width and stacked, the main one on top (2a–2d, 4c). */
+.dialog-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 24px 20px; border-top: 1px solid var(--line); }
+/* Destructive: tinted, not filled — white on the dark theme's --alert is under 4.5:1 (UX-07 handoff). */
+.btn-danger { background: color-mix(in srgb, var(--alert) 14%, var(--surface)); color: var(--alert); }
+.btn-danger:hover { background: color-mix(in srgb, var(--alert) 22%, var(--surface)); }
+
 /* Mobile shell: the desktop modals it reuses (lançamento, quitar, adicionar prato) open as bottom sheets,
    and the full-width slide-over (cadastro de produto) clears the status bar. */
 @media (max-width: 767px) {
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal-panel { border-radius: 22px 22px 0 0; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
   .drawer-panel { padding-top: env(safe-area-inset-top, 0px); }
+  .dialog-actions { flex-direction: column-reverse; padding: 12px 16px 16px; }
+  .dialog-actions > .btn { min-height: 50px; font-size: 15px; }
 }
 
 /* Ficha técnica rows (cadastro de produto): one line on desktop; on a phone the item search takes its own line. */
