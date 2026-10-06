@@ -154,7 +154,7 @@ export default function ProductsScreen() {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1120 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div>
         <Segmented
           value={tab}

@@ -42,7 +42,7 @@ export default function FinanceOverviewScreen() {
   );
   if (tab === "dre") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1080 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {tabs}
         <FinanceDreTab entries={entries} />
       </div>
@@ -91,7 +91,7 @@ export default function FinanceOverviewScreen() {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1080 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {tabs}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 14 }}>
         {kpis.map((k) => (

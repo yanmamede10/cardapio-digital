@@ -594,3 +594,53 @@ for (const theme of ["light", "dark"] as const) {
     });
   });
 }
+
+test("H-2 · listas, tabelas e painéis ocupam a largura útil como o Cardápio a 1366, 1920 e 2560 px; no celular a 360 e 390 px, sem rolagem lateral", async ({ page, request }, info) => {
+  test.setTimeout(180_000);
+  const mobile = info.project.name === "mobile";
+  // Emissão fiscal is a list too: on for the Chapa 27 just here.
+  await setModules(request, [...DEMO_MODULES, "fiscal"], "chapa27");
+  try {
+    await loginAs(page, request, "dono@chapa27.example");
+    const settle = () => expect(page.locator(".skeleton")).toHaveCount(0, { timeout: 8_000 });
+    if (mobile) {
+      for (const width of [360, 390]) {
+        await page.setViewportSize({ width, height: 780 });
+        for (const path of ["/visao-geral", "/produtos", "/contas-a-pagar", "/contas-a-receber", "/emissao-fiscal", "/mesas/3/pedido", "/config/equipe"]) {
+          await page.goto(path);
+          await settle();
+          await fits(page, `${path} a ${width} px`);
+        }
+      }
+      return;
+    }
+    // [screen, address, tab to open, the box that must fill (default: the screen itself)]
+    const screens: [string, string, string?, string?][] = [
+      ["Visão geral", "/visao-geral"],
+      ["Visão geral · DRE", "/visao-geral", "DRE"],
+      ["Produtos · Catálogo", "/produtos"],
+      ["Produtos · Movimentações", "/produtos", "Movimentações"],
+      ["Contas a Pagar", "/contas-a-pagar"],
+      ["Contas a Receber", "/contas-a-receber"],
+      ["Emissão fiscal", "/emissao-fiscal"],
+      ["Lançar pedido", "/mesas/3/pedido"],
+      ["Equipe & Permissões (a lista)", "/config", "Equipe & Permissões", "main section.card:has-text('Desde')"]
+    ];
+    const width = (box = "main > *") => page.locator(box).first().evaluate((e) => e.getBoundingClientRect().width);
+    for (const w of [1366, 1920, 2560]) {
+      await page.setViewportSize({ width: w, height: 900 });
+      await page.goto("/cardapio");
+      await settle();
+      const menu = await width();
+      for (const [name, path, tab, box] of screens) {
+        await page.goto(path);
+        await settle();
+        if (tab) await page.getByRole("button", { name: tab, exact: true }).click();
+        await settle();
+        expect.soft(await width(box), `${name} a ${w} px (Cardápio: ${menu} px)`).toBeGreaterThanOrEqual(menu - 1);
+      }
+    }
+  } finally {
+    await setModules(request, DEMO_MODULES, "chapa27");
+  }
+});

@@ -71,7 +71,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
   const cols = "96px minmax(160px,1fr) 150px 116px 130px 124px";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1120 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14 }}>
         {entrySums(entries, kind).map((k) => (
           <section key={k.label} className="card" style={{ padding: "18px 22px" }}>

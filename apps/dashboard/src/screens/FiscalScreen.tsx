@@ -32,7 +32,7 @@ export default function FiscalScreen() {
   const cols = "minmax(180px,1fr) 70px 90px 110px 110px 100px";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1120 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="card" style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, fontSize: 12.5, color: "var(--ink2)" }}>
         <i className="fa-solid fa-circle-info" style={{ fontSize: 15, color: "var(--ink3)" }} />
         A emissão de NFC-e ainda não está integrada. A lista já mostra os pedidos e comandas fechados que vão precisar de nota.

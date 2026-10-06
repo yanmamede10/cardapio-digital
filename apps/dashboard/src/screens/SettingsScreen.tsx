@@ -183,7 +183,7 @@ export default function SettingsScreen() {
       )}
 
       {tab === "staff" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 720 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink3)" }}>{LEVELS_HINT}</p>
           <section className="card" style={{ overflow: "hidden" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px 90px 70px", gap: 12, padding: "9px 16px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" }}>
@@ -209,7 +209,7 @@ export default function SettingsScreen() {
               </div>
             ))}
           </section>
-          <section className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+          <section className="card" style={{ padding: 16, maxWidth: 720, display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="field-label">{member.id ? `Editar ${staff.find((s) => s.id === member.id)?.name ?? "membro"}` : "Adicionar membro"}</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <Field label="Nome">

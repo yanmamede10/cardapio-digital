@@ -265,7 +265,7 @@ export default function LaunchOrderScreen() {
   const num = Number(useParams<{ number: string }>().number);
   const navigate = useNavigate();
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 1120 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button type="button" className="btn btn-outline" onClick={() => navigate("/mesas", { state: { select: num } })}>
           <i className="fa-solid fa-arrow-left" style={{ fontSize: 13 }} />
