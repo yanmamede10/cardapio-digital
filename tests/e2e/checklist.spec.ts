@@ -555,5 +555,42 @@ for (const theme of ["light", "dark"] as const) {
       expect(box.height).toBe(box.photo);
       await ctx.close();
     });
+
+    test("H-1 · cardápio clássico: o logo fica inteiro por cima da borda inferior da capa — com e sem foto de capa, logo em imagem e em iniciais", async ({ browser, request, page }, info) => {
+      const phone = info.project.name === "mobile";
+      const ctx = await browser.newContext({ viewport: page.viewportSize()!, colorScheme: theme, isMobile: phone, hasTouch: phone });
+      const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+      await ctx.route("**/h1-*.png", (r) => r.fulfill({ contentType: "image/png", body: png }));
+      let look = { logoUrl: null as string | null, coverPhotos: [] as string[] };
+      await ctx.route(/\/api\/restaurants\/chapa27\/appearance$/, async (r) => {
+        const res = await r.fetch();
+        await r.fulfill({ response: res, json: { ...(await res.json()), template: "classico", ...look } });
+      });
+      const url = await tableUrl(request, await staffToken(request, "dono@chapa27.example"), "chapa27", 7);
+      const g = await ctx.newPage();
+      for (const cover of [false, true]) {
+        for (const logo of [false, true]) {
+          look = { logoUrl: logo ? `${WEB}/h1-logo.png` : null, coverPhotos: cover ? [`${WEB}/h1-capa.png`] : [] };
+          const where = `${cover ? "com" : "sem"} capa, logo em ${logo ? "imagem" : "iniciais"}`;
+          await g.goto(url);
+          const mark = g.getByRole("button", { name: /voltar ao topo do cardápio/ });
+          await expect(mark).toBeVisible();
+          if (logo) await expect(mark.locator("img")).toBeVisible();
+          else await expect(mark).toHaveText("C2");
+          if (cover) await expect(g.locator(".scroll .photo-placeholder").first()).toHaveAttribute("style", /h1-capa/);
+          // It reaches up into the cover, and at every edge and its middle it's the logo the screen shows, not the cover.
+          const hit = await mark.evaluate((b) => {
+            const r = b.getBoundingClientRect();
+            const banner = b.closest(".scroll")!.querySelector(".photo-placeholder")!.getBoundingClientRect();
+            const [cx, cy] = [r.left + r.width / 2, r.top + r.height / 2];
+            const points = { topo: [cx, r.top + 1], base: [cx, r.bottom - 1], esquerda: [r.left + 1, cy], direita: [r.right - 1, cy], meio: [cx, cy] };
+            return { overlaps: r.top < banner.bottom, covered: Object.entries(points).filter(([, [x, y]]) => !b.contains(document.elementFromPoint(x, y))).map(([k]) => k) };
+          });
+          expect(hit.overlaps, `${where}: o logo sobe na capa`).toBe(true);
+          expect(hit.covered, `${where}: pontos do logo cobertos pela capa`).toEqual([]);
+        }
+      }
+      await ctx.close();
+    });
   });
 }

@@ -375,7 +375,8 @@ export default function MenuScreen() {
         </div>
 
         <div style={{ padding: "0 var(--pad)" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: -30 }}>
+          {/* relative: the cover above is positioned, so without it the logo row paints under the cover (H-1). */}
+          <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: -30 }}>
             <button type="button" onClick={toTop} aria-label={toTopLabel} style={{ width: 66, height: 66, borderRadius: "var(--r-elevated)", background: "var(--pri)", border: "3px solid var(--bg)", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--priInk)", font: "700 20px var(--font)", letterSpacing: "-.02em", overflow: "hidden" }}>{logoCircle(66, 24)}</button>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 999, background: "var(--surf)", border: "1px solid var(--line)", font: "600 var(--t-s) var(--font)" }}>
               <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--i-s)", color: "var(--good)" }} />Aberto agora
