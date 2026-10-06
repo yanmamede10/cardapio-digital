@@ -309,6 +309,7 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | CAR-16 | Categoria de outro restaurante | Adm | Produto com a categoria de outro restaurante (criar e editar) | 400; editar sem mandar a categoria mantém a dele | api:categoria | ✅ (J-1) |
 | CAR-17 | Migração 9m | — | Banco na 9l com prato com categoria, prato sem produto e produto em dois pratos; rodar a 9m | Produto com a categoria do prato (a do primeiro, se em dois); prato sem produto ganha um (nome, preço, produto, un); a coluna sai do prato; categoria com item não se apaga nem direto no banco | api:categoria | ✅ (J-1) |
 | CAR-08 | Foto do prato | Adm | Enviar foto | Sem Storage configurado: aviso de erro; com Storage: aparece | M (hospedado) | ✅ M sem Storage · ⏳ com Storage |
+| CAR-18 | Linha do prato no celular | Adm | Cardápio a 360 e 390 px, claro e escuro: "Batata com Cheddar e Bacon" R$ 32,90 e um nome de 80 caracteres, horário "Almoço 11:30 – 15:00 · Jantar 18:00 – 23:30" | Nome em até 2 linhas (o longo termina em "…"); "R$ 32,90" numa linha; horário na linha dele, sem encostar no Disponível nem no "…" (medido pelas caixas); Disponível e "…" com 44 × 44 | e2e:mobile | ✅ (K-1) |
 
 ### 4.9 Contas a pagar e a receber (FIN)
 
@@ -832,3 +833,11 @@ O desenho "UX-07-08 Produtos Catalogo" implementado em itens, cada um com teste 
 **Fora do escopo, registrado e não corrigido:** na aba Movimentações, o selo "Saída" (`pill("sec")`) tem contraste 2,38:1 no tema claro e 4,47:1 no escuro (precisa de 4,5:1); a varredura só abre a aba Catálogo, e o passo do `dialogos.spec` que abria Movimentações saiu junto com o popover de Filtros do Catálogo.
 
 **Não feito nesta rodada:** EST-04 (alerta de estoque: selo "Abaixo do aviso", faixa e campo "Avisar quando o saldo chegar a") não existe ainda — o lugar está marcado no código do Catálogo e do cadastro; "Mover e excluir" (desenho 2d) — para excluir, mova os itens antes.
+
+### Rodada K (06/10/2026): antes da demonstração
+
+| Item | O que mudou | Casos | Antes → depois |
+| --- | --- | --- | --- |
+| K-1 | Cardápio no celular: o nome do prato vai até 2 linhas, o preço fica numa linha (`nowrap`) e o horário ganha a linha dele (dividindo a linha com o preço, a soma das larguras mínimas passava da coluna e o horário ia para baixo do Disponível) | CAR-18 | e2e "K-1 ·" (claro e escuro): 16 verificações falhavam (nome cortado e preço em 2 linhas, nos 2 pratos, a 360 e 390 px) → passa |
+
+A 360 e 390 px, no Chrome com as fontes do Windows, a caixa do horário terminava 11 px antes do Disponível (a sobreposição medida já passava antes); numa réplica da linha ela aparece com a tela a 280 px, ou a 300 px com a fonte 15% maior — a causa é a mesma, e a linha própria a elimina.

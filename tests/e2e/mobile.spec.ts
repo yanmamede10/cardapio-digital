@@ -244,3 +244,54 @@ test.describe("tema escuro", () => {
     await api("POST", `/api/orders/${order.id}/reject`);
   });
 });
+
+// K-1: on the phone the Cardápio's dish row cut the name at "Ched…", broke the price into "R$" / "32,90" and ran the
+// schedule under the Disponível switch. Measured by the elements' boxes, at 360 and 390 px, in both themes.
+for (const theme of ["light", "dark"] as const) {
+  test.describe(`tema ${theme === "light" ? "claro" : "escuro"}`, () => {
+    test.use({ theme });
+    test(`K-1 · linha do prato no Cardápio do celular: nome em até 2 linhas, preço numa linha, horário sem sobrepor, alvos de 44 px (${theme})`, async ({ page, api }) => {
+      const tag = uid().slice(-4);
+      const schedule = "Almoço 11:30 – 15:00 · Jantar 18:00 – 23:30"; // the demo seed's label
+      const dishes = [`Batata com Cheddar e Bacon ${tag}`, `Hambúrguer Duplo com Cheddar Cremoso, Bacon Crocante e Cebola Caramelizada ${tag}`];
+      for (const name of dishes) await api("POST", `/api/restaurants/${R}/items`, { categoryId: `${R}-cat-1`, name, price: 32.9, shortDescription: "", scheduleLabel: schedule });
+
+      await page.goto("/cardapio");
+      for (const width of [360, 390]) {
+        await page.setViewportSize({ width, height: 844 });
+        for (const [i, name] of dishes.entries()) {
+          const at = `${width} px, ${name}`;
+          const toggle = page.getByRole("switch", { name: `${name} disponível` });
+          const options = page.getByRole("button", { name: `Opções de ${name}` });
+          const row = toggle.locator("xpath=..");
+          await row.scrollIntoViewIfNeeded();
+          const title = row.getByText(name, { exact: true });
+          const price = row.getByText("R$ 32,90", { exact: true });
+          const when = row.getByText(schedule, { exact: true });
+
+          const fit = await title.evaluate((el) => ({ lines: Math.round(el.clientHeight / parseFloat(getComputedStyle(el).lineHeight)), cutSideways: el.scrollWidth > el.clientWidth, cutBelow: el.scrollHeight > el.clientHeight + 1 }));
+          expect.soft(fit.cutSideways, `${at}: nome cortado na largura`).toBe(false);
+          expect.soft(fit.lines, `${at}: nome em até 2 linhas`).toBeLessThanOrEqual(2);
+          if (i === 0) expect.soft(fit.cutBelow, `${at}: nome que cabe em 2 linhas aparece inteiro`).toBe(false);
+          const priceLines = await price.evaluate((el) => {
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            return new Set([...r.getClientRects()].filter((x) => x.width > 0).map((x) => Math.round(x.top))).size;
+          });
+          expect.soft(priceLines, `${at}: preço numa linha só`).toBe(1);
+
+          const boxes = { nome: await title.boundingBox(), preço: await price.boundingBox(), horário: await when.boundingBox() };
+          for (const [control, target] of [["Disponível", await toggle.boundingBox()], ["Opções", await options.boundingBox()]] as const) {
+            expect.soft(target!.width >= 44 && target!.height >= 44, `${at}: alvo ${control} ${target!.width}×${target!.height}`).toBe(true);
+            for (const [part, b] of Object.entries(boxes)) {
+              const overlaps = b!.x < target!.x + target!.width && target!.x < b!.x + b!.width && b!.y < target!.y + target!.height && target!.y < b!.y + b!.height;
+              expect.soft(overlaps, `${at}: ${part} sobrepõe ${control}`).toBe(false);
+            }
+          }
+          const last = (await options.boundingBox())!;
+          expect.soft(last.x + last.width, `${at}: a linha cabe na tela`).toBeLessThanOrEqual(width);
+        }
+      }
+    });
+  });
+}

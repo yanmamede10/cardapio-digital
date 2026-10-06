@@ -140,14 +140,13 @@ export default function MobileMenuScreen() {
                     {g.items.map((p) => (
                       <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderBottom: "1px solid var(--line)", minHeight: 62 }}>
                         <div style={{ width: 42, height: 42, flex: "0 0 42px", borderRadius: 10, background: "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 5px,var(--surface3) 5px,var(--surface3) 10px)", border: "1px solid var(--line)" }} />
+                        {/* K-1: the name in up to 2 lines, the price on one, the schedule on its own line — sharing the price's, it pushed past the column into the switch */}
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: p.soldOut ? "var(--ink3)" : "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                            <span className="mono" style={{ fontSize: 12.5, fontWeight: 600 }}>
-                              {brl(p.price)}
-                            </span>
-                            <span style={{ fontSize: 11, color: "var(--ink3)" }}>{p.scheduleLabel}</span>
+                          <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3, color: p.soldOut ? "var(--ink3)" : "var(--ink)", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden", overflowWrap: "anywhere" }}>{p.name}</div>
+                          <div className="mono" style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" }}>
+                            {brl(p.price)}
                           </div>
+                          <div style={{ fontSize: 11, color: "var(--ink3)", overflowWrap: "anywhere" }}>{p.scheduleLabel}</div>
                         </div>
                         <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} label={`${p.name} disponível`} />
                         {canEdit && (
