@@ -87,10 +87,10 @@ for (const theme of ["light", "dark"] as const) {
           await p.getByRole("button", { name: new RegExp(pao.name) }).click();
           await expect(p.getByText("Ajustar estoque")).toBeVisible();
         }],
-        ["Produtos: Filtros", async (p) => {
+        ["Produtos: Nova categoria", async (p) => {
           await goto(p, "/produtos");
-          await p.getByRole("button", { name: /Filtros/ }).first().click();
-          await dialog(p, "Filtros");
+          await p.getByRole("button", { name: "Nova categoria" }).first().click();
+          await dialog(p, "Nova categoria");
         }],
         ["Contas a Pagar: Quitar", async (p) => {
           await goto(p, "/contas-a-pagar");
@@ -162,6 +162,17 @@ for (const theme of ["light", "dark"] as const) {
         }]
       ];
       const mobile: Step[] = [
+        ["Produtos: opções da categoria (folha)", async (p) => {
+          await goto(p, "/produtos");
+          await p.getByRole("button", { name: "Opções da categoria Lanches" }).click();
+          await expect(p.getByRole("button", { name: "Ordenar categorias" })).toBeVisible();
+        }],
+        ["Produtos: Ordenar categorias", async (p) => {
+          await goto(p, "/produtos");
+          await p.getByRole("button", { name: "Opções da categoria Lanches" }).click();
+          await p.getByRole("button", { name: "Ordenar categorias" }).click();
+          await expect(p.getByRole("button", { name: "Subir Lanches" })).toBeVisible();
+        }],
         ["Mesa: Fechar conta (folha)", async (p) => {
           await goto(p, `/mesas/${open.number}`);
           await p.getByRole("button", { name: /Fechar conta/ }).click();

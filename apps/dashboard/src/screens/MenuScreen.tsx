@@ -33,8 +33,8 @@ interface DraftExtra {
 
 /** Dishes whose product has no category (J-1) are listed under this one, always last; it isn't dragged, renamed or deleted. */
 export const NO_CATEGORY_GROUP: MenuCategory = { id: "", restaurantId: "", name: NO_CATEGORY, sortOrder: Number.MAX_SAFE_INTEGER };
-/** The categories to group dishes by: the list, plus "Sem categoria" when some dish has none. */
-export const withNoCategory = (categories: MenuCategory[], items: MenuItem[]) => (items.some((i) => !i.categoryId) ? [...categories, NO_CATEGORY_GROUP] : categories);
+/** The categories to group by (dishes here, the Catálogo in Produtos): the list, plus "Sem categoria" when something has none. */
+export const withNoCategory = (categories: MenuCategory[], items: { categoryId: string | null }[]) => (items.some((i) => !i.categoryId) ? [...categories, NO_CATEGORY_GROUP] : categories);
 
 /** "Nova categoria" in the Cardápio (UX-07 · 2e): the same box as in Produtos, only this sentence changes. */
 export const MENU_CATEGORY_HELP = "É a mesma lista do Catálogo de Produtos. Aparece no cardápio do cliente quando tiver um prato.";
@@ -56,7 +56,22 @@ interface Draft {
 }
 
 /** Sortable ids for category rows are prefixed so they never collide with item ids in the shared DndContext. */
-const catSortId = (id: string) => `cat-${id}`;
+export const catSortId = (id: string) => `cat-${id}`;
+
+/** A category dropped on another's place (Cardápio and Produtos, one order): the same move-by-one-step API, repeated. */
+export async function dropCategory(categories: MenuCategory[], activeSortId: string, overSortId: string, notify: (m: string) => void) {
+  const oldIndex = categories.findIndex((c) => catSortId(c.id) === activeSortId);
+  const newIndex = categories.findIndex((c) => catSortId(c.id) === overSortId);
+  if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+  const dir: "up" | "down" = newIndex > oldIndex ? "down" : "up";
+  const cat = categories[oldIndex];
+  try {
+    for (let i = 0; i < Math.abs(newIndex - oldIndex); i++) await api.moveCategory(cat.id, dir);
+    notify(`Categoria ${cat.name} movida para ${dir === "up" ? "cima" : "baixo"}`);
+  } catch {
+    // ignore edge (already first/last)
+  }
+}
 
 /** Category rows and item rows share one DndContext; scope collisions to same-kind droppables so
  *  dragging a category (a small handle spanning a large distance) can't resolve to a nested item row. */
@@ -190,21 +205,8 @@ export default function MenuScreen() {
     const overId = String(over.id);
 
     if (activeId.startsWith("cat-")) {
-      const rawId = activeId.slice(4);
-      const oldIndex = categories.findIndex((c) => c.id === rawId);
-      const newIndex = categories.findIndex((c) => catSortId(c.id) === overId);
-      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-      const dir: "up" | "down" = newIndex > oldIndex ? "down" : "up";
-      const steps = Math.abs(newIndex - oldIndex);
-      const cat = categories[oldIndex];
-      try {
-        for (let i = 0; i < steps; i++) await api.moveCategory(rawId, dir);
-        notify(`Categoria ${cat.name} movida para ${dir === "up" ? "cima" : "baixo"}`);
-      } catch {
-        // ignore edge (already first/last)
-      } finally {
-        reload();
-      }
+      await dropCategory(categories, activeId, overId, notify);
+      reload();
       return;
     }
 
@@ -302,7 +304,7 @@ export default function MenuScreen() {
           <SortableContext items={groups.map((g) => catSortId(g.cat.id))} strategy={verticalListSortingStrategy}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {groups.map((g) => (
-                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit && g.cat !== NO_CATEGORY_GROUP} onRename={() => cats.rename(g.cat)} onDelete={() => cats.remove(g.cat)}>
+                <CategorySection key={g.cat.id} cat={g.cat} count={g.items.length} canEdit={canEdit} onRename={() => cats.rename(g.cat)} onDelete={() => cats.remove(g.cat)}>
                   <SortableContext items={g.items.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                     {g.items.map((m) => (
                       <ItemRow key={m.id} item={m} canEdit={canEdit} onToggleAvailable={() => toggleAvailable(m)} onUnlink={() => unlink(m)} onEdit={() => openEdit(m)} />
@@ -508,7 +510,7 @@ export default function MenuScreen() {
   );
 }
 
-function DragHandle({ ariaLabel, ...rest }: { ariaLabel: string } & ButtonHTMLAttributes<HTMLButtonElement>) {
+export function DragHandle({ ariaLabel, ...rest }: { ariaLabel: string } & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type="button"
@@ -521,7 +523,7 @@ function DragHandle({ ariaLabel, ...rest }: { ariaLabel: string } & ButtonHTMLAt
   );
 }
 
-function CategoryDragPreview({ name }: { name: string }) {
+export function CategoryDragPreview({ name }: { name: string }) {
   return (
     <div className="card" style={{ padding: "13px 18px", boxShadow: "var(--shadow2)", transform: "scale(1.02)", display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 13.5 }}>
       <i className="fa-solid fa-grip-vertical" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
@@ -540,19 +542,63 @@ function ItemDragPreview({ name, price }: { name: string; price: string }) {
   );
 }
 
-function CategorySection({ cat, count, canEdit, onRename, onDelete, children }: { cat: MenuCategory; count: number; canEdit: boolean; onRename: () => void; onDelete: () => void; children: ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: catSortId(cat.id), disabled: cat === NO_CATEGORY_GROUP });
+/** A category's card (Cardápio and Produtos): handle, name and count, rename and delete. With onToggle (Produtos) the name
+ *  collapses the section. "Sem categoria" is fixed: no handle, no rename or delete, always last. */
+export function CategorySection({
+  cat,
+  count,
+  canEdit,
+  onRename,
+  onDelete,
+  children,
+  open = true,
+  onToggle,
+  note,
+  empty = 'Nenhum prato nesta categoria ainda. Use "Adicionar prato".',
+  minWidth = 820
+}: {
+  cat: MenuCategory;
+  count: number;
+  canEdit: boolean;
+  onRename: () => void;
+  onDelete: () => void;
+  children: ReactNode;
+  open?: boolean;
+  onToggle?: () => void;
+  note?: ReactNode;
+  empty?: string;
+  minWidth?: number;
+}) {
+  const fixed = cat === NO_CATEGORY_GROUP;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: catSortId(cat.id), disabled: fixed });
   const style: CSSProperties = { overflowX: "auto", transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  const title = (
+    <>
+      <span style={{ fontWeight: 600, fontSize: 13.5 }}>{cat.name}</span>
+      <span className="mono" style={{ fontSize: 11, color: "var(--ink3)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
+        {count}
+      </span>
+    </>
+  );
   return (
     <section ref={setNodeRef} style={style} className="card">
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 18px", background: "var(--surface2)", borderBottom: "1px solid var(--line)", minWidth: 820 }}>
-        {canEdit && <DragHandle ariaLabel={`Reordenar categoria ${cat.name}`} {...attributes} {...listeners} />}
-        <div style={{ fontWeight: 600, fontSize: 13.5 }}>{cat.name}</div>
-        <span className="mono" style={{ fontSize: 11, color: "var(--ink3)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
-          {count}
-        </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 18px 4px 10px", minHeight: 52, background: "var(--surface2)", borderBottom: open ? "1px solid var(--line)" : 0, minWidth }}>
+        {fixed ? (
+          <i className="fa-regular fa-folder-open" aria-hidden="true" style={{ width: 26, textAlign: "center", fontSize: 14, color: "var(--ink3)" }} />
+        ) : (
+          canEdit && <DragHandle ariaLabel={`Reordenar categoria ${cat.name}`} {...attributes} {...listeners} />
+        )}
+        {onToggle ? (
+          <button type="button" aria-expanded={open} onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, border: 0, background: "transparent", padding: "0 8px", borderRadius: 10, cursor: "pointer", font: "inherit", color: "var(--ink)" }}>
+            <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 12, color: "var(--ink3)" }} />
+            {title}
+          </button>
+        ) : (
+          title
+        )}
+        {note && <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink2)" }}>{note}</span>}
         <div style={{ flex: 1 }} />
-        {canEdit && (
+        {canEdit && !fixed && (
           <>
             <button type="button" className="icon-btn" title="Renomear categoria" aria-label={`Renomear categoria ${cat.name}`} onClick={onRename}>
               <i className="fa-solid fa-pen" style={{ fontSize: 14, lineHeight: 1 }} />
@@ -563,8 +609,8 @@ function CategorySection({ cat, count, canEdit, onRename, onDelete, children }: 
           </>
         )}
       </div>
-      {count === 0 && <div style={{ padding: "14px 18px", fontSize: 12.5, color: "var(--ink3)", minWidth: 820 }}>Nenhum prato nesta categoria ainda. Use "Adicionar prato".</div>}
-      {children}
+      {open && count === 0 && <div style={{ padding: "14px 18px", fontSize: 12.5, color: "var(--ink3)", minWidth }}>{empty}</div>}
+      {open && children}
     </section>
   );
 }

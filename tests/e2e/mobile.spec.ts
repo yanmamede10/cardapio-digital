@@ -58,6 +58,34 @@ test("no celular a cozinha não vê Fechar conta na mesa com comanda aberta; o g
   await api("POST", `/api/restaurants/${R}/tables/${table}/close`, {});
 });
 
+// J-3 (UX-07 · 4a): on the phone the Catálogo is grouped in cards by category; each category's "…" renames, deletes or
+// opens Ordenar categorias (the Cardápio's arrows, same order); search and type narrow it.
+test("J-3 · Produtos no celular: cartões por categoria, busca, tipo e o … da categoria com Renomear, Excluir e Ordenar", async ({ page, api }) => {
+  const { pao } = await burgerKit(api); // an insumo without a category
+  await page.goto("/produtos");
+  await expect(page.getByRole("button", { name: /^Lanches \d+$/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", { name: /^Sem categoria \d+$/ })).toBeVisible();
+  await page.getByLabel("Buscar por nome").fill(pao.name);
+  await expect(page.getByRole("button", { name: new RegExp(pao.name) })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Lanches \d+$/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Limpar busca" }).click();
+  await page.getByRole("button", { name: "Produtos", exact: true }).click();
+  await expect(page.getByRole("button", { name: new RegExp(pao.name) })).toHaveCount(0);
+  await page.getByRole("button", { name: "Todos", exact: true }).click();
+
+  await page.getByRole("button", { name: "Opções da categoria Lanches" }).click();
+  for (const action of ["Renomear", "Excluir", "Ordenar categorias"]) await expect(page.getByRole("button", { name: action, exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Excluir", exact: true }).click();
+  const box = page.getByRole("dialog", { name: "Excluir “Lanches”?" });
+  await expect(box).toContainText(/Esta categoria tem \d+ itens/);
+  await box.getByRole("button", { name: "Entendi" }).click();
+  await page.getByRole("button", { name: "Opções da categoria Lanches" }).click();
+  await page.getByRole("button", { name: "Ordenar categorias" }).click();
+  await expect(page.getByRole("button", { name: "Subir Lanches" })).toBeVisible();
+  await page.getByRole("button", { name: "Concluir" }).click();
+  await expect(page.getByRole("button", { name: /^Lanches \d+$/ })).toBeVisible();
+});
+
 test("cadastro de produto no celular: a busca da composição ocupa a linha inteira", async ({ page }) => {
   await page.goto("/produtos");
   await page.getByRole("button", { name: "Novo item" }).click();

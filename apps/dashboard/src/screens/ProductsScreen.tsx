@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { PRODUCT_UNITS, type Product, type ProductType, type StockMovement, type UpsertProductRequest, type XmlImportRequest } from "@cardapio/shared";
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { PRODUCT_UNITS, type MenuCategory, type Product, type ProductType, type StockMovement, type UpsertProductRequest, type XmlImportRequest } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { brl, dayMonth, localIso } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
-import { Segmented } from "../components/Segmented";
+import { Chip, Segmented } from "../components/Segmented";
 import { SlideOver } from "../components/SlideOver";
+import { EmptyState } from "../components/EmptyState";
+import { useCategoryDialog } from "../components/CategoryDialog";
 import { FilterPopover, PAST_PERIODS, inPeriod, type FilterGroup, type FilterValues } from "../components/FilterPopover";
+import { CategoryDragPreview, CategorySection, NO_CATEGORY_GROUP, catSortId, dropCategory, withNoCategory } from "./MenuScreen";
 
 export interface Draft {
   id: string | null;
@@ -32,15 +37,10 @@ export const pill = (tone: string) => ({ fontSize: 11.5, fontWeight: 600, border
 const headRow = { display: "grid", gap: 16, padding: "12px 20px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" } as const;
 export const TYPE_LABEL: Record<ProductType, string> = { produto: "Produto", insumo: "Insumo" };
 
-export const CATALOG_FILTERS: FilterGroup[] = [
-  { id: "tipo", label: "Tipo", options: ["Produto", "Insumo"] },
-  { id: "status", label: "Status", options: ["Em estoque", "Sem estoque", "Ficha técnica"] }
-];
 export const MOVEMENT_FILTERS: FilterGroup[] = [
   { id: "tipo", label: "Tipo", options: ["Entrada", "Saída"] },
   { id: "per", label: "Período", options: PAST_PERIODS }
 ];
-export const catalogMatch = (p: Product, f: FilterValues) => (!f.tipo || TYPE_LABEL[p.type] === f.tipo) && (!f.status || stockStatus(p).label === f.status);
 export const movementMatch = (m: StockMovement, f: FilterValues) => (!f.tipo || (m.kind === "in" ? "Entrada" : "Saída") === f.tipo) && inPeriod(localIso(new Date(m.createdAt)), f);
 
 /** Edit-form draft for an existing product. */
@@ -59,9 +59,55 @@ export const draftOf = (p: Product): Draft => ({
 });
 
 export function stockStatus(p: Product) {
-  if (p.composed) return { label: "Ficha técnica", tone: "ink3" };
-  return p.stock > 0 ? { label: "Em estoque", tone: "ok" } : { label: "Sem estoque", tone: "alert" };
+  if (p.composed) return { label: "Ficha técnica", tone: "ink3", icon: "fa-list-ul" };
+  return p.stock > 0 ? { label: "Em estoque", tone: "ok", icon: "fa-check" } : { label: "Sem estoque", tone: "alert", icon: "fa-circle-exclamation" };
 }
+
+/** Status pill with its icon (UX-07: icon + text, never color alone). */
+export function StatusPill({ p }: { p: Product }) {
+  const st = stockStatus(p);
+  return (
+    <span style={{ ...pill(st.tone), display: "inline-flex", alignItems: "center", gap: 5 }}>
+      <i className={`fa-solid ${st.icon}`} aria-hidden="true" style={{ fontSize: 10 }} />
+      {st.label}
+    </span>
+  );
+}
+
+/** EST-04 (alerta de estoque) is not built yet: its "Abaixo do aviso" pill and strip go here when it is (UX-07 design). */
+
+export type CatalogType = "todos" | ProductType;
+/** Catálogo filters: name, type, and a category (its id, "" = Sem categoria, null = Todas). */
+export interface CatalogFilter {
+  q: string;
+  tipo: CatalogType;
+  cat: string | null;
+}
+export const NO_FILTER: CatalogFilter = { q: "", tipo: "todos", cat: null };
+export const TYPE_OPTIONS: { value: CatalogType; label: string }[] = [
+  { value: "todos", label: "Todos" },
+  { value: "produto", label: "Produtos" },
+  { value: "insumo", label: "Insumos" }
+];
+export const PRODUCTS_CATEGORY_HELP = "Uma lista só para Catálogo e Cardápio. Categoria sem produto não aparece no cardápio do cliente.";
+export const ONLY_INSUMOS = "Só insumos · não aparece no cardápio do cliente";
+export const NONE_NOTE = "Itens antigos · abra o item e escolha uma categoria. Fica sempre no fim.";
+export const countLabel = (n: number) => (n === 1 ? "1 item" : `${n} itens`);
+
+/** The Catálogo by category, in the Cardápio's order (UX-07), "Sem categoria" last. Without a filter every category shows,
+ *  empty ones too (a new one must be visible to fill); with one, only the categories with a match. */
+export function catalogGroups(products: Product[], categories: MenuCategory[], f: CatalogFilter) {
+  const q = f.q.trim().toLowerCase();
+  const shown = products.filter((p) => (f.tipo === "todos" || p.type === f.tipo) && (!q || p.name.toLowerCase().includes(q)) && (f.cat === null || (p.categoryId ?? "") === f.cat));
+  const filtered = !!q || f.tipo !== "todos" || f.cat !== null;
+  const groups = withNoCategory(categories, shown)
+    .map((cat) => ({ cat, items: shown.filter((p) => (p.categoryId ?? "") === cat.id) }))
+    .filter((g) => g.items.length > 0 || (!filtered && g.cat !== NO_CATEGORY_GROUP));
+  return { shown, groups, filtered, chips: withNoCategory(categories, products) };
+}
+const onlyInsumos = (items: Product[]) => items.length > 0 && items.every((p) => p.type === "insumo");
+const COLS = "minmax(160px,1fr) 84px 150px 96px 96px 140px 44px";
+const ROW_MIN = 900;
 
 /** Supplier NF-e → import payload. Parsed in the browser (native DOMParser) so the API needs no XML dependency. */
 export async function parseNfe(file: File): Promise<XmlImportRequest> {
@@ -87,17 +133,33 @@ export default function ProductsScreen() {
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [catFilter, setCatFilter] = useState<FilterValues>({});
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [filter, setFilter] = useState<CatalogFilter>(NO_FILTER);
+  const [closed, setClosed] = useState<string[]>([]); // collapsed sections
+  const [dragging, setDragging] = useState<string | null>(null);
   const [movFilter, setMovFilter] = useState<FilterValues>({});
   const [importing, setImporting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }) // Space picks up, arrows move, Space drops, Esc cancels
+  );
 
   const reload = () =>
-    Promise.all([api.listProducts(), api.listStockMovements()]).then(([p, m]) => {
+    Promise.all([api.listProducts(), api.listStockMovements(), api.listCategories()]).then(([p, m, c]) => {
       setProducts(p);
       setMovements(m);
+      setCategories(c);
       return p;
     });
+  const cats = useCategoryDialog({
+    categories,
+    help: PRODUCTS_CATEGORY_HELP,
+    itemsIn: (c) => (products ?? []).filter((p) => p.categoryId === c.id).map((p) => p.name),
+    notify,
+    onChanged: () => reload()
+  });
 
   useEffect(() => {
     reload()
@@ -136,7 +198,10 @@ export default function ProductsScreen() {
     );
   }
 
-  const shownProducts = products.filter((p) => catalogMatch(p, catFilter));
+  const { shown, groups, filtered, chips } = catalogGroups(products, categories, filter);
+  const set = (patch: Partial<CatalogFilter>) => setFilter({ ...filter, ...patch });
+  const toggle = (id: string) => setClosed(closed.includes(id) ? closed.filter((x) => x !== id) : [...closed, id]);
+  const newItem = () => setDraft({ ...EMPTY_DRAFT });
   const shownMovements = movements.filter((m) => movementMatch(m, movFilter));
 
   const xmlInput = (
@@ -167,64 +232,137 @@ export default function ProductsScreen() {
       </div>
 
       {tab === "catalogo" ? (
-        <section className="card">
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
-            <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Produtos e insumos</div>
-            <FilterPopover
-              groups={CATALOG_FILTERS}
-              value={catFilter}
-              onChange={setCatFilter}
-              resultCount={shownProducts.length}
-            />
-            <button type="button" className="btn btn-primary" onClick={() => setDraft({ ...EMPTY_DRAFT })}>
-              <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap" }}>
+            {products.length > 0 && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "0 4px 0 14px", width: 260 }}>
+                  <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: 14, color: "var(--ink3)" }} />
+                  <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+                  {filter.q && (
+                    <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
+                      <i className="fa-solid fa-circle-xmark" style={{ fontSize: 14 }} />
+                    </button>
+                  )}
+                </div>
+                <Segmented value={filter.tipo} onChange={(tipo) => set({ tipo })} options={TYPE_OPTIONS} />
+              </>
+            )}
+            <div style={{ flex: 1 }} />
+            <div className="mono" style={{ fontSize: 12, color: "var(--ink2)" }}>
+              {filtered ? `${shown.length} de ${countLabel(products.length)}` : countLabel(products.length)}
+            </div>
+            <button type="button" className="btn btn-outline" onClick={cats.create}>
+              <i className="fa-solid fa-folder-plus" style={{ fontSize: 14 }} />
+              Nova categoria
+            </button>
+            <button type="button" className="btn btn-primary" onClick={newItem}>
+              <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
               Novo item
             </button>
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <div style={{ minWidth: 760 }}>
-              <div style={{ ...headRow, gridTemplateColumns: "minmax(160px,1fr) 110px 120px 110px 120px 18px" }}>
-                {["Item", "Tipo", "Estoque atual", "Custo", "Status", ""].map((h) => (
-                  <div key={h} className="field-label">
-                    {h}
-                  </div>
-                ))}
-              </div>
-              {shownProducts.map((p) => {
-                const st = stockStatus(p);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => openEdit(p)}
-                    style={{ display: "grid", gridTemplateColumns: "minmax(160px,1fr) 110px 120px 110px 120px 18px", gap: 16, alignItems: "center", width: "100%", textAlign: "left", padding: "13px 20px", border: 0, borderBottom: "1px solid var(--line)", background: "transparent", cursor: "pointer", color: "var(--ink)" }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 500 }}>{p.name}</div>
-                      <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{p.type === "produto" && p.price ? brl(p.price) : p.unit}</div>
-                    </div>
-                    <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>{TYPE_LABEL[p.type]}</div>
-                    <div className="mono" style={{ fontSize: 13, fontWeight: 600, color: p.composed ? "var(--ink3)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
-                      {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
-                    </div>
-                    <div className="mono" style={{ fontSize: 13 }}>
-                      {brl(p.cost)}
-                    </div>
-                    <div>
-                      <span style={pill(st.tone)}>{st.label}</span>
-                    </div>
-                    <i className="fa-solid fa-chevron-right" style={{ fontSize: 11, color: "var(--ink3)" }} />
-                  </button>
-                );
-              })}
-              {shownProducts.length === 0 && (
-                <div style={{ padding: "36px 20px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>
-                  {products.length ? "Nenhum resultado com esses filtros." : "Nenhum item cadastrado ainda."}
-                </div>
-              )}
+
+          {products.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <Chip active={filter.cat === null} onClick={() => set({ cat: null })}>
+                Todas
+              </Chip>
+              {chips.map((c) => (
+                <Chip key={c.id || "none"} active={filter.cat === c.id} onClick={() => set({ cat: c.id })}>
+                  {c.name}
+                </Chip>
+              ))}
             </div>
-          </div>
-        </section>
+          )}
+
+          {products.length === 0 && categories.length === 0 ? (
+            <EmptyState
+              icon="fa-box-open"
+              title="Seu catálogo ainda está vazio"
+              sub="Cadastre o que você vende (produtos) e o que usa no preparo (insumos). Categorias como Hambúrgueres ou Carnes organizam os dois e o cardápio."
+              action={
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                  <button type="button" className="btn btn-primary" onClick={newItem}>
+                    <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
+                    Cadastrar primeiro item
+                  </button>
+                  <button type="button" className="btn btn-outline" onClick={cats.create}>
+                    <i className="fa-solid fa-folder-plus" style={{ fontSize: 14 }} />
+                    Criar categoria
+                  </button>
+                </div>
+              }
+            />
+          ) : filtered && shown.length === 0 ? (
+            <EmptyState
+              icon="fa-magnifying-glass"
+              title={filter.q.trim() ? `Nenhum item com “${filter.q.trim()}”` : "Nenhum item com esses filtros"}
+              sub="A busca olha o nome em todas as categorias e nos dois tipos. Confira a grafia ou tente outra palavra."
+              action={
+                <button type="button" className="btn btn-outline" onClick={() => setFilter(NO_FILTER)}>
+                  {filter.q.trim() ? "Limpar busca" : "Limpar filtros"}
+                </button>
+              }
+            />
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: ROW_MIN }}>
+                <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 16, padding: "0 19px 0 27px", marginBottom: -6 }}>
+                  {["Item", "Tipo", "Estoque atual", "Custo", "Preço", "Status", ""].map((h, i) => (
+                    <div key={i} className="field-label">
+                      {h}
+                    </div>
+                  ))}
+                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={({ active }) => setDragging(String(active.id))}
+                  onDragCancel={() => setDragging(null)}
+                  onDragEnd={async ({ active, over }) => {
+                    setDragging(null);
+                    if (over && active.id !== over.id) {
+                      await dropCategory(categories, String(active.id), String(over.id), notify);
+                      reload();
+                    }
+                  }}
+                >
+                  <SortableContext items={groups.map((g) => catSortId(g.cat.id))} strategy={verticalListSortingStrategy}>
+                    {groups.map((g) => (
+                      <CategorySection
+                        key={g.cat.id || "none"}
+                        cat={g.cat}
+                        count={g.items.length}
+                        canEdit
+                        onRename={() => cats.rename(g.cat)}
+                        onDelete={() => cats.remove(g.cat)}
+                        open={!dragging && !closed.includes(g.cat.id)} // while a category is dragged, only the titles
+                        onToggle={() => toggle(g.cat.id)}
+                        note={
+                          g.cat === NO_CATEGORY_GROUP ? (
+                            NONE_NOTE
+                          ) : onlyInsumos(g.items) ? (
+                            <>
+                              <i className="fa-solid fa-eye-slash" aria-hidden="true" style={{ fontSize: 11 }} />
+                              {ONLY_INSUMOS}
+                            </>
+                          ) : undefined
+                        }
+                        empty="Nenhum item nesta categoria ainda."
+                        minWidth={ROW_MIN}
+                      >
+                        {g.items.map((p) => (
+                          <CatalogRow key={p.id} p={p} onOpen={() => openEdit(p)} />
+                        ))}
+                      </CategorySection>
+                    ))}
+                  </SortableContext>
+                  <DragOverlay>{dragging ? <CategoryDragPreview name={categories.find((c) => catSortId(c.id) === dragging)?.name ?? ""} /> : null}</DragOverlay>
+                </DndContext>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <section className="card">
           {xmlInput}
@@ -306,6 +444,7 @@ export default function ProductsScreen() {
         </section>
       )}
 
+      {cats.dialog}
       {draft && (
         <ProductForm
           draft={draft}
@@ -324,6 +463,31 @@ export default function ProductsScreen() {
         />
       )}
     </div>
+  );
+}
+
+/** A Catálogo row (UX-07 · 1a): one button, the pencil included, opens the cadastro. */
+function CatalogRow({ p, onOpen }: { p: Product; onOpen: () => void }) {
+  return (
+    <button type="button" onClick={onOpen} style={{ display: "grid", gridTemplateColumns: COLS, gap: 16, alignItems: "center", width: "100%", textAlign: "left", padding: "7px 18px 7px 26px", minHeight: 58, border: 0, borderTop: "1px solid var(--line)", background: "transparent", color: "var(--ink)", font: "inherit", cursor: "pointer", minWidth: ROW_MIN }}>
+      <div style={{ minWidth: 0, fontSize: 13.5, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+      <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>{TYPE_LABEL[p.type]}</div>
+      <div className="mono" style={{ fontSize: 13, fontWeight: 600, color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
+        {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
+      </div>
+      <div className="mono" style={{ fontSize: 13 }}>
+        {brl(p.cost)}
+      </div>
+      <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+        {p.type === "produto" ? brl(p.price) : "—"}
+      </div>
+      <div>
+        <StatusPill p={p} />
+      </div>
+      <span className="icon-btn" aria-hidden="true" title="Editar">
+        <i className="fa-solid fa-pen" style={{ fontSize: 13 }} />
+      </span>
+    </button>
   );
 }
 

@@ -1,25 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import type { Product, StockMovement } from "@cardapio/shared";
+import type { MenuCategory, Product, StockMovement } from "@cardapio/shared";
 import { ApiError, api } from "../../lib/api";
 import { brl, dayMonth, localIso } from "../../lib/format";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
+import { ActionSheet } from "../../components/mobile/ActionSheet";
+import { CategoryReorderPanel } from "../../components/mobile/CategoryReorderPanel";
 import { FilterPopover, type FilterValues } from "../../components/FilterPopover";
+import { Segmented } from "../../components/Segmented";
+import { useCategoryDialog } from "../../components/CategoryDialog";
+import { NO_CATEGORY_GROUP } from "../MenuScreen";
 import {
-  CATALOG_FILTERS,
   EMPTY_DRAFT,
   MOVEMENT_FILTERS,
+  NONE_NOTE,
+  NO_FILTER,
+  ONLY_INSUMOS,
+  PRODUCTS_CATEGORY_HELP,
   ProductForm,
+  StatusPill,
   TYPE_LABEL,
-  catalogMatch,
+  TYPE_OPTIONS,
+  catalogGroups,
+  countLabel,
   draftOf,
   movementMatch,
   parseNfe,
   pill,
   qty,
-  stockStatus,
+  type CatalogFilter,
   type Draft
 } from "../ProductsScreen";
 
@@ -32,7 +43,11 @@ export default function MobileProductsScreen() {
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [catFilter, setCatFilter] = useState<FilterValues>({});
+  const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [filter, setFilter] = useState<CatalogFilter>(NO_FILTER);
+  const [closed, setClosed] = useState<string[]>([]);
+  const [menuFor, setMenuFor] = useState<MenuCategory | null>(null); // the "…" of a category
+  const [ordering, setOrdering] = useState(false);
   const [movFilter, setMovFilter] = useState<FilterValues>({});
   const [importing, setImporting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -44,11 +59,27 @@ export default function MobileProductsScreen() {
   });
 
   const reload = () =>
-    Promise.all([api.listProducts(), api.listStockMovements()]).then(([p, m]) => {
+    Promise.all([api.listProducts(), api.listStockMovements(), api.listCategories()]).then(([p, m, c]) => {
       setProducts(p);
       setMovements(m);
+      setCategories(c);
       return p;
     });
+  const cats = useCategoryDialog({
+    categories,
+    help: PRODUCTS_CATEGORY_HELP,
+    itemsIn: (c) => (products ?? []).filter((p) => p.categoryId === c.id).map((p) => p.name),
+    notify,
+    onChanged: () => reload()
+  });
+  const moveCat = async (c: MenuCategory, dir: "up" | "down") => {
+    try {
+      await api.moveCategory(c.id, dir);
+      reload();
+    } catch {
+      // already first/last
+    }
+  };
 
   useEffect(() => {
     reload()
@@ -85,7 +116,8 @@ export default function MobileProductsScreen() {
     );
   }
 
-  const shownProducts = products.filter((p) => catalogMatch(p, catFilter));
+  const { shown, groups, filtered, chips } = catalogGroups(products, categories, filter);
+  const set = (patch: Partial<CatalogFilter>) => setFilter({ ...filter, ...patch });
   const shownMovements = movements.filter((m) => movementMatch(m, movFilter));
   const pickXml = () => fileInput.current?.click();
 
@@ -110,16 +142,48 @@ export default function MobileProductsScreen() {
           <MobileChip grow active={tab === "mov"} onClick={() => setTab("mov")}>
             Movimentações
           </MobileChip>
-          {(tab === "catalogo" || movements.length > 0) && (
-            <FilterPopover
-              sheet
-              groups={tab === "catalogo" ? CATALOG_FILTERS : MOVEMENT_FILTERS}
-              value={tab === "catalogo" ? catFilter : movFilter}
-              onChange={tab === "catalogo" ? setCatFilter : setMovFilter}
-              resultCount={tab === "catalogo" ? shownProducts.length : shownMovements.length}
-            />
-          )}
+          {tab === "mov" && movements.length > 0 && <FilterPopover sheet groups={MOVEMENT_FILTERS} value={movFilter} onChange={setMovFilter} resultCount={shownMovements.length} />}
         </div>
+        {tab === "catalogo" && (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 4px 0 12px", minHeight: 44 }}>
+                <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: 14, color: "var(--ink3)" }} />
+                <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 15, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+                {filter.q && (
+                  <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
+                    <i className="fa-solid fa-circle-xmark" style={{ fontSize: 15 }} />
+                  </button>
+                )}
+              </div>
+              <button type="button" aria-label="Nova categoria" title="Nova categoria" onClick={cats.create} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface2)", color: "var(--brandText)", border: "1px solid var(--line)" }}>
+                <i className="fa-solid fa-folder-plus" style={{ fontSize: 17 }} />
+              </button>
+            </div>
+            {products.length > 0 && (
+              <>
+                <div className="no-scrollbar" style={{ display: "flex", gap: 7, overflowX: "auto", margin: "0 -12px", padding: "0 12px" }}>
+                  <MobileChip active={filter.cat === null} onClick={() => set({ cat: null })}>
+                    Todas
+                  </MobileChip>
+                  {chips.map((c) => (
+                    <MobileChip key={c.id || "none"} active={filter.cat === c.id} onClick={() => set({ cat: c.id })}>
+                      {c.name}
+                    </MobileChip>
+                  ))}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Segmented value={filter.tipo} onChange={(tipo) => set({ tipo })} options={TYPE_OPTIONS} />
+                  </div>
+                  <span className="mono" style={{ fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap" }}>
+                    {filtered ? `${shown.length} de ${countLabel(products.length)}` : countLabel(products.length)}
+                  </span>
+                </div>
+              </>
+            )}
+          </>
+        )}
         {tab === "mov" && (
           <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={importing} onClick={pickXml}>
             <i className="fa-solid fa-file-import" style={{ fontSize: 13 }} />
@@ -130,40 +194,80 @@ export default function MobileProductsScreen() {
 
       <div style={{ padding: "12px 12px 90px", display: "flex", flexDirection: "column", gap: 10 }}>
         {tab === "catalogo" ? (
-          shownProducts.length === 0 ? (
+          ordering ? (
+            <CategoryReorderPanel categories={categories} onCreate={cats.create} onRename={cats.rename} onDelete={cats.remove} onMove={moveCat} onDone={() => setOrdering(false)} />
+          ) : products.length === 0 && categories.length === 0 ? (
             <MobileEmptyState
-              icon="fa-boxes-stacked"
-              title={products.length ? "Nenhum item com esses filtros" : "Catálogo vazio"}
-              sub={products.length ? "Ajuste os filtros para ver outros itens." : "Cadastre produtos e insumos pelo botão +."}
+              icon="fa-box-open"
+              title="Seu catálogo ainda está vazio"
+              sub="Cadastre o que você vende (produtos) e o que usa no preparo (insumos). Categorias como Hambúrgueres ou Carnes organizam os dois e o cardápio."
+              action={
+                <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} onClick={() => setDraft({ ...EMPTY_DRAFT })}>
+                  <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
+                  Cadastrar primeiro item
+                </button>
+              }
+            />
+          ) : filtered && shown.length === 0 ? (
+            <MobileEmptyState
+              icon="fa-magnifying-glass"
+              title={filter.q.trim() ? `Nenhum item com “${filter.q.trim()}”` : "Nenhum item com esses filtros"}
+              sub="A busca olha o nome em todas as categorias e nos dois tipos."
+              action={
+                <button type="button" className="btn btn-outline" style={{ minHeight: 48 }} onClick={() => setFilter(NO_FILTER)}>
+                  {filter.q.trim() ? "Limpar busca" : "Limpar filtros"}
+                </button>
+              }
             />
           ) : (
-            <section style={card}>
-              {shownProducts.map((p) => {
-                const st = stockStatus(p);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setDraft(draftOf(p))}
-                    style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", cursor: "pointer", font: "inherit", color: "var(--ink)", padding: "11px 13px", minHeight: 62 }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-                      <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>
-                        {TYPE_LABEL[p.type]} · {p.type === "produto" && p.price ? brl(p.price) : `custo ${brl(p.cost)}`}
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                      <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: p.composed ? "var(--ink3)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
-                        {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
+            groups.map((g) => {
+              const open = !closed.includes(g.cat.id);
+              const note = g.cat === NO_CATEGORY_GROUP ? NONE_NOTE : g.items.length && g.items.every((p) => p.type === "insumo") ? ONLY_INSUMOS : null;
+              return (
+                <div key={g.cat.id || "none"} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <button type="button" aria-expanded={open} onClick={() => setClosed(open ? [...closed, g.cat.id] : closed.filter((x) => x !== g.cat.id))} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, border: 0, background: "transparent", padding: "0 4px", cursor: "pointer", font: "inherit", color: "var(--ink)", textAlign: "left" }}>
+                      <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 12, color: "var(--ink3)" }} />
+                      <span style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.cat.name}</span>
+                      <span className="mono" style={{ fontSize: 11.5, color: "var(--ink2)", background: "var(--surface3)", borderRadius: 999, padding: "1px 9px" }}>
+                        {g.items.length}
                       </span>
-                      <span style={{ ...pill(st.tone), fontSize: 10.5, padding: "1px 8px" }}>{st.label}</span>
-                    </div>
-                    <i className="fa-solid fa-chevron-right" style={{ fontSize: 13, color: "var(--ink3)" }} />
-                  </button>
-                );
-              })}
-            </section>
+                    </button>
+                    {g.cat !== NO_CATEGORY_GROUP && (
+                      <button type="button" aria-label={`Opções da categoria ${g.cat.name}`} onClick={() => setMenuFor(g.cat)} style={{ width: 44, height: 44, border: 0, background: "transparent", color: "var(--ink2)", cursor: "pointer" }}>
+                        <i className="fa-solid fa-ellipsis" style={{ fontSize: 16 }} />
+                      </button>
+                    )}
+                  </div>
+                  {note && <div style={{ fontSize: 12, color: "var(--ink2)", padding: "0 4px 4px" }}>{note}</div>}
+                  {open && (
+                    <section style={card}>
+                      {g.items.length === 0 && <div style={{ padding: "14px 16px", fontSize: 13, color: "var(--ink2)" }}>Nenhum item nesta categoria ainda.</div>}
+                      {g.items.map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setDraft(draftOf(p))}
+                          style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", cursor: "pointer", font: "inherit", color: "var(--ink)", padding: "10px 14px 10px 16px", minHeight: 66 }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                            <div style={{ fontSize: 15, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              <StatusPill p={p} />
+                              <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>{p.type === "produto" ? brl(p.price) : TYPE_LABEL[p.type]}</span>
+                            </div>
+                          </div>
+                          <span className="mono" style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
+                            {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
+                          </span>
+                          <i className="fa-solid fa-chevron-right" aria-hidden="true" style={{ fontSize: 11, color: "var(--ink3)" }} />
+                        </button>
+                      ))}
+                    </section>
+                  )}
+                </div>
+              );
+            })
           )
         ) : movements.length === 0 ? (
           <div
@@ -218,6 +322,21 @@ export default function MobileProductsScreen() {
         )}
       </div>
 
+      <ActionSheet
+        open={!!menuFor}
+        onClose={() => setMenuFor(null)}
+        title={menuFor?.name ?? ""}
+        actions={
+          menuFor
+            ? [
+                { label: "Renomear", icon: "fa-pen", onClick: () => (setMenuFor(null), cats.rename(menuFor)) },
+                { label: "Excluir", icon: "fa-trash", danger: true, onClick: () => (setMenuFor(null), cats.remove(menuFor)) },
+                { label: "Ordenar categorias", icon: "fa-grip-vertical", onClick: () => (setMenuFor(null), setOrdering(true)) }
+              ]
+            : []
+        }
+      />
+      {cats.dialog}
       {draft && (
         <ProductForm
           draft={draft}

@@ -650,3 +650,86 @@ test("G-4 · PIX via sistema pausado: Configurações → Financeiro não oferec
     await api("PATCH", `${P}/payment-mode`, { paymentMode: "maquininha_propria" });
   }
 });
+
+// J-3 (UX-07 · 1a–1e): the Catálogo by category, in the Cardápio's order — search, category chips, type, collapsible
+// sections with their count, "Sem categoria" last, drag (here with the keyboard) to reorder, and the two empty states.
+plain("J-3 · Produtos: Catálogo por categoria com busca, chips, tipo, seções recolhíveis e ordem arrastando, a mesma do Cardápio", async ({ page, request }) => {
+  await loginAs(page, request, "gerente@chapa27.example");
+  const token = await staffToken(request, "gerente@chapa27.example");
+  const order = async () => (await (await request.get("http://localhost:4200/api/restaurants/chapa27/categories")).json()).map((c: { name: string }) => c.name);
+  await page.goto("/produtos");
+  const sections = page.locator("section.card button[aria-expanded]");
+  await expect(sections.first()).toBeVisible();
+  const titles = (await sections.allTextContents()).map((t) => t.replace(/\d+$/, "").trim());
+  expect(titles.slice(0, 4)).toEqual(["Hambúrgueres", "Porções", "Bebidas", "Sobremesas"]);
+  expect(titles.at(-1)).toBe("Sem categoria"); // the demo's insumos have none: always last
+  await expect(page.getByText("Itens antigos · abra o item e escolha uma categoria. Fica sempre no fim.")).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Hambúrgueres \d+$/ })).toBeVisible(); // name + count
+  await expect(page.getByRole("button", { name: /^Filtros/ })).toHaveCount(0); // the type is a segmented now
+
+  // Search: across categories and types; nothing found → the empty state, and Limpar busca brings everything back.
+  await page.getByLabel("Buscar por nome").fill("cheesecake");
+  await expect(page.getByRole("button", { name: /Cheesecake de Frutas Vermelhas/ })).toBeVisible();
+  await expect(sections).toHaveCount(1);
+  await expect(page.getByText(/^1 de \d+ itens$/)).toBeVisible();
+  await page.getByLabel("Buscar por nome").fill("picanha de sirí");
+  await expect(page.getByText("Nenhum item com “picanha de sirí”")).toBeVisible();
+  await page.getByRole("button", { name: "Limpar busca" }).last().click();
+  await expect(page.getByLabel("Buscar por nome")).toHaveValue("");
+
+  // Type and chip.
+  await page.getByRole("button", { name: "Insumos", exact: true }).click();
+  await expect(page.getByRole("button", { name: /Bacon em fatias/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Clássico/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Todos", exact: true }).click();
+  await page.getByRole("button", { name: "Bebidas", exact: true }).click();
+  await expect(sections).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /Cerveja long neck/ })).toBeVisible();
+  await page.getByRole("button", { name: "Todas", exact: true }).click();
+
+  // Collapse and expand.
+  const hamburgueres = page.getByRole("button", { name: /^Hambúrgueres \d+$/ });
+  await hamburgueres.click();
+  await expect(hamburgueres).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("button", { name: /^Clássico/ })).toHaveCount(0);
+  await hamburgueres.click();
+  await expect(page.getByRole("button", { name: /^Clássico/ })).toBeVisible();
+
+  // Drag Porções above Hambúrgueres with the keyboard (Space picks up, ↑ moves, Space drops): the Cardápio's order too.
+  try {
+    const porcoes = page.locator("section.card", { has: page.getByRole("button", { name: "Reordenar categoria Porções" }) });
+    await page.getByRole("button", { name: "Reordenar categoria Porções" }).focus();
+    await page.keyboard.press("Space");
+    await expect(porcoes).toHaveCSS("opacity", "0.6"); // picked up
+    await page.keyboard.press("ArrowUp");
+    await expect(porcoes).toHaveAttribute("style", /translate3d\(0px, -\d+px/); // above Hambúrgueres
+    await page.keyboard.press("Space");
+    await expect(toast(page)).toContainText("Categoria Porções movida para cima");
+    await expect.poll(order).toEqual(["Porções", "Hambúrgueres", "Bebidas", "Sobremesas"]);
+    expect((await sections.allTextContents())[0]).toMatch(/^Porções/);
+  } finally {
+    const now: { id: string; name: string }[] = await (await request.get("http://localhost:4200/api/restaurants/chapa27/categories/all", { headers: { Authorization: `Bearer ${token}` } })).json();
+    if (now[0]?.name === "Porções") await request.post(`http://localhost:4200/api/restaurants/chapa27/categories/${now[0].id}/move`, { data: { direction: "down" }, headers: { Authorization: `Bearer ${token}` } });
+  }
+  expect(await order()).toEqual(["Hambúrgueres", "Porções", "Bebidas", "Sobremesas"]);
+
+  // The row opens the cadastro.
+  await page.getByRole("button", { name: /^Clássico/ }).click();
+  await expect(page.locator(".drawer-panel input").first()).toHaveValue("Clássico");
+});
+
+plain("J-3 · Produtos de um restaurante sem nenhum item: o estado vazio cadastra o primeiro item ou cria categoria", async ({ page, request }) => {
+  const r = await newRestaurant(request);
+  await adminApi(request, "PATCH", `/restaurants/${r.id}/status`, { status: "ativo" });
+  await loginFreshOwner(page, request, r);
+  await page.goto("/produtos");
+  await expect(page.getByText("Seu catálogo ainda está vazio")).toBeVisible();
+  await expect(page.getByLabel("Buscar por nome")).toHaveCount(0);
+  await page.getByRole("button", { name: "Criar categoria" }).click();
+  await expect(page.getByRole("dialog", { name: "Nova categoria" })).toContainText("Uma lista só para Catálogo e Cardápio.");
+  await page.getByRole("dialog", { name: "Nova categoria" }).getByLabel("Nome da categoria").fill("Carnes");
+  await page.getByRole("dialog", { name: "Nova categoria" }).getByRole("button", { name: "Criar categoria" }).click();
+  await expect(toast(page)).toContainText("Categoria Carnes criada");
+  await expect(page.getByRole("button", { name: "Carnes 0", exact: true })).toBeVisible();
+  await expect(page.getByText("Nenhum item nesta categoria ainda.")).toBeVisible();
+});
