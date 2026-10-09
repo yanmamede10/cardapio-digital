@@ -2,140 +2,29 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import app from "../../apps/api/src/app.ts";
 import { ADMIN_KEY, ALL_MODULES, R, SEED_MODULES, call, login, setModules } from "./helpers.ts";
+import { ROUTES } from "./rotas.mjs";
+import { render } from "../../scripts/gerar-permissoes.ts";
 
-// E-1: every route registered in Express, walked from the app itself. A route has to be on one of the lists below or this
-// test fails — a new route can't ship without saying who may call it. For each protected route: no credential → 401; a
-// staff token of another restaurant → 403/404; every role below the minimum → 403; its module off → 403.
+// E-1: every route registered in Express, walked from the app itself. A route has to be in tests/api/rotas.mjs (the one list:
+// the permission matrix docs/seguranca/permissoes.md and scripts/conferir-permissoes.mjs read it too) or this test fails — a
+// new route can't ship without saying who may call it. For each protected route: no credential → 401; a staff token of
+// another restaurant → 403/404; every role below the minimum → 403; its module off → 403.
 
-// garcom: the waiter and up, not the kitchen (Atendimento, Fechar conta).
 type Min = "funcionario" | "garcom" | "administrador" | "dono";
 type Rule = [min: Min, module: string | null];
-
+const of = (access: string) => ROUTES.filter(([, r]) => r.access === access).map(([route]) => route);
 /** Anyone, no token: the customer app (menu, QR, orders by device id) and the login itself. */
-const PUBLIC = [
-  "GET /api/health",
-  "POST /api/auth/login",
-  "GET /api/restaurants/",
-  "GET /api/restaurants/:id",
-  "GET /api/restaurants/:id/categories",
-  "GET /api/restaurants/:id/items",
-  "GET /api/restaurants/:id/items/:itemId",
-  "GET /api/restaurants/:id/appearance",
-  "GET /api/tables/:tableCode",
-  "GET /api/payment-methods/",
-  "POST /api/coupons/apply",
-  "POST /api/orders/",
-  "GET /api/orders/",
-  "GET /api/orders/:id",
-  "POST /api/orders/:id/call-waiter"
-];
+const PUBLIC = of("public");
 /** Evolution → API: its shared secret header, not a token. */
-const WEBHOOK = ["POST /api/whatsapp/webhook/"];
+const WEBHOOK = of("webhook");
 /** The caller's own login (any role, provisional password included): nothing of another restaurant to reach. */
-const SELF = ["GET /api/auth/me", "POST /api/auth/password"];
+const SELF = of("self");
 /** Any staff role, no :id to swap: the token's restaurant decides what comes back (G-1: the addresses of its orders). */
-const OWN = ["GET /api/addresses/"];
+const OWN = of("own");
 /** The super admin key (Bearer); no staff token passes. */
-const SUPER_ADMIN = [
-  "GET /api/admin/restaurants",
-  "POST /api/admin/restaurants",
-  "GET /api/admin/restaurants/:id",
-  "PATCH /api/admin/restaurants/:id",
-  "PATCH /api/admin/restaurants/:id/status",
-  "PATCH /api/admin/restaurants/:id/modules",
-  "POST /api/admin/restaurants/:id/staff/:staffId/reset-password",
-  "PATCH /api/admin/restaurants/:id/plan",
-  "GET /api/admin/billing",
-  "POST /api/admin/billing",
-  "POST /api/admin/billing/:chargeId/pay"
-];
+const SUPER_ADMIN = of("admin");
 /** Staff of the restaurant: minimum role and module (docs/adr/0005-modelo-de-permissoes.md, PLAN_MODULES). */
-const STAFF: Record<string, Rule> = {
-  "GET /api/restaurants/:id/orders": ["funcionario", "pedidos"],
-  "GET /api/restaurants/:id/shift-stats": ["funcionario", "pedidos"],
-  "POST /api/orders/:id/accept": ["funcionario", "pedidos"],
-  "POST /api/orders/:id/reject": ["funcionario", "pedidos"],
-  "PATCH /api/orders/:id/stage": ["funcionario", "pedidos"],
-
-  "GET /api/restaurants/:id/tables": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/tables": ["administrador", "mesas"],
-  "GET /api/restaurants/:id/salon-grid": ["funcionario", "mesas"],
-  "PATCH /api/restaurants/:id/salon-grid": ["administrador", "mesas"],
-  "PATCH /api/restaurants/:id/tables/:number/position": ["administrador", "mesas"],
-  "PATCH /api/restaurants/:id/tables/:number": ["administrador", "mesas"],
-  "DELETE /api/restaurants/:id/tables/:number": ["administrador", "mesas"],
-  "GET /api/restaurants/:id/tables/:number/comanda": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/tables/:number/orders": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/tables/:number/close": ["garcom", "mesas"],
-  "POST /api/restaurants/:id/tables/:number/transfer": ["funcionario", "mesas"],
-  "GET /api/restaurants/:id/tables/:number/qr": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/tables/:number/qr": ["administrador", "mesas"],
-  "GET /api/restaurants/:id/waiter-calls": ["funcionario", "mesas"],
-  "POST /api/restaurants/:id/waiter-calls/:callId/resolve": ["funcionario", "mesas"],
-
-  "PATCH /api/restaurants/:id/items/:itemId/sold-out": ["funcionario", "cardapio"],
-  "POST /api/restaurants/:id/items": ["administrador", "cardapio"],
-  "PATCH /api/restaurants/:id/items/:itemId": ["administrador", "cardapio"],
-  "POST /api/restaurants/:id/items/:itemId/image": ["administrador", "cardapio"],
-  "DELETE /api/restaurants/:id/items/:itemId": ["administrador", "cardapio"],
-  "POST /api/restaurants/:id/items/:itemId/duplicate": ["administrador", "cardapio"],
-  "POST /api/restaurants/:id/items/:itemId/move": ["administrador", "cardapio"],
-  // J-1: one list of categories for the Cardápio and the Catálogo — either module (both off: 403).
-  "GET /api/restaurants/:id/categories/all": ["funcionario", "cardapio|produtos"],
-  "POST /api/restaurants/:id/categories/:categoryId/move": ["administrador", "cardapio|produtos"],
-  "POST /api/restaurants/:id/categories": ["administrador", "cardapio|produtos"],
-  "PATCH /api/restaurants/:id/categories/:categoryId": ["administrador", "cardapio|produtos"],
-  "DELETE /api/restaurants/:id/categories/:categoryId": ["administrador", "cardapio|produtos"],
-
-  "GET /api/restaurants/:id/coupons": ["administrador", "promocoes"],
-  "POST /api/restaurants/:id/coupons": ["administrador", "promocoes"],
-  "PATCH /api/restaurants/:id/coupons/:couponId": ["administrador", "promocoes"],
-  "DELETE /api/restaurants/:id/coupons/:couponId": ["administrador", "promocoes"],
-  "POST /api/restaurants/:id/coupons/:couponId/duplicate": ["administrador", "promocoes"],
-
-  "GET /api/restaurants/:id/tickets": ["garcom", "atendimento"],
-  "PATCH /api/restaurants/:id/tickets/:ticketId": ["garcom", "atendimento"],
-  "POST /api/restaurants/:id/tickets/:ticketId/messages": ["garcom", "atendimento"],
-  "POST /api/restaurants/:id/tickets/:ticketId/media": ["garcom", "atendimento"],
-  "GET /api/restaurants/:id/reviews": ["garcom", "atendimento"],
-  "POST /api/restaurants/:id/reviews/:reviewId/reply": ["garcom", "atendimento"],
-  "GET /api/restaurants/:id/whatsapp": ["garcom", "atendimento"],
-  "POST /api/restaurants/:id/whatsapp/terms": ["dono", "atendimento"],
-  "POST /api/restaurants/:id/whatsapp/connect": ["dono", "atendimento"],
-  "POST /api/restaurants/:id/whatsapp/disconnect": ["dono", "atendimento"],
-
-  "GET /api/restaurants/:id/products": ["administrador", "produtos"],
-  "POST /api/restaurants/:id/products": ["administrador", "produtos"],
-  "PATCH /api/restaurants/:id/products/:productId": ["administrador", "produtos"],
-  "GET /api/restaurants/:id/stock-movements": ["administrador", "produtos"],
-  "POST /api/restaurants/:id/stock-movements/adjust": ["administrador", "produtos"],
-  "POST /api/restaurants/:id/stock-movements/xml": ["administrador", "produtos"],
-
-  "GET /api/restaurants/:id/analytics": ["administrador", "relatorios"],
-  // Contas a Pagar / a Receber / Visão Geral: one table, the module follows the entry's kind (no kind: Visão Geral).
-  "GET /api/restaurants/:id/finance-entries": ["administrador", "visao"],
-  "POST /api/restaurants/:id/finance-entries": ["administrador", "pagar"],
-  "POST /api/restaurants/:id/finance-entries/:entryId/pay": ["administrador", "pagar"],
-  "DELETE /api/restaurants/:id/finance-entries/:entryId": ["administrador", "pagar"],
-  "GET /api/restaurants/:id/closed-orders": ["administrador", "fiscal"],
-  // Minha Fatura and Configurações are not modules.
-  "GET /api/restaurants/:id/finance": ["administrador", null],
-  "GET /api/restaurants/:id/payment-mode": ["funcionario", null],
-  "GET /api/restaurants/:id/profile": ["dono", null],
-  "PATCH /api/restaurants/:id/profile": ["dono", null],
-  "GET /api/restaurants/:id/hours": ["dono", null],
-  "PATCH /api/restaurants/:id/hours": ["dono", null],
-  "GET /api/restaurants/:id/fiscal": ["dono", null],
-  "PATCH /api/restaurants/:id/fiscal": ["dono", null],
-  "PATCH /api/restaurants/:id/payment-mode": ["dono", null],
-  "GET /api/restaurants/:id/appearance/draft": ["dono", null],
-  "PATCH /api/restaurants/:id/appearance/draft": ["dono", null],
-  "POST /api/restaurants/:id/appearance/publish": ["dono", null],
-  "POST /api/restaurants/:id/appearance/upload": ["dono", null],
-  "GET /api/restaurants/:id/staff": ["dono", null],
-  "POST /api/restaurants/:id/staff": ["dono", null],
-  "PATCH /api/restaurants/:id/staff/:staffId": ["dono", null]
-};
+const STAFF: Record<string, Rule> = Object.fromEntries(ROUTES.filter(([, r]) => r.access === "staff").map(([route, r]) => [route, [r.min as Min, r.module ?? null]]));
 
 /** "METHOD /path" of every route Express has, mount point included (Express 4: the mount is only in the layer's regexp). */
 function registeredRoutes(): string[] {
@@ -262,6 +151,15 @@ test("módulo desligado: 403 em toda rota do módulo, mesmo para o Dono", async 
   }
   await setModules(SEED_MODULES);
   assert.deepEqual(wrong, []);
+});
+
+// Item 8: the matrix is generated, never edited by hand — this fails when someone changes rotas.mjs (or who sees a screen)
+// without running npx tsx scripts/gerar-permissoes.ts.
+test("docs/seguranca/permissoes.md é o que scripts/gerar-permissoes.ts gera da lista de rotas", async () => {
+  const { readFileSync } = await import("node:fs");
+  const doc = readFileSync(new URL("../../docs/seguranca/permissoes.md", import.meta.url), "utf8").replaceAll("\r\n", "\n");
+  assert.equal(doc, render(), "rode: npx tsx scripts/gerar-permissoes.ts");
+  assert.equal(new Set(ROUTES.map(([route]) => route)).size, ROUTES.length, "rota repetida em rotas.mjs");
 });
 
 test("credencial do super admin só vale com a chave inteira", async () => {

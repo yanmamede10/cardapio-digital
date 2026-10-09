@@ -473,6 +473,25 @@ export const ROLE_LABEL: Record<StaffRole, string> = { owner: "Dono", manager: "
 export const SUPPORT_ROLES: StaffRole[] = ["owner", "manager", "waiter"];
 /** Fechar conta (Mesas): whoever serves the tables — waiter, Administrador and Dono; not the kitchen (decided 02/10/2026, F-4). */
 export const CLOSE_BILL_ROLES: StaffRole[] = ["owner", "manager", "waiter"];
+
+/** The dashboard's screens (the menu's modules) and who sees each one: a minimum level, or exact roles when a screen splits a
+ *  level (Atendimento: SUPPORT_ROLES). One place for the dashboard's menu and route guard (lib/modules.ts) and for the
+ *  permission matrix (scripts/gerar-permissoes.ts, item 8). It mirrors the API guards of the data each screen loads. */
+export const SCREENS: Record<string, { label: string; level: number; roles?: StaffRole[] }> = {
+  pedidos: { label: "Central de Pedidos", level: LEVEL.FUNCIONARIO },
+  cardapio: { label: "Cardápio", level: LEVEL.FUNCIONARIO },
+  mesas: { label: "Mesas", level: LEVEL.FUNCIONARIO },
+  promocoes: { label: "Promoções e Cupons", level: LEVEL.ADMINISTRADOR },
+  atendimento: { label: "Atendimento", level: LEVEL.FUNCIONARIO, roles: SUPPORT_ROLES },
+  produtos: { label: "Produtos", level: LEVEL.ADMINISTRADOR },
+  relatorios: { label: "Relatórios", level: LEVEL.ADMINISTRADOR },
+  visao: { label: "Visão Geral", level: LEVEL.ADMINISTRADOR },
+  pagar: { label: "Contas a Pagar", level: LEVEL.ADMINISTRADOR },
+  receber: { label: "Contas a Receber", level: LEVEL.ADMINISTRADOR },
+  fiscal: { label: "Emissão Fiscal", level: LEVEL.ADMINISTRADOR },
+  financeiro: { label: "Minha Fatura", level: LEVEL.ADMINISTRADOR },
+  config: { label: "Configurações", level: LEVEL.DONO }
+};
 /** Any role string outside StaffRole counts as Funcionário. */
 export const roleLevel = (role: string | undefined) => ROLE_LEVEL[role as StaffRole] ?? LEVEL.FUNCIONARIO;
 
