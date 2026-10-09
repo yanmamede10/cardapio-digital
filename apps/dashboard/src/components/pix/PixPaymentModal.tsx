@@ -92,7 +92,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
 
   const qr = useMemo(() => fakeQrDataUri(Math.round(amount * 100)), [amount]);
   const code = useMemo(
-    () => `00020126580014BR.GOV.BCB.PIX0136${Math.round(amount * 100).toString(16).padStart(8, "0")}-mesapronta52040000530398654${amount.toFixed(2).replace(".", "")}5802BR5919${title.toUpperCase().slice(0, 20)}6009SAO PAULO6304ABCD`,
+    () => `00020126580014BR.GOV.BCB.PIX0136${Math.round(amount * 100).toString(16).padStart(8, "0")}-pyro52040000530398654${amount.toFixed(2).replace(".", "")}5802BR5919${title.toUpperCase().slice(0, 20)}6009SAO PAULO6304ABCD`,
     [amount, title]
   );
 

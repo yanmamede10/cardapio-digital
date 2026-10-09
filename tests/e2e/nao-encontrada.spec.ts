@@ -37,7 +37,7 @@ for (const theme of ["light", "dark"] as const) {
           await page.goto(LOST);
           await expect(page.getByText(TITLE), who).toBeVisible();
           expect(new URL(page.url()).pathname, `${who}: fica no endereço digitado`).toBe(LOST);
-          await expect(page, who).toHaveTitle(`Página não encontrada · ${R}`);
+          await expect(page, who).toHaveTitle(`Página não encontrada · ${R} · Pyro`);
           await expect(page.getByText("Página não encontrada", { exact: true }), `${who}: cabeçalho`).toBeVisible();
           if (mobile) await expect(page.getByText(R, { exact: true }), `${who}: subtítulo`).toBeVisible();
           await expect(current, `${who}: nada ativo no menu`).toHaveCount(0);
@@ -56,7 +56,7 @@ for (const theme of ["light", "dark"] as const) {
       await asSuperAdmin(page);
       await page.goto("/admin/pagina-que-nao-existe");
       await expect(page.getByText(TITLE)).toBeVisible();
-      await expect(page).toHaveTitle("Página não encontrada · Super Admin");
+      await expect(page).toHaveTitle("Página não encontrada · Super Admin · Pyro");
       expect(await a11yProblems(page, "/admin/pagina-que-nao-existe")).toEqual([]);
       await page.getByRole("link", { name: "Voltar ao início" }).click();
       await expect.poll(() => new URL(page.url()).pathname).toBe("/admin");
@@ -67,7 +67,7 @@ for (const theme of ["light", "dark"] as const) {
       await loginAs(page, request, "cozinha@chapa27.example");
       await page.goto("/config");
       await expect.poll(() => new URL(page.url()).pathname).toBe("/");
-      await expect(page).toHaveTitle(`Central de Pedidos · ${R}`);
+      await expect(page).toHaveTitle(`Central de Pedidos · ${R} · Pyro`);
       await expect(page.getByText(TITLE)).toHaveCount(0);
     });
 
@@ -136,7 +136,7 @@ for (const theme of ["light", "dark"] as const) {
       await page.addInitScript(() => localStorage.removeItem("cardapio.dashboard.session")); // runs after the fixture's: logged out
       await page.goto(LOST);
       await expect(page.getByRole("heading", { name: TITLE })).toBeVisible();
-      await expect(page).toHaveTitle("Página não encontrada · MesaPronta Gestão");
+      await expect(page).toHaveTitle("Página não encontrada · Pyro");
       expect(await a11yProblems(page, `sem login ${LOST}`)).toEqual([]);
       await page.getByRole("link", { name: "Entrar" }).click();
       await expect.poll(() => new URL(page.url()).pathname).toBe("/");

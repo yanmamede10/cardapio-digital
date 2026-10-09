@@ -1,5 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { PLATFORM_NAME } from "@cardapio/shared";
+import { Logo } from "./Logo";
 import { NAV_GROUPS, canSee, moduleByKey, type ModuleDef } from "../lib/modules";
 import { useDashboardState } from "../state/DashboardStateContext";
 import { logout } from "../lib/api";
@@ -58,26 +60,10 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
       }}
     >
       {/* Checklist 17: the logo goes home — "/" is each role's first screen (homePath). */}
-      <Link to="/" aria-label="MesaPronta: início" style={{ padding: "22px 22px 18px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line)", color: "inherit", textDecoration: "none" }}>
-        <div
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: 13,
-            background: "var(--brand)",
-            color: "var(--brandInk)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 600,
-            fontSize: 15
-          }}
-        >
-          MP
-        </div>
+      <Link to="/" aria-label={`${PLATFORM_NAME}: início`} style={{ padding: "22px 22px 18px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid var(--line)", color: "inherit", textDecoration: "none" }}>
+        <Logo size={34} />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 600, letterSpacing: "-.01em" }}>MesaPronta</div>
+          <div style={{ fontWeight: 600, letterSpacing: "-.01em" }}>{PLATFORM_NAME}</div>
           <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
             Gestão
           </div>

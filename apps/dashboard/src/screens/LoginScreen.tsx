@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { MIN_PASSWORD_LENGTH } from "@cardapio/shared";
+import { MIN_PASSWORD_LENGTH, PLATFORM_NAME } from "@cardapio/shared";
 import { ApiError, changePassword, login, logout } from "../lib/api";
 import { Field } from "../components/SlideOver";
+import { Logo } from "../components/Logo";
 
 export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [email, setEmail] = useState("");
@@ -9,7 +10,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    document.title = "Entrar · MesaPronta Gestão";
+    document.title = `Entrar · ${PLATFORM_NAME}`;
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -22,7 +23,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 403
-          ? "Este restaurante não está ativo. Fale com o suporte da MesaPronta."
+          ? `Este restaurante não está ativo. Fale com o suporte da ${PLATFORM_NAME}.`
           : err instanceof ApiError
             ? err.message
             : "Não foi possível entrar. Tente novamente."
@@ -55,6 +56,10 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
           boxShadow: "var(--shadow1)"
         }}
       >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+          <Logo size={32} />
+          <span style={{ fontWeight: 600, letterSpacing: "-.01em", color: "var(--ink)" }}>{PLATFORM_NAME}</span>
+        </div>
         <h1 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--ink)" }}>Entrar</h1>
         <p style={{ margin: "0 0 20px", fontSize: 13, color: "var(--ink3)" }}>Acesse com seu e-mail cadastrado no restaurante.</p>
 

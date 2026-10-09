@@ -135,7 +135,7 @@ test("a pilha local responde como a VM: cardápio em /, painel em /painel/, API 
   expect(script(web.body)).toMatch(/^\/assets\/index-\w+\.js$/);
   const painel = await https("/painel/");
   expect(painel.status).toBe(200);
-  expect(painel.body).toContain("<title>MesaPronta · Gestão</title>");
+  expect(painel.body).toContain("<title>Pyro</title>");
   expect(script(painel.body)).toMatch(/^\/painel\/assets\/index-[\w-]+\.js$/);
 
   // A reload of an address the app routes by itself: its own app's index.html, never a 404 nor the other app.

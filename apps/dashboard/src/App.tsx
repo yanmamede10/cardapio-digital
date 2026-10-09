@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
+import { PLATFORM_NAME } from "@cardapio/shared";
 import { useIsMobile } from "./lib/useIsMobile";
 import { SESSION_ENDED, getSession, refreshSession } from "./lib/api";
 import { homePath, knownPath, routeAllowed } from "./lib/modules";
@@ -20,7 +21,7 @@ export default function App() {
   const known = knownPath(mobileScreens(), pathname) || knownPath(desktopScreens(), pathname);
   const lost = !loggedIn && !isAdmin && !known;
   useEffect(() => {
-    if (lost) document.title = "Página não encontrada · MesaPronta Gestão";
+    if (lost) document.title = `Página não encontrada · ${PLATFORM_NAME}`;
   }, [lost]);
 
   // Without this, an expired token left the screens polling in silence: the Central went empty instead of asking to log in.

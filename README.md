@@ -1,6 +1,8 @@
-# cardapio-digital (MesaPronta)
+# cardapio-digital (Pyro)
 
 SaaS de gestão para restaurantes: cardápio digital com comanda na mesa (QR/tablet), delivery próprio, painel de gestão do restaurante e um painel de plataforma (super admin).
+
+**Nome e logo.** A plataforma se chama **Pyro** (o app de delivery continua Levva): o nome mora em `PLATFORM_NAME` (`packages/shared`) e o logo num arquivo só, `packages/shared/brand/logo.svg` — a pasta pública dos dois apps (servida como `/logo.svg`): favicon do painel e do cardápio, o componente `Logo` do painel (barra lateral, cabeçalho do celular, login e Super Admin). Os ícones dos dois APKs são gerados dele: trocou o `logo.svg`, rode `node scripts/gerar-icones.mjs` e faça o commit dos PNGs (o `npm test` falha enquanto os ícones forem de outro logo). Chaves internas continuam com o nome antigo, de propósito (trocar deslogaria todo mundo ou quebraria o APK): `mesapronta.theme` (localStorage), `mesapronta.adminKey` (sessionStorage), o evento `mesapronta:sessao-encerrada`, o `appId`/`applicationId` `com.mesapronta.gestao` e `com.mesapronta.cardapio` (registrados no Firebase), o pacote Java e o `custom_url_scheme` dos dois APKs.
 
 ## Estrutura
 

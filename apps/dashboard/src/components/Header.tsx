@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PLATFORM_NAME } from "@cardapio/shared";
 import { api } from "../lib/api";
 import { initialsOf } from "../lib/format";
 import type { NotifItem } from "../lib/live";
@@ -12,9 +13,9 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
   useEffect(() => {
     api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {});
   }, []);
-  // Checklist 5: the tab says which screen and which restaurant ("Central de Pedidos · Chapa 27 Burgers").
+  // Checklist 5: the tab says which screen, which restaurant and the platform ("Central de Pedidos · Chapa 27 Burgers · Pyro").
   useEffect(() => {
-    document.title = restaurantName ? `${screen} · ${restaurantName}` : screen;
+    document.title = [screen, restaurantName, PLATFORM_NAME].filter(Boolean).join(" · ");
   }, [screen, restaurantName]);
   const notifCount = notifs.length;
 

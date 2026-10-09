@@ -460,6 +460,10 @@ export interface Review {
   repliedAt: string | null;
 }
 
+/** The platform's name, as people read it (item 11). Its mark is packages/shared/brand/logo.svg. Not the internal keys
+ *  (localStorage, the Android appId, …), which keep the old name: renaming them would log everyone out or break the APK. */
+export const PLATFORM_NAME = "Pyro";
+
 export type StaffRole = "owner" | "manager" | "waiter" | "kitchen";
 
 /** Every password a person picks (Equipe & Permissões, the first-login change). Provisional ones from the super admin are 12. */

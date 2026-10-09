@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import type { AdminRestaurant, RestaurantStatus } from "@cardapio/shared";
+import { PLATFORM_NAME, type AdminRestaurant, type RestaurantStatus } from "@cardapio/shared";
 import { ApiError, BASE_URL } from "../lib/api";
 import { fmtDate } from "../lib/format";
 import { useDashboardState } from "../state/DashboardStateContext";
@@ -8,6 +8,7 @@ import { EmptyState } from "../components/EmptyState";
 import { Segmented } from "../components/Segmented";
 import { Field } from "../components/SlideOver";
 import { Toast } from "../components/Toast";
+import { Logo } from "../components/Logo";
 import AdminRestaurantScreen from "./AdminRestaurantScreen";
 import AdminBillingScreen from "./AdminBillingScreen";
 
@@ -49,7 +50,7 @@ export default function AdminScreen() {
   // UX-05: anything else under /admin is a 404, with or without the key — the list used to stand in for it.
   const notFound = !billing && !detailId && !/^\/admin\/?$/.test(pathname);
   useEffect(() => {
-    document.title = `${notFound ? "Página não encontrada" : !key ? "Entrar" : billing ? "Mensalidades" : detailId ? "Restaurante" : "Restaurantes"} · Super Admin`;
+    document.title = `${notFound ? "Página não encontrada" : !key ? "Entrar" : billing ? "Mensalidades" : detailId ? "Restaurante" : "Restaurantes"} · Super Admin · ${PLATFORM_NAME}`;
   }, [notFound, key, billing, detailId]);
 
   // Own tiny fetch: the staff request() would attach the staff token and log the staff out on a 401.
@@ -88,10 +89,11 @@ export default function AdminScreen() {
     <div style={{ minHeight: "100vh", background: "var(--bg)", padding: "28px 16px" }}>
       <div style={{ maxWidth: 1080, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <Logo size={34} />
           <div style={{ flex: 1 }}>
             <h1 style={{ margin: 0, fontSize: 19, fontWeight: 600, letterSpacing: "-.015em" }}>{notFound ? "Página não encontrada" : billing ? "Mensalidades" : "Restaurantes"}</h1>
             <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
-              MesaPronta · Plataforma
+              {PLATFORM_NAME} · Plataforma
             </div>
           </div>
           {key && (

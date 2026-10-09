@@ -10,7 +10,7 @@ const httpsApi = process.env.VITE_PUBLIC_URL?.startsWith("https://") ?? false;
 
 const config: CapacitorConfig = {
   appId: "com.mesapronta.gestao",
-  appName: "MesaPronta Gestão",
+  appName: "Pyro Gestão", // what the launcher shows (also res/values/strings.xml); the appId above stays: Firebase knows it
   webDir: "dist",
   server: {
     androidScheme: httpsApi ? "https" : "http",

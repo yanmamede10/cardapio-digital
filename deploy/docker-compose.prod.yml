@@ -82,7 +82,7 @@ services:
       TELEMETRY_ENABLED: "false"
       LOG_LEVEL: ERROR,WARN,INFO
       # Name shown in the phone under "Aparelhos conectados".
-      CONFIG_SESSION_PHONE_CLIENT: MesaPronta
+      CONFIG_SESSION_PHONE_CLIENT: Pyro
     volumes: [evolution_instances:/evolution/instances]
 
   # Evolution's internal store only (no published port; the password never leaves this network).

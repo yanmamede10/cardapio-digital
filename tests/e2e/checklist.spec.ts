@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { a11yProblems } from "./a11y";
 import { DEMO_MODULES, adminApi, asSuperAdmin, expect, loginAs, loginFreshOwner, newRestaurant, setModules, staffToken, tableUrl, test } from "./fixtures";
@@ -122,14 +123,15 @@ for (const theme of ["light", "dark"] as const) {
       }
     });
 
-    test("4 · favicon no painel e no cardápio: o MP da MesaPronta", async ({ page }) => {
+    // L-11: both favicons are the platform's one logo file (packages/shared/brand/logo.svg), whatever it draws.
+    test("4 · favicon no painel e no cardápio: o logo da plataforma, do arquivo único", async ({ page }) => {
+      const logo = readFileSync("packages/shared/brand/logo.svg", "utf8").trim(); // the run starts at the repo root
       for (const url of ["/", WEB]) {
         await page.goto(url);
         const href = await page.locator('link[rel~="icon"]').getAttribute("href");
         expect(href, url).toBeTruthy();
-        const svg = decodeURIComponent(href!.replace(/^data:image\/svg\+xml,/, ""));
-        expect(svg, url).toContain(">MP</text>");
-        expect(svg, url).toContain("#732009");
+        const served = href!.startsWith("data:") ? decodeURIComponent(href!.replace(/^data:image\/svg\+xml,/, "")) : await (await page.request.get(new URL(href!, page.url()).href)).text();
+        expect(served.replaceAll("\r\n", "\n").trim(), url).toBe(logo.replaceAll("\r\n", "\n"));
       }
     });
 
@@ -140,7 +142,7 @@ for (const theme of ["light", "dark"] as const) {
       expect(description!.length).toBeLessThanOrEqual(160);
     });
 
-    test("5 · título da aba específico em cada tela: \"<tela> · <restaurante>\" no painel e no cardápio", async ({ page, request, browser }, info) => {
+    test("5 · título da aba específico em cada tela: \"<tela> · <restaurante> · Pyro\" no painel e \"<tela> · <restaurante>\" no cardápio", async ({ page, request, browser }, info) => {
       const mobile = info.project.name === "mobile";
       await loginAs(page, request, "dono@chapa27.example");
       const R = "Chapa 27 Burgers";
@@ -155,7 +157,7 @@ for (const theme of ["light", "dark"] as const) {
       ];
       for (const [path, screen] of screens) {
         await page.goto(path);
-        await expect(page, path).toHaveTitle(`${screen} · ${R}`);
+        await expect(page, path).toHaveTitle(`${screen} · ${R} · Pyro`);
       }
       // The cardápio, opened by a table's QR: the menu, a dish, the round (its cart); a code that doesn't exist says so in the tab too.
       const staff = await staffToken(request, "dono@chapa27.example");
@@ -172,12 +174,12 @@ for (const theme of ["light", "dark"] as const) {
       // Before any login, and the Super Admin.
       const anon = await browser.newPage();
       await anon.goto("http://localhost:5274/");
-      await expect(anon).toHaveTitle("Entrar · MesaPronta Gestão");
+      await expect(anon).toHaveTitle("Entrar · Pyro");
       await asSuperAdmin(anon);
       await anon.goto("http://localhost:5274/admin");
-      await expect(anon).toHaveTitle("Restaurantes · Super Admin");
+      await expect(anon).toHaveTitle("Restaurantes · Super Admin · Pyro");
       await anon.goto("http://localhost:5274/admin/mensalidades");
-      await expect(anon).toHaveTitle("Mensalidades · Super Admin");
+      await expect(anon).toHaveTitle("Mensalidades · Super Admin · Pyro");
       await anon.close();
     });
 
@@ -310,7 +312,7 @@ for (const theme of ["light", "dark"] as const) {
     test("17 · o logo leva ao início: no painel, à tela inicial do papel; no cardápio, ao topo do cardápio", async ({ page, request, browser }) => {
       await loginAs(page, request, "dono@chapa27.example");
       await page.goto("/mesas");
-      await page.getByRole("link", { name: "MesaPronta: início" }).click();
+      await page.getByRole("link", { name: "Pyro: início" }).click();
       await expect(page).toHaveURL(/:5274\/$/);
       await expect(page).toHaveTitle(/^Central de Pedidos · /);
       // The cardápio at a table: scrolled down, the restaurant's logo brings the menu back to its top.
@@ -662,5 +664,44 @@ test("I-1 · o cardápio mostra o horário cadastrado da Chapa 27 (Configuraçõ
     await expect(g.getByText(badge, { exact: true }), when).toBeVisible();
     await expect(g.getByText(/11:00 – 23:00/)).toHaveCount(0);
     await ctx.close();
+  }
+});
+
+// L-11: the platform is called Pyro. On the desktop and the phone, nothing on screen says "MesaPronta" — the text, the names of
+// buttons and links (aria-label, title) and the tab — on the login, every screen of the Dono, a 404, the Super Admin; every tab
+// says Pyro. The internal keys (localStorage, the Android appId) keep the old name: they aren't shown.
+test("L-11 · a plataforma se chama Pyro: nenhum \"MesaPronta\" na tela (texto, nomes dos botões e aba) e o título de toda aba tem Pyro", async ({ page, request, browser }, info) => {
+  test.setTimeout(180_000);
+  const mobile = info.project.name === "mobile";
+  const seen = async (p: Page, where: string) => {
+    const text = await p.evaluate(() => [document.title, document.body.innerText, ...[...document.querySelectorAll("[aria-label],[title],[alt],[placeholder]")].flatMap((e) => ["aria-label", "title", "alt", "placeholder"].map((a) => e.getAttribute(a) ?? ""))].join("\n"));
+    expect(text, where).not.toMatch(/mesa\s*pronta/i);
+    await expect(p, where).toHaveTitle(/Pyro/);
+  };
+  const anon = await browser.newPage({ viewport: page.viewportSize()!, isMobile: mobile, hasTouch: mobile });
+  await anon.goto("http://localhost:5274/");
+  await expect(anon.getByRole("heading", { name: "Entrar" })).toBeVisible();
+  await seen(anon, "login");
+  await anon.goto("http://localhost:5274/pagina-que-nao-existe");
+  await seen(anon, "404 sem login");
+  await asSuperAdmin(anon);
+  await anon.goto("http://localhost:5274/admin");
+  await expect(anon.getByRole("heading", { name: "Restaurantes" })).toBeVisible();
+  await seen(anon, "Super Admin");
+  await anon.close();
+
+  await loginAs(page, request, "dono@chapa27.example");
+  const paths = ["/", "/mesas", "/cardapio", "/produtos", "/promocoes", "/atendimento", "/relatorios", "/visao-geral", "/contas-a-pagar", "/contas-a-receber", "/financeiro", "/config", "/pagina-que-nao-existe", ...(mobile ? ["/mais"] : [])];
+  for (const path of paths) {
+    await page.goto(path);
+    await expect(page.locator(".skeleton")).toHaveCount(0, { timeout: 8_000 });
+    await expect(page).toHaveTitle(/ · Pyro$/); // the header names the screen once the restaurant arrived
+    await seen(page, path);
+  }
+  // Configurações → Financeiro talks about the platform (the PIX by the platform): its name, the new one.
+  if (!mobile) {
+    await page.goto("/config");
+    await page.locator("main").getByRole("button", { name: "Financeiro", exact: true }).click();
+    await seen(page, "Configurações → Financeiro");
   }
 });

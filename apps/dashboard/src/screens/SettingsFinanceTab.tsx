@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { PaymentMode, TaxRegime } from "@cardapio/shared";
-import { PAYMENT_MODE_LABEL, TAX_REGIME_LABEL } from "@cardapio/shared";
+import { PAYMENT_MODE_LABEL, PLATFORM_NAME, TAX_REGIME_LABEL } from "@cardapio/shared";
 import { useNavigate } from "react-router-dom";
 import { Field } from "../components/SlideOver";
 import { Segmented } from "../components/Segmented";
@@ -90,7 +90,7 @@ export default function PaymentSubaccountTab() {
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>Como vocês recebem pagamento no balcão?</div>
           <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6 }}>
-            Define se o fechamento de comanda mostra o QR PIX da MesaPronta ou só registra a forma paga na maquininha de vocês.
+            Define se o fechamento de comanda mostra o QR PIX da {PLATFORM_NAME} ou só registra a forma paga na maquininha de vocês.
           </div>
         </div>
         <Segmented
@@ -112,7 +112,7 @@ export default function PaymentSubaccountTab() {
           <div style={{ flex: 1, minWidth: 240 }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Não é necessário abrir subconta</div>
             <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>
-              Como vocês recebem pela maquininha própria, o fechamento de comanda só registra a forma de pagamento usada — sem QR nem repasse pela MesaPronta.
+              Como vocês recebem pela maquininha própria, o fechamento de comanda só registra a forma de pagamento usada — sem QR nem repasse pela {PLATFORM_NAME}.
             </div>
           </div>
         </section>
@@ -127,7 +127,7 @@ export default function PaymentSubaccountTab() {
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>O dinheiro cai direto na conta do seu restaurante</div>
           <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6 }}>
-            A subconta é aberta no seu CNPJ, no banco que você indicar. Cada pagamento é liquidado direto para você — a MesaPronta nunca fica com o seu caixa, só desconta a taxa por transação no momento do repasse.
+            A subconta é aberta no seu CNPJ, no banco que você indicar. Cada pagamento é liquidado direto para você — a {PLATFORM_NAME} nunca fica com o seu caixa, só desconta a taxa por transação no momento do repasse.
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>

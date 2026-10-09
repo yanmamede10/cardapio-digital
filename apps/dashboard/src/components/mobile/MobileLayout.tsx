@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { PLATFORM_NAME } from "@cardapio/shared";
 import { App } from "@capacitor/app";
 import { back } from "../../lib/back";
 import { type LiveData, buildNotifs, useLiveData } from "../../lib/live";
@@ -8,6 +9,7 @@ import { initialsOf } from "../../lib/format";
 import { canSee, moduleByKey } from "../../lib/modules";
 import { useDashboardState } from "../../state/DashboardStateContext";
 import { Toast } from "../Toast";
+import { Logo } from "../Logo";
 
 export interface MobileFabConfig {
   label: string;
@@ -73,9 +75,9 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
   // UX-05: an address the router doesn't know has no screen to name itself: the header says so.
   const screen = notFound ? "Página não encontrada" : header?.title ?? "";
   const subtitle = notFound ? restaurantName : header?.subtitle ?? "";
-  // Checklist 5: the tab (and the Android task switcher) says which screen and which restaurant.
+  // Checklist 5: the tab (and the Android task switcher) says which screen, which restaurant and the platform.
   useEffect(() => {
-    if (screen) document.title = restaurantName ? `${screen} · ${restaurantName}` : screen;
+    if (screen) document.title = [screen, restaurantName, PLATFORM_NAME].filter(Boolean).join(" · ");
   }, [screen, restaurantName]);
 
   const setHeader = useCallback((next: MobileHeaderConfig | null) => setHeaderState((prev) => (headerEqual(prev, next) ? prev : next)), []);
@@ -140,26 +142,8 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
           }}
         >
           {isRoot ? (
-            <Link
-              to="/"
-              aria-label="MesaPronta: início"
-              style={{
-                width: 44,
-                height: 44,
-                flex: "0 0 44px",
-                borderRadius: 11,
-                background: "var(--brand)",
-                color: "var(--brandInk)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontWeight: 600,
-                fontSize: 14,
-                textDecoration: "none"
-              }}
-            >
-              MP
+            <Link to="/" aria-label={`${PLATFORM_NAME}: início`} style={{ width: 44, height: 44, flex: "0 0 44px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Logo size={36} />
             </Link>
           ) : (
             <button

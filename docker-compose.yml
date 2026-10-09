@@ -30,7 +30,7 @@ services:
       TELEMETRY_ENABLED: "false"
       LOG_LEVEL: ERROR,WARN,INFO
       # Name shown in the phone under "Aparelhos conectados".
-      CONFIG_SESSION_PHONE_CLIENT: MesaPronta dev
+      CONFIG_SESSION_PHONE_CLIENT: Pyro dev
     volumes: [evolution_instances:/evolution/instances]
 
   evolution-db:
