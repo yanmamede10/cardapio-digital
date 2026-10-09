@@ -4,6 +4,7 @@ import type { CartLineInput, MenuCategory, MenuItem } from "@cardapio/shared";
 import { ApiError, api } from "../lib/api";
 import { brl } from "../lib/format";
 import { useMobileScreen } from "../components/mobile/MobileLayout";
+import { Modal } from "../components/Modal";
 import { useDashboardState } from "../state/DashboardStateContext";
 
 /** A line of the order being launched: the dish, the choices (optionIds per group) and the note. */
@@ -155,10 +156,17 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
         </button>
       </div>
 
+      {/* Item 7 (I-2): like every panel, it closes only by its own X (or Esc / the Android back), not on the background. */}
       {choosing && (
-        <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setChoosing(null)}>
-          <div className="modal-panel" role="dialog" aria-label={choosing.item.name} style={{ maxWidth: 460 }}>
-            <div style={{ padding: "18px 20px 6px", fontSize: 16, fontWeight: 600 }}>{choosing.item.name}</div>
+        <Modal label={choosing.item.name} onClose={() => setChoosing(null)} style={{ maxWidth: 460 }}>
+          {(close) => (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 12px 2px 20px" }}>
+              <div style={{ flex: 1, fontSize: 16, fontWeight: 600 }}>{choosing.item.name}</div>
+              <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
+                <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
+              </button>
+            </div>
             <div style={{ padding: "6px 20px 16px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
               {choosing.item.optionGroups.map((g) => (
                 <fieldset key={g.id} style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -202,8 +210,9 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
                 Adicionar · {brl(unitPrice(choosing) * choosing.quantity)}
               </button>
             </div>
-          </div>
-        </div>
+          </>
+          )}
+        </Modal>
       )}
 
       {reviewing && (

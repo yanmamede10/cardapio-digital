@@ -268,13 +268,14 @@ for (const theme of ["light", "dark"] as const) {
 }
 
 // I-2 (UX-08): no modal, side panel or bottom sheet closes on a click on its background — only its own X, Cancelar or
-// Continuar — and what was typed stays. The phone's action sheets, the filter popovers and Lançar pedido's dish options
-// still close outside: they have no other way out.
+// Continuar — and what was typed stays. Lançar pedido's dish options too (item 7: they closed outside, having no X). The
+// phone's action sheets and the filter popovers are menus: they still close outside.
 test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e o que foi digitado continua lá; o X e o Cancelar fecham", async ({ page, api }, info) => {
   test.setTimeout(240_000);
   const phone = info.project.name === "mobile";
   const items = await api<{ id: string; name: string; soldOut: boolean; optionGroups: unknown[] }[]>("GET", `${P}/items`);
   const plain = items.find((i) => !i.soldOut && i.optionGroups.length === 0)!;
+  const optioned = items.find((i) => !i.soldOut && i.optionGroups.length > 0)!;
   const bill = await api("POST", `${P}/finance-entries`, { kind: "payable", description: `Gás ${uid()}`, amount: 10, dueDate: new Date().toLocaleDateString("sv-SE"), status: "pending" });
   const open = await newTable(api); // an open comanda, on the map
   await api("POST", `${P}/tables/${open.number}/orders`, { lines: [line(plain.id)] });
@@ -305,7 +306,8 @@ test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e
         ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), ["Cancelar"], false], // whole screen: Cancelar in the top bar, no X (J-4)
         ["Adicionar prato (folha)", async () => (await goto("/cardapio"), await tap("Adicionar prato"), dialog("Adicionar prato ao cardápio")), ["Fechar"]],
         ["Novo lançamento (folha)", async () => (await goto("/contas-a-pagar"), await tap("Novo lançamento"), dialog("Novo lançamento")), ["Cancelar"]],
-        ["Quitar conta (folha)", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), ["Cancelar"]]
+        ["Quitar conta (folha)", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), ["Cancelar"]],
+        ["Lançar pedido: opções do prato (folha)", async () => (await goto(`/mesas/${open.number}/pedido`), await tap(`Adicionar ${optioned.name}`), dialog(optioned.name)), ["Fechar"]]
       ]
     : [
         ["Produto/Insumo", async () => (await goto("/produtos"), await tap("Novo item"), drawer), ["Fechar", "Cancelar"]],
@@ -314,6 +316,7 @@ test("I-2 · modais, painéis laterais e folhas não fecham ao clicar no fundo e
         ["Organizar prato", async () => (await goto("/cardapio"), await tap(`Organizar ${plain.name}`), drawer), ["Fechar", "Cancelar"]],
         ["Novo lançamento", async () => (await goto("/contas-a-pagar"), await tap("Novo lançamento"), dialog("Novo lançamento")), ["Cancelar"]],
         ["Quitar conta", async () => (await goto("/contas-a-pagar"), await quitar(), dialog("Quitar conta")), ["Cancelar"]],
+        ["Lançar pedido: opções do prato", async () => (await goto(`/mesas/${open.number}/pedido`), await tap(`Adicionar ${optioned.name}`), dialog(optioned.name)), ["Fechar"]],
         ["Lançar pedido: Revisar pedido", async () => (await goto(`/mesas/${open.number}/pedido`), await tap(`Adicionar ${plain.name}`), await tap(/Revisar e enviar/), dialog("Revisar pedido")), ["Continuar"]],
         ["Mesas: Fechar conta (maquininha)", fechar, ["Cancelar"]],
         ["Mesas: cobrança PIX", async () => (await pixMode("sistema"), await fechar()), ["Fechar"]],
