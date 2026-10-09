@@ -21,12 +21,19 @@ test("seed de demonstração: hamburgueria com cardápio, ficha técnica, estoqu
   assert.equal(items.length, 30);
   assert.ok(items.every((i: { imageUrl: string | null }) => i.imageUrl === null), "sem fotos de terceiros");
 
-  const products = (await call("GET", `${P}/products`, { token })).body as { name: string; type: string; composed: boolean; cost: number; stock: number; unit: string }[];
+  const products = (await call("GET", `${P}/products`, { token })).body as { name: string; type: string; composed: boolean; cost: number; stock: number; unit: string; categoryId: string | null }[];
   const byName = (n: string) => products.find((p) => p.name === n)!;
   assert.equal(byName("Clássico").composed, true);
   assert.equal(byName("Clássico").cost, 11.71, "1,85 + 6,90 + 0,04×54,90 + 0,015×12 + 0,03×7,50 + 0,02×18");
   assert.ok(byName("Bacon em fatias").stock < 1 && byName("Pão australiano").stock < 10, "alguns itens perto de acabar");
   assert.ok(products.filter((p) => p.type === "insumo").every((p) => p.unit && p.cost > 0));
+  // Item 6: every insumo is born in a category; the insumos' own come after the menu's (other test files add theirs after).
+  const all = (await call("GET", `${P}/categories/all`, { token })).body as { id: string; name: string }[];
+  assert.deepEqual(all.slice(0, 10).map((c) => c.name), ["Hambúrgueres", "Porções", "Bebidas", "Sobremesas", "Carnes", "Pães", "Hortifrúti", "Laticínios", "Molhos", "Embalagens"]);
+  const catOf = (n: string) => all.find((c) => c.id === byName(n).categoryId)?.name;
+  // Other test files add items to the Chapa 27 (one goes to Sem categoria on purpose): the seed's 33 insumos all have one.
+  assert.ok(products.filter((p) => p.type === "insumo" && p.categoryId).length >= 33, "os insumos do seed nascem com categoria");
+  assert.deepEqual(["Blend bovino 150 g", "Pão brioche", "Alface americana", "Queijo cheddar fatiado", "Chope pilsen (barril)", "Caixa de hambúrguer para viagem", "Molho barbecue", "Brownie"].map(catOf), ["Carnes", "Pães", "Hortifrúti", "Laticínios", "Bebidas", "Embalagens", "Molhos", "Sobremesas"]);
 
   const grid = (await call("GET", `${P}/salon-grid`, { token })).body;
   assert.equal(grid.tables.length, 30);

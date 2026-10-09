@@ -470,10 +470,11 @@ plain("J-2 · Cardápio: criar, renomear e excluir categoria na caixa do design;
 
   await page.getByRole("button", { name: "Excluir categoria Sobremesas" }).click();
   const busy = page.getByRole("dialog", { name: "Excluir “Sobremesas”?" });
-  await expect(busy).toContainText("Esta categoria tem 4 itens. Para excluir, mova os itens para outra categoria.");
-  await expect(busy.getByRole("listitem")).toHaveText(["Brownie com Sorvete", "Petit Gâteau", "Cheesecake de Frutas Vermelhas", "Sundae de Doce de Leite"]);
+  // 4 dishes and, since item 6, 3 insumos (Brownie, Petit gâteau congelado, Calda de chocolate): the API's count.
+  await expect(busy).toContainText("Esta categoria tem 7 itens. Para excluir, mova os itens para outra categoria.");
+  await expect(busy.getByRole("listitem")).toHaveText(["Brownie com Sorvete", "Petit Gâteau", "Cheesecake de Frutas Vermelhas", "Sundae de Doce de Leite", "e mais 3 itens do Catálogo de Produtos"]);
   await expect(busy.getByRole("button", { name: "Excluir", exact: true })).toHaveCount(0);
-  await expect(busy.getByLabel("Mover os 4 itens para:")).toHaveValue("");
+  await expect(busy.getByLabel("Mover os 7 itens para:")).toHaveValue("");
   await expect(busy.getByRole("button", { name: "Mover e excluir" })).toBeDisabled(); // no destination yet
   await busy.getByRole("button", { name: "Cancelar" }).click();
   await expect(busy).toBeHidden();
@@ -699,12 +700,14 @@ plain("J-3 · Produtos: Catálogo por categoria com busca, chips, tipo, seções
   await loginAs(page, request, "gerente@chapa27.example");
   const token = await staffToken(request, "gerente@chapa27.example");
   const order = async () => (await (await request.get("http://localhost:4200/api/restaurants/chapa27/categories")).json()).map((c: { name: string }) => c.name);
+  // Since item 6 the seed's insumos are all in a category: one without, so "Sem categoria" shows (last).
+  await request.post("http://localhost:4200/api/restaurants/chapa27/products", { data: { name: `Guardanapo ${uid()}`, type: "insumo", unit: "un", price: 0, cost: 0.05, ncm: "", cst: "", taxRate: 0, composed: false, components: [] }, headers: { Authorization: `Bearer ${token}` } });
   await page.goto("/produtos");
   const sections = page.locator("section.card button[aria-expanded]");
   await expect(sections.first()).toBeVisible();
   const titles = (await sections.allTextContents()).map((t) => t.replace(/\d+$/, "").trim());
-  expect(titles.slice(0, 4)).toEqual(["Hambúrgueres", "Porções", "Bebidas", "Sobremesas"]);
-  expect(titles.at(-1)).toBe("Sem categoria"); // the demo's insumos have none: always last
+  expect(titles.slice(0, 10)).toEqual(["Hambúrgueres", "Porções", "Bebidas", "Sobremesas", "Carnes", "Pães", "Hortifrúti", "Laticínios", "Molhos", "Embalagens"]);
+  expect(titles.at(-1)).toBe("Sem categoria"); // always last
   await expect(page.getByText("Itens antigos · abra o item e escolha uma categoria. Fica sempre no fim.")).toBeVisible();
   await expect(page.getByRole("button", { name: /^Hambúrgueres \d+$/ })).toBeVisible(); // name + count
   await expect(page.getByRole("button", { name: /^Filtros/ })).toHaveCount(0); // the type is a segmented now

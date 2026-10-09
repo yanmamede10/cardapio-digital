@@ -56,7 +56,7 @@ test("categoria só com insumo não aparece no cardápio público; o painel vê 
   const refused = await call("DELETE", `${P}/categories/${molhos.id}`, gerente);
   assert.deepEqual([refused.status, refused.body.error, refused.body.items], [409, `A categoria ${name} tem 1 item. Mova para outra categoria antes de excluir.`, 1]);
   const sobremesas = await call("DELETE", `${P}/categories/chapa27-cat-3`, gerente);
-  assert.deepEqual([sobremesas.status, sobremesas.body.error], [409, "A categoria Sobremesas tem 4 itens. Mova para outra categoria antes de excluir."]);
+  assert.deepEqual([sobremesas.status, sobremesas.body.error], [409, "A categoria Sobremesas tem 7 itens. Mova para outra categoria antes de excluir."]); // 4 dishes + 3 insumos (item 6)
 
   // Out of the category (Sem categoria), the category is empty and goes.
   const moved = await call("PATCH", `${P}/products/${insumo.body.id}`, { ...gerente, body: { ...product({ name: insumo.body.name, unit: "kg", cost: 18 }), categoryId: null } });

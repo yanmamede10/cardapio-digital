@@ -10,40 +10,46 @@ import { hashPassword } from "../src/lib/auth.js";
 const prisma = new PrismaClient();
 const R = "chapa27";
 
-// [name, unit, cost, stock] — a few close to running out (pão australiano, cheddar, bacon, água com gás).
-const INSUMOS: [string, string, number, number][] = [
-  ["Pão brioche", "un", 1.85, 180],
-  ["Pão australiano", "un", 2.1, 6],
-  ["Blend bovino 150 g", "un", 6.9, 140],
-  ["Blend de costela 150 g", "un", 7.8, 60],
-  ["Picanha 180 g", "un", 13.5, 25],
-  ["Frango empanado", "un", 4.2, 50],
-  ["Hambúrguer de grão-de-bico", "un", 5.1, 20],
-  ["Queijo cheddar fatiado", "kg", 54.9, 0.6],
-  ["Bacon em fatias", "kg", 42, 0.4],
-  ["Alface americana", "kg", 12, 2.5],
-  ["Tomate", "kg", 7.5, 4],
-  ["Cebola roxa", "kg", 5.9, 3],
-  ["Picles", "kg", 28, 1.5],
-  ["Molho da casa", "L", 18, 3],
-  ["Molho barbecue", "L", 22, 2],
-  ["Ovo", "un", 0.75, 60],
-  ["Batata palito congelada", "kg", 16.9, 25],
-  ["Anéis de cebola congelados", "kg", 24, 4],
-  ["Nuggets de frango", "kg", 32, 3],
-  ["Mandioca congelada", "kg", 11, 8],
-  ["Polenta congelada", "kg", 9, 6],
-  ["Sorvete de creme", "L", 19.9, 5],
-  ["Brownie", "un", 4.5, 18],
-  ["Petit gâteau congelado", "un", 6.2, 12],
-  ["Calda de chocolate", "kg", 26, 1.2],
-  ["Doce de leite", "kg", 21, 1.5],
-  ["Leite", "L", 5.2, 12],
-  ["Leite condensado", "kg", 14, 2],
-  ["Limão", "kg", 6.5, 3],
-  ["Laranja", "kg", 4.2, 10],
-  ["Chope pilsen (barril)", "L", 12, 50]
+// [name, unit, cost, stock, category] — a few close to running out (pão australiano, cheddar, bacon, água com gás).
+// Item 6: every insumo is born in a category (one list with the Cardápio's, J-1): Bebidas and Sobremesas are the menu's,
+// the others below (INSUMO_CATEGORIES). The embalagens are in no ficha técnica: they're there for the Catálogo.
+const INSUMOS: [string, string, number, number, string][] = [
+  ["Pão brioche", "un", 1.85, 180, "Pães"],
+  ["Pão australiano", "un", 2.1, 6, "Pães"],
+  ["Blend bovino 150 g", "un", 6.9, 140, "Carnes"],
+  ["Blend de costela 150 g", "un", 7.8, 60, "Carnes"],
+  ["Picanha 180 g", "un", 13.5, 25, "Carnes"],
+  ["Frango empanado", "un", 4.2, 50, "Carnes"],
+  ["Hambúrguer de grão-de-bico", "un", 5.1, 20, "Carnes"], // the burger's patty, with the others
+  ["Queijo cheddar fatiado", "kg", 54.9, 0.6, "Laticínios"],
+  ["Bacon em fatias", "kg", 42, 0.4, "Carnes"],
+  ["Alface americana", "kg", 12, 2.5, "Hortifrúti"],
+  ["Tomate", "kg", 7.5, 4, "Hortifrúti"],
+  ["Cebola roxa", "kg", 5.9, 3, "Hortifrúti"],
+  ["Picles", "kg", 28, 1.5, "Hortifrúti"],
+  ["Molho da casa", "L", 18, 3, "Molhos"],
+  ["Molho barbecue", "L", 22, 2, "Molhos"],
+  ["Ovo", "un", 0.75, 60, "Hortifrúti"], // hortifrutigranjeiros
+  ["Batata palito congelada", "kg", 16.9, 25, "Hortifrúti"],
+  ["Anéis de cebola congelados", "kg", 24, 4, "Hortifrúti"],
+  ["Nuggets de frango", "kg", 32, 3, "Carnes"],
+  ["Mandioca congelada", "kg", 11, 8, "Hortifrúti"],
+  ["Polenta congelada", "kg", 9, 6, "Hortifrúti"],
+  ["Sorvete de creme", "L", 19.9, 5, "Laticínios"],
+  ["Brownie", "un", 4.5, 18, "Sobremesas"],
+  ["Petit gâteau congelado", "un", 6.2, 12, "Sobremesas"],
+  ["Calda de chocolate", "kg", 26, 1.2, "Sobremesas"],
+  ["Doce de leite", "kg", 21, 1.5, "Laticínios"],
+  ["Leite", "L", 5.2, 12, "Laticínios"],
+  ["Leite condensado", "kg", 14, 2, "Laticínios"],
+  ["Limão", "kg", 6.5, 3, "Hortifrúti"],
+  ["Laranja", "kg", 4.2, 10, "Hortifrúti"],
+  ["Chope pilsen (barril)", "L", 12, 50, "Bebidas"],
+  ["Caixa de hambúrguer para viagem", "un", 0.9, 200, "Embalagens"],
+  ["Saco de papel kraft", "un", 0.35, 300, "Embalagens"]
 ];
+/** The insumos' own categories, after the menu's four (Bebidas and Sobremesas hold insumos too). */
+const INSUMO_CATEGORIES = ["Carnes", "Pães", "Hortifrúti", "Laticínios", "Molhos", "Embalagens"];
 
 const BEEF = { id: "ponto", label: "Ponto da carne", type: "single", hint: "escolha 1", options: ["Ao ponto", "Bem passado", "Mal passado"].map((label, i) => ({ id: `ponto-${i}`, label, priceDelta: 0 })) };
 // id "extra": the group the dashboard's "Organizar prato" edits. Each adicional takes its insumo from stock (name → id below).
@@ -135,15 +141,19 @@ async function main() {
     }
   });
 
+  // One list of categories (J-1): the menu's first (ids chapa27-cat-0…3, as before), then the insumos' own.
+  const categoryId = new Map<string, string>();
+  for (const [ci, name] of [...Object.keys(MENU), ...INSUMO_CATEGORIES].entries()) {
+    categoryId.set(name, `${R}-cat-${ci}`);
+    await prisma.menuCategory.create({ data: { id: `${R}-cat-${ci}`, restaurantId: R, name, sortOrder: ci } });
+  }
   const insumo = new Map<string, string>();
-  for (const [name, unit, cost, stock] of INSUMOS) {
-    insumo.set(name, (await prisma.product.create({ data: { restaurantId: R, name, type: "insumo", unit, cost, stock } })).id);
+  for (const [name, unit, cost, stock, category] of INSUMOS) {
+    insumo.set(name, (await prisma.product.create({ data: { restaurantId: R, name, type: "insumo", unit, cost, stock, categoryId: categoryId.get(category)! } })).id);
   }
 
   let sort = 0;
-  for (const [ci, [category, dishes]] of Object.entries(MENU).entries()) {
-    const categoryId = `${R}-cat-${ci}`;
-    await prisma.menuCategory.create({ data: { id: categoryId, restaurantId: R, name: category, sortOrder: ci } });
+  for (const [category, dishes] of Object.entries(MENU)) {
     for (const d of dishes) {
       const product = await prisma.product.create({
         data: {
@@ -155,7 +165,7 @@ async function main() {
           cost: d.own?.cost ?? 0,
           stock: d.own?.stock ?? 0,
           composed: !!d.recipe,
-          categoryId,
+          categoryId: categoryId.get(category)!,
           components: d.recipe ? { create: d.recipe.map(([name, quantity]) => ({ componentId: insumo.get(name)!, quantity })) } : undefined
         }
       });
