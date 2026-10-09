@@ -78,7 +78,8 @@ test("J-3 · Produtos no celular: cartões por categoria, busca, tipo e o … da
   await page.getByRole("button", { name: "Excluir", exact: true }).click();
   const box = page.getByRole("dialog", { name: "Excluir “Lanches”?" });
   await expect(box).toContainText(/Esta categoria tem \d+ itens/);
-  await box.getByRole("button", { name: "Entendi" }).click();
+  await expect(box.getByLabel(/Mover os \d+ itens para:/)).toBeVisible(); // item 2: "Mover e excluir"
+  await box.getByRole("button", { name: "Cancelar" }).click();
   await page.getByRole("button", { name: "Opções da categoria Lanches" }).click();
   await page.getByRole("button", { name: "Ordenar categorias" }).click();
   await expect(page.getByRole("button", { name: "Subir Lanches" })).toBeVisible();

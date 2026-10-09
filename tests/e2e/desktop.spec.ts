@@ -431,8 +431,8 @@ plain("serviço de 10% desligado em Configurações → Salão some da comanda d
 
 // J-2 (UX-07 · 2a–2e): the Cardápio's category box replaces the browser's prompt and confirm (a browser box here would be
 // dismissed by Playwright and nothing would open). Empty name or one taken: the main button stays off; Enter confirms, Esc
-// cancels; with dishes, it says how many and which, and offers no Excluir.
-plain("J-2 · Cardápio: criar, renomear e excluir categoria na caixa do design; com pratos ela diz quantos e quais e não exclui", async ({ page, request }) => {
+// cancels; with dishes, it says how many and which, and Excluir becomes "Mover e excluir" with a destination (item 2).
+plain("J-2 · Cardápio: criar, renomear e excluir categoria na caixa do design; com pratos ela diz quantos e quais e pede o destino", async ({ page, request }) => {
   await loginAs(page, request, "gerente@chapa27.example");
   await page.goto("/cardapio");
   const name = `Combos ${uid()}`;
@@ -470,26 +470,40 @@ plain("J-2 · Cardápio: criar, renomear e excluir categoria na caixa do design;
 
   await page.getByRole("button", { name: "Excluir categoria Sobremesas" }).click();
   const busy = page.getByRole("dialog", { name: "Excluir “Sobremesas”?" });
-  await expect(busy).toContainText("Esta categoria tem 4 itens. Mova os itens para outra categoria antes de excluir.");
+  await expect(busy).toContainText("Esta categoria tem 4 itens. Para excluir, mova os itens para outra categoria.");
   await expect(busy.getByRole("listitem")).toHaveText(["Brownie com Sorvete", "Petit Gâteau", "Cheesecake de Frutas Vermelhas", "Sundae de Doce de Leite"]);
-  await expect(busy.getByRole("button", { name: "Excluir" })).toHaveCount(0);
-  await busy.getByRole("button", { name: "Entendi" }).click();
+  await expect(busy.getByRole("button", { name: "Excluir", exact: true })).toHaveCount(0);
+  await expect(busy.getByLabel("Mover os 4 itens para:")).toHaveValue("");
+  await expect(busy.getByRole("button", { name: "Mover e excluir" })).toBeDisabled(); // no destination yet
+  await busy.getByRole("button", { name: "Cancelar" }).click();
   await expect(busy).toBeHidden();
   await expect(page.getByRole("button", { name: "Excluir categoria Sobremesas" })).toBeVisible();
 });
 
-test("J-2 · Cardápio: categoria sem prato mas com insumo — a API recusa e a caixa mostra quantos itens tem", async ({ page, api }) => {
+// Item 2 (UX-07 · 2d): the API's 409 brings the count the Cardápio didn't know; the box asks where to, and "Mover e excluir"
+// moves them and deletes the category in one go.
+test("Item 2 · Cardápio: categoria sem prato mas com insumo — a API diz quantos e a caixa move para a categoria escolhida e exclui", async ({ page, api }) => {
   const name = `Molhos ${uid()}`;
   const list = await api<{ id: string; name: string }[]>("POST", `/api/restaurants/${R}/categories`, { name });
   const cat = list.find((c) => c.name === name)!;
-  await api("POST", `/api/restaurants/${R}/products`, { name: `Maionese ${uid()}`, type: "insumo", unit: "kg", price: 0, cost: 18, ncm: "", cst: "", taxRate: 0, composed: false, components: [], categoryId: cat.id });
+  const maionese = `Maionese ${uid()}`;
   await page.goto("/cardapio");
+  await expect(page.getByRole("button", { name: `Excluir categoria ${name}` })).toBeVisible();
+  // Meanwhile, someone puts an insumo in it from Produtos: this screen's list still says it's empty.
+  await api("POST", `/api/restaurants/${R}/products`, { name: maionese, type: "insumo", unit: "kg", price: 0, cost: 18, ncm: "", cst: "", taxRate: 0, composed: false, components: [], categoryId: cat.id });
   await page.getByRole("button", { name: `Excluir categoria ${name}` }).click();
   const box = page.getByRole("dialog", { name: `Excluir “${name}”?` });
-  await box.getByRole("button", { name: "Excluir" }).click(); // the Cardápio sees no dish in it
-  await expect(box).toContainText(`A categoria ${name} tem 1 item. Mova para outra categoria antes de excluir.`);
-  await box.getByRole("button", { name: "Entendi" }).click();
-  await expect(page.getByRole("button", { name: `Excluir categoria ${name}` })).toBeVisible();
+  // The list came before the insumo: the Cardápio sees no dish and an old count — the API's 409 brings the real one.
+  await expect(box).toContainText("Ela sai do Catálogo e do Cardápio.");
+  await box.getByRole("button", { name: "Excluir" }).click();
+  await expect(box).toContainText("Esta categoria tem 1 item. Para excluir, mova os itens para outra categoria.");
+  await box.getByLabel("Mover o item para:").selectOption({ label: "Lanches" });
+  await box.getByRole("button", { name: "Mover e excluir" }).click();
+  await expect(box).toBeHidden();
+  await expect(page.locator(".toast-bubble")).toContainText(`Categoria ${name} excluída; os itens foram para Lanches`);
+  await expect(page.getByRole("button", { name: `Excluir categoria ${name}` })).toHaveCount(0);
+  const products = await api<{ name: string; categoryId: string | null }[]>("GET", `/api/restaurants/${R}/products`);
+  expect(products.find((p) => p.name === maionese)!.categoryId).toBe(`${R}-cat-1`); // Lanches
 });
 
 plain("Produtos: contagem de estoque define o estoque e aparece em Movimentações", async ({ page, request }) => {

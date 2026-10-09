@@ -4,7 +4,8 @@ import { ApiError, api } from "../lib/api";
 import { useBack } from "../lib/back";
 
 /** What the box does (UX-07 · 2a–2d). For "delete", items = the names this screen knows are in the category (dishes in the
- *  Cardápio; produtos and insumos in Produtos); the API counts everything and answers 409 when the screen didn't know. */
+ *  Cardápio; produtos and insumos in Produtos); the API counts everything and answers 409 (with how many) when the screen
+ *  didn't know. With items, the box asks where to move them ("Mover e excluir", 2d). */
 export type CategoryDialogMode =
   | { kind: "create"; help: string; confirm?: string }
   | { kind: "rename"; category: MenuCategory }
@@ -30,10 +31,12 @@ export function CategoryDialog({
   const [name, setName] = useState(original);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // Excluir with items: refused before asking (the screen knew) or after (the API's 409 says how many).
-  const [blocked, setBlocked] = useState<{ text: string; names: string[] } | null>(
-    mode.kind === "delete" && mode.items.length ? { text: `Esta categoria tem ${plural(mode.items.length)}. Mova os itens para outra categoria antes de excluir.`, names: mode.items } : null
-  );
+  // Excluir with items: known before asking (the screen knew) or after (the API's 409 says how many) — then "Mover e excluir".
+  const [inside, setInside] = useState(mode.kind === "delete" ? { count: Math.max(mode.category.items ?? 0, mode.items.length), names: mode.items } : { count: 0, names: [] as string[] });
+  const [moveTo, setMoveTo] = useState("");
+  const others = mode.kind === "delete" ? categories.filter((c) => c.id !== mode.category.id) : [];
+  // Items and nowhere to move them: only "Entendi".
+  const blocked = mode.kind === "delete" && inside.count > 0 && others.length === 0;
 
   useBack(onClose); // Esc (and the Android back) cancels; opened over the cadastro (3f), only this box closes
 
@@ -41,7 +44,7 @@ export function CategoryDialog({
   const self = mode.kind === "rename" ? mode.category.id : null;
   const taken = categories.some((c) => c.id !== self && c.name.trim().toLowerCase() === trimmed.toLowerCase());
   const fieldError = trimmed && taken ? "Já existe uma categoria com esse nome" : error;
-  const ready = mode.kind === "delete" || (!!trimmed && !taken && trimmed !== original);
+  const ready = mode.kind === "delete" ? !inside.count || !!moveTo : !!trimmed && !taken && trimmed !== original;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault(); // Enter confirms
@@ -54,11 +57,14 @@ export function CategoryDialog({
         onDone(list, `Categoria ${trimmed} criada`, list.find((c) => c.name === trimmed));
       } else if (mode.kind === "rename") {
         onDone(await api.renameCategory(mode.category.id, trimmed), `Categoria renomeada para ${trimmed}`);
+      } else if (inside.count) {
+        const list = await api.deleteCategory(mode.category.id, moveTo);
+        onDone(list, `Categoria ${mode.category.name} excluída; os itens foram para ${others.find((c) => c.id === moveTo)?.name}`);
       } else {
         onDone(await api.deleteCategory(mode.category.id), `Categoria ${mode.category.name} excluída`);
       }
     } catch (err) {
-      if (mode.kind === "delete" && err instanceof ApiError && err.status === 409) setBlocked({ text: err.message, names: [] }); // "A categoria X tem 3 itens…"
+      if (mode.kind === "delete" && err instanceof ApiError && err.status === 409) setInside({ count: err.items ?? 1, names: [] }); // the screen didn't know
       else setError(err instanceof ApiError && err.status === 409 ? "Já existe uma categoria com esse nome" : err instanceof ApiError && err.status === 400 ? "Use até 40 caracteres" : "Não foi possível salvar. Tente de novo.");
     } finally {
       setBusy(false);
@@ -91,19 +97,43 @@ export function CategoryDialog({
                 {fieldError ?? (mode.kind === "create" ? mode.help : "O novo nome aparece também no Cardápio e no cardápio do cliente.")}
               </span>
             </label>
-          ) : blocked ? (
+          ) : inside.count ? (
             <>
-              <div style={text}>{blocked.text}</div>
-              {blocked.names.length > 0 && (
+              <div style={text}>
+                Esta categoria tem {plural(inside.count)}.{" "}
+                {blocked ? "Crie outra categoria para receber os itens antes de excluir esta." : "Para excluir, mova os itens para outra categoria."}
+              </div>
+              {inside.names.length > 0 && (
                 // Scrolls when long: focusable, so the keyboard can scroll it too (axe scrollable-region-focusable).
                 <ul tabIndex={0} aria-label="Itens da categoria" style={{ margin: 0, padding: 0, listStyle: "none", border: "1px solid var(--line)", borderRadius: 12, background: "var(--surface2)", maxHeight: 200, overflowY: "auto" }}>
-                  {blocked.names.map((n, i) => (
+                  {inside.names.map((n, i) => (
                     <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", fontSize: 13, borderTop: i ? "1px solid var(--line)" : 0 }}>
                       <i className="fa-solid fa-box" style={{ fontSize: 11, color: "var(--ink2)" }} />
                       {n}
                     </li>
                   ))}
+                  {inside.count > inside.names.length && (
+                    // The Cardápio lists its dishes; the insumos and produtos off the menu are in Produtos.
+                    <li style={{ padding: "9px 14px", fontSize: 13, color: "var(--ink2)", borderTop: "1px solid var(--line)" }}>
+                      e mais {plural(inside.count - inside.names.length)} do Catálogo de Produtos
+                    </li>
+                  )}
                 </ul>
+              )}
+              {!blocked && (
+                <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ink2)" }}>{inside.count === 1 ? "Mover o item para:" : `Mover os ${inside.count} itens para:`}</span>
+                  <select className="field" autoFocus value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
+                    <option value="" disabled>
+                      Escolha a categoria
+                    </option>
+                    {others.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               )}
             </>
           ) : (
@@ -121,7 +151,7 @@ export function CategoryDialog({
                 Cancelar
               </button>
               <button type="submit" className={`btn ${mode.kind === "delete" ? "btn-danger" : "btn-primary"}`} disabled={busy || !ready}>
-                {mode.kind === "delete" ? "Excluir" : mode.kind === "rename" ? "Salvar" : mode.confirm ?? "Criar categoria"}
+                {mode.kind === "delete" ? (inside.count ? "Mover e excluir" : "Excluir") : mode.kind === "rename" ? "Salvar" : mode.confirm ?? "Criar categoria"}
               </button>
             </>
           )}

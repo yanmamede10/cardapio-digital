@@ -95,6 +95,33 @@ test("o prato mostra a categoria do produto: mudar no Catálogo muda no cardápi
   assert.equal((await dish()).categoryName, "Hambúrgueres");
 });
 
+// Item 2 (pendência do J, UX-07 · 2d): "Mover e excluir" — with a destination of the same restaurant, its items move there
+// and the category goes, in one transaction; without one, still 409; another restaurant's destination, 404 and nothing moves.
+test("Item 2 · mover e excluir: os itens vão para a categoria escolhida e a categoria sai; destino de outro restaurante ou o mesmo é recusado", async () => {
+  const gerente = { token: tokens.gerente };
+  const fogo = (await call("GET", "/api/restaurants/fogo/categories")).body as Cat[];
+  const mk = async (name: string) => ((await call("POST", `${P}/categories`, { ...gerente, body: { name } })).body as Cat[]).find((c) => c.name === name)!;
+  const [velha, nova] = [await mk(`Velha ${uid()}`), await mk(`Nova ${uid()}`)];
+  const ids = [] as string[];
+  for (const name of [`Ketchup ${uid()}`, `Mostarda ${uid()}`]) ids.push((await call("POST", `${P}/products`, { ...gerente, body: product({ name, cost: 3, categoryId: velha.id }) })).body.id);
+  const where = async () => ((await call("GET", `${P}/products`, gerente)).body as { id: string; categoryId: string }[]).filter((p) => ids.includes(p.id)).map((p) => p.categoryId);
+
+  const listed = (await call("GET", `${P}/categories/all`, gerente)).body as (Cat & { items: number })[];
+  assert.equal(listed.find((c) => c.id === velha.id)!.items, 2, "a lista da equipe diz quantos itens cada categoria tem");
+  assert.equal((await call("DELETE", `${P}/categories/${velha.id}`, gerente)).status, 409, "sem destino: continua 409");
+  assert.equal((await call("DELETE", `${P}/categories/${velha.id}`, { ...gerente, body: { moveTo: fogo[0].id } })).status, 404, "destino de outro restaurante");
+  assert.equal((await call("DELETE", `${P}/categories/${velha.id}`, { ...gerente, body: { moveTo: velha.id } })).status, 400, "a própria categoria");
+  assert.equal((await call("DELETE", `${P}/categories/${velha.id}`, { ...gerente, body: { moveTo: 7 } })).status, 400);
+  assert.deepEqual(await where(), [velha.id, velha.id], "nada mudou nas recusas");
+
+  const done = await call("DELETE", `${P}/categories/${velha.id}`, { ...gerente, body: { moveTo: nova.id } });
+  assert.equal(done.status, 200);
+  assert.equal((done.body as Cat[]).some((c) => c.id === velha.id), false, "a categoria saiu");
+  assert.deepEqual(await where(), [nova.id, nova.id], "os itens foram para a escolhida");
+  assert.equal(((await call("GET", "/api/restaurants/fogo/categories")).body as Cat[]).length, fogo.length, "o outro restaurante não mudou");
+  assert.equal((await call("DELETE", `${P}/categories/${nova.id}`, { token: tokens.garcom, body: { moveTo: velha.id } })).status, 403, "garçom não exclui");
+});
+
 // Last in the file: its psql calls block this process for seconds, and a keep-alive connection the API closed meanwhile
 // (5 s) would be reused by the next request here (ECONNRESET).
 test("migração 9m: o produto ganha a categoria do prato, o prato sem produto ganha um, e a categoria sai do prato", () => {

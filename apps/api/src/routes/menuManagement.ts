@@ -269,9 +269,10 @@ menuManagementRouter.post("/:id/categories/:categoryId/move", ...categoryGuard, 
 // Categorias: a restaurant signed up by the super admin starts with none, and dishes need one. Names are unique per
 // restaurant (case-insensitive); only an empty category (no produto, insumo or dish) can be deleted.
 const MAX_CATEGORY_LENGTH = 40;
+/** The staff's list: with how many produtos and insumos each holds (the delete box says how many before asking, item 2). */
 async function categoriesFor(restaurantId: string) {
-  const categories = await prisma.menuCategory.findMany({ where: { restaurantId }, orderBy: { sortOrder: "asc" } });
-  return categories.map((c) => ({ id: c.id, restaurantId: c.restaurantId, name: c.name, sortOrder: c.sortOrder }));
+  const categories = await prisma.menuCategory.findMany({ where: { restaurantId }, orderBy: { sortOrder: "asc" }, include: { _count: { select: { products: true } } } });
+  return categories.map((c) => ({ id: c.id, restaurantId: c.restaurantId, name: c.name, sortOrder: c.sortOrder, items: c._count.products }));
 }
 /** The trimmed name, or the error to answer with. */
 async function categoryName(restaurantId: string, raw: unknown, exceptId?: string): Promise<{ name: string } | { status: number; error: string }> {
@@ -304,14 +305,25 @@ menuManagementRouter.patch("/:id/categories/:categoryId", ...categoryGuard, asyn
   res.json(await categoriesFor(req.params.id));
 });
 
+// "Mover e excluir" (UX-07 · 2d): with { moveTo }, its items (produtos and insumos; a dish counts through its product) go to
+// that category of the same restaurant and this one goes, in one transaction. Without it, only an empty one goes (409).
 menuManagementRouter.delete("/:id/categories/:categoryId", ...categoryGuard, async (req, res) => {
   const category = await prisma.menuCategory.findUnique({ where: { id: req.params.categoryId } });
   if (!category || category.restaurantId !== req.params.id) return res.status(404).json({ error: "category not found" });
-  // Produtos and insumos; a dish counts through its product.
-  const items = await prisma.product.count({ where: { categoryId: category.id } });
-  if (items) {
-    return res.status(409).json({ error: `A categoria ${category.name} tem ${items === 1 ? "1 item" : `${items} itens`}. Mova para outra categoria antes de excluir.`, items });
+  const { moveTo } = (req.body ?? {}) as { moveTo?: unknown };
+  if (moveTo !== undefined) {
+    if (typeof moveTo !== "string" || moveTo === category.id) return res.status(400).json({ error: "moveTo must be another category" });
+    const target = await prisma.menuCategory.findUnique({ where: { id: moveTo } });
+    if (target?.restaurantId !== req.params.id) return res.status(404).json({ error: "destination category not found" });
+  } else {
+    const items = await prisma.product.count({ where: { categoryId: category.id } });
+    if (items) {
+      return res.status(409).json({ error: `A categoria ${category.name} tem ${items === 1 ? "1 item" : `${items} itens`}. Mova para outra categoria antes de excluir.`, items });
+    }
   }
-  await prisma.menuCategory.delete({ where: { id: category.id } });
+  await prisma.$transaction([
+    ...(typeof moveTo === "string" ? [prisma.product.updateMany({ where: { categoryId: category.id }, data: { categoryId: moveTo } })] : []),
+    prisma.menuCategory.delete({ where: { id: category.id } })
+  ]);
   res.json(await categoriesFor(req.params.id));
 });

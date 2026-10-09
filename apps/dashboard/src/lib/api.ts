@@ -93,10 +93,13 @@ function setSession(next: StaffSession | null) {
 export class ApiError extends Error {
   status: number;
   detail: string;
-  constructor(status: number, detail: string) {
+  /** The error body's count, when it has one (a category's 409: how many items are in it). */
+  items?: number;
+  constructor(status: number, detail: string, items?: number) {
     super(readableError(status, detail));
     this.status = status;
     this.detail = detail;
+    this.items = items;
   }
 }
 
@@ -126,13 +129,15 @@ async function send<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 401) setSession(null);
   if (!res.ok) {
     let message = `Erro ${res.status}`;
+    let items: number | undefined;
     try {
       const body = await res.json();
       if (body?.error) message = body.error;
+      if (typeof body?.items === "number") items = body.items;
     } catch {
       // ignore malformed error body
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, items);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
@@ -272,7 +277,9 @@ export const api = {
   createCategory: (name: string) => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories`, { method: "POST", body: JSON.stringify({ name }) }),
   renameCategory: (categoryId: string, name: string) =>
     request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}`, { method: "PATCH", body: JSON.stringify({ name }) }),
-  deleteCategory: (categoryId: string) => request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}`, { method: "DELETE" }),
+  /** moveTo: its items go to that category first ("Mover e excluir"); without it, only an empty one goes (409). */
+  deleteCategory: (categoryId: string, moveTo?: string) =>
+    request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}`, { method: "DELETE", body: moveTo ? JSON.stringify({ moveTo }) : undefined }),
   moveCategory: (categoryId: string, direction: "up" | "down") =>
     request<MenuCategory[]>(`/api/restaurants/${RESTAURANT_ID}/categories/${categoryId}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
 

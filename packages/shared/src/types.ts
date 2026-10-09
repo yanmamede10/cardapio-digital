@@ -30,6 +30,8 @@ export interface MenuCategory {
   restaurantId: string;
   name: string;
   sortOrder: number;
+  /** Staff list only: how many produtos and insumos it holds (a dish counts through its product). */
+  items?: number;
 }
 
 /** An option may consume stock: productId (an insumo or a simple produto) × quantity per unit sold (e.g. Bacon extra = 0,03 kg of bacon). */
