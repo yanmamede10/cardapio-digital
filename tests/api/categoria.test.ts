@@ -14,47 +14,6 @@ before(async () => {
   for (const u of ["dono", "gerente", "garcom"]) tokens[u] = (await call("POST", "/api/auth/login", { body: { email: `${u}@chapa27.example`, password: "senha123" } })).body.token;
 });
 
-test("migração 9m: o produto ganha a categoria do prato, o prato sem produto ganha um, e a categoria sai do prato", () => {
-  // A database at the migration before 9m, with rows written then, and 9m run on it — as on the Supabase.
-  const container = process.env.TEST_DB_CONTAINER ?? "cardapio-test-db";
-  const psql = (sql: string, db = "cardapio_mig") => {
-    const r = spawnSync("docker", ["exec", "-i", "-e", "PGCLIENTENCODING=UTF8", container, "psql", "-U", "postgres", "-d", db, "-v", "ON_ERROR_STOP=1", "-qAt", "-F", "|"], { input: sql, encoding: "utf8" });
-    assert.equal(r.status, 0, r.stderr);
-    return r.stdout.trim().split("\n").filter(Boolean);
-  };
-  const dir = "apps/api/prisma/migrations";
-  const migrations = readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort();
-  const at = migrations.indexOf("9m_category_on_product");
-  assert.ok(at > 0, "migração 9m não encontrada");
-  psql("DROP DATABASE IF EXISTS cardapio_mig; CREATE DATABASE cardapio_mig;", "postgres");
-  psql('CREATE TABLE "_prisma_migrations" ("id" TEXT);'); // 9f turns RLS on in it; Prisma isn't running these
-  for (const m of migrations.slice(0, at)) psql(readFileSync(`${dir}/${m}/migration.sql`, "utf8"));
-  psql(`
-    INSERT INTO "Restaurant" ("id","name","initials","cuisine","cuisineTagsJson","rating","reviewCount","etaMinMinutes","etaMaxMinutes","deliveryFee","isOpen","coverLabel")
-      VALUES ('mig','Mig','MG','Lanches','[]',5,0,10,20,0,true,'capa');
-    INSERT INTO "MenuCategory" ("id","restaurantId","name","sortOrder") VALUES ('mig-lanches','mig','Lanches',0), ('mig-bebidas','mig','Bebidas',1);
-    INSERT INTO "Product" ("id","restaurantId","name","type","price") VALUES ('mig-burger','mig','X-Burger','produto',30), ('mig-pao','mig','Pão','insumo',0), ('mig-combo','mig','Combo','produto',40);
-    INSERT INTO "MenuItem" ("id","restaurantId","categoryId","productId","name","shortDescription","longDescription","price","photoLabel","optionGroupsJson","sortOrder") VALUES
-      ('mig-1','mig','mig-lanches','mig-burger','X-Burger','','',30,'foto','[]',0),
-      ('mig-2','mig','mig-bebidas',NULL,'Suco de laranja','','',9.5,'foto','[]',1),
-      ('mig-3','mig','mig-bebidas','mig-combo','Combo','','',40,'foto','[]',2),
-      ('mig-4','mig','mig-lanches','mig-combo','Combo (cópia)','','',40,'foto','[]',3);
-  `);
-  psql(readFileSync(`${dir}/9m_category_on_product/migration.sql`, "utf8"));
-
-  assert.deepEqual(psql(`SELECT "id","categoryId","name","type","unit","price" FROM "Product" ORDER BY "id"`), [
-    "mig-burger|mig-lanches|X-Burger|produto|un|30",
-    "mig-combo|mig-bebidas|Combo|produto|un|40", // on two dishes (Duplicar): the first one's, in menu order
-    "mig-pao||Pão|insumo|un|0", // an insumo had no category
-    "prato-mig-2|mig-bebidas|Suco de laranja|produto|un|9.5" // the dish without a product got one, as the phone form makes it
-  ]);
-  assert.deepEqual(psql(`SELECT "id","productId" FROM "MenuItem" ORDER BY "id"`), ["mig-1|mig-burger", "mig-2|prato-mig-2", "mig-3|mig-combo", "mig-4|mig-combo"]);
-  assert.deepEqual(psql(`SELECT column_name FROM information_schema.columns WHERE table_name = 'MenuItem' AND column_name = 'categoryId'`), [], "a categoria mora num lugar só");
-  // Restrict: a category with an item can't go, not even straight in the database.
-  assert.equal(spawnSync("docker", ["exec", "-i", container, "psql", "-U", "postgres", "-d", "cardapio_mig", "-v", "ON_ERROR_STOP=1"], { input: `DELETE FROM "MenuCategory" WHERE "id" = 'mig-lanches';` }).status, 3);
-  psql("DROP DATABASE cardapio_mig;", "postgres");
-});
-
 // GET /categories + /items of the Chapa 27 before J-1 (recorded on the code of 1f6fbef/ab66391): the same menu after it.
 const ANTES: [string, [string, number][]][] = [
   ["Hambúrgueres", [["Clássico", 32.9], ["Cheddar & Bacon", 38.9], ["Duplo Smash", 36.9], ["Salada", 33.9], ["Costela BBQ", 42.9], ["Frango Crispy", 34.9], ["Veggie de Grão-de-Bico", 35.9], ["Picanha", 46.9], ["Kids", 24.9], ["Brutal Triplo", 54.9]]],
@@ -134,4 +93,47 @@ test("o prato mostra a categoria do produto: mudar no Catálogo muda no cardápi
     await call("PATCH", `${P}/products/${kids.id}`, { ...dono, body: { ...kids, categoryId: "chapa27-cat-0" } });
   }
   assert.equal((await dish()).categoryName, "Hambúrgueres");
+});
+
+// Last in the file: its psql calls block this process for seconds, and a keep-alive connection the API closed meanwhile
+// (5 s) would be reused by the next request here (ECONNRESET).
+test("migração 9m: o produto ganha a categoria do prato, o prato sem produto ganha um, e a categoria sai do prato", () => {
+  // A database at the migration before 9m, with rows written then, and 9m run on it — as on the Supabase.
+  const container = process.env.TEST_DB_CONTAINER ?? "cardapio-test-db";
+  const psql = (sql: string, db = "cardapio_mig") => {
+    const r = spawnSync("docker", ["exec", "-i", "-e", "PGCLIENTENCODING=UTF8", container, "psql", "-U", "postgres", "-d", db, "-v", "ON_ERROR_STOP=1", "-qAt", "-F", "|"], { input: sql, encoding: "utf8" });
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout.trim().split("\n").filter(Boolean);
+  };
+  const dir = "apps/api/prisma/migrations";
+  const migrations = readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort();
+  const at = migrations.indexOf("9m_category_on_product");
+  assert.ok(at > 0, "migração 9m não encontrada");
+  psql("DROP DATABASE IF EXISTS cardapio_mig; CREATE DATABASE cardapio_mig;", "postgres");
+  psql('CREATE TABLE "_prisma_migrations" ("id" TEXT);'); // 9f turns RLS on in it; Prisma isn't running these
+  for (const m of migrations.slice(0, at)) psql(readFileSync(`${dir}/${m}/migration.sql`, "utf8"));
+  psql(`
+    INSERT INTO "Restaurant" ("id","name","initials","cuisine","cuisineTagsJson","rating","reviewCount","etaMinMinutes","etaMaxMinutes","deliveryFee","isOpen","coverLabel")
+      VALUES ('mig','Mig','MG','Lanches','[]',5,0,10,20,0,true,'capa');
+    INSERT INTO "MenuCategory" ("id","restaurantId","name","sortOrder") VALUES ('mig-lanches','mig','Lanches',0), ('mig-bebidas','mig','Bebidas',1);
+    INSERT INTO "Product" ("id","restaurantId","name","type","price") VALUES ('mig-burger','mig','X-Burger','produto',30), ('mig-pao','mig','Pão','insumo',0), ('mig-combo','mig','Combo','produto',40);
+    INSERT INTO "MenuItem" ("id","restaurantId","categoryId","productId","name","shortDescription","longDescription","price","photoLabel","optionGroupsJson","sortOrder") VALUES
+      ('mig-1','mig','mig-lanches','mig-burger','X-Burger','','',30,'foto','[]',0),
+      ('mig-2','mig','mig-bebidas',NULL,'Suco de laranja','','',9.5,'foto','[]',1),
+      ('mig-3','mig','mig-bebidas','mig-combo','Combo','','',40,'foto','[]',2),
+      ('mig-4','mig','mig-lanches','mig-combo','Combo (cópia)','','',40,'foto','[]',3);
+  `);
+  psql(readFileSync(`${dir}/9m_category_on_product/migration.sql`, "utf8"));
+
+  assert.deepEqual(psql(`SELECT "id","categoryId","name","type","unit","price" FROM "Product" ORDER BY "id"`), [
+    "mig-burger|mig-lanches|X-Burger|produto|un|30",
+    "mig-combo|mig-bebidas|Combo|produto|un|40", // on two dishes (Duplicar): the first one's, in menu order
+    "mig-pao||Pão|insumo|un|0", // an insumo had no category
+    "prato-mig-2|mig-bebidas|Suco de laranja|produto|un|9.5" // the dish without a product got one, as the phone form makes it
+  ]);
+  assert.deepEqual(psql(`SELECT "id","productId" FROM "MenuItem" ORDER BY "id"`), ["mig-1|mig-burger", "mig-2|prato-mig-2", "mig-3|mig-combo", "mig-4|mig-combo"]);
+  assert.deepEqual(psql(`SELECT column_name FROM information_schema.columns WHERE table_name = 'MenuItem' AND column_name = 'categoryId'`), [], "a categoria mora num lugar só");
+  // Restrict: a category with an item can't go, not even straight in the database.
+  assert.equal(spawnSync("docker", ["exec", "-i", container, "psql", "-U", "postgres", "-d", "cardapio_mig", "-v", "ON_ERROR_STOP=1"], { input: `DELETE FROM "MenuCategory" WHERE "id" = 'mig-lanches';` }).status, 3);
+  psql("DROP DATABASE cardapio_mig;", "postgres");
 });
