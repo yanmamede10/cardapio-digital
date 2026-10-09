@@ -133,6 +133,21 @@ O Playwright roda em três tamanhos de tela (projetos `desktop` 1366, `tablet` 1
 
 `npm run carga` sobe o Postgres descartável e a API como o `npm test`, constrói o cardápio e o painel (`vite build` + `vite preview` na 5273 e na 5274, como o celular recebe) e roda a casa cheia de `tests/load/cenario.mjs` (30 mesas × 4 celulares, 15 tablets, 10 Centrais, 10 pedidos/min por 10 min, tudo do IP do Wi-Fi, cada aparelho no polling real das telas) em `tests/load/pico.mjs`. Com a casa cheia, `tests/load/cardapio.mjs` mede o cardápio no Lighthouse (modo celular: 4G lenta simulada e CPU 4× mais lenta) na rota do QR e na do tablet, e `tests/load/painel.spec.ts` mede pedido → Central nas telas de verdade. No fim, os garçons fecham as 29 contas juntos. Falha se o LCP do cardápio passar de 2,5 s, se um pedido levar mais de 5 s (p95) para aparecer na Central, se a API do cardápio passar de 2 s (p95) ou se houver algum 429. `npm run carga -- supabase` roda o mesmo contra o banco do `apps/api/.env` (o projeto Supabase de testes): sem Docker e sem migração, só o seed de demonstração, que não apaga nada. Relatórios do Lighthouse em `test-results/`. O plano completo, com o que é automático e o que é manual, os resultados e as medições, está em [docs/testes/plano-de-testes.md](docs/testes/plano-de-testes.md).
 
+### Conferir permissões
+
+A matriz de permissões (rota × papel, com o que cada um deve receber) está em [docs/seguranca/permissoes.md](docs/seguranca/permissoes.md). Ela é gerada da mesma lista que o teste de autorização confere (`tests/api/rotas.mjs`) e de quem vê cada tela (`SCREENS`, em `packages/shared`): depois de mudar uma rota ou uma tela, rode `npx tsx scripts/gerar-permissoes.ts` (o `npm test` falha se o arquivo não for o gerado).
+
+Para conferir uma pilha no ar (a local, a de testes ou a VM), `scripts/conferir-permissoes.mjs` chama **só as rotas GET** da matriz com cada papel e lista o que respondeu diferente do esperado — não cria, muda nem apaga nada. Precisa de um token de cada papel do mesmo restaurante (o `token` de `POST /api/auth/login`) e da chave do Super Admin:
+
+```sh
+PERMISSOES_URL=http://localhost:4100 \
+PERMISSOES_TOKEN_COZINHA=… PERMISSOES_TOKEN_GARCOM=… PERMISSOES_TOKEN_ADMINISTRADOR=… PERMISSOES_TOKEN_DONO=… \
+PERMISSOES_SUPER_ADMIN_KEY=… \
+node scripts/conferir-permissoes.mjs
+```
+
+Sai com 1 se houver divergência. Um token que faltar deixa a coluna dele de fora (o do Dono é obrigatório: dele saem o restaurante, os módulos, um prato e uma mesa). `GET /api/orders/:id` não é conferida: precisaria de um pedido feito pelo próprio script. O `npm test` roda o script contra a pilha de teste (logins do Chapa 27) e falha com qualquer divergência ou com qualquer método que não seja GET.
+
 ## Variáveis de ambiente
 
 A API tem um `.env.example`: copie para `apps/api/.env`. Os fronts não precisam de `.env` em dev (o `.env.development` de cada um, versionado, aponta para a API e o cardápio desta máquina); em produção, o único endereço é o `PUBLIC_URL` do `deploy/.env` (ver "Deploy").
