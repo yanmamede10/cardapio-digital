@@ -113,6 +113,8 @@ export interface Product {
   categoryId: string | null;
   /** It has stock movements: its unit can no longer change (a new unit is a new product). */
   unitLocked?: boolean;
+  /** It has stock movements and isn't composed: its cost changes only through Ajustar estoque (item 3) or an XML entry. */
+  costLocked?: boolean;
 }
 
 export interface UpsertProductRequest {
@@ -135,9 +137,12 @@ export interface StockMovement {
   productName: string;
   unit: string;
   kind: "in" | "out";
+  /** 0: an Ajustar estoque that only corrected the cost. */
   quantity: number;
   source: string;
   createdAt: string;
+  /** The cost per unit this movement set (Ajustar estoque, item 3); null = it didn't touch the cost. */
+  unitCost: number | null;
 }
 
 /** NF-e items parsed client-side from the supplier XML. */

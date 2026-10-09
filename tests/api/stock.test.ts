@@ -169,7 +169,7 @@ describe("ajuste manual de estoque", () => {
     assert.equal((await adjust({ productId: p.id, kind: "out", quantity: 0.25, reason: "Perda" })).body.stock, 10.25);
     assert.equal((await adjust({ productId: p.id, kind: "count", quantity: 9 })).body.stock, 9, "contagem define o estoque");
     assert.equal((await adjust({ productId: p.id, kind: "count", quantity: 9 })).body.stock, 9, "contagem igual não gera movimento");
-    const moves = (await call("GET", `${P}/stock-movements`, { token })).body.filter((m: { productName: string }) => m.productName === p.name);
+    const moves = (await call("GET", `${P}/stock-movements`, { token })).body.filter((m: { productName: string }) => m.productName.startsWith(p.name)); // renamed below
     assert.deepEqual(moves.map((m: { kind: string; quantity: number; source: string }) => [m.kind, m.quantity, m.source]).reverse(), [
       ["in", 10.5, "Entrada manual: Compra sem nota"],
       ["out", 0.25, "Saída manual: Perda"],
@@ -198,8 +198,43 @@ test("depois de qualquer movimentação a unidade não muda mais (A-01): 409 com
 
   const refused = await edit({ unit: "kg" });
   assert.deepEqual([refused.status, refused.body.error], [409, "A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto."]);
-  const same = await edit({ unit: "g", cost: 41 });
-  assert.deepEqual([same.status, same.body.cost, same.body.unitLocked], [200, 41, true], "o resto segue editável");
+  const same = await edit({ unit: "g", name: `${p.name} curado` });
+  assert.deepEqual([same.status, same.body.name, same.body.unitLocked], [200, `${p.name} curado`, true], "o resto segue editável");
   const listed = (await call("GET", `${P}/products`, { token })).body.find((x: { id: string }) => x.id === p.id);
   assert.deepEqual([listed.unit, listed.unitLocked], ["g", true]);
+});
+
+// Item 3 (pendência do J): the cost locks after the first movement, like the unit; Ajustar estoque corrects it (with or
+// without a quantity) and the movement records the cost it set.
+test("Item 3 · custo travado depois da primeira movimentação (409 com o motivo); o Ajustar estoque corrige e registra o custo na movimentação", async () => {
+  const p = (await call("POST", `${P}/products`, { token, body: product({ name: `Cheddar ${uid()}`, unit: "kg", cost: 40 }) })).body;
+  const edit = (over: object) => call("PATCH", `${P}/products/${p.id}`, { token, body: product({ name: p.name, unit: "kg", ...over }) });
+  const adjust = (body: object) => call("POST", `${P}/stock-movements/adjust`, { token, body: { productId: p.id, ...body } });
+  const movements = async () => (await call("GET", `${P}/stock-movements`, { token })).body.filter((m: { productName: string }) => m.productName.startsWith(p.name)); // renamed below
+  assert.equal(p.costLocked, false);
+  assert.deepEqual([(await edit({ cost: 41 })).body.cost, (await edit({ cost: 41 })).status], [41, 200], "sem movimentação ainda: muda");
+
+  assert.equal((await adjust({ kind: "in", quantity: 5 })).body.costLocked, true);
+  const refused = await edit({ cost: 42 });
+  assert.deepEqual([refused.status, refused.body.error], [409, "O custo não pode mudar aqui depois que o produto teve movimentação. Corrija em Ajustar estoque, informando o custo."]);
+  assert.equal((await stockOf(p.id)).cost, 41, "nada mudou na recusa");
+
+  // Only the cost: a movement of 0 that records it; the stock stays.
+  const fixed = await adjust({ kind: "count", cost: 7.4567, reason: "nota errada" });
+  assert.deepEqual([fixed.status, fixed.body.cost, fixed.body.stock], [200, 7.4567, 5]);
+  // The form shows 2 decimals (7,46) and sends them back with any other edit: same cost in cents, the exact one stays.
+  const renamed = await edit({ cost: 7.46, name: `${p.name} fatiado` });
+  assert.deepEqual([renamed.status, renamed.body.cost], [200, 7.4567]);
+  // With a quantity: stock and cost together.
+  const entrada = await adjust({ kind: "in", quantity: 2, cost: 38 });
+  assert.deepEqual([entrada.body.stock, entrada.body.cost], [7, 38]);
+  const [last, costOnly] = await movements();
+  assert.deepEqual([last.kind, last.quantity, last.unitCost, last.source], ["in", 2, 38, "Entrada manual"]);
+  assert.deepEqual([costOnly.quantity, costOnly.unitCost, costOnly.source], [0, 7.4567, "Correção de custo: nota errada"]);
+  assert.equal((await movements()).at(-1).unitCost, null, "a entrada sem custo não registra custo");
+
+  for (const bad of [{ kind: "in" }, { kind: "in", cost: -1 }, { kind: "in", cost: "8" }, { kind: "count", quantity: 1, cost: 2e6 }]) {
+    assert.equal((await adjust(bad)).status, 400, JSON.stringify(bad));
+  }
+  assert.equal((await stockOf(p.id)).cost, 38);
 });

@@ -330,7 +330,8 @@ export function serializeProduct(p: Product & { components: (ProductComponent & 
     composed: p.composed,
     components,
     categoryId: p.categoryId,
-    unitLocked: (p._count?.movements ?? 0) > 0
+    unitLocked: (p._count?.movements ?? 0) > 0,
+    costLocked: !p.composed && (p._count?.movements ?? 0) > 0
   };
 }
 
@@ -342,7 +343,8 @@ export function serializeMovement(m: StockMovement & { product: Product }): ApiS
     kind: m.kind as ApiStockMovement["kind"],
     quantity: m.quantity,
     source: m.source,
-    createdAt: m.createdAt.toISOString()
+    createdAt: m.createdAt.toISOString(),
+    unitCost: m.unitCost
   };
 }
 

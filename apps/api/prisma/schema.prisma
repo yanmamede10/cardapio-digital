@@ -178,6 +178,8 @@ model StockMovement {
   kind         String   // "in" | "out"
   quantity     Float    // always positive; kind gives the sign
   source       String   // XML file name or "Fechamento de comanda #1234"
+  // Item 3: the cost per unit an Ajustar estoque set (the cost is locked after the first movement); null = cost untouched.
+  unitCost     Float?
   createdAt    DateTime @default(now())
 }
 

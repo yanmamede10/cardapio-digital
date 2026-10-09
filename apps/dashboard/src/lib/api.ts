@@ -290,9 +290,10 @@ export const api = {
   updateProduct: (productId: string, payload: UpsertProductRequest) =>
     request<Product>(`/api/restaurants/${RESTAURANT_ID}/products/${productId}`, { method: "PATCH", body: JSON.stringify(payload) }),
   listStockMovements: () => request<StockMovement[]>(`/api/restaurants/${RESTAURANT_ID}/stock-movements`),
-  /** Entrada/saída manual or a physical count (sets the stock); each becomes a movement. */
-  adjustStock: (productId: string, kind: "in" | "out" | "count", quantity: number, reason: string) =>
-    request<Product>(`/api/restaurants/${RESTAURANT_ID}/stock-movements/adjust`, { method: "POST", body: JSON.stringify({ productId, kind, quantity, reason }) }),
+  /** Entrada/saída manual or a physical count (sets the stock); each becomes a movement. cost (per unit) replaces the
+   *  product's and is recorded on the movement (item 3); with a cost, quantity may be left out (only the cost changes). */
+  adjustStock: (productId: string, kind: "in" | "out" | "count", quantity: number | undefined, reason: string, cost?: number) =>
+    request<Product>(`/api/restaurants/${RESTAURANT_ID}/stock-movements/adjust`, { method: "POST", body: JSON.stringify({ productId, kind, quantity, reason, cost }) }),
   importXml: (payload: XmlImportRequest) =>
     request<{ imported: number }>(`/api/restaurants/${RESTAURANT_ID}/stock-movements/xml`, { method: "POST", body: JSON.stringify(payload) }),
 

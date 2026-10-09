@@ -45,6 +45,10 @@ export const MOVEMENT_FILTERS: FilterGroup[] = [
   { id: "tipo", label: "Tipo", options: ["Entrada", "Saída"] },
   { id: "per", label: "Período", options: PAST_PERIODS }
 ];
+/** A movement's pill (Entrada, Saída, or Custo when it only corrected the cost — item 3), its quantity and its origin. */
+export const movementTag = (m: StockMovement) => (m.quantity === 0 ? { label: "Custo", tone: "ink2" } : m.kind === "in" ? { label: "Entrada", tone: "ok" } : { label: "Saída", tone: "sec" });
+export const movementQty = (m: StockMovement) => (m.quantity === 0 ? "—" : `${m.kind === "in" ? "+" : "−"} ${qty(m.quantity)} ${m.unit}`);
+export const movementSource = (m: StockMovement) => (m.unitCost == null ? m.source : `${m.source} · custo ${brl(m.unitCost)}/${m.unit}`);
 export const movementMatch = (m: StockMovement, f: FilterValues) => (!f.tipo || (m.kind === "in" ? "Entrada" : "Saída") === f.tipo) && inPeriod(localIso(new Date(m.createdAt)), f);
 
 /** Edit-form draft for an existing product. */
@@ -428,16 +432,16 @@ export default function ProductsScreen() {
                         {dayMonth(localIso(new Date(m.createdAt)))}
                       </div>
                       <div>
-                        <span style={pill(m.kind === "in" ? "ok" : "sec")}>{m.kind === "in" ? "Entrada" : "Saída"}</span>
+                        <span style={pill(movementTag(m).tone)}>{movementTag(m).label}</span>
                       </div>
                       <div style={{ fontWeight: 500 }}>{m.productName}</div>
                       <div className="mono" style={{ fontWeight: 600, color: m.kind === "in" ? "var(--ok)" : "var(--ink)" }}>
-                        {m.kind === "in" ? "+" : "−"} {qty(m.quantity)} {m.unit}
+                        {movementQty(m)}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, color: "var(--ink2)" }}>
                         <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: 12, color: "var(--ink3)" }} />
                         <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: xml ? 12 : undefined }}>
-                          {m.source}
+                          {movementSource(m)}
                         </span>
                       </div>
                     </div>
@@ -463,8 +467,8 @@ export default function ProductsScreen() {
             notify(`${saved.name} ${draft.id ? "atualizado" : "cadastrado"} no Catálogo`);
             reload();
           }}
-          onAdjusted={(p) => {
-            notify(`Estoque de ${p.name}: ${qty(p.stock)} ${p.unit}`);
+          onAdjusted={(message) => {
+            notify(message);
             reload();
           }}
           onError={notify}
@@ -538,8 +542,8 @@ export function ProductForm({
   categories: MenuCategory[];
   onCategoriesChanged: (list: MenuCategory[]) => void;
   onSaved: (p: Product) => void;
-  /** After an Ajustar estoque (the form stays open, the list refreshes). */
-  onAdjusted: (p: Product) => void;
+  /** After an Ajustar estoque (the form stays open, the list refreshes): what to tell the person. */
+  onAdjusted: (message: string) => void;
   onError: (msg: string) => void;
 }) {
   const [initial] = useState(draft); // "Alterações não salvas" compares with what the sheet opened with
@@ -547,7 +551,7 @@ export function ProductForm({
   const [tried, setTried] = useState(false); // after a Criar item/Salvar with problems, the fields say which
   const [adjusting, setAdjusting] = useState(false);
   const [taxOpen, setTaxOpen] = useState(false);
-  const [adj, setAdj] = useState({ kind: "in" as keyof typeof ADJUST_HINT, qty: "", reason: "" });
+  const [adj, setAdj] = useState({ kind: "in" as keyof typeof ADJUST_HINT, qty: "", reason: "", cost: "" });
   const current = draft.id ? products.find((p) => p.id === draft.id) : undefined;
   const set = (patch: Partial<Draft>) => setDraft({ ...draft, ...patch });
   // "Nova categoria" right here (3f): the new one comes back selected.
@@ -563,13 +567,18 @@ export function ProductForm({
     }
   });
   const adjust = async () => {
-    if (!current || !adj.qty) return;
+    if (!current || !(adj.qty || adj.cost)) return;
     setSaving(true);
     try {
-      onAdjusted(await api.adjustStock(current.id, adj.kind, num(adj.qty), adj.reason.trim()));
-      setAdj({ ...adj, qty: "", reason: "" });
+      // Item 3: the cost alone (no quantity) only corrects the cost — a Contagem with an empty quantity doesn't zero the stock.
+      const saved = await api.adjustStock(current.id, adj.kind, adj.qty ? num(adj.qty) : undefined, adj.reason.trim(), adj.cost ? num(adj.cost) : undefined);
+      const stock = `Estoque de ${saved.name}: ${qty(saved.stock)} ${saved.unit}`;
+      const cost = `custo ${brl(saved.cost)}/${saved.unit}`;
+      onAdjusted(!adj.qty ? `Custo de ${saved.name}: ${brl(saved.cost)}/${saved.unit}` : adj.cost ? `${stock} · ${cost}` : stock);
+      if (adj.cost) set({ cost: saved.cost.toFixed(2).replace(".", ",") }); // the locked field shows the new cost
+      setAdj({ ...adj, qty: "", reason: "", cost: "" });
     } catch (err) {
-      onError(err instanceof ApiError && err.status === 400 ? "Informe uma quantidade válida" : err instanceof ApiError ? err.message : "Não foi possível ajustar o estoque");
+      onError(err instanceof ApiError && err.status === 400 ? "Informe uma quantidade ou um custo válido" : err instanceof ApiError ? err.message : "Não foi possível ajustar o estoque");
     } finally {
       setSaving(false);
     }
@@ -586,7 +595,8 @@ export function ProductForm({
   const setLine = (i: number, patch: Partial<Draft["lines"][number]>) => set({ lines: draft.lines.map((l, j) => (i === j ? { ...l, ...patch } : l)) });
   const cost = composed ? autoCost : num(draft.cost);
   const margin = num(draft.price) > 0 ? `${(((num(draft.price) - cost) / num(draft.price)) * 100).toFixed(1).replace(".", ",")}%` : "—";
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
+  // A cost corrected in Ajustar estoque updates the locked field; that isn't an unsaved change of the form.
+  const dirty = JSON.stringify({ ...draft, cost: "" }) !== JSON.stringify({ ...initial, cost: "" }) || (!current?.costLocked && draft.cost !== initial.cost);
   const errors = { name: draft.name.trim() ? null : "Informe o nome do item.", price: isProduto && !(num(draft.price) > 0) ? "Informe o preço de venda." : null };
   const problems = tried ? Object.values(errors).filter(Boolean).length : 0;
   const taxFilled = !!(draft.ncm.trim() || draft.cst.trim() || num(draft.taxRate));
@@ -734,13 +744,13 @@ export function ProductForm({
       <Section title={isProduto ? "Preço e custo" : "Custo"}>
         <div style={grid3}>
           {isProduto && money(draft.price, (price) => set({ price }), "Preço de venda", tried ? errors.price : null)}
-          {composed ? (
+          {composed || current?.costLocked ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <span style={locked}>
-                Custo <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />
+                {composed ? "Custo" : isProduto ? "Custo" : "Custo médio"} <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />
               </span>
-              <div className="field mono" style={{ background: "var(--surface3)", color: "var(--ink2)", fontWeight: 600 }}>
-                {brl(autoCost)}
+              <div className="field mono" aria-describedby="cost-help" style={{ background: "var(--surface3)", color: "var(--ink2)", fontWeight: 600 }}>
+                {brl(composed ? autoCost : current!.cost)}
               </div>
             </div>
           ) : (
@@ -755,12 +765,14 @@ export function ProductForm({
             </div>
           )}
         </div>
-        <div style={help}>
+        <div id="cost-help" style={help}>
           {composed
             ? "Calculado pela ficha técnica com o custo médio de cada componente."
-            : draft.id
-              ? "Muda sozinho a cada entrada de nota (média ponderada). Corrija aqui se precisar."
-              : "Depois da primeira entrada de estoque, o custo passa a ser a média das entradas."}
+            : current?.costLocked
+              ? "Travado depois da primeira movimentação: muda sozinho a cada entrada de nota (média ponderada). Para corrigir, use Ajustar estoque e informe o custo."
+              : draft.id
+                ? "Muda sozinho a cada entrada de nota (média ponderada). Corrija aqui se precisar."
+                : "Depois da primeira entrada de estoque, o custo passa a ser a média das entradas."}
         </div>
       </Section>
 
@@ -802,12 +814,21 @@ export function ProductForm({
                   ]}
                 />
                 <div style={help}>{ADJUST_HINT[adj.kind]}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1.6fr)", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10 }}>
                   <input className="field mono" inputMode="decimal" placeholder={`Qtd. (${current.unit})`} aria-label="Quantidade do ajuste" value={adj.qty} onChange={(e) => setAdj({ ...adj, qty: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ background: "var(--surface)" }} />
-                  <input className="field" maxLength={80} placeholder="Motivo (opcional)" aria-label="Motivo do ajuste" value={adj.reason} onChange={(e) => setAdj({ ...adj, reason: e.target.value })} style={{ background: "var(--surface)" }} />
+                  <div style={{ position: "relative" }}>
+                    <span className="mono" aria-hidden="true" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink2)" }}>
+                      R$
+                    </span>
+                    <input className="field mono" inputMode="decimal" placeholder={`Custo/${current.unit} (opcional)`} aria-label={`Custo por ${current.unit} (opcional)`} aria-describedby="adjust-cost-help" value={adj.cost} onChange={(e) => setAdj({ ...adj, cost: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ background: "var(--surface)", paddingLeft: 44 }} />
+                  </div>
+                  <input className="field" maxLength={80} placeholder="Motivo (opcional)" aria-label="Motivo do ajuste" value={adj.reason} onChange={(e) => setAdj({ ...adj, reason: e.target.value })} style={{ background: "var(--surface)", gridColumn: "1 / -1" }} />
                 </div>
-                <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start" }} disabled={saving || !adj.qty} onClick={adjust}>
-                  Registrar {adj.kind === "count" ? "contagem" : adj.kind === "in" ? "entrada" : "saída"}
+                <div id="adjust-cost-help" style={help}>
+                  Custo, se informado, substitui o atual ({brl(current.cost)}/{current.unit}) e fica registrado na movimentação. Só o custo, sem quantidade, corrige o custo sem mexer no saldo.
+                </div>
+                <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start" }} disabled={saving || !(adj.qty || adj.cost)} onClick={adjust}>
+                  {!adj.qty && adj.cost ? "Registrar custo" : `Registrar ${adj.kind === "count" ? "contagem" : adj.kind === "in" ? "entrada" : "saída"}`}
                 </button>
               </div>
             )}

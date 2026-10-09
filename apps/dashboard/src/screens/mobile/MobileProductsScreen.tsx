@@ -29,6 +29,9 @@ import {
   movementMatch,
   parseNfe,
   pill,
+  movementQty,
+  movementSource,
+  movementTag,
   qty,
   type CatalogFilter,
   type Draft
@@ -297,19 +300,19 @@ export default function MobileProductsScreen() {
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderBottom: "1px solid var(--line)", minHeight: 62 }}>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <span style={{ ...pill(m.kind === "in" ? "ok" : "sec"), fontSize: 10.5, padding: "1px 8px" }}>{m.kind === "in" ? "Entrada" : "Saída"}</span>
+                      <span style={{ ...pill(movementTag(m).tone), fontSize: 10.5, padding: "1px 8px" }}>{movementTag(m).label}</span>
                       <span style={{ fontSize: 13.5, fontWeight: 500, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.productName}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--ink3)", minWidth: 0 }}>
                       <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: 11 }} />
                       <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {m.source}
+                        {movementSource(m)}
                       </span>
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
                     <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: m.kind === "in" ? "var(--ok)" : "var(--ink)", whiteSpace: "nowrap" }}>
-                      {m.kind === "in" ? "+" : "−"} {qty(m.quantity)} {m.unit}
+                      {movementQty(m)}
                     </span>
                     <span className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
                       {dayMonth(localIso(new Date(m.createdAt)))}
@@ -349,8 +352,8 @@ export default function MobileProductsScreen() {
             notify(`${saved.name} ${draft.id ? "atualizado" : "cadastrado"} no Catálogo`);
             reload();
           }}
-          onAdjusted={(p) => {
-            notify(`Estoque de ${p.name}: ${qty(p.stock)} ${p.unit}`);
+          onAdjusted={(message) => {
+            notify(message);
             reload();
           }}
           onError={notify}

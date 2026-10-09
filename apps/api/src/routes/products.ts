@@ -11,6 +11,7 @@ const staffGuard = [requireStaff, requireOwnRestaurant, requireMinRole(LEVEL.ADM
 // _count.movements: a product with any stock movement has its unit locked (see PATCH).
 const withComponents = { components: { include: { component: true } }, _count: { select: { movements: true } } } as const;
 export const UNIT_LOCKED = "A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto.";
+export const COST_LOCKED = "O custo não pode mudar aqui depois que o produto teve movimentação. Corrija em Ajustar estoque, informando o custo.";
 const MAX_NAME_LENGTH = 80;
 const MAX_TAX_CODE_LENGTH = 20;
 
@@ -89,9 +90,12 @@ productsRouter.patch("/:id/products/:productId", ...staffGuard, async (req, res)
   if (error) return res.status(400).json({ error });
   // The history (movements), the stock and the fichas técnicas are quantities in this unit: kg → g would re-read 0,15 kg as
   // 0,15 g. Once anything moved, the unit stays; a new unit is a new product (A-01).
-  if (body.unit !== existing.unit && (await prisma.stockMovement.count({ where: { productId: existing.id } })) > 0) {
-    return res.status(409).json({ error: UNIT_LOCKED });
-  }
+  // Item 3: so is the cost (the history and the average from the XML entries hang on it); Ajustar estoque corrects it and
+  // records it on a movement. Compared in cents: the form shows 2 decimals of an average like 7,4567.
+  const costChanged = !body.composed && Math.round(body.cost * 100) !== Math.round(existing.cost * 100);
+  const moved = (body.unit !== existing.unit || costChanged) && (await prisma.stockMovement.count({ where: { productId: existing.id } })) > 0;
+  if (moved && body.unit !== existing.unit) return res.status(409).json({ error: UNIT_LOCKED });
+  if (moved) return res.status(409).json({ error: COST_LOCKED });
   if (body.composed && !existing.composed && (await prisma.productComponent.count({ where: { componentId: existing.id } })) > 0) {
     return res.status(409).json({ error: "este item é usado na composição de outro produto e não pode virar composto" });
   }
@@ -105,7 +109,7 @@ productsRouter.patch("/:id/products/:productId", ...staffGuard, async (req, res)
         name,
         unit: body.unit,
         price,
-        cost: body.cost,
+        cost: costChanged || body.composed ? body.cost : existing.cost,
         ncm: body.ncm.trim(),
         cst: body.cst.trim(),
         taxRate: body.taxRate,
@@ -132,12 +136,16 @@ productsRouter.get("/:id/stock-movements", ...staffGuard, async (req, res) => {
 });
 
 // Ajuste manual: stock that arrives without an NF-e, losses, and the physical count (which sets the stock and logs the
-// difference). Composed products have no stock of their own.
+// difference). Composed products have no stock of their own. Item 3: an optional cost (per unit) replaces the product's —
+// the way to correct a wrong cost once it's locked — and is recorded on the movement; with a cost, the quantity may be left
+// out (only the cost changes: a movement of 0).
 const ADJUST_SOURCE = { in: "Entrada manual", out: "Saída manual", count: "Contagem de estoque" } as const;
 productsRouter.post("/:id/stock-movements/adjust", ...staffGuard, async (req, res) => {
-  const { productId, kind, quantity, reason } = req.body as { productId?: string; kind?: keyof typeof ADJUST_SOURCE; quantity?: unknown; reason?: unknown };
+  const { productId, kind, quantity, reason, cost } = req.body as { productId?: string; kind?: keyof typeof ADJUST_SOURCE; quantity?: unknown; reason?: unknown; cost?: unknown };
   if (!kind || !(kind in ADJUST_SOURCE)) return res.status(400).json({ error: "kind must be in, out or count" });
-  if (typeof quantity !== "number" || !Number.isFinite(quantity) || quantity < 0 || (kind !== "count" && quantity === 0) || quantity > 1e6) {
+  if (cost !== undefined && (!isAmount(cost) || (cost as number) > 1e6)) return res.status(400).json({ error: "cost must be a non-negative number" });
+  const costOnly = quantity === undefined && cost !== undefined;
+  if (!costOnly && (typeof quantity !== "number" || !Number.isFinite(quantity) || quantity < 0 || (kind !== "count" && quantity === 0) || quantity > 1e6)) {
     return res.status(400).json({ error: "quantity must be a positive number (zero only for a count)" });
   }
   if (reason !== undefined && (typeof reason !== "string" || reason.length > MAX_NAME_LENGTH)) return res.status(400).json({ error: `reason must be at most ${MAX_NAME_LENGTH} characters` });
@@ -145,12 +153,17 @@ productsRouter.post("/:id/stock-movements/adjust", ...staffGuard, async (req, re
   if (!product || product.restaurantId !== req.params.id) return res.status(404).json({ error: "product not found" });
   if (product.composed) return res.status(400).json({ error: "produto com ficha técnica não tem estoque próprio: ajuste os itens da composição" });
 
-  const delta = round3(kind === "count" ? quantity - product.stock : kind === "in" ? quantity : -quantity);
-  const source = [ADJUST_SOURCE[kind], typeof reason === "string" && reason.trim()].filter(Boolean).join(": ");
-  if (delta !== 0) {
+  const n = costOnly ? 0 : (quantity as number);
+  const delta = costOnly ? 0 : round3(kind === "count" ? n - product.stock : kind === "in" ? n : -n);
+  const unitCost = typeof cost === "number" ? Math.round(cost * 10000) / 10000 : null;
+  const source = [costOnly ? "Correção de custo" : ADJUST_SOURCE[kind], typeof reason === "string" && reason.trim()].filter(Boolean).join(": ");
+  if (delta !== 0 || unitCost !== null) {
     await prisma.$transaction([
-      prisma.product.update({ where: { id: product.id }, data: kind === "count" ? { stock: quantity } : { stock: { increment: delta } } }),
-      prisma.stockMovement.create({ data: { restaurantId: req.params.id, productId: product.id, kind: delta > 0 ? "in" : "out", quantity: Math.abs(delta), source } })
+      prisma.product.update({
+        where: { id: product.id },
+        data: { ...(costOnly ? {} : kind === "count" ? { stock: n } : { stock: { increment: delta } }), ...(unitCost !== null ? { cost: unitCost } : {}) }
+      }),
+      prisma.stockMovement.create({ data: { restaurantId: req.params.id, productId: product.id, kind: delta < 0 ? "out" : "in", quantity: Math.abs(delta), source, unitCost } })
     ]);
   }
   res.json(serializeProduct(await loadProduct(product.id)));

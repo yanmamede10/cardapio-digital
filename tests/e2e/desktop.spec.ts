@@ -524,6 +524,33 @@ plain("Produtos: contagem de estoque define o estoque e aparece em Movimentaçõ
   await expect(page.getByText("Contagem de estoque: Inventário de sábado").first()).toBeVisible();
 });
 
+// Item 3 (pendência do J): after the first movement the cost is locked, like the unit, and the form says where to fix it;
+// Ajustar estoque takes an optional cost — alone, it corrects the cost without touching the stock — and Movimentações shows it.
+test("Item 3 · custo travado depois da primeira movimentação; o Ajustar estoque corrige só o custo e Movimentações mostra", async ({ page, api }) => {
+  const name = `Cebola ${uid()}`;
+  const p = await api("POST", `/api/restaurants/${R}/products`, { name, type: "insumo", unit: "kg", price: 0, cost: 6, ncm: "", cst: "", taxRate: 0, composed: false, components: [] });
+  await api("POST", `/api/restaurants/${R}/stock-movements/adjust`, { productId: p.id, kind: "in", quantity: 10 });
+  await page.goto("/produtos");
+  await page.getByLabel("Buscar por nome").fill(name);
+  await page.getByRole("button", { name: new RegExp(name) }).click();
+  const sheet = page.locator(".drawer-panel");
+  await expect(sheet.getByText(/^Travado depois da primeira movimentação/)).toBeVisible();
+  await expect(sheet.getByRole("textbox", { name: "Custo médio" })).toHaveCount(0); // shown, not editable
+  await expect(sheet).toContainText("R$ 6,00");
+
+  await sheet.getByRole("button", { name: "Ajustar estoque" }).click();
+  await sheet.getByLabel("Custo por kg (opcional)").fill("5,40");
+  await sheet.getByLabel("Motivo do ajuste").fill("nota com preço errado");
+  await sheet.getByRole("button", { name: "Registrar custo" }).click();
+  await expect(page.locator(".toast-bubble")).toContainText(`Custo de ${name}: R$ 5,40/kg`);
+  await expect(sheet).toContainText("R$ 5,40");
+  await expect(sheet).toContainText("10 kg"); // the stock didn't move
+  await sheet.getByRole("button", { name: "Cancelar" }).click(); // nothing unsaved: closes without asking
+  await expect(sheet).toBeHidden();
+  await page.getByRole("button", { name: "Movimentações", exact: true }).click();
+  await expect(page.getByText("Correção de custo: nota com preço errado · custo R$ 5,40/kg")).toBeVisible();
+});
+
 plain("Configurações → Salão: sem pedido pelo QR, o Mesas esconde o QR e o QR impresso manda chamar o garçom", async ({ page, browser, request }) => {
   await loginAs(page, request, "dono@chapa27.example");
   await page.goto("/config");
