@@ -51,7 +51,7 @@ Fora do escopo: Emissão Fiscal e delivery próprio. Só entram para conferir qu
 
 Cardápio do cliente pela mesa: no painel, **Mesas → selecione a mesa → QR code** abre a folha da mesa; **Copiar link** dá `…/t/<código da mesa>` (43 caracteres aleatórios, um por mesa). **Mesas → Imprimir QR** mostra as folhas de todas as mesas, prontas para imprimir em A4.
 
-**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"); 05/10/2026 para os fronts no Caddy, num endereço só (seção 4.21); 06/10/2026 para a rodada J, Produtos no padrão do Cardápio (UX-07: categoria no produto, Catálogo por categoria, cadastro em folha; casos EST-18 a EST-24 e CAR-15 a CAR-17; seção 7, "Rodada J"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
+**Coluna Resultado:** última rodada — 27/09/2026; 29/09/2026 para Lançar pedido, categorias, ajuste de estoque e adicionais com estoque; 30/09/2026 para os casos da rodada "Prompt A" (dados, segurança, pedido pelo QR, cards parciais — seção 6); 01/10/2026 para a rodada "Prompt C" (seção 6) e para a rodada "Prompt D", o deploy na VM (seção 7, "Rodada D"); 02/10/2026 para a rodada "Prompt E", segurança, histórico do pedido, lista do delivery e backup do Storage (seções 4.18 a 4.20 e 7, "Rodada E"), e para a rodada "Prompt F", as decisões da auditoria (SEN-07/08, PED-17, MES-18/19, DESC-04/05, CUP-01 a 04; seção 7, "Rodada F"); 05/10/2026 para os fronts no Caddy, num endereço só (seção 4.21); 06/10/2026 para a rodada J, Produtos no padrão do Cardápio (UX-07: categoria no produto, Catálogo por categoria, cadastro em folha; casos EST-18 a EST-24 e CAR-15 a CAR-17; seção 7, "Rodada J"); 09/10/2026 para a rodada L, pendências do J (EST-25, EST-26, CAR-19 e o roteiro do UX8-04; seção 7, "Rodada L"). ✅ passou · ✅ M passou no roteiro manual · ✅ corrigido (B##) falhou e foi corrigido nesta rodada · ❌ P2-## falha cosmética registrada, não corrigida · ⏳ depende de aparelho ou do ambiente hospedado.
 
 **Tamanhos de tela:** desktop 1366×820, tablet em paisagem 1280×800 (toque), celular 390×844 (toque). **Temas:** claro e escuro (botão de tema no menu lateral ou na aba Mais). Em cada tela, o mínimo é: nada vaza para fora da tela (sem rolagem horizontal da página), textos legíveis nos dois temas, sem erro no console e sem chamada da API com erro.
 
@@ -286,6 +286,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | EST-21 | Catálogo vazio | Dono novo | Restaurante sem item | "Seu catálogo ainda está vazio" com Cadastrar primeiro item e Criar categoria | e2e:desktop | ✅ |
 | EST-22 | Cadastro em folha | Adm | Novo item → Criar item sem nada; preencher; Saldo inicial 48 | Folha de 720 px a 28 px do topo; "Corrija 2 campos para salvar." com o erro em Nome e em Preço de venda; Margem calculada; o saldo inicial entra como "Entrada manual: Saldo inicial" | e2e:desktop | ✅ |
 | EST-23 | Tipo e unidade travados, Tributação recolhida | Adm | Editar um item que já movimentou | Tipo travado; unidade desabilitada com o motivo; Tributação fechada com "Preenchida"/"Não preenchida"; rodapé "Sem alterações" / "Alterações não salvas" | e2e:desktop, e2e:dialogos | ✅ |
+| EST-25 | Selo "Saída" legível | Adm | Produtos → Movimentações com uma entrada e uma saída, claro e escuro | Selos "Entrada" e "Saída" com 4,5:1 ou mais (era 2,38:1 no claro e 4,47:1 no escuro) | e2e:dialogos (L-1) | ✅ |
+| EST-26 | Custo travado depois de movimentar; correção no Ajustar estoque | Adm | Insumo com custo 6,00 e uma entrada; mudar o custo no cadastro; Ajustar estoque só com "Custo/kg" 5,40 e motivo | API 409 "O custo não pode mudar aqui depois que o produto teve movimentação. Corrija em Ajustar estoque, informando o custo."; na tela o custo aparece travado com o motivo; "Registrar custo" muda o custo sem mexer no saldo; Movimentações mostra "Custo" e "Correção de custo: … · custo R$ 5,40/kg"; renomear com o custo arredondado mantém o exato | api:estoque, e2e:desktop (L-3) | ✅ |
 | EST-24 | Nova categoria no cadastro e no celular | Adm | No cadastro, "Nova categoria" → Criar e usar; no celular, Novo item | A categoria nova fica selecionada no item; no celular, tela cheia com Cancelar e Criar item na barra de cima | e2e:desktop, e2e:mobile | ✅ |
 
 ### 4.8 Cardápio no painel (CAR)
@@ -301,7 +303,8 @@ Formato: **ID · caso · papel · passos e dados · esperado · Auto**. "Qualque
 | CAR-07 | Reordenar | Adm | Arrastar categoria/prato | Ordem salva e igual no cliente | M | ✅ M |
 | CAR-09 | Adicional com baixa de estoque | Adm | Organizar prato → Bacon extra → "Baixa: Bacon em fatias (kg)" 0,03 | Vender 2 Clássicos com Bacon extra e fechar baixa 0,06 kg de bacon; vínculo inválido (produto composto, outro restaurante, quantidade 0) → 400 | api:cardapio | ✅ |
 | CAR-10 | Criar, renomear e excluir categoria | Adm | Nova categoria "Combos"; renomear; excluir | Na caixa do design (não mais o prompt do navegador): nome vazio ou repetido deixa o botão desativado; Enter confirma, Esc cancela; aparece vazia ("Nenhum prato nesta categoria"); renomeia; exclui | api:cardapio, e2e:desktop | ✅ (J-2) |
-| CAR-11 | Categoria com itens não é excluída | Adm | Excluir "Sobremesas"; excluir uma categoria só com insumo | A caixa diz "Esta categoria tem 4 itens…" e lista os pratos, sem botão Excluir; a só com insumo: API 409 "A categoria X tem 1 item. Mova para outra categoria antes de excluir." | api:categoria, e2e:desktop | ✅ (J-1, J-2) |
+| CAR-19 | Mover e excluir | Adm | Excluir "Sobremesas" (4 pratos e 3 insumos); excluir uma categoria que recebeu um insumo com o Cardápio aberto; destino de outro restaurante pela API | A caixa diz "Esta categoria tem 7 itens", lista os pratos e "e mais 3 itens do Catálogo de Produtos", pede "Mover os 7 itens para:" e só libera "Mover e excluir" com o destino; a desatualizada recebe o 409 com a contagem e vira a mesma caixa; mover e excluir numa transação; outro restaurante 404, a própria 400, sem destino 409 | api:categoria, e2e:desktop, e2e:mobile (L-2) | ✅ |
+| CAR-11 | Categoria com itens não é excluída (até a rodada L) | Adm | Excluir "Sobremesas"; excluir uma categoria só com insumo | A caixa diz "Esta categoria tem 4 itens…" e lista os pratos, sem botão Excluir; a só com insumo: API 409 "A categoria X tem 1 item. Mova para outra categoria antes de excluir." | api:categoria, e2e:desktop | ✅ (J-1, J-2) |
 | CAR-12 | Nome de categoria repetido, vazio ou longo | Adm | "combos da casa" (já existe), "", 41 caracteres | 409 / 400 / 400 | api:cardapio | ✅ |
 | CAR-13 | Restaurante novo começa pelas categorias | Dono novo | Cardápio vazio | "Criar primeira categoria" | M | ✅ M |
 | CAR-14 | Categoria vazia não aparece para o cliente | cliente | Criar categoria sem pratos; outra só com um insumo | Cardápio do cliente não mostra nenhuma das duas (a API já não as manda) | api:categoria, M | ✅ |
@@ -514,7 +517,24 @@ Vale para Produto/Insumo, Cupom, Organizar prato, Novo lançamento e Quitar cont
 | UX8-01 | Clicar fora não fecha | Adm | Abrir; digitar; clicar no fundo escurecido | Continua aberto, com o que foi digitado | e2e:dialogos (I-2, J-5) | ✅ |
 | UX8-02 | Sem alteração fecha direto | Adm | Abrir e apertar Esc; abrir e tocar no X/Cancelar | Fecha, sem perguntar | e2e:dialogos (J-5) | ✅ |
 | UX8-03 | Com alteração pergunta | Adm | Digitar; Esc; depois X/Cancelar | "Descartar alterações?" (Descartar / Continuar editando); Continuar editando mantém o digitado; Descartar fecha | e2e:dialogos (J-5) | ✅ |
-| UX8-04 | Voltar do Android | Adm | No APK: digitar num cadastro e tocar em voltar | A mesma pergunta; sem alteração, fecha (sem sair da tela) | M (aparelho) — o caminho é o mesmo do Esc (`lib/back.ts`) | ⏳ |
+| UX8-04 | Voltar do Android | Adm | No APK: digitar num cadastro e tocar em voltar (roteiro abaixo) | A mesma pergunta; sem alteração, fecha (sem sair da tela) | M (aparelho) — o caminho é o mesmo do Esc (`lib/back.ts`) | ⏳ |
+
+**Roteiro do UX8-04 (aparelho Android com o APK do painel).** Gesto de voltar ou botão ◁, tanto faz: os dois chegam no mesmo `backButton` do Capacitor.
+
+1. Gere e instale o APK como em "APK do painel" do README (`VITE_PUBLIC_URL=https://<IP-da-VM> npm run build:android --workspace apps/dashboard` e `./gradlew assembleDebug`; ou, para a pilha local, sem a variável e o celular na mesma rede com a API em `HOST=0.0.0.0`). Instale com `adb install -r app-debug.apk` ou copiando o arquivo.
+2. Entre como Administrador (Chapa 27: `gerente@chapa27.example`). Celular em pé.
+3. **Produto/Insumo (tela cheia).** Produtos → Novo item → toque em voltar sem digitar nada. Esperado: a folha fecha e você continua em Produtos (o app não volta para a tela anterior nem fecha).
+4. De novo Novo item → digite "Teste voltar" no Nome → voltar. Esperado: "Descartar alterações?" com Continuar editando e Descartar. Toque em **Continuar editando**: a pergunta some e "Teste voltar" continua no campo.
+5. Voltar de novo → **Descartar**: a folha fecha, nada foi salvo (o item não aparece no Catálogo).
+6. Com a pergunta aberta, toque em voltar: ela some e o texto continua (voltar na pergunta = Continuar editando).
+7. **Caixa sobre a folha.** No cadastro, toque em "Nova categoria" → voltar. Esperado: só a caixa de categoria fecha; o cadastro continua aberto.
+8. **Novo lançamento (folha de baixo).** Contas a Pagar → Novo lançamento → voltar sem digitar: fecha. De novo, digite uma descrição → voltar: pergunta; Continuar editando mantém; Descartar fecha.
+9. **Quitar conta.** Contas a Pagar → Quitar numa conta pendente → troque a forma de pagamento → voltar: pergunta; Descartar fecha e a conta continua pendente.
+10. **Cupom e Organizar prato (telas).** Promoções → Novo cupom → digite o código → voltar: pergunta; Descartar volta para Promoções. Cardápio → … de um prato → Organizar → mude a descrição → voltar: pergunta; Descartar volta para o Cardápio sem salvar.
+11. **Sem nada aberto.** Em qualquer tela com a barra de abas, voltar volta para a tela anterior (o roteador), como antes.
+12. Repita 3–5 com o tema escuro (Minha conta → Tema). Anote o modelo do aparelho, a versão do Android e o commit do APK no Resultado.
+
+Falha = o app sair da tela (ou fechar) com algo digitado sem perguntar, a pergunta não aparecer, ou Continuar editando perder o que foi digitado.
 
 ## 5. Só com aparelho na mão
 
@@ -841,3 +861,19 @@ O desenho "UX-07-08 Produtos Catalogo" implementado em itens, cada um com teste 
 | K-1 | Cardápio no celular: o nome do prato vai até 2 linhas, o preço fica numa linha (`nowrap`) e o horário ganha a linha dele (dividindo a linha com o preço, a soma das larguras mínimas passava da coluna e o horário ia para baixo do Disponível) | CAR-18 | e2e "K-1 ·" (claro e escuro): 16 verificações falhavam (nome cortado e preço em 2 linhas, nos 2 pratos, a 360 e 390 px) → passa |
 
 A 360 e 390 px, no Chrome com as fontes do Windows, a caixa do horário terminava 11 px antes do Disponível (a sobreposição medida já passava antes); numa réplica da linha ela aparece com a tela a 280 px, ou a 300 px com a fonte 15% maior — a causa é a mesma, e a linha própria a elimina.
+
+### Rodada L (09/10/2026): pendências do J
+
+| Item | O que mudou | Casos | Antes → depois |
+| --- | --- | --- | --- |
+| L-1 | Selo "Saída" em Movimentações com a cor de texto do tom (`--secText`, mais escura no claro e mais clara no escuro) | EST-25 | e2e dialogos "Produtos: Movimentações com Entrada e Saída": axe color-contrast 2,38 (claro) e 4,47 (escuro) → passa, desktop e celular |
+| L-2 | "Mover e excluir": a caixa diz quantos itens (contagem da API, `items` na lista da equipe), pede o destino e a API move e exclui numa transação (`DELETE … { moveTo }`) | CAR-19 | api categoria "Item 2 ·" e e2e desktop "Item 2 · Cardápio": falhavam (409 sempre; caixa só com "Entendi") → passam |
+| L-3 | Custo travado depois da primeira movimentação (409 com o motivo); custo opcional no Ajustar estoque, gravado na movimentação (`StockMovement.unitCost`, migração 9n) | EST-26 | api estoque "Item 3 ·" e e2e desktop "Item 3 ·": falhavam (o PATCH do custo respondia 200; sem campo de custo) → passam |
+| L-4 | Categoria no "Organizar prato": mantida editável, como estava | CAR-15 | sem mudança |
+| L-5 | Roteiro do voltar do Android no APK | UX8-04 | roteiro na seção 4.22; continua ⏳ (aparelho) |
+| L-6 | Seed da demonstração: cada insumo do Chapa 27 nasce numa categoria (Carnes, Pães, Hortifrúti, Laticínios, Bebidas, Embalagens, Molhos, Sobremesas) e duas embalagens de exemplo; só o seed | — | api demo-seed: falhava (insumos sem categoria) → passa |
+| L-7 | I-1 e I-2 conferidos (feitos em 1f6fbef e ab66391); faltava um painel: as opções do prato no Lançar pedido fechavam ao clicar fora — agora o Modal comum, com X, Esc e voltar | UX8-01 | e2e dialogos "I-2 ·": falhava ("clicar no fundo não fecha") → passa |
+
+Também: `categoria.test` roda o teste da migração 9m por último (o psql síncrono bloqueava o processo ~8 s e a próxima requisição reaproveitava uma conexão já fechada pela API: ECONNRESET).
+
+**Consequência do L-6 para a demonstração:** a lista de categorias é uma só (J-1), então o Cardápio do painel do Chapa 27 passa a mostrar também as seis categorias só de insumos, vazias de prato ("Nenhum prato nesta categoria ainda"). O cardápio do cliente não muda (só mostra categoria com prato).
