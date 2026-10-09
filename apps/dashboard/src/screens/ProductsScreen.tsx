@@ -37,7 +37,7 @@ export const EMPTY_DRAFT: Draft = { id: null, name: "", type: "produto", unit: "
 const num = (s: string) => Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s) || 0;
 const decimal = (n: number) => (n ? String(n).replace(".", ",") : "");
 export const qty = (n: number) => n.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
-export const pill = (tone: string) => ({ fontSize: 11.5, fontWeight: 600, borderRadius: 999, padding: "2px 11px", whiteSpace: "nowrap" as const, background: `color-mix(in srgb, var(--${tone}) 16%, transparent)`, color: `var(--${tone})` });
+export const pill = (tone: string) => ({ fontSize: 11.5, fontWeight: 600, borderRadius: 999, padding: "2px 11px", whiteSpace: "nowrap" as const, background: `color-mix(in srgb, var(--${tone}) 16%, transparent)`, color: `var(--${tone}Text, var(--${tone}))` });
 const headRow = { display: "grid", gap: 16, padding: "12px 20px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" } as const;
 export const TYPE_LABEL: Record<ProductType, string> = { produto: "Produto", insumo: "Insumo" };
 

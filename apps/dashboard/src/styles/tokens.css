@@ -14,7 +14,7 @@
   --brandInk: #FCF7D3;
   --brandSoft: #F0E3D2;
   --sec: #CD8C52;
-  --secText: #855B35; /* sec as text: 4.6:1 on every surface (sec itself is 2.2:1) */
+  --secText: #7A5330; /* sec as text: 6.3:1 on the background, 4.7:1 on its own 16% tint over --surface3 (sec itself is 2.2:1) */
   --neutral: #626266;
   --ok: #3F6B4A;
   --warn: #775214; /* 4.6:1 as text, also on its own 18% tint (status pills); was #A5711C */
@@ -49,7 +49,7 @@
   --brandInk: #FCF7D3;
   --brandSoft: #1F1510;
   --sec: #968576;
-  --secText: #968576;
+  --secText: #A89785; /* 4.7:1 on its own 16% tint over every dark surface (the "Saída" pill was 4.47:1) */
   --neutral: #88888B;
   --ok: #6E9B78;
   --warn: #C79B4A;

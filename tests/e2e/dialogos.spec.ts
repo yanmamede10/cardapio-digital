@@ -21,6 +21,8 @@ for (const theme of ["light", "dark"] as const) {
       const phone = info.project.name === "mobile";
 
       const { item: burger, pao } = await burgerKit(api); // a dish without options
+      await api("POST", `${P}/stock-movements/adjust`, { productId: pao.id, kind: "in", quantity: 5 }); // an Entrada and a Saída
+      await api("POST", `${P}/stock-movements/adjust`, { productId: pao.id, kind: "out", quantity: 1 });
       const items = await api<{ id: string; name: string; soldOut: boolean; optionGroups: unknown[] }[]>("GET", `${P}/items`);
       const withOptions = items.find((i) => i.optionGroups.length && !i.soldOut)!;
       const burgerName = items.find((i) => i.id === burger.id)!.name;
@@ -87,6 +89,12 @@ for (const theme of ["light", "dark"] as const) {
           await p.getByRole("button", { name: new RegExp(pao.name) }).click();
           await p.getByRole("button", { name: "Ajustar estoque" }).click();
           await expect(p.getByRole("button", { name: "Registrar entrada" })).toBeVisible();
+        }],
+        // Item 1 (pendência do J): the "Saída" pill was 2.38:1 (light) and 4.47:1 (dark); the sweep only opens Catálogo.
+        ["Produtos: Movimentações com Entrada e Saída", async (p) => {
+          await goto(p, "/produtos");
+          await p.getByRole("button", { name: "Movimentações", exact: true }).click();
+          await expect(p.getByText("Saída", { exact: true }).first()).toBeVisible();
         }],
         ["Produtos: Novo item com erros e Tributação aberta", async (p) => {
           await goto(p, "/produtos");
