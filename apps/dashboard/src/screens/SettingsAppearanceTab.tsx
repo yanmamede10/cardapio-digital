@@ -479,7 +479,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
       {previewOpen && (
         <div className="modal-overlay">
           <div className="modal-panel" style={{ maxWidth: 560 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 22px", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderBottom: "1px solid var(--glassBd)" }}>
+            <div className="glass" style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 22px", borderBottom: "1px solid var(--glassBd)" }}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>Como o cliente vai ver</div>
                 <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Template {TEMPLATES.find((t) => t.id === draft.template)?.name} · cor {brandColor.toUpperCase()}</div>
@@ -495,7 +495,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 22, background: "var(--surface2)" }}>
               <PagePreview big />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 22px", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderTop: "1px solid var(--glassBd)", flexWrap: "wrap" }}>
+            <div className="glass" style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 22px", borderTop: "1px solid var(--glassBd)", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 160, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
                 {published ? "Já publicado — clientes veem esta versão." : "Rascunho visível só para a sua equipe."}
               </div>

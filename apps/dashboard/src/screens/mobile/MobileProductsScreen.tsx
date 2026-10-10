@@ -137,7 +137,7 @@ export default function MobileProductsScreen() {
           if (file) importFile(file);
         }}
       />
-      <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
+      <div className="glass" style={{ position: "sticky", top: 0, zIndex: 5, padding: "11px 12px 9px", borderBottom: "1px solid var(--glassBd)", display: "flex", flexDirection: "column", gap: 9 }}>
         <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
           <MobileChip grow active={tab === "catalogo"} onClick={() => setTab("catalogo")}>
             Catálogo

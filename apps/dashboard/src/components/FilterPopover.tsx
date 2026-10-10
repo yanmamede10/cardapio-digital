@@ -118,11 +118,11 @@ export function FilterPopover({
           <div
             role="dialog"
             aria-label="Filtros"
+            className="glass"
             style={{
               ...(sheet
                 ? { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 26, maxHeight: "88dvh", borderRadius: "20px 20px 0 0", paddingBottom: "env(safe-area-inset-bottom, 0px)" }
                 : { position: "absolute", [align]: 0, top: "calc(100% + 8px)", zIndex: 21, width: 360, maxWidth: "calc(100vw - 40px)", borderRadius: 18 }),
-              background: "var(--surface)",
               border: "1px solid var(--glassBd)",
               boxShadow: "var(--shadow2)",
               display: "flex",

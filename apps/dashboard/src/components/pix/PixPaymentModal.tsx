@@ -114,7 +114,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
   return (
     <div className="modal-overlay">
       <div className="modal-panel" style={{ maxWidth: 420 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderBottom: "1px solid var(--glassBd)" }}>
+        <div className="glass" style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", borderBottom: "1px solid var(--glassBd)" }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, background: "var(--brandSoft)", color: "var(--brandText)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 34px" }}>
             <i className="fa-solid fa-qrcode" style={{ fontSize: 18, lineHeight: 1 }} />
           </div>

@@ -83,3 +83,24 @@ test("L-13 · todo tamanho de texto do painel vem da escala (--text-*), e númer
   assert.match(mono, /font-variant-numeric: tabular-nums/);
   assert.doesNotMatch(mono, /font-family/, "números na fonte do sistema");
 });
+
+// L-15 (UI-01): glass only through base.css's .glass (solid fallback, "reduzir transparência"), never inline; and its tint is
+// thick enough that text keeps 4.5:1 with the worst thing scrolling under it — black in the light theme, white in the dark.
+test("L-15 · vidro só pela classe .glass, com fundo sólido de reserva, e texto a 4,5:1 sobre ele com qualquer coisa por baixo", () => {
+  const base = readFileSync(new URL("apps/dashboard/src/styles/base.css", ROOT), "utf8");
+  assert.match(base, /\.glass \{ background: var\(--surface\); \}/, "sem backdrop-filter: sólido");
+  assert.match(base, /@media \(prefers-reduced-transparency: reduce\) \{\s*\.glass \{ background: var\(--surface\);/);
+  const src = new URL("apps/dashboard/src/", ROOT);
+  const inline = readdirSync(src, { recursive: true, encoding: "utf8" })
+    .filter((f) => f.endsWith(".tsx"))
+    .filter((f) => /backdropFilter|var\(--glassBg\)/.test(readFileSync(new URL(f.replaceAll("\\", "/"), src), "utf8")));
+  assert.deepEqual(inline, [], "vidro inline");
+  const wrong: string[] = [];
+  for (const [theme, t, under] of [["claro", light, "#000000"], ["escuro", dark, "#FFFFFF"]] as const) {
+    const [r, g, b, a] = /rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/.exec(t.glassBg)!.slice(1).map(Number);
+    const u = hex(under);
+    const mixed = `#${[r, g, b].map((c, i) => Math.round(c * a + u[i] * (1 - a)).toString(16).padStart(2, "0")).join("")}`;
+    for (const ink of ["ink", "ink2", "ink3", "brandText"]) if (ratio(t[ink], mixed) < 4.5) wrong.push(`${theme}: --${ink} ${ratio(t[ink], mixed).toFixed(2)}:1`);
+  }
+  assert.deepEqual(wrong, []);
+});

@@ -81,3 +81,28 @@ for (const theme of ["light", "dark"] as const) {
     });
   });
 }
+
+// L-15: glass only on what floats over the content — menus, the phone's search and tab bars (sheets' bars too) — never on the
+// page itself (the desktop's header and sidebar); with "reduzir transparência", solid.
+test("L-15 · vidro só no que flutua (menu, barra de busca e de abas do celular); cabeçalho e menu lateral sólidos; sem vidro com reduzir transparência", async ({ page, request }, info) => {
+  const blur = (css: string) => page.locator(css).first().evaluate((e) => getComputedStyle(e).backdropFilter);
+  await loginAs(page, request, "dono@chapa27.example");
+  if (info.project.name === "mobile") {
+    await open(page, "/cardapio");
+    expect(await blur("main .glass")).toContain("blur");
+    expect(await blur("nav.glass")).toContain("blur");
+    await page.getByRole("button", { name: /^Notificações/ }).click();
+    expect(await blur("header .glass")).toContain("blur");
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-transparency", value: "reduce" }] });
+    expect(await blur("nav.glass")).toBe("none");
+    const [bg, surface] = await page.locator("nav.glass").evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(document.body).getPropertyValue("--surface").trim()]);
+    expect(bg).toBe(`rgb(${surface.match(/[\da-f]{2}/gi)!.map((x) => parseInt(x, 16)).join(", ")})`);
+  } else {
+    await open(page, "/");
+    expect(await blur("header")).toBe("none");
+    expect(await blur("aside")).toBe("none");
+    await page.getByRole("button", { name: /^Notificações/ }).click();
+    expect(await blur("header .glass")).toContain("blur");
+  }
+});

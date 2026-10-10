@@ -58,7 +58,7 @@ export default function MobileTablesScreen() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
+      <div className="glass" style={{ position: "sticky", top: 0, zIndex: 5, padding: "11px 12px 9px", borderBottom: "1px solid var(--glassBd)", display: "flex", flexDirection: "column", gap: 9 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar mesa" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />

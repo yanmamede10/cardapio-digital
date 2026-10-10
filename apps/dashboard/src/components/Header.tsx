@@ -29,10 +29,8 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
         alignItems: "center",
         gap: 18,
         padding: "16px 26px",
-        background: "var(--glassBg)",
-        backdropFilter: "var(--blur)",
-        WebkitBackdropFilter: "var(--blur)",
-        borderBottom: "1px solid var(--glassBd)"
+        background: "var(--bg)",
+        borderBottom: "1px solid var(--line)"
       }}
     >
       {/* UI-01 · 14: the screen's name is the title (title2); the restaurant and what the screen is for, a line below. */}
@@ -87,14 +85,12 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
         </button>
         {notifOpen && (
           <div
+            className="glass"
             style={{
               position: "absolute",
               right: 0,
               top: 46,
               width: 310,
-              background: "var(--glassBg)",
-              backdropFilter: "var(--blur)",
-              WebkitBackdropFilter: "var(--blur)",
               border: "1px solid var(--glassBd)",
               borderRadius: 16,
               boxShadow: "var(--shadow2)",

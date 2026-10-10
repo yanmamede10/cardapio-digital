@@ -234,6 +234,17 @@ textarea.field-mobile {
   animation: dcToast .36s var(--ease-spring) both;
 }
 
+/* UI-01 · 15: glass only on what floats over the content — the phone's search bars and tab bar, sheets' and dialogs' headers,
+   menus. Solid where the browser can't blur, and with "reduzir transparência". The tint is thick (--glassBg, 92 %), so text
+   on it keeps 4.5:1 even with black (light theme) or white (dark) scrolling under it (tests/api/tokens.test.ts). */
+.glass { background: var(--surface); }
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: var(--glassBg); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
 .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 
 .tap { transition: transform .12s var(--ease-spring), background .12s var(--ease-spring), color .12s var(--ease-spring), border-color .12s var(--ease-spring); }

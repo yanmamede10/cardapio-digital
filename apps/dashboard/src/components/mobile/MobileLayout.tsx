@@ -207,6 +207,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
 
           {notifOpen && (
             <div
+              className="glass"
               style={{
                 position: "absolute",
                 top: "100%",
@@ -214,8 +215,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                 left: 12,
                 marginTop: 8,
                 zIndex: 20,
-                background: "var(--surface)",
-                border: "1px solid var(--line)",
+                border: "1px solid var(--glassBd)",
                 borderRadius: 14,
                 boxShadow: "0 20px 44px rgba(0,0,0,.28)",
                 overflow: "hidden"
@@ -285,10 +285,10 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
 
       {showTabs && (
         <nav
+          className="glass"
           style={{
             flex: "0 0 auto",
-            background: "var(--surface)",
-            borderTop: "1px solid var(--line)",
+            borderTop: "1px solid var(--glassBd)",
             display: "flex",
             padding: "6px 6px calc(14px + env(safe-area-inset-bottom, 0px))"
           }}

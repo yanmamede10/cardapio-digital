@@ -19,7 +19,7 @@ interface Props {
   sheet?: { saveLabel: string; onSave: () => void; saving?: boolean; dirty: boolean; status: string };
 }
 
-const bar = { position: "sticky", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", zIndex: 2 } as const;
+const bar = { position: "sticky", zIndex: 2 } as const;
 const textButton = { minWidth: 88, border: 0, background: "transparent", padding: "0 10px", cursor: "pointer", font: "inherit", fontSize: "var(--text-headline)", color: "var(--brandText)" } as const;
 
 /** Right-hand slide-over panel used by the coupon editor; the product cadastro opens it as a sheet. */
@@ -30,7 +30,7 @@ export function SlideOver({ title, subtitle, onClose, footer, children, width, s
     <div className={`drawer-overlay${sheet ? " sheet" : ""}`}>
       <div className={`drawer-panel${sheet ? " sheet" : ""}`} role="dialog" aria-modal="true" aria-label={title} style={width && !sheet ? { width } : undefined}>
         {sheet && phone ? (
-          <div style={{ ...bar, top: 0, display: "flex", alignItems: "center", padding: "6px 8px", minHeight: 52, borderBottom: "1px solid var(--glassBd)" }}>
+          <div className="glass" style={{ ...bar, top: 0, display: "flex", alignItems: "center", padding: "6px 8px", minHeight: 52, borderBottom: "1px solid var(--glassBd)" }}>
             <button type="button" onClick={guard.request} style={{ ...textButton, textAlign: "left" }}>
               Cancelar
             </button>
@@ -40,7 +40,7 @@ export function SlideOver({ title, subtitle, onClose, footer, children, width, s
             </button>
           </div>
         ) : (
-          <div style={{ ...bar, top: 0, display: "flex", alignItems: "center", gap: 12, padding: sheet ? "16px 16px 16px 32px" : "20px 24px", borderBottom: "1px solid var(--glassBd)" }}>
+          <div className="glass" style={{ ...bar, top: 0, display: "flex", alignItems: "center", gap: 12, padding: sheet ? "16px 16px 16px 32px" : "20px 24px", borderBottom: "1px solid var(--glassBd)" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: sheet ? "var(--text-title3)" : "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>
               <div style={{ fontSize: "var(--text-subheadline)", color: sheet ? "var(--ink2)" : "var(--ink3)", marginTop: sheet ? 0 : 2 }}>{subtitle}</div>
@@ -54,7 +54,7 @@ export function SlideOver({ title, subtitle, onClose, footer, children, width, s
           {children}
         </div>
         {!(sheet && phone) && (
-          <div style={{ ...bar, bottom: 0, display: "flex", alignItems: "center", gap: 10, padding: sheet ? "14px 24px 14px 32px" : "16px 24px", borderTop: "1px solid var(--glassBd)" }}>
+          <div className="glass" style={{ ...bar, bottom: 0, display: "flex", alignItems: "center", gap: 10, padding: sheet ? "14px 24px 14px 32px" : "16px 24px", borderTop: "1px solid var(--glassBd)" }}>
             {sheet ? (
               <>
                 {sheet.dirty && <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--brandText)" }} />}

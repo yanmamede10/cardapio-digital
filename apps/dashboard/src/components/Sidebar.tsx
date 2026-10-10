@@ -48,10 +48,8 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
       style={{
         width: 264,
         flex: "0 0 264px",
-        background: "var(--glassBg)",
-        backdropFilter: "var(--blur)",
-        WebkitBackdropFilter: "var(--blur)",
-        borderRight: "1px solid var(--glassBd)",
+        background: "var(--bg)",
+        borderRight: "1px solid var(--line)",
         display: "flex",
         flexDirection: "column",
         position: "sticky",

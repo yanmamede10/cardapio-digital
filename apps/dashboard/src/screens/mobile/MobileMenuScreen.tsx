@@ -102,7 +102,7 @@ export default function MobileMenuScreen() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 9 }}>
+      <div className="glass" style={{ position: "sticky", top: 0, zIndex: 5, padding: "11px 12px 9px", borderBottom: "1px solid var(--glassBd)", display: "flex", alignItems: "center", gap: 9 }}>
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />

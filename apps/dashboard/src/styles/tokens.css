@@ -27,8 +27,9 @@
   /* Text on --alert (badges, the voice-note send button): white here, 7.5:1. */
   --alertInk: #FFFFFF;
 
-  /* Glass: only what floats (search bar, sheets' header, menus, the phone's tab bar) — base.css .glass, with a solid fallback. */
-  --glassBg: rgba(255, 255, 255, .72);
+  /* Glass: only what floats (search bar, sheets' header, menus, the phone's tab bar) — base.css .glass, with a solid fallback.
+     92 % thick: text on it keeps 4.5:1 even with black scrolling under it. */
+  --glassBg: rgba(255, 255, 255, .92);
   --glassBd: rgba(11, 12, 13, .07);
   --blur: saturate(160%) blur(20px);
 
@@ -106,7 +107,7 @@
   /* White on this --alert is 3.5:1: text on it is the dark background, 5.5:1. */
   --alertInk: #020304;
 
-  --glassBg: rgba(13, 15, 16, .72);
+  --glassBg: rgba(13, 15, 16, .92); /* 4.5:1 for --ink3 even with white under it */
   --glassBd: rgba(255, 255, 255, .08);
   --blur: saturate(150%) blur(20px);
   --shadow-float: 0 1px 2px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .55);
