@@ -13,6 +13,7 @@ import { LinkDishModal } from "../../components/LinkDishModal";
 import { MENU_CATEGORY_HELP, dishesIn, withNoCategory } from "../MenuScreen";
 import { useCategoryDialog } from "../../components/CategoryDialog";
 import { CategoryReorderPanel } from "../../components/mobile/CategoryReorderPanel";
+import { ClearSearch } from "../../components/ClearSearch";
 
 export default function MobileMenuScreen() {
   // Funcionário (garçom, cozinha) only flips Esgotado/Disponível; adding, editing and removing dishes is Administrador+.
@@ -106,6 +107,7 @@ export default function MobileMenuScreen() {
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <ClearSearch value={query} onClear={() => setQuery("")} />
         </div>
         {canEdit && <button
           type="button"

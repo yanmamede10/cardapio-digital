@@ -661,7 +661,7 @@ function GridCell({
         borderRadius: 10,
         border: editing ? `1px dashed ${isOver ? "var(--brand)" : "var(--line2)"}` : "1px solid transparent",
         background: isOver ? "var(--brandSoft)" : "transparent",
-        transition: "border-color .12s var(--ease-spring), background .12s var(--ease-spring)"
+        transition: "border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease)"
       }}
     >
       {table && <TableChip key={table.id} table={table} locked={!editing} selected={selected} onSelect={onSelect} onContextMenu={onContextMenu} />}

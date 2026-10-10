@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, Outlet, useLocation, useNavigate, useOutletContext } from "react-router-dom";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate, useNavigationType, useOutletContext } from "react-router-dom";
 import { PLATFORM_NAME } from "@cardapio/shared";
 import { App } from "@capacitor/app";
 import { back } from "../../lib/back";
@@ -69,6 +69,17 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
   const [header, setHeaderState] = useState<MobileHeaderConfig | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [restaurantName, setRestaurantName] = useState("");
+  // UI-01 · 17 (page-side-by-side): a new screen comes in from the right, going back from the left (base.css .page-fwd/-back).
+  const navType = useNavigationType();
+  const mainRef = useRef<HTMLElement>(null);
+  const firstPage = useRef(true);
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    if (firstPage.current || !main) return void (firstPage.current = false);
+    main.classList.remove("page-fwd", "page-back");
+    void main.offsetWidth; // restart the animation
+    main.classList.add(navType === "POP" ? "page-back" : "page-fwd");
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     api.getRestaurant().then((r) => setRestaurantName(r.name)).catch(() => {});
   }, []);
@@ -172,7 +183,8 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
             <i className="fa-solid fa-bell" style={{ fontSize: "var(--icon-sm)" }} />
             {notifCount > 0 && (
               <span
-                className="mono"
+                key={notifCount}
+                className="mono badge-pop"
                 style={{
                   position: "absolute",
                   top: -5,
@@ -207,7 +219,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
 
           {notifOpen && (
             <div
-              className="glass"
+              className="glass menu-pop"
               style={{
                 position: "absolute",
                 top: "100%",
@@ -250,7 +262,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
         </header>
 
         {/* The one scroller of the phone shell: focusable, so the keyboard can scroll screens with nothing to focus (UX-03). */}
-        <main tabIndex={0} style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--bg)" }}>
+        <main ref={mainRef} tabIndex={0} style={{ flex: 1, minHeight: 0, overflowY: "auto", background: "var(--bg)" }}>
           <Outlet context={ctx} />
         </main>
 
@@ -322,7 +334,8 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                 <span style={{ fontSize: "var(--text-caption)", fontWeight: 600 }}>{t.label}</span>
                 {badge && (
                   <span
-                    className="mono"
+                    key={badge}
+                    className="mono badge-pop"
                     style={{
                       position: "absolute",
                       top: 4,

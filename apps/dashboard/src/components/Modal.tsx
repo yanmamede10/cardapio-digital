@@ -68,9 +68,15 @@ export function Modal({
   style?: CSSProperties;
   children: (close: () => void) => ReactNode;
 }) {
-  const guard = useDiscardGuard(dirty, onClose, name);
+  // UI-01 · 17 (modal-open-close): closing plays .closing (base.css) for --dur, then the parent unmounts it.
+  const [closing, setClosing] = useState(false);
+  const exit = () => {
+    setClosing(true);
+    window.setTimeout(onClose, parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--dur")) || 200);
+  };
+  const guard = useDiscardGuard(dirty, exit, name);
   return (
-    <div className="modal-overlay">
+    <div className={closing ? "modal-overlay closing" : "modal-overlay"}>
       <div className="modal-panel" role="dialog" aria-modal="true" aria-label={label} style={style}>
         {children(guard.request)}
       </div>

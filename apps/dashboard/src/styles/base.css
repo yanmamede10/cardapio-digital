@@ -4,10 +4,6 @@
   from { opacity: 0; transform: translate(-50%, 10px) scale(.96); }
   to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
-@keyframes dcScaleIn {
-  from { opacity: 0; transform: scale(.96); }
-  to { opacity: 1; transform: scale(1); }
-}
 
 * { box-sizing: border-box; }
 
@@ -79,7 +75,7 @@ button { -webkit-tap-highlight-color: transparent; }
   font-size: var(--text-subheadline);
   font-weight: 600;
   white-space: nowrap;
-  transition: transform .12s var(--ease-spring), background .12s var(--ease-spring), border-color .12s var(--ease-spring), color .12s var(--ease-spring);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 .btn:active { transform: scale(.97); }
 .btn-primary { background: var(--brand); color: var(--brandInk); }
@@ -104,7 +100,7 @@ button { -webkit-tap-highlight-color: transparent; }
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform .12s var(--ease-spring), border-color .12s var(--ease-spring), color .12s var(--ease-spring);
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 .icon-btn:hover { color: var(--brandText); background: var(--surface2); }
 .icon-btn:active { transform: scale(.97); }
@@ -119,7 +115,7 @@ button { -webkit-tap-highlight-color: transparent; }
   color: var(--ink);
   outline: none;
   width: 100%;
-  transition: border-color .12s var(--ease-spring);
+  transition: border-color var(--dur-fast) var(--ease);
 }
 .field:focus { border-color: var(--brandText); }
 textarea.field { resize: vertical; }
@@ -169,7 +165,7 @@ textarea.field-mobile {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  animation: dcScaleIn .36s var(--ease-spring) both;
+  animation: modalIn var(--dur-slow) var(--ease) backwards;
 }
 
 .toggle-track {
@@ -187,7 +183,7 @@ textarea.field-mobile {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
-  transition: left .15s ease;
+  transition: left var(--dur-fast) var(--ease);
 }
 
 .modal-overlay {
@@ -212,8 +208,12 @@ textarea.field-mobile {
   border-radius: var(--radius-sheet);
   box-shadow: var(--shadow-float);
   overflow: hidden;
-  animation: dcScaleIn .36s var(--ease-spring) both;
+  animation: modalIn var(--dur-slow) var(--ease) backwards;
 }
+/* Closing (Modal): the panel shrinks and fades, the backdrop fades, then React unmounts it. */
+.modal-overlay { animation: fadeIn var(--dur) var(--ease) backwards; }
+.modal-overlay.closing { animation: fadeOut var(--dur) var(--ease) forwards; }
+.modal-overlay.closing > .modal-panel { animation: modalOut var(--dur) var(--ease) forwards; }
 
 .toast-bubble {
   position: fixed;
@@ -231,7 +231,7 @@ textarea.field-mobile {
   font-size: var(--text-subheadline);
   font-weight: 500;
   box-shadow: var(--shadow2);
-  animation: dcToast .36s var(--ease-spring) both;
+  animation: dcToast var(--dur-slow) var(--ease) backwards;
 }
 
 /* UI-01 · 15: glass only on what floats over the content — the phone's search bars and tab bar, sheets' and dialogs' headers,
@@ -247,7 +247,7 @@ textarea.field-mobile {
 
 .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 
-.tap { transition: transform .12s var(--ease-spring), background .12s var(--ease-spring), color .12s var(--ease-spring), border-color .12s var(--ease-spring); }
+.tap { transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
 .tap:active { transform: scale(.97); }
 
 /* Sidebar rows: hover only paints rows without an inline (active) background. */
@@ -313,6 +313,54 @@ textarea.field-mobile {
   .qr-card-table { font-size: 30pt; }
   .qr-card-hint { font-size: 14pt; }
   .qr-svg { max-width: 70mm; }
+}
+
+/* UI-01 · 17: motion, CSS only — durations and easing from the tokens (--dur-fast 150, --dur 200, --dur-slow 250, --ease).
+   Each one is a class the screens put on the moving thing; with "reduzir movimento" on, only opacity changes, or nothing (the
+   block at the end). Loops (skeleton, live dot, spinner) aren't transitions and keep their own rhythm. */
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes fadeOut { to { opacity: 0; } }
+/* number-pop-in: a new number rises in from a blur */
+@keyframes numPop { from { opacity: 0; filter: blur(3px); transform: translateY(.4em); } }
+.num-pop { display: inline-block; animation: numPop var(--dur) var(--ease) backwards; }
+/* notification-badge: comes in diagonally and settles with a small overshoot */
+@keyframes badgePop { 0% { opacity: 0; transform: translate(-6px, 6px) scale(.4); } 65% { opacity: 1; transform: scale(1.15); } }
+.badge-pop { animation: badgePop var(--dur-slow) var(--ease) backwards; }
+/* menu-dropdown: grows from the button that opened it (top right) */
+@keyframes menuIn { from { opacity: 0; transform: translateY(-4px) scale(.96); } }
+.menu-pop { transform-origin: top right; animation: menuIn var(--dur-fast) var(--ease) backwards; }
+/* modal-open-close: scale and fade in; out the same way, then React unmounts it (Modal waits --dur) */
+@keyframes modalIn { from { opacity: 0; transform: scale(.96); } }
+@keyframes modalOut { to { opacity: 0; transform: scale(.96); } }
+/* page-side-by-side (phone): forward comes in from the right, back from the left */
+@keyframes pageFwd { from { opacity: 0; transform: translateX(28px); } }
+@keyframes pageBack { from { opacity: 0; transform: translateX(-28px); } }
+.page-fwd { animation: pageFwd var(--dur-slow) var(--ease) backwards; }
+.page-back { animation: pageBack var(--dur-slow) var(--ease) backwards; }
+/* icon-swap: the new icon scales up out of a blur */
+@keyframes iconSwap { from { opacity: 0; filter: blur(2px); transform: scale(.5); } }
+.icon-swap { animation: iconSwap var(--dur) var(--ease) backwards; }
+/* success-check: the check turns in, out of a blur, with a small overshoot */
+@keyframes checkIn { 0% { opacity: 0; filter: blur(3px); transform: scale(.4) rotate(-45deg); } 65% { opacity: 1; filter: none; transform: scale(1.12) rotate(4deg); } }
+.success-check { animation: checkIn var(--dur-slow) var(--ease) backwards; }
+/* error-state-shake: a short side-to-side; two names so a second error shakes again (the class swaps) */
+@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+@keyframes shake2 { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+.shake-a { animation: shake var(--dur-slow) var(--ease); }
+.shake-b { animation: shake2 var(--dur-slow) var(--ease); }
+/* input-clear-with-dissolve: the typed text blurs away before the field empties (ClearSearch waits --dur) */
+@keyframes dissolve { from { text-shadow: 0 0 0 var(--ink); } to { color: transparent; text-shadow: 0 0 10px transparent; } }
+.dissolve { animation: dissolve var(--dur) var(--ease) forwards; }
+/* tabs-sliding: Segmented's thumb slides to the chosen option */
+.seg-thumb { transition: transform var(--dur) var(--ease), width var(--dur) var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  .num-pop, .badge-pop, .menu-pop, .page-fwd, .page-back, .icon-swap, .success-check, .modal-panel, .drawer-panel, .toast-bubble, .tooltip { animation-name: fadeIn; }
+  .modal-overlay.closing, .modal-overlay.closing > .modal-panel { animation-name: fadeOut; }
+  .shake-a, .shake-b { animation: none; }
+  .seg-thumb, .toggle-knob { transition: none; }
+  .btn:active, .tap:active, .icon-btn:active { transform: none; }
+  @keyframes pulse { to { opacity: 0; } }
 }
 
 /* UX-03 (Apple HIG): nothing a finger acts on is smaller than 44 × 44 — buttons, fields, switches, tabs and the label of a

@@ -11,6 +11,8 @@ const TARGETS = "button, a[href], input:not([type=hidden]), select, textarea, su
 
 /** Returns what's wrong on the page as it is now, one line per problem (empty = fine). */
 export async function a11yProblems(page: Page, where: string): Promise<string[]> {
+  // UI-01 · 17: a screen that just slid in is still fading in — measure what stays on screen, not a frame of the transition.
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {}))));
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   // The first node's own message says why (for contrast: both colors and the ratio found).
   const why = (v: (typeof axe.violations)[number]) => v.nodes[0]?.any[0]?.message ?? v.help;

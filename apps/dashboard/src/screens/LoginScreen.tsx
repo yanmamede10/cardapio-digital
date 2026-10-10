@@ -9,6 +9,8 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // UI-01 · 17 (error-state-shake): each failed attempt shakes the form once more (two class names, so it restarts).
+  const [fails, setFails] = useState(0);
   useEffect(() => {
     document.title = `Entrar · ${PLATFORM_NAME}`;
   }, []);
@@ -21,6 +23,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
       await login(email.trim(), password);
       onLoggedIn();
     } catch (err) {
+      setFails((n) => n + 1);
       setError(
         err instanceof ApiError && err.status === 403
           ? `Este restaurante não está ativo. Fale com o suporte da ${PLATFORM_NAME}.`
@@ -46,6 +49,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
     >
       <form
         onSubmit={handleSubmit}
+        className={fails ? (fails % 2 ? "shake-a" : "shake-b") : undefined}
         style={{
           width: 320,
           maxWidth: "calc(100vw - 32px)",

@@ -118,7 +118,7 @@ export function FilterPopover({
           <div
             role="dialog"
             aria-label="Filtros"
-            className="glass"
+            className="glass menu-pop"
             style={{
               ...(sheet
                 ? { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 26, maxHeight: "88dvh", borderRadius: "20px 20px 0 0", paddingBottom: "env(safe-area-inset-bottom, 0px)" }
@@ -127,8 +127,7 @@ export function FilterPopover({
               boxShadow: "var(--shadow2)",
               display: "flex",
               flexDirection: "column",
-              overflow: "hidden",
-              animation: "dcScaleIn .36s var(--ease-spring) both"
+              overflow: "hidden"
             }}
           >
             <div style={{ display: "flex", alignItems: "center", padding: "16px 18px 12px" }}>

@@ -130,3 +130,70 @@ test("L-16 · ícones: só solid, em 16, 20 ou 24 px, nas telas principais e no 
   wrong.push(...(await icons("Super Admin")));
   expect(wrong).toEqual([]);
 });
+
+// L-17: the motion, as the eye sees it — each transition runs its keyframes with the tokens' durations, and with
+// "reduzir movimento" they turn into a plain fade (or nothing).
+const anim = (page: Page, css: string) => page.locator(css).first().evaluate((e) => `${getComputedStyle(e).animationName} ${getComputedStyle(e).animationDuration}`);
+test("L-17 · transições: diálogo abre e fecha, menu, abas deslizando, ícone trocando, check do aviso, erro tremendo, busca dissolvendo, troca de tela; reduzir movimento vira fade", async ({ page, request, browser }, info) => {
+  test.setTimeout(120_000);
+  const mobile = info.project.name === "mobile";
+  // error-state-shake: a wrong password shakes the form, again on the next try.
+  const anon = await browser.newPage({ viewport: page.viewportSize()!, isMobile: mobile, hasTouch: mobile });
+  await anon.goto("http://localhost:5274/");
+  await anon.getByLabel("E-mail").fill("ninguem@exemplo.invalid"); // not a real account: no lock for the Dono
+  await anon.getByLabel("Senha").fill("errada-1234");
+  await anon.getByRole("button", { name: "Entrar" }).click();
+  await expect(anon.locator("form.shake-a")).toHaveCount(1);
+  expect(await anim(anon, "form")).toBe("shake 0.25s");
+  await anon.getByRole("button", { name: "Entrar" }).click();
+  await expect(anon.locator("form.shake-b")).toHaveCount(1);
+  await anon.close();
+
+  await loginAs(page, request, "dono@chapa27.example");
+  // input-clear-with-dissolve: the X blurs the text away, then the field is empty.
+  await open(page, "/produtos");
+  const search = page.getByLabel("Buscar por nome");
+  await search.fill("pão");
+  await page.getByRole("button", { name: "Limpar busca" }).click();
+  await expect(search).toHaveClass(/dissolve/);
+  await expect(search).toHaveValue("");
+  if (mobile) {
+    // page-side-by-side: forward from the right, back from the left.
+    await open(page, "/mais");
+    await page.getByText("Relatórios", { exact: true }).first().click();
+    await expect(page.locator("main.page-fwd")).toHaveCount(1);
+    expect(await anim(page, "main")).toBe("pageFwd 0.25s");
+    await page.goBack();
+    await expect(page.locator("main.page-back")).toHaveCount(1);
+    return;
+  }
+  // tabs-sliding: the thumb ends under the chosen option.
+  await page.getByRole("button", { name: "Insumos", exact: true }).click();
+  await expect(async () => {
+    const chosen = page.getByRole("button", { name: "Insumos", exact: true });
+    const [thumb, box] = await Promise.all([chosen.locator("xpath=../span[contains(@class,'seg-thumb')]").boundingBox(), chosen.boundingBox()]);
+    expect(Math.abs(thumb!.x - box!.x)).toBeLessThan(1);
+    expect(Math.abs(thumb!.width - box!.width)).toBeLessThan(1);
+  }).toPass();
+  // icon-swap: the theme's icon swaps with a blur.
+  await page.getByRole("button", { name: "Alternar tema" }).click();
+  expect(await anim(page, ".icon-swap")).toBe("iconSwap 0.2s");
+  // menu-dropdown: the bell's menu grows out of it.
+  await page.getByRole("button", { name: /^Notificações/ }).click();
+  expect(await anim(page, ".menu-pop")).toBe("menuIn 0.15s");
+  // success-check: the toast's check turns in.
+  await page.goto("/mesas/qr?mesa=12");
+  await page.getByRole("button", { name: "Copiar link" }).click();
+  expect(await anim(page, ".toast-bubble .success-check")).toBe("checkIn 0.25s");
+  // modal-open-close: scale in; Cancelar plays the way out before it goes.
+  await open(page, "/contas-a-pagar");
+  await page.getByRole("button", { name: "Novo lançamento" }).click();
+  expect(await anim(page, ".modal-panel")).toBe("modalIn 0.25s");
+  await page.getByRole("dialog").getByRole("button", { name: "Cancelar" }).click();
+  await expect(page.locator(".modal-overlay.closing")).toHaveCount(1);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // Reduzir movimento: the same dialog only fades.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("button", { name: "Novo lançamento" }).click();
+  expect(await anim(page, ".modal-panel")).toBe("fadeIn 0.25s");
+});

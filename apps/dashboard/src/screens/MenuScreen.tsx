@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { LEVEL, NO_CATEGORY, type MenuCategory, type MenuItem, type Product } from "@cardapio/shared";
+import { ClearSearch } from "../components/ClearSearch";
 import {
   DndContext,
   DragOverlay,
@@ -251,6 +252,7 @@ export default function MenuScreen() {
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", width: 250 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <ClearSearch value={query} onClear={() => setQuery("")} />
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {catPills.map((c) => {

@@ -5,6 +5,7 @@ import { api } from "../../lib/api";
 import { useMobileScreen } from "../../components/mobile/MobileLayout";
 import { MobileChip } from "../../components/mobile/MobileChip";
 import { MobileEmptyState } from "../../components/mobile/MobileEmptyState";
+import { ClearSearch } from "../../components/ClearSearch";
 
 const STATUS_MAP: Record<TableStatus, { label: string; bg: string; fg: string; accent: string }> = {
   free: { label: "Livre", bg: "color-mix(in srgb, var(--ok) 15%, transparent)", fg: "var(--ok)", accent: "var(--line)" },
@@ -62,6 +63,7 @@ export default function MobileTablesScreen() {
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar mesa" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <ClearSearch value={q} onClear={() => setQ("")} />
         </div>
         <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
           {FILTERS.map((f) => (

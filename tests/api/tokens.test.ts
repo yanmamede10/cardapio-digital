@@ -104,3 +104,26 @@ test("L-15 · vidro só pela classe .glass, com fundo sólido de reserva, e text
   }
   assert.deepEqual(wrong, []);
 });
+
+// L-17 (UI-01): motion in CSS only, every duration and curve from the tokens (loops — skeleton, live dot, spinner — keep their
+// rhythm); the eleven transitions exist; with "reduzir movimento" they turn into a fade, or nothing.
+test("L-17 · movimento: durações e curva dos tokens, as onze transições, e só opacidade com reduzir movimento", () => {
+  const src = new URL("apps/dashboard/src/", ROOT);
+  const base = readFileSync(new URL("styles/base.css", src), "utf8");
+  const wrong: string[] = [];
+  const check = (where: string, value: string) => {
+    if (/\d(ms|s)\b/.test(value) && !/infinite/.test(value)) wrong.push(`${where}: ${value.trim()}`);
+  };
+  for (const [, value] of base.matchAll(/(?:animation|transition)(?:-duration)?:\s*([^;}]+)/g)) check("base.css", value);
+  for (const f of readdirSync(src, { recursive: true, encoding: "utf8" }).filter((f) => f.endsWith(".tsx")))
+    for (const [, value] of readFileSync(new URL(f.replaceAll("\\", "/"), src), "utf8").matchAll(/(?:animation|transition): "([^"]+)"/g)) check(f, value);
+  assert.deepEqual(wrong, []);
+  // number-pop-in, notification-badge, menu-dropdown, modal-open-close, page-side-by-side, icon-swap, success-check,
+  // error-state-shake, input-clear-with-dissolve (tabs-sliding is .seg-thumb's transition; the tooltip's is L-18's).
+  for (const name of ["numPop", "badgePop", "menuIn", "modalIn", "modalOut", "pageFwd", "pageBack", "iconSwap", "checkIn", "shake", "dissolve"]) assert.match(base, new RegExp(`@keyframes ${name} \{`), name);
+  assert.match(base, /\.seg-thumb \{ transition: transform var\(--dur\) var\(--ease\), width var\(--dur\) var\(--ease\); \}/);
+  const reduce = base.slice(base.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
+  for (const cls of [".num-pop", ".badge-pop", ".menu-pop", ".page-fwd", ".page-back", ".icon-swap", ".success-check", ".modal-panel", ".drawer-panel", ".toast-bubble"]) assert.ok(reduce.includes(cls), `${cls} com reduzir movimento`);
+  assert.match(reduce, /\.shake-a, \.shake-b \{ animation: none; \}/);
+  assert.match(reduce, /\.seg-thumb, \.toggle-knob \{ transition: none; \}/);
+});

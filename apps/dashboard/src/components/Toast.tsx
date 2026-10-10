@@ -5,7 +5,7 @@ export function Toast() {
   if (!toast) return null;
   return (
     <div className="toast-bubble">
-      <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-md)" }} />
+      <i key={toast.message} className="fa-solid fa-circle-check success-check" style={{ fontSize: "var(--icon-md)" }} />
       {toast.message}
     </div>
   );

@@ -60,7 +60,8 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
           <i className="fa-solid fa-bell" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
           {notifCount > 0 && (
             <span
-              className="mono"
+              key={notifCount}
+              className="mono badge-pop"
               style={{
                 position: "absolute",
                 top: -5,
@@ -85,7 +86,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
         </button>
         {notifOpen && (
           <div
-            className="glass"
+            className="glass menu-pop"
             style={{
               position: "absolute",
               right: 0,
@@ -95,8 +96,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
               borderRadius: 16,
               boxShadow: "var(--shadow2)",
               overflow: "hidden",
-              zIndex: 9,
-              animation: "dcScaleIn .36s var(--ease-spring) both"
+              zIndex: 9
             }}
           >
             <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", fontWeight: 600, fontSize: "var(--text-subheadline)" }}>Notificações</div>

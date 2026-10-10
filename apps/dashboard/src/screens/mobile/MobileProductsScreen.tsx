@@ -12,6 +12,7 @@ import { FilterPopover, type FilterValues } from "../../components/FilterPopover
 import { Segmented } from "../../components/Segmented";
 import { useCategoryDialog } from "../../components/CategoryDialog";
 import { NO_CATEGORY_GROUP } from "../MenuScreen";
+import { ClearSearch } from "../../components/ClearSearch";
 import {
   EMPTY_DRAFT,
   MOVEMENT_FILTERS,
@@ -153,11 +154,7 @@ export default function MobileProductsScreen() {
               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 4px 0 12px", minHeight: 44 }}>
                 <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                 <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-headline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
-                {filter.q && (
-                  <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
-                    <i className="fa-solid fa-circle-xmark" style={{ fontSize: "var(--icon-sm)" }} />
-                  </button>
-                )}
+                <ClearSearch value={filter.q} onClear={() => set({ q: "" })} />
               </div>
               <button type="button" aria-label="Nova categoria" title="Nova categoria" onClick={cats.create} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface2)", color: "var(--brandText)", border: "1px solid var(--line)" }}>
                 <i className="fa-solid fa-folder-plus" style={{ fontSize: "var(--icon-sm)" }} />

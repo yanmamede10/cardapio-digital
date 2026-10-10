@@ -12,6 +12,7 @@ import { EmptyState } from "../components/EmptyState";
 import { useCategoryDialog } from "../components/CategoryDialog";
 import { FilterPopover, PAST_PERIODS, inPeriod, type FilterGroup, type FilterValues } from "../components/FilterPopover";
 import { CategoryDragPreview, CategorySection, NO_CATEGORY_GROUP, catSortId, dropCategory, withNoCategory } from "./MenuScreen";
+import { ClearSearch } from "../components/ClearSearch";
 
 export interface Draft {
   id: string | null;
@@ -249,11 +250,7 @@ export default function ProductsScreen() {
                 <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "0 4px 0 14px", width: 260 }}>
                   <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                   <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
-                  {filter.q && (
-                    <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
-                      <i className="fa-solid fa-circle-xmark" style={{ fontSize: "var(--icon-sm)" }} />
-                    </button>
-                  )}
+                  <ClearSearch value={filter.q} onClear={() => set({ q: "" })} />
                 </div>
                 <Segmented value={filter.tipo} onChange={(tipo) => set({ tipo })} options={TYPE_OPTIONS} />
               </>

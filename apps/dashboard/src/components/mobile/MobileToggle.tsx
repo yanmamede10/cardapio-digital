@@ -31,7 +31,7 @@ export function MobileToggle({ on, onClick, title, label }: { on: boolean; onCli
             borderRadius: "50%",
             background: "var(--surface)",
             boxShadow: "0 1px 3px rgba(0,0,0,.25)",
-            transition: "left .15s ease"
+            transition: "left var(--dur-fast) var(--ease)"
           }}
         />
       </span>

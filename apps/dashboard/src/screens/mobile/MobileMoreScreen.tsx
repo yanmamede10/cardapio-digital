@@ -52,7 +52,7 @@ export default function MobileMoreScreen() {
           </div>
         </div>
         <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Usar o tema claro" : "Usar o tema escuro"} style={{ width: 44, height: 44, borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer" }}>
-          <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: "var(--icon-sm)" }} />
+          <i key={theme} className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"} icon-swap`} style={{ fontSize: "var(--icon-sm)" }} />
         </button>
       </section>
 

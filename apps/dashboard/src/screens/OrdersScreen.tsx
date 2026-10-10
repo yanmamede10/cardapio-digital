@@ -177,7 +177,7 @@ export default function OrdersScreen() {
                   >
                     <i className={`fa-solid ${f.icon}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                     {f.label}
-                    <span className="mono" style={{ fontSize: "var(--text-caption)" }}>
+                    <span key={count} className="mono num-pop" style={{ fontSize: "var(--text-caption)" }}>
                       {count}
                     </span>
                   </button>
@@ -292,7 +292,7 @@ function KanbanColumn({ id, label, dot, count, children }: { id: string; label: 
         display: "flex",
         flexDirection: "column",
         minHeight: 380,
-        transition: "border-color .12s var(--ease-spring)"
+        transition: "border-color var(--dur-fast) var(--ease)"
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 16px", borderBottom: "1px solid var(--line)" }}>
@@ -301,7 +301,7 @@ function KanbanColumn({ id, label, dot, count, children }: { id: string; label: 
           {label}
         </div>
         <div style={{ flex: 1 }} />
-        <span className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--ink2)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
+        <span key={count} className="mono num-pop" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--ink2)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
           {count}
         </span>
       </div>

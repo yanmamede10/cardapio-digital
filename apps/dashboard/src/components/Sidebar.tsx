@@ -21,7 +21,7 @@ const rowStyle: CSSProperties = {
   letterSpacing: "-.008em",
   textDecoration: "none",
   color: "var(--ink2)",
-  transition: "background .12s var(--ease-spring), color .12s var(--ease-spring)"
+  transition: "background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease)"
 };
 const childStyle: CSSProperties = { ...rowStyle, gap: 9, padding: "9px 12px", borderRadius: 10, fontSize: "var(--text-subheadline)", fontWeight: 500, letterSpacing: 0 };
 const activeStyle: CSSProperties = { background: "var(--brandSoft)", color: "var(--brandText)" };
@@ -132,7 +132,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
           className="btn-ghost"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minWidth: 44, minHeight: 44, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >
-          <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
+          <i key={theme} className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"} icon-swap`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
         <button
           type="button"
