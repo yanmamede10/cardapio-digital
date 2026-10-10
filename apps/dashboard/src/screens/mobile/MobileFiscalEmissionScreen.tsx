@@ -45,7 +45,7 @@ export default function MobileFiscalEmissionScreen() {
 
       <div style={{ padding: "12px 12px 28px", display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "12px 13px", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
-          <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: "var(--ink3)", marginTop: 1 }} />
+          <i className="fa-solid fa-circle-info" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)", marginTop: 1 }} />
           A emissão de NFC-e ainda não está integrada. A lista já mostra os pedidos e comandas fechados que vão precisar de nota.
         </div>
 
@@ -55,7 +55,7 @@ export default function MobileFiscalEmissionScreen() {
           <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
             {rows.map((o) => (
               <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderBottom: "1px solid var(--line)", minHeight: 62 }}>
-                <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 14, color: "var(--ink3)", width: 16, textAlign: "center" }} />
+                <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)", width: 16, textAlign: "center" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "var(--text-body)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{orderRef(o)}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>

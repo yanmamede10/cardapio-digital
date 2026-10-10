@@ -106,3 +106,27 @@ test("L-15 · vidro só no que flutua (menu, barra de busca e de abas do celular
     expect(await blur("header .glass")).toContain("blur");
   }
 });
+
+// L-16: one icon style (solid) at three sizes — whatever the icon sits in, it renders at 16, 20 or 24 px.
+test("L-16 · ícones: só solid, em 16, 20 ou 24 px, nas telas principais e no Super Admin", async ({ page, request }) => {
+  test.setTimeout(90_000);
+  const icons = (where: string) =>
+    page.evaluate((where) => {
+      const shown = [...document.querySelectorAll('i[class*="fa-"]')].filter((e) => e.getBoundingClientRect().width > 0);
+      return shown.flatMap((e) => {
+        const size = getComputedStyle(e).fontSize;
+        const style = [...e.classList].find((c) => /^fa-(regular|light|thin|duotone|brands)$/.test(c) && !e.classList.contains("fa-whatsapp"));
+        return ["16px", "20px", "24px"].includes(size) && !style ? [] : [`${where}: ${e.className} ${size}`];
+      });
+    }, where);
+  await loginAs(page, request, "dono@chapa27.example");
+  const wrong: string[] = [];
+  for (const [name, path] of SCREENS) {
+    await open(page, path);
+    wrong.push(...(await icons(name)));
+  }
+  await asSuperAdmin(page);
+  await open(page, "/admin");
+  wrong.push(...(await icons("Super Admin")));
+  expect(wrong).toEqual([]);
+});

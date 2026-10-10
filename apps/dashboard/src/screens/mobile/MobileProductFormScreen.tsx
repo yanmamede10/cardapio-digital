@@ -127,7 +127,7 @@ export default function MobileProductFormScreen() {
           />
           {!item.imageUrl && (
             <>
-              <i className="fa-solid fa-image" style={{ fontSize: 22 }} />
+              <i className="fa-solid fa-image" style={{ fontSize: "var(--icon-lg)" }} />
               <div className="mono" style={{ fontSize: "var(--text-caption)" }}>
                 foto do prato · 1200×900
               </div>
@@ -176,7 +176,7 @@ export default function MobileProductFormScreen() {
             onClick={() => setExtras((prev) => [...prev, { name: "Nova variação", price: "0,00" }])}
             style={{ minHeight: 38, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500, display: "flex", alignItems: "center", gap: 7 }}
           >
-            <i className="fa-solid fa-plus" style={{ fontSize: 12 }} />
+            <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
             Adicionar
           </button>
         </div>
@@ -196,7 +196,7 @@ export default function MobileProductFormScreen() {
               style={{ width: 92, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", fontSize: "var(--text-subheadline)", color: "var(--ink)", outline: "none" }}
             />
             <button type="button" aria-label={`Remover ${v.name}`} onClick={() => setExtras((prev) => prev.filter((_, j) => j !== i))} style={{ width: 44, height: 44, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer" }}>
-              <i className="fa-solid fa-trash" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
             </button>
           </div>
         ))}

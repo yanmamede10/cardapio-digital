@@ -34,7 +34,7 @@ export function ActionSheet({ open, onClose, title, actions }: { open: boolean; 
               minHeight: 52
             }}
           >
-            <i className={`fa-solid ${a.icon}`} style={{ fontSize: 15, width: 20 }} />
+            <i className={`fa-solid ${a.icon}`} style={{ fontSize: "var(--icon-sm)", width: 20 }} />
             {a.label}
           </button>
         ))}

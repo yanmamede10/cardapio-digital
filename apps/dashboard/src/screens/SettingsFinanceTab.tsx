@@ -107,7 +107,7 @@ export default function PaymentSubaccountTab() {
       {paymentMode !== "sistema" && (
         <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "flex-start" }}>
           <div style={{ width: 46, height: 46, borderRadius: 16, background: "var(--surface2)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 46px" }}>
-            <i className="fa-solid fa-credit-card" style={{ fontSize: 20, lineHeight: 1 }} />
+            <i className="fa-solid fa-credit-card" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
           </div>
           <div style={{ flex: 1, minWidth: 240 }}>
             <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Não é necessário abrir subconta</div>
@@ -122,7 +122,7 @@ export default function PaymentSubaccountTab() {
       <>
       <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div style={{ width: 46, height: 46, borderRadius: 16, background: "var(--brandSoft)", color: "var(--brandText)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 46px" }}>
-          <i className="fa-solid fa-shield-halved" style={{ fontSize: 22, lineHeight: 1 }} />
+          <i className="fa-solid fa-shield-halved" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
         </div>
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
           <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>O dinheiro cai direto na conta do seu restaurante</div>
@@ -174,29 +174,29 @@ export default function PaymentSubaccountTab() {
             <input ref={docInput} type="file" accept="application/pdf,image/jpeg,image/png" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && onDocFile(e.target.files[0])} />
             {doc.status === "empty" && (
               <button type="button" onClick={() => docInput.current?.click()} className="tap" style={{ border: "1.5px dashed var(--line2)", background: "transparent", color: "var(--ink2)", borderRadius: 16, padding: 22, cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: 21, lineHeight: 1 }} />
+                <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
                 <span style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Enviar contrato social ou CCMEI</span>
                 <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>PDF, JPG ou PNG de até 10 MB</span>
               </button>
             )}
             {doc.status === "loading" && (
               <div style={{ display: "flex", alignItems: "center", gap: 14, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 16, padding: "15px 18px" }}>
-                <i className="fa-solid fa-spinner" style={{ fontSize: 20, lineHeight: 1, animation: "sk 1.1s ease-in-out infinite", color: "var(--ink3)" }} />
+                <i className="fa-solid fa-spinner" style={{ fontSize: "var(--icon-md)", lineHeight: 1, animation: "sk 1.1s ease-in-out infinite", color: "var(--ink3)" }} />
                 <div style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Enviando {doc.fileName}…</div>
               </div>
             )}
             {doc.status === "preview" && (
               <div style={{ display: "flex", alignItems: "center", gap: 14, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 16, padding: "15px 18px" }}>
                 <div style={{ width: 38, height: 38, borderRadius: 13, background: "var(--surface)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className="fa-solid fa-file-pdf" style={{ fontSize: 19, lineHeight: 1 }} />
+                  <i className="fa-solid fa-file-pdf" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.fileName}</div>
                   <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>{doc.sizeLabel} · enviado agora</div>
                 </div>
-                <i className="fa-solid fa-circle-check" style={{ fontSize: 18, lineHeight: 1, color: "var(--ok)" }} />
+                <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ok)" }} />
                 <button type="button" className="icon-btn" title="Remover" aria-label="Remover documento" onClick={() => setDoc(emptyDoc)}>
-                  <i className="fa-solid fa-xmark" style={{ fontSize: 15 }} />
+                  <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                 </button>
               </div>
             )}
@@ -217,7 +217,7 @@ export default function PaymentSubaccountTab() {
 
           <div style={{ display: "flex", gap: 11, flexWrap: "wrap" }}>
             <button type="button" className="btn btn-primary" disabled={!cnpj.trim() || !legalName.trim() || doc.status !== "preview"} onClick={onSubmitOnboarding}>
-              <i className="fa-solid fa-paper-plane" style={{ fontSize: 17, lineHeight: 1 }} />
+              <i className="fa-solid fa-paper-plane" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               Enviar para análise
             </button>
             <button type="button" className="btn btn-outline" onClick={goSupport}>
@@ -231,7 +231,7 @@ export default function PaymentSubaccountTab() {
         <section className="card" style={{ padding: 24, maxWidth: 620, display: "flex", flexDirection: "column", gap: 22 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ width: 52, height: 52, borderRadius: 18, background: "color-mix(in srgb, var(--warn) 16%, transparent)", color: "var(--warn)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 52px" }}>
-              <i className="fa-solid fa-clock" style={{ fontSize: 24, lineHeight: 1 }} />
+              <i className="fa-solid fa-clock" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Em análise</div>
@@ -241,7 +241,7 @@ export default function PaymentSubaccountTab() {
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {STEPS(status).map((s) => (
               <div key={s.label} style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "13px 0", borderBottom: "1px solid var(--line)" }}>
-                <i className={`fa-solid ${s.icon}`} style={{ fontSize: 18, lineHeight: 1, color: s.fg, marginTop: 1 }} />
+                <i className={`fa-solid ${s.icon}`} style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: s.fg, marginTop: 1 }} />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{s.label}</div>
                   <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{s.sub}</div>
@@ -259,7 +259,7 @@ export default function PaymentSubaccountTab() {
         <section className="card" style={{ padding: 24, maxWidth: 660, display: "flex", flexDirection: "column", gap: 22 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div style={{ width: 52, height: 52, borderRadius: 18, background: "color-mix(in srgb, var(--ok) 16%, transparent)", color: "var(--ok)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 52px" }}>
-              <i className="fa-solid fa-circle-check" style={{ fontSize: 24, lineHeight: 1 }} />
+              <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Subconta ativa</div>
@@ -284,7 +284,7 @@ export default function PaymentSubaccountTab() {
           </div>
           <div style={{ display: "flex", gap: 11, flexWrap: "wrap" }}>
             <button type="button" className="btn btn-primary" disabled title="O extrato da subconta chega em breve">
-              <i className="fa-solid fa-receipt" style={{ fontSize: 17, lineHeight: 1 }} />
+              <i className="fa-solid fa-receipt" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               Extrato em breve
             </button>
             <button type="button" className="btn btn-outline" onClick={() => setStatus("form")}>
@@ -298,7 +298,7 @@ export default function PaymentSubaccountTab() {
         <section className="card" style={{ padding: 24, maxWidth: 620, display: "flex", flexDirection: "column", gap: 22 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ width: 52, height: 52, borderRadius: 18, background: "color-mix(in srgb, var(--alert) 14%, transparent)", color: "var(--alert)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 52px" }}>
-              <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 24, lineHeight: 1 }} />
+              <i className="fa-solid fa-circle-exclamation" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Cadastro reprovado</div>
@@ -313,7 +313,7 @@ export default function PaymentSubaccountTab() {
           </div>
           <div style={{ display: "flex", gap: 11, flexWrap: "wrap" }}>
             <button type="button" className="btn btn-primary" onClick={() => setStatus("form")}>
-              <i className="fa-solid fa-rotate-right" style={{ fontSize: 17, lineHeight: 1 }} />
+              <i className="fa-solid fa-rotate-right" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               Reenviar documento
             </button>
             <button type="button" className="btn btn-outline" onClick={goSupport}>

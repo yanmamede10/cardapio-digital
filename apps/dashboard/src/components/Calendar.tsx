@@ -22,10 +22,10 @@ export function Calendar({ from, to, onPick }: { from: string | null; to?: strin
           {MONTHS[m - 1]} de {y}
         </div>
         <button type="button" title="Mês anterior" aria-label="Mês anterior" style={navBtn} onClick={() => shift(-1)}>
-          <i className="fa-solid fa-chevron-left" style={{ fontSize: 12 }} />
+          <i className="fa-solid fa-chevron-left" style={{ fontSize: "var(--icon-sm)" }} />
         </button>
         <button type="button" title="Próximo mês" aria-label="Próximo mês" style={navBtn} onClick={() => shift(1)}>
-          <i className="fa-solid fa-chevron-right" style={{ fontSize: 12 }} />
+          <i className="fa-solid fa-chevron-right" style={{ fontSize: "var(--icon-sm)" }} />
         </button>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7,minmax(0,1fr))" }}>

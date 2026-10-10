@@ -93,7 +93,7 @@ export default function MobileTeamScreen() {
         onClick={() => (formOpen && !member.id ? setFormOpen(false) : open(EMPTY_MEMBER))}
         style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
       >
-        <i className="fa-solid fa-user-plus" style={{ fontSize: 14 }} />
+        <i className="fa-solid fa-user-plus" style={{ fontSize: "var(--icon-sm)" }} />
         Adicionar membro
       </button>
     </div>

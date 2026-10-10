@@ -64,7 +64,7 @@ export default function MobileSupportScreen() {
         </div>
         {late > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--alert)" }}>
-            <i className="fa-solid fa-stopwatch" style={{ fontSize: 13 }} />
+            <i className="fa-solid fa-stopwatch" style={{ fontSize: "var(--icon-sm)" }} />
             {late} ticket(s) sem resposta há mais de 1h
           </div>
         )}
@@ -87,7 +87,7 @@ export default function MobileSupportScreen() {
               <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <span style={{ fontSize: "var(--text-body)", fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.customerName}</span>
-                  <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: 12, color: "var(--ink3)" }} />
+                  <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                   <span className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: slaFg(since) }}>
                     {fmtMinutes(since)}
                   </span>

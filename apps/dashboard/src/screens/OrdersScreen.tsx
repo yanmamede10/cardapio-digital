@@ -175,7 +175,7 @@ export default function OrdersScreen() {
                       color: active ? "var(--brandText)" : "var(--ink2)"
                     }}
                   >
-                    <i className={`fa-solid ${f.icon}`} style={{ fontSize: 17, lineHeight: 1 }} />
+                    <i className={`fa-solid ${f.icon}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                     {f.label}
                     <span className="mono" style={{ fontSize: "var(--text-caption)" }}>
                       {count}
@@ -191,7 +191,7 @@ export default function OrdersScreen() {
             {offline ? "Sem conexão com o servidor — tentando de novo" : "Atualizando em tempo real"}
           </div>
           <button type="button" className="btn btn-outline" disabled title="A impressão da fila chega em breve">
-            <i className="fa-solid fa-print" style={{ fontSize: 17, lineHeight: 1 }} />
+            <i className="fa-solid fa-print" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             Impressão em breve
           </button>
         </div>
@@ -378,7 +378,7 @@ function KanbanCardBody({
     <div style={style}>
       <AwaitingTag order={o} />
       <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
-        <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 19, lineHeight: 1, color: "var(--ink2)", marginTop: 1 }} />
+        <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ink2)", marginTop: 1 }} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: "var(--text-body)", letterSpacing: "-.01em" }}>{ref}</div>
           <InHouseTag order={o} />
@@ -457,7 +457,7 @@ function KanbanCardBody({
           }}
         >
           {nextLabel}
-          <i className="fa-solid fa-arrow-right" style={{ fontSize: 16, lineHeight: 1 }} />
+          <i className="fa-solid fa-arrow-right" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
       ) : null}
     </div>

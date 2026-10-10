@@ -107,7 +107,7 @@ export default function FinanceOverviewScreen() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-subheadline)", fontWeight: 500, color: k.alert ? "var(--alert)" : "var(--ink2)" }}>
-              <i className={`fa-solid ${k.icon}`} style={{ fontSize: 13 }} />
+              <i className={`fa-solid ${k.icon}`} style={{ fontSize: "var(--icon-sm)" }} />
               {k.label}
             </div>
             <div className="mono" style={{ fontSize: "var(--text-title1)", fontWeight: 600, letterSpacing: "-.04em", lineHeight: 1.15, color: k.fg }}>

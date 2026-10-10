@@ -75,8 +75,8 @@ test("L-13 · todo tamanho de texto do painel vem da escala (--text-*), e númer
     }
   }
   for (const f of files.filter((f) => f.endsWith(".css"))) {
-    // Points only for paper (the printed QR cards).
-    for (const [, v] of readFileSync(new URL(f, src), "utf8").matchAll(/font-size:\s*([^;]+);/g)) if (!/^var\(--text-\w+\)$|^\d+pt$/.test(v.trim())) wrong.push(`${f}: font-size: ${v}`);
+    // Points only for paper (the printed QR cards); icons.css sizes the icons (L-16).
+    for (const [, v] of readFileSync(new URL(f, src), "utf8").matchAll(/font-size:\s*([^;]+);/g)) if (!/^var\(--(text|icon)-\w+\)$|^\d+pt$/.test(v.trim())) wrong.push(`${f}: font-size: ${v}`);
   }
   assert.deepEqual(wrong, []);
   const mono = /\.mono \{([^}]*)\}/.exec(readFileSync(new URL("styles/base.css", src), "utf8"))?.[1] ?? "";

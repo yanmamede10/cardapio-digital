@@ -55,3 +55,21 @@ test("logo num lugar só: Logo, os dois favicons e os ícones dos APKs vêm de p
   const drawn = sources("apps/dashboard/src").filter((s) => />\s*MP\s*</.test(s));
   assert.deepEqual(drawn, []);
 });
+
+// L-16 (UI-01): the dashboard's icons in one style — solid (fa-brands only for the WhatsApp mark) — at three sizes: 16 by
+// default (icons.css), 20 or 24 when an icon says so (--icon-md, --icon-lg); no other size written on an icon.
+test("L-16 · painel: ícones só no estilo solid, em 16, 20 ou 24 px", () => {
+  const files = readdirSync(new URL("apps/dashboard/src", ROOT), { recursive: true, encoding: "utf8" }).filter((f) => /\.tsx?$/.test(f));
+  const wrong: string[] = [];
+  for (const f of files) {
+    const code = read(`apps/dashboard/src/${f.replaceAll("\\", "/")}`);
+    for (const [style] of code.matchAll(/fa-(regular|light|thin|duotone|sharp)\b/g)) wrong.push(`${f}: ${style}`);
+    for (const [brand] of code.matchAll(/fa-brands fa-[\w-]+/g)) if (brand !== "fa-brands fa-whatsapp") wrong.push(`${f}: ${brand}`);
+    for (const [tag] of code.matchAll(/<i\b[^>]*?\/>/gs))
+      for (const [, size] of tag.matchAll(/fontSize: ([^,}]+)/g))
+        if (!/^(\w+ \? )?"var\(--icon-(sm|md|lg)\)"( : "var\(--icon-(sm|md|lg)\)")?$/.test(size.trim())) wrong.push(`${f}: ícone com fontSize ${size.trim()}`);
+    for (const [, size] of code.matchAll(/const iconStyle[^=]*= \{[^}]*?fontSize: ([^,}]+)/g)) if (!/^"var\(--icon-(sm|md|lg)\)"$/.test(size.trim())) wrong.push(`${f}: iconStyle ${size}`);
+  }
+  assert.deepEqual(wrong, []);
+  assert.match(read("apps/dashboard/src/styles/icons.css"), /\.fa-solid,\.fa-regular,\.fa-brands\{font-size:var\(--icon-sm\);/);
+});

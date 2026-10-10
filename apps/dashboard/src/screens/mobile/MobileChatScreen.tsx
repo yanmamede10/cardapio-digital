@@ -86,13 +86,13 @@ export default function MobileChatScreen() {
       <div style={{ padding: "10px 12px", background: "var(--surface2)", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 9 }}>
         <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: st.bg, color: st.fg }}>{st.label}</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 600, color: slaFg(since) }}>
-          <i className="fa-solid fa-stopwatch" style={{ fontSize: 12 }} />
+          <i className="fa-solid fa-stopwatch" style={{ fontSize: "var(--icon-sm)" }} />
           {since >= 60 ? `SLA estourado · ${fmtMinutes(since)}` : `Última resposta ${fmtMinutes(since)}`}
         </span>
         <div style={{ flex: 1 }} />
         {ticket.status !== "resolved" && (
           <button type="button" onClick={resolve} style={{ minHeight: 36, background: "var(--surface)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 11px", cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-            <i className="fa-solid fa-circle-check" style={{ fontSize: 12 }} />
+            <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-sm)" }} />
             Resolver
           </button>
         )}
@@ -149,7 +149,7 @@ export default function MobileChatScreen() {
           aria-expanded={quickOpen}
           style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: quickOpen ? "var(--brandSoft)" : "var(--surface2)", border: `1px solid ${quickOpen ? "var(--brand)" : "var(--line)"}`, color: quickOpen ? "var(--brandText)" : "var(--ink2)", cursor: "pointer" }}
         >
-          <i className="fa-solid fa-bolt" style={{ fontSize: 15 }} />
+          <i className="fa-solid fa-bolt" style={{ fontSize: "var(--icon-sm)" }} />
         </button>
         {ticket.channel === "whatsapp" && <MediaButtons onSend={sendMedia} onError={notify} />}
         <input
@@ -161,7 +161,7 @@ export default function MobileChatScreen() {
           style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 22, padding: "0 15px", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", outline: "none" }}
         />
         <button type="button" onClick={send} aria-label="Enviar resposta" style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brand)", color: "var(--brandInk)", border: 0, cursor: "pointer" }}>
-          <i className="fa-solid fa-paper-plane" style={{ fontSize: 15 }} />
+          <i className="fa-solid fa-paper-plane" style={{ fontSize: "var(--icon-sm)" }} />
         </button>
       </div>
     </div>

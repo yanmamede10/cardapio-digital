@@ -57,7 +57,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
           className="icon-btn"
           style={{ position: "relative" }}
         >
-          <i className="fa-solid fa-bell" style={{ fontSize: 20, lineHeight: 1 }} />
+          <i className="fa-solid fa-bell" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
           {notifCount > 0 && (
             <span
               className="mono"
@@ -103,7 +103,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
             {notifs.length === 0 && <div style={{ padding: "16px 14px", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhuma notificação agora.</div>}
             {notifs.map((n, i) => (
               <div key={i} style={{ display: "flex", gap: 11, padding: "11px 14px", borderBottom: "1px solid var(--line)", alignItems: "flex-start" }}>
-                <i className={`fa-solid ${n.icon}`} style={{ fontSize: 19, lineHeight: 1, color: n.color }} />
+                <i className={`fa-solid ${n.icon}`} style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: n.color }} />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{n.title}</div>
                   <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{n.sub}</div>

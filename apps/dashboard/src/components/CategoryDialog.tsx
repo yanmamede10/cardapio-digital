@@ -108,7 +108,7 @@ export function CategoryDialog({
                 <ul tabIndex={0} aria-label="Itens da categoria" style={{ margin: 0, padding: 0, listStyle: "none", border: "1px solid var(--line)", borderRadius: 12, background: "var(--surface2)", maxHeight: 200, overflowY: "auto" }}>
                   {inside.names.map((n, i) => (
                     <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", fontSize: "var(--text-subheadline)", borderTop: i ? "1px solid var(--line)" : 0 }}>
-                      <i className="fa-solid fa-box" style={{ fontSize: 11, color: "var(--ink2)" }} />
+                      <i className="fa-solid fa-box" style={{ fontSize: "var(--icon-sm)", color: "var(--ink2)" }} />
                       {n}
                     </li>
                   ))}

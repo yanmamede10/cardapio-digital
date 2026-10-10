@@ -34,7 +34,7 @@ export function WhatsAppBadge({ state }: { state: WhatsAppState }) {
   const { label, color } = LOOK[state];
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 600, color, border: `1px solid ${color}`, borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap" }}>
-      <i className="fa-brands fa-whatsapp" style={{ fontSize: 13 }} />
+      <i className="fa-brands fa-whatsapp" style={{ fontSize: "var(--icon-sm)" }} />
       {label}
     </span>
   );
@@ -46,7 +46,7 @@ export function WhatsAppIndicator({ status }: { status: WhatsAppStatus | null })
   if (!status.termsAcceptedAt) {
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap" }}>
-        <i className="fa-brands fa-whatsapp" style={{ fontSize: 13 }} />
+        <i className="fa-brands fa-whatsapp" style={{ fontSize: "var(--icon-sm)" }} />
         WhatsApp não configurado
       </span>
     );
@@ -55,7 +55,7 @@ export function WhatsAppIndicator({ status }: { status: WhatsAppStatus | null })
   const who = getSession()?.role === "owner" ? "Reconecte em Configurações → WhatsApp." : "Avise o Dono para reconectar em Configurações → WhatsApp.";
   return (
     <div role="alert" style={{ flexBasis: "100%", display: "flex", alignItems: "center", gap: 10, fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 12%, transparent)", border: "1px solid var(--alert)", borderRadius: 12, padding: "10px 14px" }}>
-      <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: 16 }} />
+      <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: "var(--icon-sm)" }} />
       <span>
         WhatsApp desconectado — mensagens novas não estão chegando no sistema. <span style={{ fontWeight: 500 }}>{who}</span>
       </span>
@@ -131,10 +131,10 @@ export function MediaButtons({ onSend, onError }: { onSend: (file: Blob, name: s
     return (
       <>
         <button type="button" aria-label="Descartar gravação" onClick={() => stop(false)} style={btn}>
-          <i className="fa-solid fa-trash" style={{ fontSize: 15 }} />
+          <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
         </button>
         <button type="button" aria-label="Enviar gravação" onClick={() => stop(true)} style={{ ...btn, background: "var(--alert)", borderColor: "var(--alert)", color: "var(--alertInk)", width: "auto", flex: "0 0 auto", padding: "0 12px", display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
-          <i className="fa-solid fa-circle" style={{ fontSize: 9 }} />
+          <i className="fa-solid fa-circle" style={{ fontSize: "var(--icon-sm)" }} />
           Gravando · enviar
         </button>
       </>
@@ -154,10 +154,10 @@ export function MediaButtons({ onSend, onError }: { onSend: (file: Blob, name: s
         }}
       />
       <button type="button" aria-label="Enviar imagem" disabled={busy} onClick={() => picker.current?.click()} style={btn}>
-        <i className="fa-solid fa-image" style={{ fontSize: 15 }} />
+        <i className="fa-solid fa-image" style={{ fontSize: "var(--icon-sm)" }} />
       </button>
       <button type="button" aria-label="Gravar áudio" disabled={busy} onClick={record} style={btn}>
-        <i className={`fa-solid ${busy ? "fa-spinner fa-spin" : "fa-microphone"}`} style={{ fontSize: 15 }} />
+        <i className={`fa-solid ${busy ? "fa-spinner fa-spin" : "fa-microphone"}`} style={{ fontSize: "var(--icon-sm)" }} />
       </button>
     </>
   );

@@ -24,7 +24,7 @@ export function CategoryReorderPanel({
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 13px", fontSize: "var(--text-footnote)", color: "var(--ink2)", borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
         <span style={{ flex: 1 }}>Use as setas para reordenar as categorias.</span>
         <button type="button" className="btn btn-outline" style={{ minHeight: 40, padding: "0 12px", fontSize: "var(--text-subheadline)" }} onClick={onCreate}>
-          <i className="fa-solid fa-plus" style={{ fontSize: 12 }} />
+          <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
           Nova categoria
         </button>
         {onDone && (
@@ -35,19 +35,19 @@ export function CategoryReorderPanel({
       </div>
       {categories.map((c) => (
         <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderBottom: "1px solid var(--line)", minHeight: 52 }}>
-          <i className="fa-solid fa-grip-vertical" style={{ fontSize: 15, color: "var(--ink3)" }} />
+          <i className="fa-solid fa-grip-vertical" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
           <div style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
           <button type="button" aria-label={`Renomear categoria ${c.name}`} onClick={() => onRename(c)} style={square}>
-            <i className="fa-solid fa-pen" style={{ fontSize: 13 }} />
+            <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
           <button type="button" aria-label={`Excluir categoria ${c.name}`} onClick={() => onDelete(c)} style={square}>
-            <i className="fa-solid fa-trash" style={{ fontSize: 13 }} />
+            <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
           <button type="button" aria-label={`Subir ${c.name}`} onClick={() => onMove(c, "up")} style={square}>
-            <i className="fa-solid fa-angle-up" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-angle-up" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
           <button type="button" aria-label={`Descer ${c.name}`} onClick={() => onMove(c, "down")} style={square}>
-            <i className="fa-solid fa-angle-down" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-angle-down" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
         </div>
       ))}

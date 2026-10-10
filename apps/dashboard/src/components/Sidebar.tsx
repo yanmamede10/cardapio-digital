@@ -25,7 +25,7 @@ const rowStyle: CSSProperties = {
 };
 const childStyle: CSSProperties = { ...rowStyle, gap: 9, padding: "9px 12px", borderRadius: 10, fontSize: "var(--text-subheadline)", fontWeight: 500, letterSpacing: 0 };
 const activeStyle: CSSProperties = { background: "var(--brandSoft)", color: "var(--brandText)" };
-const iconStyle: CSSProperties = { fontSize: 18, lineHeight: 1, width: 21, textAlign: "center" };
+const iconStyle: CSSProperties = { fontSize: "var(--icon-md)", lineHeight: 1, width: 21, textAlign: "center" };
 const labelStyle: CSSProperties = { flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
 function Badge({ n }: { n?: number }) {
@@ -99,7 +99,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
                 {/* Doubles as the spacer; when collapsed it names the current page and gives way before the section name does. */}
                 <span style={{ ...labelStyle, textAlign: "right", fontSize: "var(--text-caption)", fontWeight: 500, color: "var(--brandText)" }}>{!isOpen && active ? active.label : ""}</span>
                 {!isOpen && <Badge n={badgeSum} />}
-                <i className={`fa-solid ${isOpen ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, lineHeight: 1, color: "var(--ink3)", width: 11, textAlign: "center" }} />
+                <i className={`fa-solid ${isOpen ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1, color: "var(--ink3)", width: 11, textAlign: "center" }} />
               </button>
               {isOpen && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 1, margin: "1px 0 7px 21px", paddingLeft: 13, borderLeft: "1px solid var(--line)" }}>
@@ -132,7 +132,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
           className="btn-ghost"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minWidth: 44, minHeight: 44, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >
-          <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: 17, lineHeight: 1 }} />
+          <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
         <button
           type="button"
@@ -141,7 +141,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
           aria-label="Sair"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44, borderRadius: 999, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >
-          <i className="fa-solid fa-power-off" style={{ fontSize: 15, lineHeight: 1 }} />
+          <i className="fa-solid fa-power-off" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
       </div>
     </aside>

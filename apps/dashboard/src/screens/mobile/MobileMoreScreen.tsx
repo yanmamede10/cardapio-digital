@@ -52,7 +52,7 @@ export default function MobileMoreScreen() {
           </div>
         </div>
         <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Usar o tema claro" : "Usar o tema escuro"} style={{ width: 44, height: 44, borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer" }}>
-          <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: 15 }} />
+          <i className={`fa-solid ${theme === "dark" ? "fa-sun" : "fa-moon"}`} style={{ fontSize: "var(--icon-sm)" }} />
         </button>
       </section>
 
@@ -68,7 +68,7 @@ export default function MobileMoreScreen() {
             return (
               <button key={m.key} type="button" onClick={() => navigate(m.path)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", cursor: "pointer", font: "inherit", color: "var(--ink)", padding: "0 14px", minHeight: 58 }}>
                 <div style={{ width: 36, height: 36, flex: "0 0 36px", borderRadius: 10, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className={`fa-solid ${m.icon}`} style={{ fontSize: 15 }} />
+                  <i className={`fa-solid ${m.icon}`} style={{ fontSize: "var(--icon-sm)" }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{m.label}</div>
@@ -79,7 +79,7 @@ export default function MobileMoreScreen() {
                     {badge}
                   </span>
                 )}
-                <i className="fa-solid fa-chevron-right" style={{ fontSize: 13, color: "var(--ink3)" }} />
+                <i className="fa-solid fa-chevron-right" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
               </button>
             );
           })}
@@ -91,7 +91,7 @@ export default function MobileMoreScreen() {
         onClick={logout}
         style={{ minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
       >
-        <i className="fa-solid fa-power-off" style={{ fontSize: 13 }} />
+        <i className="fa-solid fa-power-off" style={{ fontSize: "var(--icon-sm)" }} />
         Sair da conta
       </button>
     </div>

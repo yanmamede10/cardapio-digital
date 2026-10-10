@@ -77,7 +77,7 @@ export default function MobilePromotionsScreen() {
           <article key={c.id} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: 12, display: "flex", flexDirection: "column", gap: 9 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
               <div style={{ width: 38, height: 38, flex: "0 0 38px", borderRadius: 10, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <i className={`fa-solid ${KIND_ICON[c.kind]}`} style={{ fontSize: 15 }} />
+                <i className={`fa-solid ${KIND_ICON[c.kind]}`} style={{ fontSize: "var(--icon-sm)" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: ".04em" }}>
@@ -89,7 +89,7 @@ export default function MobilePromotionsScreen() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", background: "var(--surface2)", borderRadius: 20, padding: "3px 10px" }}>
-                <i className="fa-solid fa-calendar-days" style={{ fontSize: 11, marginRight: 6 }} />
+                <i className="fa-solid fa-calendar-days" style={{ fontSize: "var(--icon-sm)", marginRight: 6 }} />
                 {expired ? `expirou ${fmtDate(c.validUntil)}` : `até ${fmtDate(c.validUntil)}`}
               </span>
               <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", background: "var(--surface2)", borderRadius: 20, padding: "3px 10px" }}>{CHANNEL_LABEL[c.channel]}</span>

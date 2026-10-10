@@ -83,7 +83,7 @@ export default function MobileCouponFormScreen() {
                   onClick={() => setKind(t.key)}
                   style={{ flex: 1, minHeight: 46, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}`, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                 >
-                  <i className={`fa-solid ${t.icon}`} style={{ fontSize: 13 }} />
+                  <i className={`fa-solid ${t.icon}`} style={{ fontSize: "var(--icon-sm)" }} />
                   {t.label}
                 </button>
               );
@@ -135,7 +135,7 @@ export default function MobileCouponFormScreen() {
                 onClick={() => toggleCombo(i.id)}
                 style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", minHeight: 48, background: "var(--surface2)", border: `1px solid ${on ? "var(--brand)" : "var(--line)"}`, borderRadius: 11, padding: "0 12px", cursor: "pointer", font: "inherit", color: "var(--ink)" }}
               >
-                <i className={`fa-solid ${on ? "fa-square-check" : "fa-square"}`} style={{ fontSize: 15, color: on ? "var(--brandText)" : "var(--ink3)" }} />
+                <i className={`fa-solid ${on ? "fa-square-check" : "fa-square"}`} style={{ fontSize: "var(--icon-sm)", color: on ? "var(--brandText)" : "var(--ink3)" }} />
                 <span style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)" }}>{i.name}</span>
                 <span className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                   {brl(i.price)}

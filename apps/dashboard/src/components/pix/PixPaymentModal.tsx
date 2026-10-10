@@ -116,14 +116,14 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
       <div className="modal-panel" style={{ maxWidth: 420 }}>
         <div className="glass" style={{ display: "flex", alignItems: "center", gap: 13, padding: "18px 22px", borderBottom: "1px solid var(--glassBd)" }}>
           <div style={{ width: 34, height: 34, borderRadius: 12, background: "var(--brandSoft)", color: "var(--brandText)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 34px" }}>
-            <i className="fa-solid fa-qrcode" style={{ fontSize: 18, lineHeight: 1 }} />
+            <i className="fa-solid fa-qrcode" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>Pagamento PIX</div>
             <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{title}{itemsLabel ? ` · ${itemsLabel}` : ""}</div>
           </div>
           <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar">
-            <i className="fa-solid fa-xmark" style={{ fontSize: 18 }} />
+            <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-md)" }} />
           </button>
         </div>
 
@@ -137,7 +137,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
               <img src={qr} width={196} height={196} alt="QR code PIX" style={{ display: "block", imageRendering: "pixelated" }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 9, border: `1px solid ${urgent ? "var(--alert)" : "var(--line2)"}`, borderRadius: 999, padding: "8px 16px" }}>
-              <i className="fa-solid fa-clock" style={{ fontSize: 15, lineHeight: 1, color: urgent ? "var(--alert)" : "var(--ink)" }} />
+              <i className="fa-solid fa-clock" style={{ fontSize: "var(--icon-sm)", lineHeight: 1, color: urgent ? "var(--alert)" : "var(--ink)" }} />
               <span className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: ".02em", color: urgent ? "var(--alert)" : "var(--ink)" }}>{timer}</span>
               <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>para expirar</span>
             </div>
@@ -146,7 +146,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
               <div style={{ display: "flex", alignItems: "center", gap: 11, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 14, padding: "12px 14px" }}>
                 <span className="mono" style={{ flex: 1, minWidth: 0, fontSize: "var(--text-footnote)", color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{code}</span>
                 <button type="button" className="btn btn-outline" style={{ padding: "8px 13px", fontSize: "var(--text-footnote)" }} onClick={copy}>
-                  <i className="fa-regular fa-copy" style={{ fontSize: 14, lineHeight: 1 }} />
+                  <i className="fa-solid fa-copy" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                   Copiar
                 </button>
               </div>
@@ -167,7 +167,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
         {status === "paid" && (
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "30px 24px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
             <div style={{ width: 84, height: 84, borderRadius: 999, background: "color-mix(in srgb, var(--ok) 16%, transparent)", color: "var(--ok)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <i className="fa-solid fa-check" style={{ fontSize: 38, lineHeight: 1 }} />
+              <i className="fa-solid fa-check" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
               <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em", color: "var(--ok)" }}>Pagamento confirmado</div>
@@ -184,7 +184,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
             </div>
             <div style={{ width: "100%", display: "flex", gap: 10 }}>
               <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => onNotify?.("Recibo enviado para a impressora")}>
-                <i className="fa-solid fa-print" style={{ fontSize: 16, lineHeight: 1 }} />
+                <i className="fa-solid fa-print" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                 Recibo
               </button>
               <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={onConfirmed}>
@@ -197,7 +197,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
         {status === "expired" && (
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "30px 24px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
             <div style={{ width: 84, height: 84, borderRadius: 999, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: 34, lineHeight: 1 }} />
+              <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
               <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em" }}>QR code expirado</div>
@@ -208,7 +208,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
               <span className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em" }}>{brl(amount)}</span>
             </div>
             <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={regenerate}>
-              <i className="fa-solid fa-rotate-right" style={{ fontSize: 17, lineHeight: 1 }} />
+              <i className="fa-solid fa-rotate-right" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               Gerar novo QR
             </button>
             <button type="button" className="btn btn-outline" style={{ width: "100%" }} onClick={onClose}>

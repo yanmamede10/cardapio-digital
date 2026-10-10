@@ -104,7 +104,7 @@ export default function MobileMenuScreen() {
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div className="glass" style={{ position: "sticky", top: 0, zIndex: 5, padding: "11px 12px 9px", borderBottom: "1px solid var(--glassBd)", display: "flex", alignItems: "center", gap: 9 }}>
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
-          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
+          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         {canEdit && <button
@@ -113,7 +113,7 @@ export default function MobileMenuScreen() {
           title="Reordenar categorias"
           style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: reorderOn ? "var(--brandSoft)" : "var(--surface2)", color: reorderOn ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${reorderOn ? "var(--brand)" : "var(--line)"}` }}
         >
-          <i className="fa-solid fa-grip-vertical" style={{ fontSize: 15 }} />
+          <i className="fa-solid fa-grip-vertical" style={{ fontSize: "var(--icon-sm)" }} />
         </button>}
       </div>
 
@@ -133,7 +133,7 @@ export default function MobileMenuScreen() {
                       {g.items.length} {g.items.length === 1 ? "item" : "itens"} · {available} disponíveis
                     </div>
                   </div>
-                  <i className={`fa-solid ${open ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ fontSize: 14, color: "var(--ink3)" }} />
+                  <i className={`fa-solid ${open ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                 </button>
                 {open && (
                   <div style={{ borderTop: "1px solid var(--line)" }}>
@@ -151,7 +151,7 @@ export default function MobileMenuScreen() {
                         <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} label={`${p.name} disponível`} />
                         {canEdit && (
                           <button type="button" aria-label={`Opções de ${p.name}`} onClick={() => setMenuFor(p)} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
-                            <i className="fa-solid fa-ellipsis" style={{ fontSize: 14 }} />
+                            <i className="fa-solid fa-ellipsis" style={{ fontSize: "var(--icon-sm)" }} />
                           </button>
                         )}
                       </div>
@@ -172,7 +172,7 @@ export default function MobileMenuScreen() {
             sub={categories.length ? "Vincule o primeiro prato do Catálogo para começar a receber pedidos." : "Crie as categorias (ex.: Hambúrgueres, Bebidas) e depois vincule os pratos do Catálogo."}
             action={
               canEdit && <button type="button" onClick={() => (categories.length ? setLinking(true) : cats.create())} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
+                <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
                 {categories.length ? "Adicionar primeiro prato" : "Criar primeira categoria"}
               </button>
             }

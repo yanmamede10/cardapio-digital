@@ -175,18 +175,18 @@ export default function MobileTableDetailScreen() {
       {free && (
         <div style={{ padding: "44px 22px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 11, background: "var(--surface)", border: "1px dashed var(--line2)", borderRadius: 14 }}>
           <div style={{ width: 58, height: 58, borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
-            <i className="fa-solid fa-chair" style={{ fontSize: 22 }} />
+            <i className="fa-solid fa-chair" style={{ fontSize: "var(--icon-lg)" }} />
           </div>
           <div style={{ fontSize: "var(--text-headline)", fontWeight: 600 }}>Mesa livre</div>
           <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)", textWrap: "pretty" }}>{qrOrdering ? "Nenhuma comanda aberta. Lance o pedido aqui ou peça para o cliente escanear o QR code da mesa." : "Nenhuma comanda aberta. Lance o pedido aqui."}</div>
           <div style={{ display: "flex", gap: 9, flexWrap: "wrap", justifyContent: "center" }}>
             <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, padding: "0 18px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-              <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
               Lançar pedido
             </button>
             {qrOrdering && (
               <button type="button" onClick={showQr} style={{ minHeight: 46, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 11, padding: "0 16px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                <i className="fa-solid fa-qrcode" style={{ fontSize: 13 }} />
+                <i className="fa-solid fa-qrcode" style={{ fontSize: "var(--icon-sm)" }} />
                 QR da mesa
               </button>
             )}
@@ -254,26 +254,26 @@ export default function MobileTableDetailScreen() {
         <>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 9 }}>
             <button type="button" onClick={() => setSplitOpen((v) => !v)} style={ACTION_BTN}>
-              <i className="fa-solid fa-divide" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-divide" style={{ fontSize: "var(--icon-sm)" }} />
               Dividir conta
             </button>
             {qrOrdering && (
               <button type="button" onClick={showQr} style={ACTION_BTN}>
-                <i className="fa-solid fa-qrcode" style={{ fontSize: 13 }} />
+                <i className="fa-solid fa-qrcode" style={{ fontSize: "var(--icon-sm)" }} />
                 QR da mesa
               </button>
             )}
             <button type="button" onClick={() => setTransferOpen(true)} style={{ ...ACTION_BTN, opacity: freeTables.length === 0 ? 0.5 : 1, cursor: freeTables.length === 0 ? "not-allowed" : "pointer" }} disabled={freeTables.length === 0}>
-              <i className="fa-solid fa-right-left" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-right-left" style={{ fontSize: "var(--icon-sm)" }} />
               Transferir itens
             </button>
             <button type="button" disabled title="A impressão da comanda chega em breve" style={{ ...ACTION_BTN, opacity: 0.5, cursor: "not-allowed" }}>
-              <i className="fa-solid fa-print" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-print" style={{ fontSize: "var(--icon-sm)" }} />
               Impressão em breve
             </button>
           </div>
           <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ ...ACTION_BTN, minHeight: 52, fontSize: "var(--text-body)" }}>
-            <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
             Lançar pedido
           </button>
           {/* F-4: the waiter and up close the bill; the kitchen doesn't (the API answers 403). */}
@@ -283,7 +283,7 @@ export default function MobileTableDetailScreen() {
               onClick={() => setPayOpen(true)}
               style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
             >
-              <i className="fa-solid fa-receipt" style={{ fontSize: 15 }} />
+              <i className="fa-solid fa-receipt" style={{ fontSize: "var(--icon-sm)" }} />
               Fechar conta · {brl(total)}
             </button>
           )}

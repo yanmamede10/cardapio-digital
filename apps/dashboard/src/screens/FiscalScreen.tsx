@@ -34,7 +34,7 @@ export default function FiscalScreen() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div className="card" style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
-        <i className="fa-solid fa-circle-info" style={{ fontSize: 15, color: "var(--ink3)" }} />
+        <i className="fa-solid fa-circle-info" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
         A emissão de NFC-e ainda não está integrada. A lista já mostra os pedidos e comandas fechados que vão precisar de nota.
       </div>
       <section className="card">
@@ -59,7 +59,7 @@ export default function FiscalScreen() {
             {rows.map((o) => (
               <div key={o.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "13px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: "var(--text-subheadline)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                  <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 13, color: "var(--ink3)", width: 15, textAlign: "center" }} />
+                  <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)", width: 15, textAlign: "center" }} />
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {orderRef(o)}
                   </span>

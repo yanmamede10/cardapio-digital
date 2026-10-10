@@ -43,13 +43,13 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "20px 24px 4px" }}>
           <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>Adicionar prato ao cardápio</div>
           <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
-            <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
+            <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
         </div>
         <div style={{ padding: "2px 24px 0", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Escolha pratos já cadastrados no Catálogo. Nome, preço e tributação vêm de lá.</div>
         <div style={{ padding: "18px 24px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }} className="field">
-            <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
+            <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar prato no Catálogo" aria-label="Buscar prato no Catálogo" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", color: "var(--ink)", width: "100%", minWidth: 0 }} />
           </div>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -76,12 +76,12 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
                   </div>
                   {items.some((m) => m.productId === p.id) ? (
                     <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--ok)", padding: "6px 12px" }}>
-                      <i className="fa-solid fa-check" style={{ fontSize: 11 }} />
+                      <i className="fa-solid fa-check" style={{ fontSize: "var(--icon-sm)" }} />
                       No cardápio
                     </span>
                   ) : (
                     <button type="button" className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "var(--text-subheadline)", minHeight: 36 }} disabled={!categoryId} onClick={() => link(p)}>
-                      <i className="fa-solid fa-plus" style={{ fontSize: 11 }} />
+                      <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
                       Adicionar
                     </button>
                   )}

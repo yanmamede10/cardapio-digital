@@ -150,7 +150,7 @@ export default function PromotionsScreen() {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", width: 250 }}>
-          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
+          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cupom" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <div style={{ display: "flex", gap: 8, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
@@ -159,13 +159,13 @@ export default function PromotionsScreen() {
             {stats.active} ativos
           </span>
           <span className="pill" style={{ background: "var(--surface2)", border: "1px solid var(--line)" }}>
-            <i className="fa-solid fa-ticket" style={{ fontSize: 13 }} />
+            <i className="fa-solid fa-ticket" style={{ fontSize: "var(--icon-sm)" }} />
             {stats.uses} usos totais
           </span>
         </div>
         <div style={{ flex: 1 }} />
         <button type="button" className="btn btn-primary" onClick={openNew}>
-          <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
+          <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
           Novo cupom
         </button>
       </div>
@@ -177,7 +177,7 @@ export default function PromotionsScreen() {
           sub="Crie promoções por percentual, valor fixo ou combos para impulsionar pedidos na mesa e no delivery."
           action={
             <button type="button" className="btn btn-primary" onClick={openNew}>
-              <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
+              <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
               Criar primeiro cupom
             </button>
           }
@@ -216,10 +216,10 @@ export default function PromotionsScreen() {
                 </button>
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                   <button type="button" title="Duplicar" aria-label={`Duplicar cupom ${c.code}`} className="icon-btn" onClick={() => duplicate(c)}>
-                    <i className="fa-solid fa-copy" style={{ fontSize: 16, lineHeight: 1 }} />
+                    <i className="fa-solid fa-copy" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                   </button>
                   <button type="button" title="Excluir" aria-label={`Excluir cupom ${c.code}`} className="icon-btn" style={{ color: "var(--alert)" }} onClick={() => remove(c)}>
-                    <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
+                    <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                   </button>
                 </div>
               </div>

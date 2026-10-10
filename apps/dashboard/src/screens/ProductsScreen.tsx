@@ -78,7 +78,7 @@ export function StatusPill({ p }: { p: Product }) {
   const st = stockStatus(p);
   return (
     <span style={{ ...pill(st.tone), display: "inline-flex", alignItems: "center", gap: 5 }}>
-      <i className={`fa-solid ${st.icon}`} aria-hidden="true" style={{ fontSize: 10 }} />
+      <i className={`fa-solid ${st.icon}`} aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
       {st.label}
     </span>
   );
@@ -247,11 +247,11 @@ export default function ProductsScreen() {
             {products.length > 0 && (
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "0 4px 0 14px", width: 260 }}>
-                  <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: 14, color: "var(--ink3)" }} />
+                  <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                   <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
                   {filter.q && (
                     <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
-                      <i className="fa-solid fa-circle-xmark" style={{ fontSize: 14 }} />
+                      <i className="fa-solid fa-circle-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                     </button>
                   )}
                 </div>
@@ -263,11 +263,11 @@ export default function ProductsScreen() {
               {filtered ? `${shown.length} de ${countLabel(products.length)}` : countLabel(products.length)}
             </div>
             <button type="button" className="btn btn-outline" onClick={cats.create}>
-              <i className="fa-solid fa-folder-plus" style={{ fontSize: 14 }} />
+              <i className="fa-solid fa-folder-plus" style={{ fontSize: "var(--icon-sm)" }} />
               Nova categoria
             </button>
             <button type="button" className="btn btn-primary" onClick={newItem}>
-              <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
+              <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
               Novo item
             </button>
           </div>
@@ -293,11 +293,11 @@ export default function ProductsScreen() {
               action={
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
                   <button type="button" className="btn btn-primary" onClick={newItem}>
-                    <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
+                    <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
                     Cadastrar primeiro item
                   </button>
                   <button type="button" className="btn btn-outline" onClick={cats.create}>
-                    <i className="fa-solid fa-folder-plus" style={{ fontSize: 14 }} />
+                    <i className="fa-solid fa-folder-plus" style={{ fontSize: "var(--icon-sm)" }} />
                     Criar categoria
                   </button>
                 </div>
@@ -353,7 +353,7 @@ export default function ProductsScreen() {
                             NONE_NOTE
                           ) : onlyInsumos(g.items) ? (
                             <>
-                              <i className="fa-solid fa-eye-slash" aria-hidden="true" style={{ fontSize: 11 }} />
+                              <i className="fa-solid fa-eye-slash" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
                               {ONLY_INSUMOS}
                             </>
                           ) : undefined
@@ -387,7 +387,7 @@ export default function ProductsScreen() {
               />
             )}
             <button type="button" className="btn btn-primary" disabled={importing} onClick={() => fileInput.current?.click()}>
-              <i className="fa-solid fa-file-import" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-file-import" style={{ fontSize: "var(--icon-sm)" }} />
               {importing ? "Importando…" : "Importar XML"}
             </button>
           </div>
@@ -404,7 +404,7 @@ export default function ProductsScreen() {
                 style={{ maxWidth: 420, width: "100%", border: "1px dashed var(--line2)", borderRadius: 20, padding: "34px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}
               >
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: "var(--brandSoft)", color: "var(--brandText)", display: "grid", placeItems: "center" }}>
-                  <i className="fa-solid fa-file-import" style={{ fontSize: 22 }} />
+                  <i className="fa-solid fa-file-import" style={{ fontSize: "var(--icon-lg)" }} />
                 </div>
                 <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", textWrap: "pretty" } as React.CSSProperties}>
                   Arraste o arquivo da nota do fornecedor. Os itens entram no estoque automaticamente.
@@ -439,7 +439,7 @@ export default function ProductsScreen() {
                         {movementQty(m)}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, color: "var(--ink2)" }}>
-                        <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: 12, color: "var(--ink3)" }} />
+                        <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                         <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: xml ? "var(--text-footnote)" : undefined }}>
                           {movementSource(m)}
                         </span>
@@ -497,7 +497,7 @@ function CatalogRow({ p, onOpen }: { p: Product; onOpen: () => void }) {
         <StatusPill p={p} />
       </div>
       <span className="icon-btn" aria-hidden="true" title="Editar">
-        <i className="fa-solid fa-pen" style={{ fontSize: 13 }} />
+        <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)" }} />
       </span>
     </button>
   );
@@ -509,7 +509,7 @@ const help = { fontSize: "var(--text-footnote)", color: "var(--ink2)", lineHeigh
 const fieldError = (message: string | null) =>
   message && (
     <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 500, color: "var(--alert)" }}>
-      <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: 11 }} />
+      <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
       {message}
     </span>
   );
@@ -669,7 +669,7 @@ export function ProductForm({
     >
       {problems > 0 && (
         <div role="alert" style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 14px", borderRadius: 12, background: "color-mix(in srgb, var(--alert) 14%, var(--surface))", color: "var(--alert)", fontSize: "var(--text-subheadline)", fontWeight: 500 }}>
-          <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: 14 }} />
+          <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
           Corrija {problems === 1 ? "1 campo" : `${problems} campos`} para salvar.
         </div>
       )}
@@ -683,7 +683,7 @@ export function ProductForm({
         <div style={grid3}>
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             <span style={locked}>
-              Tipo{draft.id && <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />}
+              Tipo{draft.id && <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />}
             </span>
             {draft.id ? (
               <div className="field" style={{ background: "var(--surface3)", color: "var(--ink2)" }}>
@@ -702,7 +702,7 @@ export function ProductForm({
           </div>
           <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             <span style={locked}>
-              Unidade{current?.unitLocked && <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />}
+              Unidade{current?.unitLocked && <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />}
             </span>
             {/* Once stock moved, the history and the fichas técnicas are in this unit: it can't change (the API refuses too). */}
             <select className="field" value={draft.unit} disabled={!!current?.unitLocked} aria-describedby={current?.unitLocked ? "unit-locked" : undefined} onChange={(e) => set({ unit: e.target.value })} style={current?.unitLocked ? { background: "var(--surface3)", color: "var(--ink2)" } : undefined}>
@@ -726,14 +726,14 @@ export function ProductForm({
               </select>
             </label>
             <button type="button" onClick={newCategory.create} style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 5, border: 0, background: "transparent", padding: 0, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--brandText)" }}>
-              <i className="fa-solid fa-plus" style={{ fontSize: 10 }} />
+              <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
               Nova categoria
             </button>
           </div>
         </div>
         {draft.id && (
           <div id="unit-locked" style={{ display: "flex", gap: 8, alignItems: "baseline", ...help }}>
-            <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />
+            <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
             <span>
               O tipo não muda depois de criado.{current?.unitLocked && " A unidade não pode mudar depois que o produto teve movimentação. Cadastre um novo produto."}
             </span>
@@ -747,7 +747,7 @@ export function ProductForm({
           {composed || current?.costLocked ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <span style={locked}>
-                {composed ? "Custo" : isProduto ? "Custo" : "Custo médio"} <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: 10 }} />
+                {composed ? "Custo" : isProduto ? "Custo" : "Custo médio"} <i className="fa-solid fa-lock" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
               </span>
               <div className="field mono" aria-describedby="cost-help" style={{ background: "var(--surface3)", color: "var(--ink2)", fontWeight: 600 }}>
                 {brl(composed ? autoCost : current!.cost)}
@@ -779,7 +779,7 @@ export function ProductForm({
       <Section title="Estoque">
         {composed ? (
           <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
-            <i className="fa-solid fa-diagram-project" aria-hidden="true" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-diagram-project" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
             <span style={{ flex: 1 }}>Sem saldo próprio. Cada venda baixa os componentes da ficha técnica.</span>
           </div>
         ) : !current ? (
@@ -798,7 +798,7 @@ export function ProductForm({
               {/* EST-04: the "Abaixo do aviso" pill and the warning field go here. */}
               <span style={{ flex: 1 }} />
               <button type="button" className="btn btn-outline" aria-expanded={adjusting} onClick={() => setAdjusting(!adjusting)}>
-                <i className="fa-solid fa-arrow-right-arrow-left" aria-hidden="true" style={{ fontSize: 12 }} />
+                <i className="fa-solid fa-arrow-right-arrow-left" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
                 Ajustar estoque
               </button>
             </div>
@@ -894,7 +894,7 @@ export function ProductForm({
                     onClick={() => set({ lines: draft.lines.filter((_, j) => j !== i) })}
                     style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink2)", cursor: "pointer", display: "grid", placeItems: "center" }}
                   >
-                    <i className="fa-solid fa-xmark" style={{ fontSize: 12 }} />
+                    <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                   </button>
                 </div>
               ))}
@@ -911,7 +911,7 @@ export function ProductForm({
                   onClick={() => set({ lines: [...draft.lines, { name: "", qty: "" }] })}
                   style={{ display: "flex", alignItems: "center", gap: 7, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--brandText)" }}
                 >
-                  <i className="fa-solid fa-plus" style={{ fontSize: 12 }} />
+                  <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
                   Adicionar componente
                 </button>
                 <div style={{ flex: 1 }} />
@@ -932,7 +932,7 @@ export function ProductForm({
             <span style={{ display: "block", ...help }}>NCM, CST/CSOSN e alíquota · usada só na emissão de nota fiscal</span>
           </span>
           <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{taxFilled ? "Preenchida" : "Não preenchida"}</span>
-          <i className={`fa-solid ${taxOpen ? "fa-chevron-up" : "fa-chevron-down"}`} aria-hidden="true" style={{ fontSize: 11, color: "var(--ink2)" }} />
+          <i className={`fa-solid ${taxOpen ? "fa-chevron-up" : "fa-chevron-down"}`} aria-hidden="true" style={{ fontSize: "var(--icon-sm)", color: "var(--ink2)" }} />
         </button>
         {taxOpen && (
           <>

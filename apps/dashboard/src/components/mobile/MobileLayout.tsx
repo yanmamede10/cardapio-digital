@@ -153,7 +153,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
               className="icon-btn"
               style={{ flex: "0 0 44px", color: "var(--brandText)" }}
             >
-              <i className="fa-solid fa-chevron-left" style={{ fontSize: 16 }} />
+              <i className="fa-solid fa-chevron-left" style={{ fontSize: "var(--icon-sm)" }} />
             </button>
           )}
           {/* UI-01 · 14: the screen's name is the title, in title2. */}
@@ -169,7 +169,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
             className="icon-btn"
             style={{ position: "relative", flex: "0 0 44px" }}
           >
-            <i className="fa-solid fa-bell" style={{ fontSize: 16 }} />
+            <i className="fa-solid fa-bell" style={{ fontSize: "var(--icon-sm)" }} />
             {notifCount > 0 && (
               <span
                 className="mono"
@@ -235,7 +235,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                   onClick={n.go}
                   style={{ display: "flex", gap: 11, width: "100%", textAlign: "left", padding: "11px 14px", border: 0, borderBottom: "1px solid var(--line)", background: "transparent", color: "var(--ink)", cursor: "pointer", font: "inherit" }}
                 >
-                  <i className={`fa-solid ${n.icon}`} style={{ fontSize: 15, color: n.color, marginTop: 2 }} />
+                  <i className={`fa-solid ${n.icon}`} style={{ fontSize: "var(--icon-sm)", color: n.color, marginTop: 2 }} />
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>{n.title}</div>
                     <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{n.sub}</div>
@@ -278,7 +278,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
               zIndex: 12
             }}
           >
-            <i className="fa-solid fa-plus" style={{ fontSize: 21 }} />
+            <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-md)" }} />
           </button>
         )}
       </div>
@@ -318,7 +318,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                   position: "relative"
                 }}
               >
-                <i className={`fa-solid ${t.icon}`} style={{ fontSize: 19 }} />
+                <i className={`fa-solid ${t.icon}`} style={{ fontSize: "var(--icon-md)" }} />
                 <span style={{ fontSize: "var(--text-caption)", fontWeight: 600 }}>{t.label}</span>
                 {badge && (
                   <span

@@ -14,7 +14,7 @@ function Delta({ pct }: { pct: number }) {
   const good = pct >= 0;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "var(--text-footnote)", fontWeight: 600, color: good ? "var(--ok)" : "var(--alert)" }}>
-      <i className={`fa-solid ${good ? "fa-arrow-up" : "fa-arrow-down"}`} style={{ fontSize: 10 }} />
+      <i className={`fa-solid ${good ? "fa-arrow-up" : "fa-arrow-down"}`} style={{ fontSize: "var(--icon-sm)" }} />
       {Math.abs(pct)}%
     </span>
   );
@@ -24,7 +24,7 @@ function StatTile({ icon, label, value, deltaPct }: { icon: string; label: strin
   return (
     <div className="card" style={{ padding: 14, flex: 1, minWidth: 160, display: "flex", flexDirection: "column", gap: 8 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--ink3)" }}>
-        <i className={`fa-solid ${icon}`} style={{ fontSize: 15 }} />
+        <i className={`fa-solid ${icon}`} style={{ fontSize: "var(--icon-sm)" }} />
         <span className="field-label">{label}</span>
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
@@ -74,7 +74,7 @@ export default function ReportsScreen() {
         <Segmented value={period} onChange={setPeriod} options={PERIOD_OPTIONS} />
         <div style={{ flex: 1 }} />
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
-          <i className="fa-solid fa-star" style={{ color: "var(--sec)", fontSize: 14 }} />
+          <i className="fa-solid fa-star" style={{ color: "var(--sec)", fontSize: "var(--icon-sm)" }} />
           <span className="mono" style={{ fontWeight: 600 }}>
             {reviewAverage.toFixed(1)}
           </span>

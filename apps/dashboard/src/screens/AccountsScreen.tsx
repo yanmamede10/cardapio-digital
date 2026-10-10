@@ -89,7 +89,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
           <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>{payable ? "Contas a pagar" : "Contas a receber"}</div>
           <FilterPopover groups={accountFilters(kind)} value={filter} onChange={setFilter} resultCount={rows.length} />
           <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-            <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
+            <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
             Novo lançamento
           </button>
         </div>
@@ -125,7 +125,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
                       </button>
                     )}
                     <button type="button" className="icon-btn" title="Excluir" aria-label={`Excluir ${e.description}`} onClick={() => deleteEntry(e, notify, reload)}>
-                      <i className="fa-solid fa-trash" style={{ fontSize: 14 }} />
+                      <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
                     </button>
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
             onClick={() => setForm({ ...form, more: !form.more })}
             style={{ display: "flex", alignItems: "center", gap: 8, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, color: "var(--brandText)", alignSelf: "flex-start" }}
           >
-            <i className={`fa-solid ${form.more ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 11 }} />
+            <i className={`fa-solid ${form.more ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: "var(--icon-sm)", width: 11 }} />
             Mais opções<span style={{ fontWeight: 400, color: "var(--ink3)" }}>· categoria e centro de custo</span>
           </button>
           {form.more && (

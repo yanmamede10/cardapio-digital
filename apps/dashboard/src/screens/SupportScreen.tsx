@@ -154,7 +154,7 @@ export default function SupportScreen() {
         {tab === "tickets" && <WhatsAppIndicator status={whatsapp} />}
         {tab === "tickets" && late > 0 && (
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 14%, transparent)", border: "1px solid var(--alert)", borderRadius: 999, padding: "7px 16px" }}>
-            <i className="fa-solid fa-stopwatch" style={{ fontSize: 15 }} />
+            <i className="fa-solid fa-stopwatch" style={{ fontSize: "var(--icon-sm)" }} />
             {late === 1 ? "1 ticket sem resposta há mais de 1 hora" : `${late} tickets sem resposta há mais de 1 hora`}
           </div>
         )}
@@ -209,7 +209,7 @@ export default function SupportScreen() {
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: 15, color: "var(--ink3)" }} />
+                        <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                         <span style={{ fontWeight: 600, fontSize: "var(--text-subheadline)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.customerName}</span>
                         {t.unreadCount > 0 && (
                           <span className="mono" style={{ fontSize: "var(--text-caption)", fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 20, padding: "1px 6px" }}>
@@ -293,7 +293,7 @@ export default function SupportScreen() {
                       maxLength={2000}
                     />
                     <button type="button" className="btn btn-primary" onClick={send} aria-label="Enviar resposta">
-                      <i className="fa-solid fa-paper-plane" style={{ fontSize: 15 }} />
+                      <i className="fa-solid fa-paper-plane" style={{ fontSize: "var(--icon-sm)" }} />
                     </button>
                   </div>
                 </>
@@ -310,7 +310,7 @@ export default function SupportScreen() {
           {reviews.map((r) => (
             <section key={r.id} className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <i className={`fa-solid ${r.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 15, color: "var(--ink3)" }} />
+                <i className={`fa-solid ${r.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                 <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>{r.customerName}</div>
                 <span style={{ color: "var(--secText)", fontSize: "var(--text-body)" }}>{stars(r.rating)}</span>
                 <span className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>

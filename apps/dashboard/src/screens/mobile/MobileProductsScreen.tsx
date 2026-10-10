@@ -151,16 +151,16 @@ export default function MobileProductsScreen() {
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 4px 0 12px", minHeight: 44 }}>
-                <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: 14, color: "var(--ink3)" }} />
+                <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                 <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-headline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
                 {filter.q && (
                   <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
-                    <i className="fa-solid fa-circle-xmark" style={{ fontSize: 15 }} />
+                    <i className="fa-solid fa-circle-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                   </button>
                 )}
               </div>
               <button type="button" aria-label="Nova categoria" title="Nova categoria" onClick={cats.create} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface2)", color: "var(--brandText)", border: "1px solid var(--line)" }}>
-                <i className="fa-solid fa-folder-plus" style={{ fontSize: 17 }} />
+                <i className="fa-solid fa-folder-plus" style={{ fontSize: "var(--icon-sm)" }} />
               </button>
             </div>
             {products.length > 0 && (
@@ -189,7 +189,7 @@ export default function MobileProductsScreen() {
         )}
         {tab === "mov" && (
           <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={importing} onClick={pickXml}>
-            <i className="fa-solid fa-file-import" style={{ fontSize: 13 }} />
+            <i className="fa-solid fa-file-import" style={{ fontSize: "var(--icon-sm)" }} />
             {importing ? "Importando…" : "Importar XML"}
           </button>
         )}
@@ -206,7 +206,7 @@ export default function MobileProductsScreen() {
               sub="Cadastre o que você vende (produtos) e o que usa no preparo (insumos). Categorias como Hambúrgueres ou Carnes organizam os dois e o cardápio."
               action={
                 <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} onClick={() => setDraft({ ...EMPTY_DRAFT })}>
-                  <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
+                  <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)" }} />
                   Cadastrar primeiro item
                 </button>
               }
@@ -230,7 +230,7 @@ export default function MobileProductsScreen() {
                 <div key={g.cat.id || "none"} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <button type="button" aria-expanded={open} onClick={() => setClosed(open ? [...closed, g.cat.id] : closed.filter((x) => x !== g.cat.id))} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, border: 0, background: "transparent", padding: "0 4px", cursor: "pointer", font: "inherit", color: "var(--ink)", textAlign: "left" }}>
-                      <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 12, color: "var(--ink3)" }} />
+                      <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: "var(--icon-sm)", width: 12, color: "var(--ink3)" }} />
                       <span style={{ fontSize: "var(--text-headline)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.cat.name}</span>
                       <span className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", background: "var(--surface3)", borderRadius: 999, padding: "1px 9px" }}>
                         {g.items.length}
@@ -238,7 +238,7 @@ export default function MobileProductsScreen() {
                     </button>
                     {g.cat !== NO_CATEGORY_GROUP && (
                       <button type="button" aria-label={`Opções da categoria ${g.cat.name}`} onClick={() => setMenuFor(g.cat)} style={{ width: 44, height: 44, border: 0, background: "transparent", color: "var(--ink2)", cursor: "pointer" }}>
-                        <i className="fa-solid fa-ellipsis" style={{ fontSize: 16 }} />
+                        <i className="fa-solid fa-ellipsis" style={{ fontSize: "var(--icon-sm)" }} />
                       </button>
                     )}
                   </div>
@@ -263,7 +263,7 @@ export default function MobileProductsScreen() {
                           <span className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600, whiteSpace: "nowrap", color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
                             {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
                           </span>
-                          <i className="fa-solid fa-chevron-right" aria-hidden="true" style={{ fontSize: 11, color: "var(--ink3)" }} />
+                          <i className="fa-solid fa-chevron-right" aria-hidden="true" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                         </button>
                       ))}
                     </section>
@@ -283,7 +283,7 @@ export default function MobileProductsScreen() {
             style={{ ...card, borderStyle: "dashed", borderColor: "var(--line2)", padding: "30px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" }}
           >
             <div style={{ width: 54, height: 54, borderRadius: 16, background: "var(--brandSoft)", color: "var(--brandText)", display: "grid", placeItems: "center" }}>
-              <i className="fa-solid fa-file-import" style={{ fontSize: 21 }} />
+              <i className="fa-solid fa-file-import" style={{ fontSize: "var(--icon-md)" }} />
             </div>
             <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Arraste o arquivo da nota do fornecedor. Os itens entram no estoque automaticamente.</div>
             <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={importing} onClick={pickXml}>
@@ -304,7 +304,7 @@ export default function MobileProductsScreen() {
                       <span style={{ fontSize: "var(--text-body)", fontWeight: 500, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.productName}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink3)", minWidth: 0 }}>
-                      <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: 11 }} />
+                      <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: "var(--icon-sm)" }} />
                       <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {movementSource(m)}
                       </span>

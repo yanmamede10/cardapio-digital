@@ -44,13 +44,13 @@ export default function MobileSettingsScreen() {
           {g.items.map((i) => (
             <button key={i.label} type="button" onClick={i.go} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", cursor: "pointer", font: "inherit", color: "var(--ink)", padding: "0 13px", minHeight: 58 }}>
               <div style={{ width: 34, height: 34, flex: "0 0 34px", borderRadius: 10, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <i className={`fa-solid ${i.icon}`} style={{ fontSize: 14 }} />
+                <i className={`fa-solid ${i.icon}`} style={{ fontSize: "var(--icon-sm)" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{i.label}</div>
                 <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{i.sub}</div>
               </div>
-              <i className="fa-solid fa-chevron-right" style={{ fontSize: 13, color: "var(--ink3)" }} />
+              <i className="fa-solid fa-chevron-right" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
             </button>
           ))}
         </section>

@@ -252,7 +252,7 @@ export default function TablesScreen() {
                 ))}
               </select>
               <button type="button" className="btn btn-ghost" onClick={newTable}>
-                <i className="fa-solid fa-plus" style={{ fontSize: 16, lineHeight: 1 }} />
+                <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                 Nova mesa
               </button>
             </>
@@ -268,7 +268,7 @@ export default function TablesScreen() {
           </div>
           {qrOrdering && (
             <button type="button" className="btn btn-outline" onClick={() => navigate("/mesas/qr")}>
-              <i className="fa-solid fa-print" aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }} />
+              <i className="fa-solid fa-print" aria-hidden="true" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               Imprimir QR
             </button>
           )}
@@ -281,7 +281,7 @@ export default function TablesScreen() {
                 setEditing((v) => !v);
               }}
             >
-              <i className={`fa-solid ${editing ? "fa-check" : "fa-pen-to-square"}`} style={{ fontSize: 16, lineHeight: 1 }} />
+              <i className={`fa-solid ${editing ? "fa-check" : "fa-pen-to-square"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               {editing ? "Concluir edição" : "Editar ambiente"}
             </button>
           )}
@@ -376,7 +376,7 @@ export default function TablesScreen() {
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
           <button type="button" className="btn btn-outline" disabled={!selT} onClick={() => selT && navigate(`/mesas/${selT.number}/pedido`)}>
-            <i className="fa-solid fa-plus" style={{ fontSize: 14, lineHeight: 1 }} />
+            <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             Lançar pedido
           </button>
           {canClose && (
@@ -442,7 +442,7 @@ export default function TablesScreen() {
           <div style={{ display: "flex", gap: 8 }}>
             {qrOrdering && (
               <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={showQr}>
-                <i className="fa-solid fa-qrcode" style={{ fontSize: 16, lineHeight: 1 }} />
+                <i className="fa-solid fa-qrcode" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                 QR code
               </button>
             )}
@@ -457,7 +457,7 @@ export default function TablesScreen() {
           </div>
           {transferTo !== "" && (
             <button type="button" className="btn btn-ghost" onClick={doTransfer}>
-              <i className="fa-solid fa-right-left" style={{ fontSize: 16, lineHeight: 1 }} />
+              <i className="fa-solid fa-right-left" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
               Confirmar transferência
             </button>
           )}
@@ -497,7 +497,7 @@ export default function TablesScreen() {
                   />
                 </div>
                 <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={() => confirmCloseTable(pixTarget.number, manualMethod)}>
-                  <i className="fa-solid fa-check" style={{ fontSize: 17, lineHeight: 1 }} />
+                  <i className="fa-solid fa-check" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                   Confirmar pagamento
                 </button>
                 <button type="button" className="btn btn-outline" style={{ width: "100%" }} onClick={() => setPixTarget(null)}>
@@ -539,7 +539,7 @@ export default function TablesScreen() {
               className="tap"
               style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, background: "transparent", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", textAlign: "left" }}
             >
-              <i className="fa-solid fa-pen" style={{ fontSize: 14, width: 14 }} />
+              <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)", width: 14 }} />
               Editar número
             </button>
             <button
@@ -548,7 +548,7 @@ export default function TablesScreen() {
               className="tap"
               style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, borderTop: "1px solid var(--line)", background: "transparent", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--alert)", textAlign: "left" }}
             >
-              <i className="fa-solid fa-trash" style={{ fontSize: 14, width: 14 }} />
+              <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", width: 14 }} />
               Excluir mesa
             </button>
           </div>

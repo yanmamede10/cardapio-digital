@@ -95,7 +95,7 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
       <section className="card" style={{ padding: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         {!mobile && (
           <button type="button" className="btn btn-ghost" onClick={() => navigate("/mesas", only != null ? { state: { select: only } } : undefined)}>
-            <i className="fa-solid fa-chevron-left" aria-hidden="true" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-chevron-left" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
             Mesas
           </button>
         )}
@@ -116,18 +116,18 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
         </label>
         {only != null && codes[only] && (
           <button type="button" className="btn btn-outline" onClick={() => copyLink(only)}>
-            <i className="fa-solid fa-link" aria-hidden="true" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-link" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
             Copiar link
           </button>
         )}
         {only != null && codes[only] && canRegenerate && (
           <button type="button" className="btn btn-outline" style={{ color: "var(--alert)" }} onClick={() => regenerate(only)}>
-            <i className="fa-solid fa-rotate" aria-hidden="true" style={{ fontSize: 14 }} />
+            <i className="fa-solid fa-rotate" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
             Gerar novo QR
           </button>
         )}
         <button type="button" className="btn btn-primary" disabled={!ready.length} onClick={() => window.print()}>
-          <i className="fa-solid fa-print" aria-hidden="true" style={{ fontSize: 15 }} />
+          <i className="fa-solid fa-print" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
           Imprimir
         </button>
       </section>

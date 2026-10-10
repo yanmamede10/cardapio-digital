@@ -17,7 +17,7 @@ export function EmptyState({ icon, title, sub, action }: { icon: string; title: 
       }}
     >
       <div style={{ width: 56, height: 56, borderRadius: 16, background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
-        <i className={`fa-solid ${icon}`} style={{ fontSize: 28, lineHeight: 1 }} />
+        <i className={`fa-solid ${icon}`} style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
       </div>
       <div>
         <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>{title}</div>

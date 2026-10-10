@@ -16,7 +16,7 @@ function Delta({ pct }: { pct: number }) {
   const good = pct >= 0;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "var(--text-footnote)", fontWeight: 600, color: good ? "var(--ok)" : "var(--alert)" }}>
-      <i className={`fa-solid ${good ? "fa-arrow-trend-up" : "fa-arrow-trend-down"}`} style={{ fontSize: 11 }} />
+      <i className={`fa-solid ${good ? "fa-arrow-trend-up" : "fa-arrow-trend-down"}`} style={{ fontSize: "var(--icon-sm)" }} />
       {good ? "+" : ""}
       {pct}%<span style={{ color: "var(--ink3)", fontWeight: 400 }}>vs. anterior</span>
     </div>

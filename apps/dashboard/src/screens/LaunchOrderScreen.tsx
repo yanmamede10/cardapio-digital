@@ -112,7 +112,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100%" }}>
       <div style={{ padding: "12px 12px 8px", display: "flex", flexDirection: "column", gap: 10 }}>
         <div className="field" style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
+          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar no cardápio" aria-label="Buscar no cardápio" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2 }}>{[chip("todos", "Todos"), ...categories.map((c) => chip(c.id, c.name))]}</div>
@@ -164,7 +164,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 12px 2px 20px" }}>
               <div style={{ flex: 1, fontSize: "var(--text-headline)", fontWeight: 600 }}>{choosing.item.name}</div>
               <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
-                <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
+                <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
               </button>
             </div>
             <div style={{ padding: "6px 20px 16px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
@@ -277,7 +277,7 @@ export default function LaunchOrderScreen() {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button type="button" className="btn btn-outline" onClick={() => navigate("/mesas", { state: { select: num } })}>
-          <i className="fa-solid fa-arrow-left" style={{ fontSize: 13 }} />
+          <i className="fa-solid fa-arrow-left" style={{ fontSize: "var(--icon-sm)" }} />
           Mesas
         </button>
         <div style={{ fontSize: "var(--text-headline)", fontWeight: 600 }}>Lançar pedido · Mesa {String(num).padStart(2, "0")}</div>

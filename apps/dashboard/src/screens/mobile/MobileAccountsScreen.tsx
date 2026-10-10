@@ -90,7 +90,7 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
                     </button>
                   )}
                   <button type="button" className="icon-btn" style={{ minWidth: 40, minHeight: 40 }} aria-label={`Excluir ${e.description}`} onClick={() => deleteEntry(e, notify, reload)}>
-                    <i className="fa-solid fa-trash" style={{ fontSize: 14 }} />
+                    <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
                   </button>
                 </div>
               </div>

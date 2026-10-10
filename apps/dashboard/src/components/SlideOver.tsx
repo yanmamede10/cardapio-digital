@@ -46,7 +46,7 @@ export function SlideOver({ title, subtitle, onClose, footer, children, width, s
               <div style={{ fontSize: "var(--text-subheadline)", color: sheet ? "var(--ink2)" : "var(--ink3)", marginTop: sheet ? 0 : 2 }}>{subtitle}</div>
             </div>
             <button type="button" className="icon-btn" onClick={guard.request} title="Fechar" aria-label="Fechar" style={sheet ? { borderRadius: "50%" } : undefined}>
-              <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
+              <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
             </button>
           </div>
         )}

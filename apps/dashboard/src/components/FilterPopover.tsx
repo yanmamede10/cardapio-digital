@@ -103,7 +103,7 @@ export function FilterPopover({
           color: active ? "var(--brandText)" : "var(--ink)"
         }}
       >
-        <i className="fa-solid fa-filter" style={{ fontSize: 12 }} />
+        <i className="fa-solid fa-filter" style={{ fontSize: "var(--icon-sm)" }} />
         Filtros
         {active > 0 && (
           <span className="mono" style={{ fontSize: "var(--text-caption)", fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 999, padding: "1px 8px" }}>
@@ -171,7 +171,7 @@ export function FilterPopover({
                         onClick={() => toggle(group.id, o)}
                         style={{ display: "flex", alignItems: "center", gap: 6, border: `1px solid ${on ? "var(--brand)" : "var(--line)"}`, borderRadius: 999, padding: "7px 13px", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, background: on ? "var(--brandSoft)" : "var(--surface)", color: on ? "var(--brandText)" : "var(--ink2)" }}
                       >
-                        {on && <i className="fa-solid fa-check" style={{ fontSize: 10 }} />}
+                        {on && <i className="fa-solid fa-check" style={{ fontSize: "var(--icon-sm)" }} />}
                         {o}
                       </button>
                     );
@@ -191,10 +191,10 @@ export function FilterPopover({
                           onClick={() => toggle("per", p)}
                           style={{ display: "flex", alignItems: "center", gap: 10, border: 0, borderRadius: 10, padding: "10px 12px", cursor: "pointer", fontSize: "var(--text-body)", textAlign: "left", background: on ? "var(--brandSoft)" : "transparent", color: "var(--ink)" }}
                         >
-                          <i className="fa-solid fa-check" style={{ fontSize: 11, width: 12, color: "var(--brandText)", opacity: on ? 1 : 0 }} />
+                          <i className="fa-solid fa-check" style={{ fontSize: "var(--icon-sm)", width: 12, color: "var(--brandText)", opacity: on ? 1 : 0 }} />
                           <span style={{ flex: 1, fontWeight: on ? 600 : 400 }}>{p}</span>
                           <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", fontVariantNumeric: "tabular-nums" }}>{hint}</span>
-                          {p === "Personalizado" && <i className="fa-solid fa-chevron-right" style={{ fontSize: 10, color: "var(--ink3)" }} />}
+                          {p === "Personalizado" && <i className="fa-solid fa-chevron-right" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />}
                         </button>
                       );
                     })}

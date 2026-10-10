@@ -52,7 +52,7 @@ export default function App() {
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "var(--bg)", fontFamily: "var(--font)" }}>
         <main className="card" style={{ width: 340, maxWidth: "100%", padding: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}>
           <div style={{ width: 56, height: 56, borderRadius: 16, background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
-            <i className="fa-solid fa-link-slash" style={{ fontSize: 28, lineHeight: 1 }} />
+            <i className="fa-solid fa-link-slash" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
           </div>
           <div>
             <h1 style={{ margin: 0, fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.015em", color: "var(--ink)" }}>Esta página não existe</h1>

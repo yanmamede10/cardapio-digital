@@ -227,7 +227,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
     <div style={{ borderRadius: big ? 22 : 18, overflow: "hidden", background: "#FFFDF1", color: "#1B1915", boxShadow: "var(--shadow2)" }}>
       {big && (
         <div style={{ position: "relative", height: 150, background: coverSrc ? `url(${coverSrc}) center/cover` : "repeating-linear-gradient(135deg,#F2EEDD,#F2EEDD 6px,#E9E4CF 6px,#E9E4CF 12px)", display: "flex", alignItems: "center", justifyContent: "center", color: "#67645D" }}>
-          {!coverSrc && <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />}
+          {!coverSrc && <i className="fa-solid fa-image" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />}
         </div>
       )}
       <div style={{ padding: big ? "0 22px 22px" : "15px 18px", marginTop: big ? -34 : 0, position: "relative", display: "flex", flexDirection: "column", gap: big ? 16 : 12 }}>
@@ -245,7 +245,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, letterSpacing: "-.01em" }}>{restaurantName}</div>
                 <div style={{ fontSize: "var(--text-caption)", opacity: 0.82 }}>Aberto até 23h</div>
               </div>
-              <i className="fa-solid fa-bag-shopping" style={{ fontSize: 16, lineHeight: 1 }} />
+              <i className="fa-solid fa-bag-shopping" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             </>
           )}
         </div>
@@ -262,7 +262,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: big ? 14 : 12, border: "1px solid #E0D9BF", borderRadius: big ? 18 : 14, padding: big ? 14 : 12, background: "#FFFDF1" }}>
           <div style={{ width: big ? 56 : 44, height: big ? 56 : 44, borderRadius: big ? 15 : 12, background: soft(16), color: brandColor, display: "flex", alignItems: "center", justifyContent: "center", flex: `0 0 ${big ? 56 : 44}px` }}>
-            <i className="fa-solid fa-fish" style={{ fontSize: big ? 21 : 18, lineHeight: 1 }} />
+            <i className="fa-solid fa-fish" style={{ fontSize: big ? "var(--icon-md)" : "var(--icon-sm)", lineHeight: 1 }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: big ? "var(--text-body)" : "var(--text-subheadline)", fontWeight: 600 }}>Prato em destaque</div>
@@ -282,7 +282,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
       <section className="card" style={{ padding: 22, display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 7 }}>
           <span className="pill" style={{ alignSelf: "flex-start", background: published ? "color-mix(in srgb, var(--ok) 16%, transparent)" : "color-mix(in srgb, var(--warn) 18%, transparent)", color: published ? "var(--ok)" : "var(--warn)" }}>
-            <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: 13, lineHeight: 1 }} />
+            <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             {published ? "Publicado" : "Rascunho"}
           </span>
           <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Página pública do restaurante</div>
@@ -293,11 +293,11 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
         </div>
         <div style={{ display: "flex", gap: 11, flexWrap: "wrap" }}>
           <button type="button" className="btn btn-outline" onClick={() => setPreviewOpen(true)}>
-            <i className="fa-solid fa-eye" style={{ fontSize: 17, lineHeight: 1 }} />
+            <i className="fa-solid fa-eye" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             Pré-visualizar
           </button>
           <button type="button" className="btn btn-primary" onClick={onPublish} disabled={published}>
-            <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: 17, lineHeight: 1 }} />
+            <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             {live.publishedAt ? "Publicar novamente" : "Publicar alterações"}
           </button>
         </div>
@@ -344,7 +344,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <span style={{ fontSize: "var(--text-body)", fontWeight: 600, color: sel ? "var(--brandText)" : "var(--ink)" }}>{t.name}</span>
-                    {sel && <i className="fa-solid fa-circle-check" style={{ fontSize: 14, lineHeight: 1, color: "var(--brandText)" }} />}
+                    {sel && <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-sm)", lineHeight: 1, color: "var(--brandText)" }} />}
                   </div>
                   <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{t.desc}</div>
                 </div>
@@ -406,7 +406,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
           <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && onLogoFile(e.target.files[0])} />
           {!logoUpload && !logoError && !draft.logoUrl && (
             <button type="button" onClick={() => logoInput.current?.click()} className="tap" style={{ width: 124, height: 124, borderRadius: 26, border: "1.5px dashed var(--line2)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: 21, lineHeight: 1 }} />
+              <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
               <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500 }}>Enviar logo</span>
             </button>
           )}
@@ -415,7 +415,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               <div style={{ position: "relative", width: 124, height: 124, borderRadius: 26, overflow: "hidden", border: "1px solid var(--line)" }}>
                 <img src={logoUpload.localUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.4 }} />
                 <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.15)", color: "#fff" }}>
-                  <i className="fa-solid fa-spinner" style={{ fontSize: 23, lineHeight: 1, animation: "sk 1.1s ease-in-out infinite" }} />
+                  <i className="fa-solid fa-spinner" style={{ fontSize: "var(--icon-lg)", lineHeight: 1, animation: "sk 1.1s ease-in-out infinite" }} />
                 </div>
               </div>
               <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Enviando {logoUpload.fileName}…</div>
@@ -424,7 +424,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
           {!logoUpload && logoError && (
             <div style={{ width: 124, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ width: 124, height: 124, borderRadius: 26, border: "1.5px solid var(--alert)", background: "color-mix(in srgb, var(--alert) 10%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--alert)" }}>
-                <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: 22, lineHeight: 1 }} />
+                <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
               </div>
               <div style={{ fontSize: "var(--text-footnote)", color: "var(--alert)", fontWeight: 500 }}>{logoError}</div>
               <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start", padding: "8px 14px", fontSize: "var(--text-footnote)" }} onClick={() => setLogoError(null)}>
@@ -437,7 +437,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               <div style={{ position: "relative", width: 124, height: 124, borderRadius: 26, border: "1px solid var(--line2)", overflow: "hidden" }}>
                 <img src={draft.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 <button type="button" onClick={removeLogo} title="Remover" aria-label="Remover logo" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 26, height: 26, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
-                  <i className="fa-solid fa-xmark" style={{ fontSize: 14 }} />
+                  <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                 </button>
               </div>
             </div>
@@ -454,18 +454,18 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 {i === 0 && <span style={{ position: "absolute", left: 8, top: 8, fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 999, padding: "3px 9px", background: "var(--brand)", color: "var(--brandInk)" }}>Capa principal</span>}
                 <button type="button" onClick={() => removeCover(url)} title="Remover" aria-label="Remover foto de capa" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
-                  <i className="fa-solid fa-xmark" style={{ fontSize: 13 }} />
+                  <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                 </button>
               </div>
             ))}
             {coverUpload && (
               <div style={{ aspectRatio: "16/10", borderRadius: 16, border: "1px solid var(--line)", background: "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
-                <i className="fa-solid fa-spinner" style={{ fontSize: 18, lineHeight: 1, animation: "sk 1.1s ease-in-out infinite" }} />
+                <i className="fa-solid fa-spinner" style={{ fontSize: "var(--icon-md)", lineHeight: 1, animation: "sk 1.1s ease-in-out infinite" }} />
               </div>
             )}
             {draft.coverPhotos.length < 6 && !coverUpload && (
               <button type="button" onClick={() => coverInput.current?.click()} className="tap" style={{ aspectRatio: "16/10", borderRadius: 16, border: "1.5px dashed var(--line2)", background: "transparent", color: "var(--ink3)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 7 }}>
-                <i className="fa-solid fa-plus" style={{ fontSize: 19, lineHeight: 1 }} />
+                <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
                 <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500 }}>Adicionar</span>
               </button>
             )}
@@ -485,11 +485,11 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Template {TEMPLATES.find((t) => t.id === draft.template)?.name} · cor {brandColor.toUpperCase()}</div>
               </div>
               <span className="pill" style={{ background: published ? "color-mix(in srgb, var(--ok) 16%, transparent)" : "color-mix(in srgb, var(--warn) 18%, transparent)", color: published ? "var(--ok)" : "var(--warn)" }}>
-                <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: 13, lineHeight: 1 }} />
+                <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                 {published ? "Publicado" : "Rascunho"}
               </span>
               <button type="button" className="icon-btn" onClick={() => setPreviewOpen(false)} title="Fechar" aria-label="Fechar">
-                <i className="fa-solid fa-xmark" style={{ fontSize: 18 }} />
+                <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-md)" }} />
               </button>
             </div>
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 22, background: "var(--surface2)" }}>
@@ -501,7 +501,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               </div>
               <button type="button" className="btn btn-outline" onClick={() => setPreviewOpen(false)}>Continuar editando</button>
               <button type="button" className="btn btn-primary" onClick={onPublish} disabled={published}>
-                <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: 17, lineHeight: 1 }} />
+                <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                 {live.publishedAt ? "Publicar novamente" : "Publicar alterações"}
               </button>
             </div>

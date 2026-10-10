@@ -249,7 +249,7 @@ export default function MenuScreen() {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", width: 250 }}>
-          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
+          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ink3)" }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -274,13 +274,13 @@ export default function MenuScreen() {
         </div>
         {canEdit && (
           <button type="button" className="btn btn-outline" onClick={cats.create}>
-            <i className="fa-solid fa-folder-plus" style={{ fontSize: 16, lineHeight: 1 }} />
+            <i className="fa-solid fa-folder-plus" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             Nova categoria
           </button>
         )}
         {canEdit && (
           <button type="button" className="btn btn-primary" onClick={openLink}>
-            <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
+            <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
             Adicionar prato
           </button>
         )}
@@ -293,7 +293,7 @@ export default function MenuScreen() {
           sub="Crie as categorias (ex.: Hambúrgueres, Bebidas) e depois vincule os pratos do Catálogo — eles aparecem no cardápio digital e no Lançar pedido."
           action={
             canEdit && <button type="button" className="btn btn-primary" onClick={cats.create}>
-              <i className="fa-solid fa-plus" style={{ fontSize: 18, lineHeight: 1 }} />
+              <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
               Criar primeira categoria
             </button>
           }
@@ -395,7 +395,7 @@ export default function MenuScreen() {
                 />
                 {!drawer.imageUrl && (
                   <>
-                    <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />
+                    <i className="fa-solid fa-image" style={{ fontSize: "var(--icon-lg)", lineHeight: 1 }} />
                     <span className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".06em", textAlign: "center", padding: "0 12px" }}>
                       ARRASTE A FOTO DO PRATO · 1200×900
                     </span>
@@ -414,7 +414,7 @@ export default function MenuScreen() {
                 </select>
               </label>
               <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
-                <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: "var(--ink3)" }} />
+                <i className="fa-solid fa-circle-info" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
                 <span style={{ flex: 1 }}>Nome, preço, composição e tributação são editados no cadastro do Catálogo.</span>
                 {drawer.productId && (
                   <button
@@ -439,7 +439,7 @@ export default function MenuScreen() {
                     onClick={() => setDrawer({ ...drawer, extras: [...drawer.extras, { name: "Novo adicional", price: "0,00", productId: "", qty: "" }] })}
                     style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: 0, color: "var(--brandText)", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, cursor: "pointer", padding: 0 }}
                   >
-                    <i className="fa-solid fa-plus" style={{ fontSize: 16, lineHeight: 1 }} />
+                    <i className="fa-solid fa-plus" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                     Adicionar
                   </button>
                 </div>
@@ -460,7 +460,7 @@ export default function MenuScreen() {
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, price: e.target.value } : y)) })}
                     />
                     <button type="button" title="Remover adicional" aria-label="Remover adicional" className="icon-btn" onClick={() => setDrawer({ ...drawer, extras: drawer.extras.filter((_, j) => j !== i) })}>
-                      <i className="fa-solid fa-trash" style={{ fontSize: 16, lineHeight: 1 }} />
+                      <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                     </button>
                     <select
                       className="field"
@@ -521,7 +521,7 @@ export function DragHandle({ ariaLabel, ...rest }: { ariaLabel: string } & Butto
       {...rest}
       style={{ flex: "none", background: "transparent", border: 0, padding: 4, cursor: "grab", color: "var(--ink3)", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
     >
-      <i className="fa-solid fa-grip-vertical" style={{ fontSize: 18, lineHeight: 1 }} />
+      <i className="fa-solid fa-grip-vertical" style={{ fontSize: "var(--icon-md)", lineHeight: 1 }} />
     </button>
   );
 }
@@ -529,7 +529,7 @@ export function DragHandle({ ariaLabel, ...rest }: { ariaLabel: string } & Butto
 export function CategoryDragPreview({ name }: { name: string }) {
   return (
     <div className="card" style={{ padding: "13px 18px", boxShadow: "var(--shadow2)", transform: "scale(1.02)", display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: "var(--text-body)" }}>
-      <i className="fa-solid fa-grip-vertical" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
+      <i className="fa-solid fa-grip-vertical" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ink3)" }} />
       {name}
     </div>
   );
@@ -538,7 +538,7 @@ export function CategoryDragPreview({ name }: { name: string }) {
 function ItemDragPreview({ name, price }: { name: string; price: string }) {
   return (
     <div className="card" style={{ padding: "13px 18px", boxShadow: "var(--shadow2)", transform: "scale(1.02)", display: "flex", alignItems: "center", gap: 12, minWidth: 280 }}>
-      <i className="fa-solid fa-grip-vertical" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
+      <i className="fa-solid fa-grip-vertical" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ink3)" }} />
       <div style={{ flex: 1, fontWeight: 600, fontSize: "var(--text-body)" }}>{name}</div>
       <div className="mono" style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>{price}</div>
     </div>
@@ -587,13 +587,13 @@ export function CategorySection({
     <section ref={setNodeRef} style={style} className="card">
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 18px 4px 10px", minHeight: 52, background: "var(--surface2)", borderBottom: open ? "1px solid var(--line)" : 0, minWidth }}>
         {fixed ? (
-          <i className="fa-regular fa-folder-open" aria-hidden="true" style={{ width: 26, textAlign: "center", fontSize: 14, color: "var(--ink3)" }} />
+          <i className="fa-solid fa-folder-open" aria-hidden="true" style={{ width: 26, textAlign: "center", fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
         ) : (
           canEdit && <DragHandle ariaLabel={`Reordenar categoria ${cat.name}`} {...attributes} {...listeners} />
         )}
         {onToggle ? (
           <button type="button" aria-expanded={open} onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, border: 0, background: "transparent", padding: "0 8px", borderRadius: 10, cursor: "pointer", font: "inherit", color: "var(--ink)" }}>
-            <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 12, color: "var(--ink3)" }} />
+            <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: "var(--icon-sm)", width: 12, color: "var(--ink3)" }} />
             {title}
           </button>
         ) : (
@@ -604,10 +604,10 @@ export function CategorySection({
         {canEdit && !fixed && (
           <>
             <button type="button" className="icon-btn" title="Renomear categoria" aria-label={`Renomear categoria ${cat.name}`} onClick={onRename}>
-              <i className="fa-solid fa-pen" style={{ fontSize: 14, lineHeight: 1 }} />
+              <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             </button>
             <button type="button" className="icon-btn" title="Excluir categoria" aria-label={`Excluir categoria ${cat.name}`} onClick={onDelete}>
-              <i className="fa-solid fa-trash" style={{ fontSize: 14, lineHeight: 1 }} />
+              <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             </button>
           </>
         )}
@@ -665,7 +665,7 @@ function ItemRow({ item: m, canEdit, onToggleAvailable, onUnlink, onEdit }: { it
         {brl(m.price)}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
-        <i className="fa-solid fa-clock" style={{ fontSize: 15, lineHeight: 1, color: "var(--ink3)" }} />
+        <i className="fa-solid fa-clock" style={{ fontSize: "var(--icon-sm)", lineHeight: 1, color: "var(--ink3)" }} />
         {m.scheduleLabel}
       </div>
       <button type="button" onClick={onToggleAvailable} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: 0, cursor: "pointer", font: "inherit", padding: 0 }}>
@@ -676,10 +676,10 @@ function ItemRow({ item: m, canEdit, onToggleAvailable, onUnlink, onEdit }: { it
       </button>
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", visibility: canEdit ? undefined : "hidden" }}>
         <button type="button" title="Remover do cardápio" aria-label={`Remover ${m.name} do cardápio`} className="icon-btn" onClick={onUnlink}>
-          <i className="fa-solid fa-link-slash" style={{ fontSize: 15, lineHeight: 1 }} />
+          <i className="fa-solid fa-link-slash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
         <button type="button" title="Organizar prato" aria-label={`Organizar ${m.name}`} className="icon-btn" onClick={onEdit}>
-          <i className="fa-solid fa-pen" style={{ fontSize: 16, lineHeight: 1 }} />
+          <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
       </div>
     </div>

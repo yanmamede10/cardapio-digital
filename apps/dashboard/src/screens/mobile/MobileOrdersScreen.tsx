@@ -176,14 +176,14 @@ export default function MobileOrdersScreen() {
               onClick={() => setCallsOpen((v) => !v)}
               style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", font: "inherit", padding: "12px 13px", color: "var(--ink)", minHeight: 48 }}
             >
-              <i className="fa-solid fa-hand" style={{ fontSize: 16, color: "var(--alert)" }} />
+              <i className="fa-solid fa-hand" style={{ fontSize: "var(--icon-sm)", color: "var(--alert)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)" }}>
                   {openCalls.length} {openCalls.length === 1 ? "mesa chamando garçom" : "mesas chamando garçom"}
                 </div>
                 <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>A mais antiga espera há {Math.max(...openCalls.map((c) => minutesSince(c.createdAt)))} min</div>
               </div>
-              <i className={`fa-solid ${callsOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ fontSize: 13, color: "var(--ink3)" }} />
+              <i className={`fa-solid ${callsOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)" }} />
             </button>
             {callsOpen && (
               <div style={{ borderTop: "1px solid color-mix(in srgb, var(--alert) 40%, transparent)", display: "flex", flexDirection: "column" }}>
@@ -218,7 +218,7 @@ export default function MobileOrdersScreen() {
               <AwaitingTag order={o} />
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <div style={{ width: 36, height: 36, flex: "0 0 36px", borderRadius: 10, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 15 }} />
+                  <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: "var(--icon-sm)" }} />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -232,7 +232,7 @@ export default function MobileOrdersScreen() {
                   <TakeawayTag order={o} />
                 </div>
                 <div className="mono" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 20, padding: "4px 9px", background: tone.bg, color: tone.fg }}>
-                  <i className="fa-solid fa-stopwatch" style={{ fontSize: 11 }} />
+                  <i className="fa-solid fa-stopwatch" style={{ fontSize: "var(--icon-sm)" }} />
                   {min} min
                 </div>
               </div>
@@ -266,7 +266,7 @@ export default function MobileOrdersScreen() {
                     Recusar
                   </button>
                   <button type="button" onClick={() => accept(o)} style={{ flex: 1, minHeight: 46, background: "var(--brandSoft)", color: "var(--brandText)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
-                    <i className="fa-solid fa-circle-check" style={{ fontSize: 14 }} />
+                    <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-sm)" }} />
                     Aceitar pedido
                   </button>
                 </div>
@@ -277,13 +277,13 @@ export default function MobileOrdersScreen() {
                   onClick={() => advance(o)}
                   style={{ minHeight: 46, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                 >
-                  <i className="fa-solid fa-arrow-right" style={{ fontSize: 13 }} />
+                  <i className="fa-solid fa-arrow-right" style={{ fontSize: "var(--icon-sm)" }} />
                   {nextLabel}
                 </button>
               )}
               {isDone && (
                 <div style={{ minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, border: "1px dashed var(--line2)", borderRadius: 11, color: "var(--ok)", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
-                  <i className="fa-solid fa-circle-check" style={{ fontSize: 13 }} />
+                  <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-sm)" }} />
                   Pedido concluído há {min} min
                 </div>
               )}

@@ -38,7 +38,7 @@ export function MobileChip({
       }}
     >
       {dot && <span style={{ width: 8, height: 8, borderRadius: "50%", background: dot }} />}
-      {icon && <i className={`fa-solid ${icon}`} style={{ fontSize: 12 }} />}
+      {icon && <i className={`fa-solid ${icon}`} style={{ fontSize: "var(--icon-sm)" }} />}
       {children}
     </button>
   );

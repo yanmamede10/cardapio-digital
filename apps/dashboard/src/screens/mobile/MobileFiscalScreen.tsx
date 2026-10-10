@@ -33,7 +33,7 @@ export default function MobileFiscalScreen() {
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 10, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 12, padding: 12 }}>
-        <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: "var(--ink3)", marginTop: 2 }} />
+        <i className="fa-solid fa-circle-info" style={{ fontSize: "var(--icon-sm)", color: "var(--ink3)", marginTop: 2 }} />
         <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", textWrap: "pretty" }}>Estes dados serão usados pelo módulo de emissão de nota fiscal, ainda em desenvolvimento.</div>
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
