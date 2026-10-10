@@ -224,7 +224,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
   const coverSrc = coverUpload?.localUrl ?? draft.coverPhotos[0];
 
   const PagePreview = ({ big }: { big: boolean }) => (
-    <div style={{ borderRadius: big ? 22 : 18, overflow: "hidden", background: "#FFFDF1", color: "#1B1915", boxShadow: "var(--shadow1)" }}>
+    <div style={{ borderRadius: big ? 22 : 18, overflow: "hidden", background: "#FFFDF1", color: "#1B1915", boxShadow: "var(--shadow2)" }}>
       {big && (
         <div style={{ position: "relative", height: 150, background: coverSrc ? `url(${coverSrc}) center/cover` : "repeating-linear-gradient(135deg,#F2EEDD,#F2EEDD 6px,#E9E4CF 6px,#E9E4CF 12px)", display: "flex", alignItems: "center", justifyContent: "center", color: "#67645D" }}>
           {!coverSrc && <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />}
@@ -436,7 +436,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
             <div style={{ width: 124, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ position: "relative", width: 124, height: 124, borderRadius: 26, border: "1px solid var(--line2)", overflow: "hidden" }}>
                 <img src={draft.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <button type="button" onClick={removeLogo} title="Remover" aria-label="Remover logo" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 26, height: 26, background: "var(--surface)", boxShadow: "var(--shadow1)" }}>
+                <button type="button" onClick={removeLogo} title="Remover" aria-label="Remover logo" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 26, height: 26, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
                   <i className="fa-solid fa-xmark" style={{ fontSize: 14 }} />
                 </button>
               </div>
@@ -453,7 +453,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               <div key={url} style={{ position: "relative", aspectRatio: "16/10", borderRadius: 16, border: "1px solid var(--line2)", overflow: "hidden" }}>
                 <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 {i === 0 && <span style={{ position: "absolute", left: 8, top: 8, fontSize: 10, fontWeight: 600, borderRadius: 999, padding: "3px 9px", background: "var(--brand)", color: "var(--brandInk)" }}>Capa principal</span>}
-                <button type="button" onClick={() => removeCover(url)} title="Remover" aria-label="Remover foto de capa" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, background: "var(--surface)", boxShadow: "var(--shadow1)" }}>
+                <button type="button" onClick={() => removeCover(url)} title="Remover" aria-label="Remover foto de capa" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
                   <i className="fa-solid fa-xmark" style={{ fontSize: 13 }} />
                 </button>
               </div>

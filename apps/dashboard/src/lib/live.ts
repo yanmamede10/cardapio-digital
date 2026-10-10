@@ -105,7 +105,7 @@ export function buildNotifs(data: Pick<LiveData, "orders" | "calls" | "tickets">
   if (unreadTicketCount > 0) {
     notifs.push({
       icon: "fa-comment-dots",
-      color: "var(--sec)",
+      color: "var(--secText)",
       title: `${unreadTicketCount} ${unreadTicketCount === 1 ? "mensagem não lida" : "mensagens não lidas"}`,
       sub: "Responda em Atendimento",
       time: "agora"

@@ -1,40 +1,89 @@
+/* The dashboard's design tokens (UI-01, item 12) — the one place for colors, type, spacing, radii, elevation and motion.
+   Swiss + minimalism, "nativo refinado": hierarchy by type and spacing, not by boxes and borders; the brand color only on
+   actions, selection and alerts; --sec is decorative only (never text on a light background: 2.2:1). Every text token reads
+   4.5:1 or more on --bg, --surface, --surface2 and --surface3 in both themes (tests/api/tokens.test.ts). */
 :root {
   color-scheme: light;
-  --bg: #FCF7D3;
-  --surface: #FFFDF1;
-  --surface2: #F2EEDD;
-  --surface3: #E9E4CF;
-  --line: #E0D9BF;
-  --line2: #CFC7A9;
-  --ink: #1B1915;
-  --ink2: #55524A;
-  --ink3: #67645D; /* UX-03: 4.6:1 on every surface (it was #87837A, 3.0:1) */
+  /* Color — light */
+  --bg: #FAF7F2; /* warm off-white (was the cream #FCF7D3) */
+  --surface: #FFFFFF;
+  --surface2: #F2EEE6; /* secondary surface, a step darker than the background */
+  --surface3: #E9E4DA; /* locked fields, pressed states */
+  --line: #E4DED3; /* hairline separators */
+  --line2: #D3CCBF;
+  --ink: #0B0C0D; /* main text, near #020304 */
+  --ink2: #626266; /* secondary text: 4.8:1 on --surface3, 6.1:1 on --surface */
+  --ink3: #626266; /* tertiary: as dark as the secondary — lighter would drop under 4.5:1; it differs by size and weight */
   --brand: #732009;
   --brandText: #732009;
-  --brandInk: #FCF7D3;
-  --brandSoft: #F0E3D2;
-  --sec: #CD8C52;
-  --secText: #7A5330; /* sec as text: 6.3:1 on the background, 4.7:1 on its own 16% tint over --surface3 (sec itself is 2.2:1) */
+  --brandInk: #FFFFFF; /* text on --brand: 11:1 */
+  --brandSoft: #F5E9E5; /* selection */
+  --sec: #CD8C52; /* accent, decorative only */
+  --secText: #7A5330; /* the accent as text: 5.3:1 on --surface3 */
   --neutral: #626266;
   --ok: #3F6B4A;
-  --warn: #775214; /* 4.6:1 as text, also on its own 18% tint (status pills); was #A5711C */
+  --warn: #775214; /* 4.6:1 as text, also on its own 18% tint (status pills) */
   --alert: #9E2A10;
   /* Text on --alert (badges, the voice-note send button): white here, 7.5:1. */
   --alertInk: #FFFFFF;
 
-  --glassBg: rgba(255, 253, 241, .72);
-  --glassBd: rgba(207, 199, 169, .55);
-  --blur: saturate(180%) blur(22px);
-  --shadow1: 0 1px 2px rgba(67, 48, 20, .05), 0 10px 26px rgba(67, 48, 20, .07);
-  --shadow2: 0 2px 6px rgba(67, 48, 20, .06), 0 28px 70px rgba(67, 48, 20, .16);
+  /* Glass: only what floats (search bar, sheets' header, menus, the phone's tab bar) — base.css .glass, with a solid fallback. */
+  --glassBg: rgba(255, 255, 255, .72);
+  --glassBd: rgba(11, 12, 13, .07);
+  --blur: saturate(160%) blur(20px);
 
+  /* Elevation: a shadow only on layers that float (sheets, menus, tooltips, toasts). Cards sit flat on the background. */
+  --shadow-float: 0 1px 2px rgba(11, 12, 13, .06), 0 12px 32px rgba(11, 12, 13, .12);
+  --shadow1: none; /* was the cards' shadow */
+  --shadow2: var(--shadow-float);
+
+  /* Type: the system font; a scale in rem with the HIG's names (1rem = 16px). Money and quantities: .num (tabular-nums). */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Roboto Mono", monospace;
-  --ease-spring: cubic-bezier(.32, .72, 0, 1);
+  --text-caption: .6875rem; /* 11px */
+  --text-footnote: .75rem; /* 12px */
+  --text-subheadline: .8125rem; /* 13px */
+  --text-body: .875rem; /* 14px */
+  --text-headline: .9375rem; /* 15px, semibold */
+  --text-title3: 1.125rem; /* 18px */
+  --text-title2: 1.375rem; /* 22px: screen titles */
+  --text-title1: 1.75rem; /* 28px */
+  --text-largeTitle: 2.125rem; /* 34px */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Icons: one style (Font Awesome solid), three sizes. */
+  --icon-sm: 1rem; /* 16px */
+  --icon-md: 1.25rem; /* 20px */
+  --icon-lg: 1.5rem; /* 24px */
+
+  /* Spacing (px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radii */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-sheet: 16px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur: 200ms;
+  --dur-slow: 250ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: var(--ease); /* the old name */
 }
 
 .dark {
   color-scheme: dark;
+  /* Color — dark: the same palette (background #020304), surfaces in layers */
   --bg: #020304;
   --surface: #0D0F10;
   --surface2: #151719;
@@ -43,23 +92,22 @@
   --line2: #33373A;
   --ink: #F2EFE4;
   --ink2: #A9A59B;
-  --ink3: #8B8984; /* 4.6:1 on every surface (was #726F69) */
+  --ink3: #8B8984; /* 4.6:1 on every surface */
   --brand: #732009;
-  --brandText: #D88852; /* 4.8:1 on the "Novo" chip and every dark surface (was #C9743F, 3.8:1 on the chip) */
+  --brandText: #D88852; /* 4.8:1 on the "Novo" chip and every dark surface */
   --brandInk: #FCF7D3;
   --brandSoft: #1F1510;
   --sec: #968576;
-  --secText: #A89785; /* 4.7:1 on its own 16% tint over every dark surface (the "Saída" pill was 4.47:1) */
+  --secText: #A89785; /* 4.7:1 on its own 16% tint over every dark surface */
   --neutral: #88888B;
   --ok: #6E9B78;
   --warn: #C79B4A;
-  --alert: #CE6E54; /* 4.6:1 (was #C7583A); sec and neutral nudged for the same reason */
+  --alert: #CE6E54;
   /* White on this --alert is 3.5:1: text on it is the dark background, 5.5:1. */
   --alertInk: #020304;
 
-  --glassBg: rgba(13, 15, 16, .68);
+  --glassBg: rgba(13, 15, 16, .72);
   --glassBd: rgba(255, 255, 255, .08);
-  --blur: saturate(170%) blur(22px);
-  --shadow1: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 26px rgba(0, 0, 0, .35);
-  --shadow2: 0 2px 8px rgba(0, 0, 0, .5), 0 28px 70px rgba(0, 0, 0, .55);
+  --blur: saturate(150%) blur(20px);
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, .5), 0 12px 32px rgba(0, 0, 0, .55);
 }
