@@ -91,7 +91,7 @@ export default function AdminScreen() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <Logo size={34} />
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>{notFound ? "Página não encontrada" : billing ? "Mensalidades" : "Restaurantes"}</h1>
+            <h1 style={{ margin: 0, fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.015em" }}>{notFound ? "Página não encontrada" : billing ? "Mensalidades" : "Restaurantes"}</h1>
             <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
               {PLATFORM_NAME} · Plataforma
             </div>
@@ -102,7 +102,7 @@ export default function AdminScreen() {
                 ["/admin", "Restaurantes"],
                 ["/admin/mensalidades", "Mensalidades"]
               ].map(([to, label]) => (
-                <NavLink key={to} to={to} end={to === "/admin"} className={({ isActive }) => (isActive ? "btn btn-primary" : "btn btn-outline")}>
+                <NavLink key={to} to={to} end={to === "/admin"} className="btn btn-outline" style={({ isActive }) => (isActive ? { background: "var(--brandSoft)", color: "var(--brandText)" } : undefined)}>
                   {label}
                 </NavLink>
               ))}
@@ -296,8 +296,9 @@ function RestaurantList({ call }: { call: AdminCall }) {
               </div>
               <button
                 type="button"
-                className={r.status === "ativo" ? "btn btn-outline" : "btn btn-primary"}
-                style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)" }}
+                className="btn btn-outline"
+                // A row action is tinted, never filled: the brand fill is the screen's one main action (Novo restaurante).
+                style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)", ...(r.status === "ativo" ? {} : { background: "var(--brandSoft)", color: "var(--brandText)" }) }}
                 onClick={() => setStatus(r, r.status === "ativo" ? "inativo" : "ativo")}
               >
                 {r.status === "ativo" ? "Desativar" : "Ativar"}

@@ -11,9 +11,9 @@ export default defineConfig({
   // timezoneId: same "today" as the API (São Paulo) whatever the machine's zone — CI runs in UTC.
   use: { baseURL: "http://localhost:5274", channel: "chrome", timezoneId: "America/Sao_Paulo", screenshot: "only-on-failure", trace: "retain-on-failure" },
   projects: [
-    { name: "desktop", testMatch: /(desktop|fluxo-critico|varredura|dialogos|caddy|checklist|nao-encontrada)\.spec\.ts/, use: { viewport: { width: 1366, height: 820 } } },
+    { name: "desktop", testMatch: /(desktop|fluxo-critico|varredura|dialogos|caddy|checklist|nao-encontrada|ui)\.spec\.ts/, use: { viewport: { width: 1366, height: 820 } } },
     { name: "tablet", testMatch: /varredura\.spec\.ts/, use: { viewport: { width: 1280, height: 800 }, hasTouch: true } },
-    { name: "mobile", testMatch: /(mobile|varredura|dialogos|checklist|nao-encontrada)\.spec\.ts/, use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, ...touch } }
+    { name: "mobile", testMatch: /(mobile|varredura|dialogos|checklist|nao-encontrada|ui)\.spec\.ts/, use: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, ...touch } }
   ],
   webServer: [
     {

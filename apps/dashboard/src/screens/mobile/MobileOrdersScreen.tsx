@@ -195,7 +195,7 @@ export default function MobileOrdersScreen() {
                       <div className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: min >= 5 ? "var(--alert)" : "var(--warn)" }}>
                         {min} min
                       </div>
-                      <button type="button" onClick={() => resolveCall(c)} style={{ minHeight: 34, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 9, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 600 }}>
+                      <button type="button" onClick={() => resolveCall(c)} style={{ minHeight: 34, background: "var(--brandSoft)", color: "var(--brandText)", border: 0, borderRadius: 9, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 600 }}>
                         Atender
                       </button>
                     </div>
@@ -265,7 +265,7 @@ export default function MobileOrdersScreen() {
                   <button type="button" onClick={() => reject(o)} style={{ flex: "0 0 38%", minHeight: 46, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
                     Recusar
                   </button>
-                  <button type="button" onClick={() => accept(o)} style={{ flex: 1, minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                  <button type="button" onClick={() => accept(o)} style={{ flex: 1, minHeight: 46, background: "var(--brandSoft)", color: "var(--brandText)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                     <i className="fa-solid fa-circle-check" style={{ fontSize: 14 }} />
                     Aceitar pedido
                   </button>

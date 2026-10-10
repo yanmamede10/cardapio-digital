@@ -35,17 +35,19 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
         borderBottom: "1px solid var(--glassBd)"
       }}
     >
+      {/* UI-01 · 14: the screen's name is the title (title2); the restaurant and what the screen is for, a line below. */}
       <div style={{ minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <h1 style={{ margin: 0, fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {restaurantName}
-          </h1>
-          <span className="pill" style={{ color: "var(--ok)", background: "var(--surface2)", border: "1px solid var(--line)" }}>
+        <h1 style={{ margin: 0, fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.015em", lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {screen}
+        </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-footnote)", color: "var(--ink2)", whiteSpace: "nowrap" }}>
+          <span data-restaurant style={{ fontWeight: 500, color: "var(--ink)" }}>{restaurantName}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--ok)" }}>
             <span className="dot" style={{ background: "var(--ok)" }} />
             Aberto
           </span>
+          {tagline && <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>· {tagline}</span>}
         </div>
-        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{tagline}</div>
       </div>
       <div style={{ flex: 1 }} />
       <div style={{ position: "relative" }}>
@@ -54,7 +56,8 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
           onClick={() => setNotifOpen((v) => !v)}
           title="Notificações"
           aria-label={notifCount > 0 ? `Notificações — ${notifCount} novas` : "Notificações"}
-          style={{ position: "relative", width: 44, height: 44, borderRadius: 13, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          className="icon-btn"
+          style={{ position: "relative" }}
         >
           <i className="fa-solid fa-bell" style={{ fontSize: 20, lineHeight: 1 }} />
           {notifCount > 0 && (

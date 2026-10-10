@@ -150,13 +150,15 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
               type="button"
               onClick={() => back() || navigate(-1)}
               aria-label="Voltar"
-              style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              className="icon-btn"
+              style={{ flex: "0 0 44px", color: "var(--brandText)" }}
             >
               <i className="fa-solid fa-chevron-left" style={{ fontSize: 16 }} />
             </button>
           )}
+          {/* UI-01 · 14: the screen's name is the title, in title2. */}
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{screen}</div>
+            <h1 style={{ margin: 0, fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.015em", lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{screen}</h1>
             <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
           </div>
           <button
@@ -164,7 +166,8 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
             onClick={() => setNotifOpen((v) => !v)}
             aria-label={notifCount ? `Notificações: ${notifCount} novas` : "Notificações"}
             aria-expanded={notifOpen}
-            style={{ position: "relative", width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            className="icon-btn"
+            style={{ position: "relative", flex: "0 0 44px" }}
           >
             <i className="fa-solid fa-bell" style={{ fontSize: 16 }} />
             {notifCount > 0 && (

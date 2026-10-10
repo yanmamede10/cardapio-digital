@@ -42,26 +42,28 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .skeleton {
   background: var(--surface2);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-card);
   animation: sk 1.4s ease-in-out infinite;
 }
 
+/* UI-01 · 14: hierarchy by type and space, not boxes — a card is a white surface on the warm background, no border, no
+   shadow (the border stays transparent so nothing moves). Inside a sheet (white on white) a hairline still groups it. */
 .card {
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: var(--shadow1);
+  border: 1px solid transparent;
+  border-radius: var(--radius-card);
+  box-shadow: none;
 }
+.modal-panel .card, .drawer-panel .card { border-color: var(--line); }
 
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   padding: 2px 9px;
   font-size: var(--text-footnote);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .btn {
@@ -70,7 +72,7 @@ button { -webkit-tap-highlight-color: transparent; }
   justify-content: center;
   gap: 7px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   padding: 10px 16px;
   cursor: pointer;
   font: inherit;
@@ -83,25 +85,20 @@ button { -webkit-tap-highlight-color: transparent; }
 .btn-primary { background: var(--brand); color: var(--brandInk); }
 .btn-primary:hover { background: color-mix(in srgb, var(--brand) 82%, #000); } /* was --sec: 2.6:1 under the light text */
 .btn:disabled { opacity: .55; cursor: not-allowed; }
-.btn-outline {
-  background: var(--surface);
-  border: 1px solid var(--line2);
-  color: var(--ink);
-}
-.btn-outline:hover { border-color: var(--brandText); color: var(--brandText); }
-.btn-ghost {
+/* Secondary buttons: a gray tint, no outline (HIG "gray" buttons); the brand fill is for the one main action. */
+.btn-outline, .btn-ghost {
   background: var(--surface2);
-  border: 1px solid var(--line2);
+  border: 1px solid transparent;
   color: var(--ink);
 }
-.btn-ghost:hover { border-color: var(--brandText); color: var(--brandText); }
+.btn-outline:hover, .btn-ghost:hover { color: var(--brandText); background: var(--surface3); }
 
 .icon-btn {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  background: var(--surface2);
-  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--ink2);
   cursor: pointer;
   display: flex;
@@ -109,13 +106,13 @@ button { -webkit-tap-highlight-color: transparent; }
   justify-content: center;
   transition: transform .12s var(--ease-spring), border-color .12s var(--ease-spring), color .12s var(--ease-spring);
 }
-.icon-btn:hover { color: var(--brandText); border-color: var(--brand); }
+.icon-btn:hover { color: var(--brandText); background: var(--surface2); }
 .icon-btn:active { transform: scale(.97); }
 
 .field {
   border: 1px solid var(--line);
   background: var(--surface2);
-  border-radius: 13px;
+  border-radius: var(--radius-control);
   padding: 11px 14px;
   font: inherit;
   font-size: var(--text-body);
@@ -128,11 +125,11 @@ button { -webkit-tap-highlight-color: transparent; }
 textarea.field { resize: vertical; }
 
 .field-label {
-  font-family: var(--mono);
-  font-size: var(--text-caption);
-  letter-spacing: .09em;
+  font-size: var(--text-footnote);
+  font-weight: 500;
+  letter-spacing: .02em;
   text-transform: uppercase;
-  color: var(--ink3);
+  color: var(--ink2);
 }
 
 /** Touch-sized field for the mobile shell — fixed min-height instead of .field's padding-based sizing. */
@@ -140,7 +137,7 @@ textarea.field { resize: vertical; }
   min-height: 46px;
   border: 1px solid var(--line);
   background: var(--surface2);
-  border-radius: 11px;
+  border-radius: var(--radius-control);
   padding: 0 12px;
   font: inherit;
   font-size: var(--text-body);
@@ -212,8 +209,8 @@ textarea.field-mobile {
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--glassBd);
-  border-radius: 26px;
-  box-shadow: var(--shadow2);
+  border-radius: var(--radius-sheet);
+  box-shadow: var(--shadow-float);
   overflow: hidden;
   animation: dcScaleIn .36s var(--ease-spring) both;
 }
@@ -229,7 +226,7 @@ textarea.field-mobile {
   gap: 10px;
   background: var(--ink);
   color: var(--bg);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   padding: 14px 20px;
   font-size: var(--text-subheadline);
   font-weight: 500;
@@ -255,13 +252,13 @@ textarea.field-mobile {
 /* UX-07 · 3: the cadastro as a sheet — 720 px (reading width) up to 28 px from the top; its header and footer stay, the
    middle scrolls. On the phone, the whole screen. */
 .drawer-overlay.sheet { justify-content: center; align-items: flex-end; }
-.drawer-panel.sheet { width: 720px; height: calc(100dvh - 28px); overflow: hidden; border: 1px solid var(--glassBd); border-bottom: 0; border-radius: 26px 26px 0 0; box-shadow: var(--shadow2); }
+.drawer-panel.sheet { width: 720px; height: calc(100dvh - 28px); overflow: hidden; border: 1px solid var(--glassBd); border-bottom: 0; border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; box-shadow: var(--shadow-float); }
 
 /* Mobile shell: the desktop modals it reuses (lançamento, quitar, adicionar prato) open as bottom sheets,
    and the full-width slide-over (cadastro de produto) clears the status bar. */
 @media (max-width: 767px) {
   .modal-overlay { padding: 0; align-items: flex-end; }
-  .modal-panel { border-radius: 22px 22px 0 0; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .modal-panel { border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
   .drawer-panel { padding-top: env(safe-area-inset-top, 0px); }
   .drawer-panel.sheet { height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
   .dialog-actions { flex-direction: column-reverse; padding: 12px 16px 16px; }

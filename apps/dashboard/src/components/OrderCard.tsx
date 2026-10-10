@@ -19,7 +19,7 @@ export function orderSubtitle(o: Order): string {
 export function InHouseTag({ order }: { order: Order }) {
   if (!order.waiterName) return null;
   return (
-    <span style={{ alignSelf: "flex-start", fontSize: "var(--text-caption)", fontWeight: 700, letterSpacing: ".02em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 999, padding: "2px 8px", color: "var(--secText)", border: "1px solid var(--secText)" }}>
+    <span style={{ alignSelf: "flex-start", fontSize: "var(--text-caption)", fontWeight: 600, letterSpacing: ".02em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 999, padding: "2px 8px", color: "var(--secText)", border: "1px solid var(--secText)" }}>
       Lançado no estabelecimento
     </span>
   );
@@ -31,11 +31,11 @@ export function AwaitingTag({ order }: { order: Order }) {
   if (order.status !== "awaiting") return null;
   return (
     <div style={{ borderRadius: 10, padding: "8px 11px", border: "1px solid var(--warn)", background: "color-mix(in srgb, var(--warn) 12%, transparent)", color: "var(--ink)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", fontWeight: 700 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
         <i className="fa-solid fa-hourglass-half" aria-hidden="true" style={{ fontSize: 13, color: "var(--warn)" }} />
         Aguardando aceite
       </div>
-      <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1.2 }}>Mesa {String(order.tableNumber ?? 0).padStart(2, "0")}</div>
+      <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.02em", lineHeight: 1.2 }}>Mesa {String(order.tableNumber ?? 0).padStart(2, "0")}</div>
     </div>
   );
 }
@@ -44,7 +44,7 @@ export function AwaitingTag({ order }: { order: Order }) {
 export function TakeawayTag({ order }: { order: Order }) {
   if (!order.takeaway) return null;
   return (
-    <span style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 8, padding: "3px 9px", background: "var(--ink)", color: "var(--bg)" }}>
+    <span style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", whiteSpace: "nowrap", borderRadius: 8, padding: "3px 9px", background: "var(--ink)", color: "var(--bg)" }}>
       <i className="fa-solid fa-bag-shopping" aria-hidden="true" style={{ fontSize: 11 }} />
       Para levar
     </span>

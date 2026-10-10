@@ -136,7 +136,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
               </span>
               <span className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>{brl(item.price)}</span>
               {n > 0 && (
-                <span className="mono" aria-label={`${n} no pedido`} style={{ minWidth: 26, height: 26, borderRadius: 999, background: "var(--brand)", color: "var(--brandInk)", display: "grid", placeItems: "center", fontSize: "var(--text-footnote)", fontWeight: 700 }}>
+                <span className="mono" aria-label={`${n} no pedido`} style={{ minWidth: 26, height: 26, borderRadius: 999, background: "var(--brand)", color: "var(--brandInk)", display: "grid", placeItems: "center", fontSize: "var(--text-footnote)", fontWeight: 600 }}>
                   {n}
                 </span>
               )}

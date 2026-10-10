@@ -50,10 +50,8 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
           width: 320,
           maxWidth: "calc(100vw - 32px)",
           background: "var(--surface)",
-          border: "1px solid var(--line)",
-          borderRadius: 16,
-          padding: 28,
-          boxShadow: "var(--shadow1)"
+          borderRadius: "var(--radius-sheet)",
+          padding: 28
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>

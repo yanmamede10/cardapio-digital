@@ -28,7 +28,7 @@ export function Layout({ notFound }: { notFound: boolean }) {
     <div style={{ display: "flex", minHeight: "100vh", width: "100%", background: "var(--bg)", color: "var(--ink)" }}>
       <Sidebar badges={badges} current={current} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <Header screen={current?.label ?? "Página não encontrada"} tagline={current?.tagline ?? "Página não encontrada"} notifs={notifs} />
+        <Header screen={current?.label ?? "Página não encontrada"} tagline={current?.tagline ?? ""} notifs={notifs} />
         <main style={{ flex: 1, minWidth: 0, padding: "20px 22px 28px" }}>
           <Outlet context={ctx} />
         </main>

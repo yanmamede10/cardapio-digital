@@ -421,7 +421,8 @@ function KanbanCardBody({
       </div>
       {o.status === "pending" || o.status === "awaiting" ? (
         <div style={{ display: "flex", gap: 7 }}>
-          <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={onAccept}>
+          {/* A card's action is tinted, never filled: the brand fill is the screen's one main action (L-14). */}
+          <button type="button" className="btn btn-outline" style={{ flex: 1, background: "var(--brandSoft)", color: "var(--brandText)" }} onClick={onAccept}>
             Aceitar
           </button>
           <button

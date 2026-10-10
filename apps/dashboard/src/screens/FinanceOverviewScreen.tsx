@@ -103,8 +103,7 @@ export default function FinanceOverviewScreen() {
               display: "flex",
               flexDirection: "column",
               gap: 6,
-              background: k.alert ? "color-mix(in srgb, var(--alert) 8%, var(--surface))" : undefined,
-              borderColor: k.alert ? "color-mix(in srgb, var(--alert) 45%, transparent)" : undefined
+              background: k.alert ? "color-mix(in srgb, var(--alert) 8%, var(--surface))" : undefined
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-subheadline)", fontWeight: 500, color: k.alert ? "var(--alert)" : "var(--ink2)" }}>

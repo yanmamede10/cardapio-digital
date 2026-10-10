@@ -16,7 +16,7 @@ export function Segmented<T extends string>({
 }) {
   return (
     // Narrower than its options (the Super Admin's four filters at 360 px): it scrolls inside instead of widening the page.
-    <div className="no-scrollbar" style={{ display: "inline-flex", maxWidth: "100%", overflowX: "auto", gap: 3, padding: 3, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 14 }}>
+    <div className="no-scrollbar" style={{ display: "inline-flex", maxWidth: "100%", overflowX: "auto", gap: 3, padding: 3, background: "var(--surface2)", borderRadius: 12 }}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -68,8 +68,8 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
         fontSize: "var(--text-subheadline)",
         fontWeight: active ? 600 : 500,
         whiteSpace: "nowrap",
-        background: active ? "var(--brandSoft)" : "var(--surface)",
-        border: `1px solid ${active ? "var(--brand)" : "var(--line)"}`,
+        background: active ? "var(--brandSoft)" : "var(--surface2)",
+        border: "1px solid transparent",
         color: active ? "var(--brandText)" : "var(--ink2)"
       }}
     >
