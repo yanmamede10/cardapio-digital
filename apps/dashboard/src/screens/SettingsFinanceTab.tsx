@@ -195,7 +195,7 @@ export default function PaymentSubaccountTab() {
                   <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>{doc.sizeLabel} · enviado agora</div>
                 </div>
                 <i className="fa-solid fa-circle-check" style={{ fontSize: "var(--icon-md)", lineHeight: 1, color: "var(--ok)" }} />
-                <button type="button" className="icon-btn" title="Remover" aria-label="Remover documento" onClick={() => setDoc(emptyDoc)}>
+                <button type="button" className="icon-btn" aria-label="Remover documento" onClick={() => setDoc(emptyDoc)}>
                   <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                 </button>
               </div>

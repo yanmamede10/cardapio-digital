@@ -280,6 +280,7 @@ export default function MobileTableDetailScreen() {
           {CLOSE_BILL_ROLES.includes(getSession()?.role as StaffRole) && (
             <button
               type="button"
+              data-tip="Fechar conta: encerra a comanda e lança em Contas a Receber"
               onClick={() => setPayOpen(true)}
               style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
             >

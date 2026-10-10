@@ -367,7 +367,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 <button
                   key={s.hex}
                   type="button"
-                  title={s.label}
+                  aria-label={s.label}
                   onClick={() => patchDraft({ brandColor: s.hex })}
                   className="tap"
                   style={{ width: 38, height: 38, borderRadius: 999, cursor: "pointer", border: "1px solid var(--line2)", background: s.hex, boxShadow: sel ? "0 0 0 3px var(--surface), 0 0 0 5px var(--ink)" : "none" }}
@@ -436,7 +436,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
             <div style={{ width: 124, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ position: "relative", width: 124, height: 124, borderRadius: 26, border: "1px solid var(--line2)", overflow: "hidden" }}>
                 <img src={draft.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <button type="button" onClick={removeLogo} title="Remover" aria-label="Remover logo" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 26, height: 26, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
+                <button type="button" onClick={removeLogo} aria-label="Remover logo" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 26, height: 26, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
                   <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                 </button>
               </div>
@@ -453,7 +453,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               <div key={url} style={{ position: "relative", aspectRatio: "16/10", borderRadius: 16, border: "1px solid var(--line2)", overflow: "hidden" }}>
                 <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 {i === 0 && <span style={{ position: "absolute", left: 8, top: 8, fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 999, padding: "3px 9px", background: "var(--brand)", color: "var(--brandInk)" }}>Capa principal</span>}
-                <button type="button" onClick={() => removeCover(url)} title="Remover" aria-label="Remover foto de capa" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
+                <button type="button" onClick={() => removeCover(url)} aria-label="Remover foto de capa" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
                   <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
                 </button>
               </div>
@@ -488,7 +488,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                 {published ? "Publicado" : "Rascunho"}
               </span>
-              <button type="button" className="icon-btn" onClick={() => setPreviewOpen(false)} title="Fechar" aria-label="Fechar">
+              <button type="button" className="icon-btn" onClick={() => setPreviewOpen(false)} aria-label="Fechar">
                 <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-md)" }} />
               </button>
             </div>

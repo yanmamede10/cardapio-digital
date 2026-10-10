@@ -42,7 +42,7 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
       <>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "20px 24px 4px" }}>
           <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>Adicionar prato ao cardápio</div>
-          <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
+          <button type="button" className="icon-btn" aria-label="Fechar" onClick={close}>
             <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
         </div>

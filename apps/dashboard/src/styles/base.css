@@ -351,6 +351,10 @@ textarea.field-mobile {
 /* input-clear-with-dissolve: the typed text blurs away before the field empties (ClearSearch waits --dur) */
 @keyframes dissolve { from { text-shadow: 0 0 0 var(--ink); } to { color: transparent; text-shadow: 0 0 10px transparent; } }
 .dissolve { animation: dissolve var(--dur) var(--ease) forwards; }
+/* tooltip-open-close (UI-01 · 18, components/Tooltip.tsx): comes in late (the delay is the layer's) with a small rise toward
+   its button, leaves at once (it unmounts). Inverted colors, 4.5:1 and more in both themes. */
+@keyframes tipIn { from { opacity: 0; transform: translateY(var(--tip-from, 4px)); } }
+.tooltip { position: fixed; z-index: 60; max-width: 260px; padding: 6px 10px; border-radius: var(--radius-control); background: var(--ink); color: var(--bg); font-size: var(--text-footnote); line-height: 1.35; pointer-events: none; box-shadow: var(--shadow-float); animation: tipIn var(--dur-fast) var(--ease) backwards; }
 /* tabs-sliding: Segmented's thumb slides to the chosen option */
 .seg-thumb { transition: transform var(--dur) var(--ease), width var(--dur) var(--ease); }
 

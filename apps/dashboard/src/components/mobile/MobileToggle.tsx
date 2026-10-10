@@ -1,5 +1,5 @@
 /** A 48×28 switch (availability, hours, coupons) inside a 52×44 touch target, announced as a switch with its label. */
-export function MobileToggle({ on, onClick, title, label }: { on: boolean; onClick: () => void; title?: string; label: string }) {
+export function MobileToggle({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
   return (
     <button
       type="button"
@@ -7,7 +7,6 @@ export function MobileToggle({ on, onClick, title, label }: { on: boolean; onCli
       aria-checked={on}
       aria-label={label}
       onClick={onClick}
-      title={title}
       style={{ width: 52, height: 44, border: 0, background: "transparent", cursor: "pointer", padding: 0, flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}
     >
       <span

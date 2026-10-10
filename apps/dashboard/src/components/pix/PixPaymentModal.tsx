@@ -122,7 +122,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
             <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>Pagamento PIX</div>
             <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{title}{itemsLabel ? ` · ${itemsLabel}` : ""}</div>
           </div>
-          <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar">
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Fechar">
             <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-md)" }} />
           </button>
         </div>

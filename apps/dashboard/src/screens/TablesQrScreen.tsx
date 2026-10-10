@@ -121,7 +121,7 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
           </button>
         )}
         {only != null && codes[only] && canRegenerate && (
-          <button type="button" className="btn btn-outline" style={{ color: "var(--alert)" }} onClick={() => regenerate(only)}>
+          <button type="button" className="btn btn-outline" style={{ color: "var(--alert)" }} data-tip="Gerar novo QR: o QR impresso atual deixa de funcionar" onClick={() => regenerate(only)}>
             <i className="fa-solid fa-rotate" aria-hidden="true" style={{ fontSize: "var(--icon-sm)" }} />
             Gerar novo QR
           </button>

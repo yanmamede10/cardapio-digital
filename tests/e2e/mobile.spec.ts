@@ -164,7 +164,7 @@ test.describe("tema escuro", () => {
     await expect(panel).toBeVisible();
 
     // Above the + button (it used to sit on top of the sheet) …
-    const fab = await page.locator('button[title="Novo lançamento"]').boundingBox();
+    const fab = await page.locator('button[aria-label="Novo lançamento"]').boundingBox();
     const onTop = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest("[role=dialog]"), [fab!.x + fab!.width / 2, fab!.y + fab!.height / 2]);
     expect(onTop).toBe(true);
 

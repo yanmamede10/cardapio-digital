@@ -184,6 +184,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
             {notifCount > 0 && (
               <span
                 key={notifCount}
+                aria-hidden="true"
                 className="mono badge-pop"
                 style={{
                   position: "absolute",
@@ -210,7 +211,6 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
           <button
             type="button"
             onClick={() => navigate("/config/perfil")}
-            title={staffRole}
             aria-label={`Minha conta: ${staffName}, ${staffRole}`}
             style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}
           >
@@ -270,7 +270,6 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
           <button
             type="button"
             onClick={header.fab.onClick}
-            title={header.fab.label}
             aria-label={header.fab.label}
             style={{
               position: "fixed",

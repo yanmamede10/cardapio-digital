@@ -197,3 +197,68 @@ test("L-17 · transições: diálogo abre e fecha, menu, abas deslizando, ícone
   await page.getByRole("button", { name: "Novo lançamento" }).click();
   expect(await anim(page, ".modal-panel")).toBe("fadeIn 0.25s");
 });
+
+// L-18: the panel's one tooltip. A button with only an icon is named by its aria-label alone (no title: one source) and the
+// tooltip shows that name — on keyboard focus, on the mouse after a short delay, on a long press on the phone (whose tap then
+// doesn't press it); actions with a consequence explain it.
+test("L-18 · dicas: botão só com ícone tem aria-label e nenhum title; a dica abre no foco do teclado, no mouse e no toque longo; ação com consequência explica", async ({ page, request, api }, info) => {
+  test.setTimeout(120_000);
+  const mobile = info.project.name === "mobile";
+  const unnamed = (where: string) =>
+    page.evaluate(
+      (where) =>
+        [...document.querySelectorAll("button, a[href]")]
+          .filter((e) => e.getBoundingClientRect().width > 0 && !(e.textContent ?? "").trim())
+          .flatMap((e) => (!e.getAttribute("aria-label") || e.hasAttribute("title") ? [`${where}: ${e.outerHTML.slice(0, 100)}`] : [])),
+      where
+    );
+  await loginAs(page, request, "dono@chapa27.example");
+  const wrong: string[] = [];
+  for (const [name, path] of SCREENS) {
+    await open(page, path);
+    wrong.push(...(await unnamed(name)));
+  }
+  await asSuperAdmin(page);
+  await open(page, "/admin");
+  wrong.push(...(await unnamed("Super Admin")));
+  expect(wrong).toEqual([]);
+
+  // The bell with a count on it (a new order waiting at Fogo & Nó): the count is aria-hidden, so it's still an icon button.
+  const items = await api("GET", `/api/restaurants/${R}/items`);
+  const burger = items.find((i: { id: string }) => i.id === `${R}-burger`);
+  const { code } = await newTable(api);
+  const lines = [{ itemId: burger.id, quantity: 1, selectedOptions: [{ groupId: "ponto", optionId: "ponto-1" }] }];
+  const order = await api("POST", "/api/orders", { mode: "table", restaurantId: R, tableCode: code, lines });
+  try {
+    await loginAs(page, request, "marina@fogoeno.com.br");
+    await open(page, "/");
+    const bell = page.getByRole("button", { name: /^Notificações\W+\d+ nova/ });
+    const name = (await bell.getAttribute("aria-label"))!;
+    await page.keyboard.press("Tab"); // a keyboard user
+    await bell.focus();
+    await expect(page.getByRole("tooltip")).toHaveText(name);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
+    if (mobile) {
+      await bell.dispatchEvent("pointerdown", { pointerType: "touch", isPrimary: true });
+      await expect(page.getByRole("tooltip")).toHaveText(name);
+      await bell.dispatchEvent("pointerup", { pointerType: "touch", isPrimary: true });
+      await bell.dispatchEvent("click");
+      await expect(bell).toHaveAttribute("aria-expanded", "false"); // the long press was for reading
+      return;
+    }
+  } finally {
+    await api("POST", `/api/orders/${order.id}/reject`);
+  }
+  await loginAs(page, request, "dono@chapa27.example");
+  await open(page, "/");
+  await page.getByRole("button", { name: "Alternar tema" }).hover();
+  await expect(page.getByRole("tooltip")).toHaveText("Alternar tema");
+  // Gerar novo QR: what it does to the printed QR, read on focus too.
+  await page.goto("/mesas/qr?mesa=12");
+  const regenerate = page.getByRole("button", { name: "Gerar novo QR" });
+  await page.keyboard.press("Tab");
+  await regenerate.focus();
+  await expect(page.getByRole("tooltip")).toContainText("o QR impresso atual deixa de funcionar");
+  await expect(regenerate).toHaveAttribute("aria-describedby", await page.getByRole("tooltip").getAttribute("id"));
+});

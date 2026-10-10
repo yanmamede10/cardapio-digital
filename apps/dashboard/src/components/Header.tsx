@@ -52,7 +52,6 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
         <button
           type="button"
           onClick={() => setNotifOpen((v) => !v)}
-          title="Notificações"
           aria-label={notifCount > 0 ? `Notificações — ${notifCount} novas` : "Notificações"}
           className="icon-btn"
           style={{ position: "relative" }}
@@ -61,6 +60,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
           {notifCount > 0 && (
             <span
               key={notifCount}
+              aria-hidden="true"
               className="mono badge-pop"
               style={{
                 position: "absolute",

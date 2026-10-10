@@ -215,10 +215,10 @@ export default function PromotionsScreen() {
                   </span>
                 </button>
                 <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                  <button type="button" title="Duplicar" aria-label={`Duplicar cupom ${c.code}`} className="icon-btn" onClick={() => duplicate(c)}>
+                  <button type="button" aria-label={`Duplicar cupom ${c.code}`} className="icon-btn" onClick={() => duplicate(c)}>
                     <i className="fa-solid fa-copy" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                   </button>
-                  <button type="button" title="Excluir" aria-label={`Excluir cupom ${c.code}`} className="icon-btn" style={{ color: "var(--alert)" }} onClick={() => remove(c)}>
+                  <button type="button" aria-label={`Excluir cupom ${c.code}`} data-tip={`Excluir cupom ${c.code}: não dá para desfazer, e o código para de valer`} className="icon-btn" style={{ color: "var(--alert)" }} onClick={() => remove(c)}>
                     <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                   </button>
                 </div>

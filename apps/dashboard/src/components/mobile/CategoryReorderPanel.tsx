@@ -40,7 +40,7 @@ export function CategoryReorderPanel({
           <button type="button" aria-label={`Renomear categoria ${c.name}`} onClick={() => onRename(c)} style={square}>
             <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
-          <button type="button" aria-label={`Excluir categoria ${c.name}`} onClick={() => onDelete(c)} style={square}>
+          <button type="button" aria-label={`Excluir categoria ${c.name}`} data-tip={`Excluir categoria ${c.name}: se tiver itens, você escolhe para onde eles vão`} onClick={() => onDelete(c)} style={square}>
             <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
           </button>
           <button type="button" aria-label={`Subir ${c.name}`} onClick={() => onMove(c, "up")} style={square}>

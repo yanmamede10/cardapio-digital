@@ -124,7 +124,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
                         Quitar
                       </button>
                     )}
-                    <button type="button" className="icon-btn" title="Excluir" aria-label={`Excluir ${e.description}`} onClick={() => deleteEntry(e, notify, reload)}>
+                    <button type="button" className="icon-btn" aria-label={`Excluir ${e.description}`} data-tip={`Excluir ${e.description}: some também da Visão Geral e do DRE`} onClick={() => deleteEntry(e, notify, reload)}>
                       <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)" }} />
                     </button>
                   </div>

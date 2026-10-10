@@ -886,7 +886,6 @@ export function ProductForm({
                   </div>
                   <button
                     type="button"
-                    title="Remover"
                     aria-label="Remover componente"
                     onClick={() => set({ lines: draft.lines.filter((_, j) => j !== i) })}
                     style={{ width: 32, height: 32, borderRadius: 9, border: "1px solid var(--line)", background: "var(--surface)", color: "var(--ink2)", cursor: "pointer", display: "grid", placeItems: "center" }}

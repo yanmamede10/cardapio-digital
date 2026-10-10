@@ -461,7 +461,7 @@ export default function MenuScreen() {
                       value={x.price}
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, price: e.target.value } : y)) })}
                     />
-                    <button type="button" title="Remover adicional" aria-label="Remover adicional" className="icon-btn" onClick={() => setDrawer({ ...drawer, extras: drawer.extras.filter((_, j) => j !== i) })}>
+                    <button type="button" aria-label="Remover adicional" className="icon-btn" onClick={() => setDrawer({ ...drawer, extras: drawer.extras.filter((_, j) => j !== i) })}>
                       <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
                     </button>
                     <select
@@ -605,10 +605,10 @@ export function CategorySection({
         <div style={{ flex: 1 }} />
         {canEdit && !fixed && (
           <>
-            <button type="button" className="icon-btn" title="Renomear categoria" aria-label={`Renomear categoria ${cat.name}`} onClick={onRename}>
+            <button type="button" className="icon-btn" aria-label={`Renomear categoria ${cat.name}`} onClick={onRename}>
               <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             </button>
-            <button type="button" className="icon-btn" title="Excluir categoria" aria-label={`Excluir categoria ${cat.name}`} onClick={onDelete}>
+            <button type="button" className="icon-btn" aria-label={`Excluir categoria ${cat.name}`} data-tip={`Excluir categoria ${cat.name}: se tiver itens, você escolhe para onde eles vão`} onClick={onDelete}>
               <i className="fa-solid fa-trash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
             </button>
           </>
@@ -677,10 +677,10 @@ function ItemRow({ item: m, canEdit, onToggleAvailable, onUnlink, onEdit }: { it
         <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: m.soldOut ? "var(--ink3)" : "var(--ok)" }}>{m.soldOut ? "Esgotado" : "Disponível"}</span>
       </button>
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", visibility: canEdit ? undefined : "hidden" }}>
-        <button type="button" title="Remover do cardápio" aria-label={`Remover ${m.name} do cardápio`} className="icon-btn" onClick={onUnlink}>
+        <button type="button" aria-label={`Remover ${m.name} do cardápio`} className="icon-btn" onClick={onUnlink}>
           <i className="fa-solid fa-link-slash" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
-        <button type="button" title="Organizar prato" aria-label={`Organizar ${m.name}`} className="icon-btn" onClick={onEdit}>
+        <button type="button" aria-label={`Organizar ${m.name}`} className="icon-btn" onClick={onEdit}>
           <i className="fa-solid fa-pen" style={{ fontSize: "var(--icon-sm)", lineHeight: 1 }} />
         </button>
       </div>

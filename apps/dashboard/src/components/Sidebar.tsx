@@ -127,7 +127,6 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
         <button
           type="button"
           onClick={toggleTheme}
-          title="Alternar tema"
           aria-label="Alternar tema"
           className="btn-ghost"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minWidth: 44, minHeight: 44, borderRadius: 999, padding: "7px 12px", border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
@@ -137,7 +136,6 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
         <button
           type="button"
           onClick={logout}
-          title="Sair"
           aria-label="Sair"
           style={{ display: "flex", alignItems: "center", justifyContent: "center", minWidth: 44, minHeight: 44, borderRadius: 999, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}
         >

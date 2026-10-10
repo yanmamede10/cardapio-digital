@@ -383,6 +383,7 @@ export default function TablesScreen() {
             <button
               type="button"
               className="btn btn-primary"
+              data-tip="Fechar conta: encerra a comanda e lança em Contas a Receber"
               disabled={!selT || selT.status === "free"}
               onClick={() =>
                 selT &&
@@ -544,6 +545,7 @@ export default function TablesScreen() {
             </button>
             <button
               type="button"
+              data-tip="Excluir mesa: não dá para desfazer, e o QR dela deixa de abrir o cardápio"
               onClick={() => deleteTable(menu.table)}
               className="tap"
               style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, borderTop: "1px solid var(--line)", background: "transparent", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--alert)", textAlign: "left" }}

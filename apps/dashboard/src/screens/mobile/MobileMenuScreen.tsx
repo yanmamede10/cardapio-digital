@@ -112,7 +112,7 @@ export default function MobileMenuScreen() {
         {canEdit && <button
           type="button"
           onClick={() => setReorderOn((v) => !v)}
-          title="Reordenar categorias"
+          aria-label="Reordenar categorias"
           style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: reorderOn ? "var(--brandSoft)" : "var(--surface2)", color: reorderOn ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${reorderOn ? "var(--brand)" : "var(--line)"}` }}
         >
           <i className="fa-solid fa-grip-vertical" style={{ fontSize: "var(--icon-sm)" }} />
@@ -150,7 +150,7 @@ export default function MobileMenuScreen() {
                           </div>
                           <div style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", overflowWrap: "anywhere" }}>{p.scheduleLabel}</div>
                         </div>
-                        <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} label={`${p.name} disponível`} />
+                        <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} label={`${p.name} disponível`} />
                         {canEdit && (
                           <button type="button" aria-label={`Opções de ${p.name}`} onClick={() => setMenuFor(p)} style={{ width: 40, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink2)", cursor: "pointer" }}>
                             <i className="fa-solid fa-ellipsis" style={{ fontSize: "var(--icon-sm)" }} />

@@ -156,7 +156,7 @@ export default function MobileProductsScreen() {
                 <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-headline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
                 <ClearSearch value={filter.q} onClear={() => set({ q: "" })} />
               </div>
-              <button type="button" aria-label="Nova categoria" title="Nova categoria" onClick={cats.create} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface2)", color: "var(--brandText)", border: "1px solid var(--line)" }}>
+              <button type="button" aria-label="Nova categoria" onClick={cats.create} style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 11, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--surface2)", color: "var(--brandText)", border: "1px solid var(--line)" }}>
                 <i className="fa-solid fa-folder-plus" style={{ fontSize: "var(--icon-sm)" }} />
               </button>
             </div>

@@ -163,7 +163,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 12px 2px 20px" }}>
               <div style={{ flex: 1, fontSize: "var(--text-headline)", fontWeight: 600 }}>{choosing.item.name}</div>
-              <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
+              <button type="button" className="icon-btn" aria-label="Fechar" onClick={close}>
                 <i className="fa-solid fa-xmark" style={{ fontSize: "var(--icon-sm)" }} />
               </button>
             </div>
