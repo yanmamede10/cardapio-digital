@@ -88,8 +88,8 @@ export default function PaymentSubaccountTab() {
       {paymentMode === "sistema" && (
       <section className="card" style={{ padding: 22, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Como vocês recebem pagamento no balcão?</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6 }}>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Como vocês recebem pagamento no balcão?</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.6 }}>
             Define se o fechamento de comanda mostra o QR PIX da {PLATFORM_NAME} ou só registra a forma paga na maquininha de vocês.
           </div>
         </div>
@@ -110,8 +110,8 @@ export default function PaymentSubaccountTab() {
             <i className="fa-solid fa-credit-card" style={{ fontSize: 20, lineHeight: 1 }} />
           </div>
           <div style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Não é necessário abrir subconta</div>
-            <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>
+            <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Não é necessário abrir subconta</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>
               Como vocês recebem pela maquininha própria, o fechamento de comanda só registra a forma de pagamento usada — sem QR nem repasse pela {PLATFORM_NAME}.
             </div>
           </div>
@@ -125,8 +125,8 @@ export default function PaymentSubaccountTab() {
           <i className="fa-solid fa-shield-halved" style={{ fontSize: 22, lineHeight: 1 }} />
         </div>
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 5 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>O dinheiro cai direto na conta do seu restaurante</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6 }}>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>O dinheiro cai direto na conta do seu restaurante</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.6 }}>
             A subconta é aberta no seu CNPJ, no banco que você indicar. Cada pagamento é liquidado direto para você — a {PLATFORM_NAME} nunca fica com o seu caixa, só desconta a taxa por transação no momento do repasse.
           </div>
         </div>
@@ -141,15 +141,15 @@ export default function PaymentSubaccountTab() {
               { value: "rejected", label: "Rejeitado" }
             ]}
           />
-          <span style={{ fontSize: 10.5, color: "var(--ink3)" }}>Estado mockado — troque para visualizar</span>
+          <span style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>Estado mockado — troque para visualizar</span>
         </div>
       </section>
 
       {status === "form" && (
         <section className="card" style={{ padding: 24, maxWidth: 560, display: "flex", flexDirection: "column", gap: 20 }}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Abrir subconta de pagamento</div>
-            <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>Leva cerca de 3 minutos. A análise do parceiro sai em até 1 dia útil.</div>
+            <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Abrir subconta de pagamento</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Leva cerca de 3 minutos. A análise do parceiro sai em até 1 dia útil.</div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
             <Field label="CNPJ">
@@ -175,14 +175,14 @@ export default function PaymentSubaccountTab() {
             {doc.status === "empty" && (
               <button type="button" onClick={() => docInput.current?.click()} className="tap" style={{ border: "1.5px dashed var(--line2)", background: "transparent", color: "var(--ink2)", borderRadius: 16, padding: 22, cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                 <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: 21, lineHeight: 1 }} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Enviar contrato social ou CCMEI</span>
-                <span style={{ fontSize: 11.5, color: "var(--ink3)" }}>PDF, JPG ou PNG de até 10 MB</span>
+                <span style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Enviar contrato social ou CCMEI</span>
+                <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>PDF, JPG ou PNG de até 10 MB</span>
               </button>
             )}
             {doc.status === "loading" && (
               <div style={{ display: "flex", alignItems: "center", gap: 14, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 16, padding: "15px 18px" }}>
                 <i className="fa-solid fa-spinner" style={{ fontSize: 20, lineHeight: 1, animation: "sk 1.1s ease-in-out infinite", color: "var(--ink3)" }} />
-                <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--ink2)" }}>Enviando {doc.fileName}…</div>
+                <div style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Enviando {doc.fileName}…</div>
               </div>
             )}
             {doc.status === "preview" && (
@@ -191,8 +191,8 @@ export default function PaymentSubaccountTab() {
                   <i className="fa-solid fa-file-pdf" style={{ fontSize: 19, lineHeight: 1 }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.fileName}</div>
-                  <div className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>{doc.sizeLabel} · enviado agora</div>
+                  <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.fileName}</div>
+                  <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>{doc.sizeLabel} · enviado agora</div>
                 </div>
                 <i className="fa-solid fa-circle-check" style={{ fontSize: 18, lineHeight: 1, color: "var(--ok)" }} />
                 <button type="button" className="icon-btn" title="Remover" aria-label="Remover documento" onClick={() => setDoc(emptyDoc)}>
@@ -202,7 +202,7 @@ export default function PaymentSubaccountTab() {
             )}
             {doc.status === "error" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ fontSize: 12, color: "var(--alert)", fontWeight: 500 }}>{doc.error}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--alert)", fontWeight: 500 }}>{doc.error}</div>
                 <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start" }} onClick={() => setDoc(emptyDoc)}>
                   Escolher outro
                 </button>
@@ -210,7 +210,7 @@ export default function PaymentSubaccountTab() {
             )}
           </div>
 
-          <label style={{ display: "flex", alignItems: "flex-start", gap: 11, fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6, cursor: "pointer" }}>
+          <label style={{ display: "flex", alignItems: "flex-start", gap: 11, fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.6, cursor: "pointer" }}>
             <input type="checkbox" defaultChecked style={{ width: 18, height: 18, marginTop: 2, accentColor: "var(--brand)", cursor: "pointer" }} />
             <span>Confirmo que sou o responsável legal pelo CNPJ e autorizo a abertura da subconta de pagamento no nome da empresa.</span>
           </label>
@@ -234,8 +234,8 @@ export default function PaymentSubaccountTab() {
               <i className="fa-solid fa-clock" style={{ fontSize: 24, lineHeight: 1 }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Em análise</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>Enviado agora · resposta em até 1 dia útil</div>
+              <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Em análise</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Enviado agora · resposta em até 1 dia útil</div>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -243,13 +243,13 @@ export default function PaymentSubaccountTab() {
               <div key={s.label} style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "13px 0", borderBottom: "1px solid var(--line)" }}>
                 <i className={`fa-solid ${s.icon}`} style={{ fontSize: 18, lineHeight: 1, color: s.fg, marginTop: 1 }} />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{s.label}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{s.sub}</div>
+                  <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{s.label}</div>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{s.sub}</div>
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6 }}>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.6 }}>
             Enquanto isso o restaurante continua operando normalmente — só os pagamentos PIX ficam indisponíveis até a subconta ser liberada.
           </div>
         </section>
@@ -262,8 +262,8 @@ export default function PaymentSubaccountTab() {
               <i className="fa-solid fa-circle-check" style={{ fontSize: 24, lineHeight: 1 }} />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Subconta ativa</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>Aprovada · recebendo pagamentos desde então</div>
+              <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Subconta ativa</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Aprovada · recebendo pagamentos desde então</div>
             </div>
             <span className="pill" style={{ background: "color-mix(in srgb, var(--ok) 16%, transparent)", color: "var(--ok)" }}>PIX habilitado</span>
           </div>
@@ -277,8 +277,8 @@ export default function PaymentSubaccountTab() {
               ["Taxa por transação", "2,9% + R$ 0,39"]
             ].map(([k, v]) => (
               <div key={k} style={{ display: "flex", alignItems: "baseline", gap: 13, padding: "12px 0", borderBottom: "1px solid var(--line)" }}>
-                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: "var(--ink3)" }}>{k}</span>
-                <span style={{ fontSize: 12.5, fontWeight: 500, textAlign: "right" }}>{v}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{k}</span>
+                <span style={{ fontSize: "var(--text-subheadline)", fontWeight: 500, textAlign: "right" }}>{v}</span>
               </div>
             ))}
           </div>
@@ -301,13 +301,13 @@ export default function PaymentSubaccountTab() {
               <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 24, lineHeight: 1 }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Cadastro reprovado</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>Você pode reenviar sem perder os dados</div>
+              <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Cadastro reprovado</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Você pode reenviar sem perder os dados</div>
             </div>
           </div>
           <div style={{ border: "1px solid color-mix(in srgb, var(--alert) 35%, var(--line))", background: "color-mix(in srgb, var(--alert) 8%, transparent)", borderRadius: 16, padding: "17px 19px", display: "flex", flexDirection: "column", gap: 5 }}>
             <div className="field-label">Motivo informado</div>
-            <div style={{ fontSize: 13, color: "var(--ink)", lineHeight: 1.6 }}>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink)", lineHeight: 1.6 }}>
               Documento ilegível: a página 2 do contrato social está cortada e o CNPJ não pôde ser conferido.
             </div>
           </div>

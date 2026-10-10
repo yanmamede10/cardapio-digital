@@ -169,7 +169,7 @@ export default function OrdersScreen() {
                       borderRadius: 11,
                       padding: "6px 12px",
                       cursor: "pointer",
-                      fontSize: 13,
+                      fontSize: "var(--text-subheadline)",
                       fontWeight: 500,
                       background: active ? "var(--surface)" : "transparent",
                       color: active ? "var(--brandText)" : "var(--ink2)"
@@ -177,7 +177,7 @@ export default function OrdersScreen() {
                   >
                     <i className={`fa-solid ${f.icon}`} style={{ fontSize: 17, lineHeight: 1 }} />
                     {f.label}
-                    <span className="mono" style={{ fontSize: 11 }}>
+                    <span className="mono" style={{ fontSize: "var(--text-caption)" }}>
                       {count}
                     </span>
                   </button>
@@ -186,7 +186,7 @@ export default function OrdersScreen() {
             </div>
           )}
           <div style={{ flex: 1 }} />
-          <div role={offline ? "alert" : undefined} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: offline ? 600 : 400, color: offline ? "var(--alert)" : "var(--ink3)" }}>
+          <div role={offline ? "alert" : undefined} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-footnote)", fontWeight: offline ? 600 : 400, color: offline ? "var(--alert)" : "var(--ink3)" }}>
             <span className="dot" style={{ background: offline ? "var(--alert)" : "var(--ok)" }} />
             {offline ? "Sem conexão com o servidor — tentando de novo" : "Atualizando em tempo real"}
           </div>
@@ -206,7 +206,7 @@ export default function OrdersScreen() {
                     <KanbanCard key={o.id} order={o} nextLabel={col.nextLabel} onAccept={accept} onReject={reject} onAdvance={() => setStage(o.id, nextStatusFor(o), col.nextLabel!, o.mode === "table" ? `Mesa ${o.tableNumber}` : `Delivery ${o.code}`)} />
                   ))}
                   {list.length === 0 && (
-                    <div style={{ border: "1px dashed var(--line2)", borderRadius: 12, padding: "18px 12px", textAlign: "center", color: "var(--ink3)", fontSize: 12.5 }}>Nenhum pedido aqui</div>
+                    <div style={{ border: "1px dashed var(--line2)", borderRadius: 12, padding: "18px 12px", textAlign: "center", color: "var(--ink3)", fontSize: "var(--text-subheadline)" }}>Nenhum pedido aqui</div>
                   )}
                 </KanbanColumn>
               );
@@ -223,9 +223,9 @@ export default function OrdersScreen() {
               <span style={{ position: "absolute", width: 8, height: 8, borderRadius: "50%", background: "var(--alert)", animation: "pulse 1.8s ease-out infinite" }} />
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--alert)" }} />
             </span>
-            <div style={{ fontWeight: 600, fontSize: 13 }}>Chamar garçom</div>
+            <div style={{ fontWeight: 600, fontSize: "var(--text-subheadline)" }}>Chamar garçom</div>
             <div style={{ flex: 1 }} />
-            <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--alert)" }}>
+            <span className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--alert)" }}>
               {calls.length}
             </span>
           </div>
@@ -235,25 +235,25 @@ export default function OrdersScreen() {
             return (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", borderBottom: "1px solid var(--line)" }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Mesa {c.tableNumber}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{c.reason}</div>
+                  <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Mesa {c.tableNumber}</div>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{c.reason}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div className="mono" style={{ fontSize: 13, fontWeight: 600, color }}>
+                  <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color }}>
                     {min} min
                   </div>
-                  <button type="button" onClick={() => resolveCall(c)} style={{ background: "transparent", border: 0, color: "var(--ink3)", font: "inherit", fontSize: 11.5, cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                  <button type="button" onClick={() => resolveCall(c)} style={{ background: "transparent", border: 0, color: "var(--ink3)", font: "inherit", fontSize: "var(--text-footnote)", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                     atender
                   </button>
                 </div>
               </div>
             );
           })}
-          {calls.length === 0 && <div style={{ padding: "18px 14px", textAlign: "center", color: "var(--ink3)", fontSize: 12.5 }}>Nenhum chamado pendente</div>}
+          {calls.length === 0 && <div style={{ padding: "18px 14px", textAlign: "center", color: "var(--ink3)", fontSize: "var(--text-subheadline)" }}>Nenhum chamado pendente</div>}
         </section>
 
         <section className="card" style={{ padding: 14 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink3)", marginBottom: 10 }}>
             Turno de hoje
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -267,8 +267,8 @@ export default function OrdersScreen() {
               { label: "Total do turno", value: shift ? brl(shift.shiftTotal) : "—" }
             ].map((s) => (
               <div key={s.label} style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <div style={{ fontSize: 12.5, color: "var(--ink2)", flex: 1, minWidth: 0 }}>{s.label}</div>
-                <div className="mono" style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.02em" }}>
+                <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", flex: 1, minWidth: 0 }}>{s.label}</div>
+                <div className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.02em" }}>
                   {s.value}
                 </div>
               </div>
@@ -297,11 +297,11 @@ function KanbanColumn({ id, label, dot, count, children }: { id: string; label: 
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 16px", borderBottom: "1px solid var(--line)" }}>
         <span className="dot" style={{ background: dot }} />
-        <div className="mono" style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".02em", textTransform: "uppercase" }}>
+        <div className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, letterSpacing: ".02em", textTransform: "uppercase" }}>
           {label}
         </div>
         <div style={{ flex: 1 }} />
-        <span className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--ink2)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
+        <span className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--ink2)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
           {count}
         </span>
       </div>
@@ -380,15 +380,15 @@ function KanbanCardBody({
       <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
         <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 19, lineHeight: 1, color: "var(--ink2)", marginTop: 1 }} />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontWeight: 600, fontSize: 13.5, letterSpacing: "-.01em" }}>{ref}</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", letterSpacing: "-.01em" }}>{ref}</div>
           <InHouseTag order={o} />
           <TakeawayTag order={o} />
-          <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</div>
         </div>
         <span
           className="mono"
           style={{
-            fontSize: 11,
+            fontSize: "var(--text-caption)",
             fontWeight: 600,
             borderRadius: 20,
             padding: "2px 7px",
@@ -403,7 +403,7 @@ function KanbanCardBody({
       <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "11px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
         {o.lines.map((l) => (
           <div key={l.id}>
-            <div style={{ display: "flex", gap: 8, fontSize: 12.5, color: "var(--ink2)" }}>
+            <div style={{ display: "flex", gap: 8, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
               <span className="mono" style={{ color: "var(--ink)", fontWeight: 500 }}>
                 {l.quantity}×
               </span>
@@ -414,7 +414,7 @@ function KanbanCardBody({
         ))}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div className="mono" style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.02em" }}>
+        <div className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.02em" }}>
           {brl(o.total)}
         </div>
         <div style={{ flex: 1 }} />
@@ -428,7 +428,7 @@ function KanbanCardBody({
             type="button"
             onClick={onReject}
             className="tap"
-            style={{ background: "transparent", color: "var(--ink3)", border: "1px solid var(--line2)", borderRadius: 11, padding: "8px 12px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500 }}
+            style={{ background: "transparent", color: "var(--ink3)", border: "1px solid var(--line2)", borderRadius: 11, padding: "8px 12px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500 }}
           >
             Recusar
           </button>
@@ -451,7 +451,7 @@ function KanbanCardBody({
             padding: 8,
             cursor: "pointer",
             font: "inherit",
-            fontSize: 13,
+            fontSize: "var(--text-subheadline)",
             fontWeight: 600
           }}
         >

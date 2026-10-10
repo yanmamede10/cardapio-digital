@@ -65,7 +65,7 @@ export default function MobileCouponFormScreen() {
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           <span className="field-label">Código do cupom</span>
-          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="VERAO20" className="field-mobile mono" style={{ letterSpacing: ".06em", fontSize: 14 }} />
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="VERAO20" className="field-mobile mono" style={{ letterSpacing: ".06em", fontSize: "var(--text-body)" }} />
         </label>
 
         <div>
@@ -81,7 +81,7 @@ export default function MobileCouponFormScreen() {
                   key={t.key}
                   type="button"
                   onClick={() => setKind(t.key)}
-                  style={{ flex: 1, minHeight: 46, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}`, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+                  style={{ flex: 1, minHeight: 46, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}`, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                 >
                   <i className={`fa-solid ${t.icon}`} style={{ fontSize: 13 }} />
                   {t.label}
@@ -108,7 +108,7 @@ export default function MobileCouponFormScreen() {
             {CHANNELS.map((c) => {
               const active = channel === c.key;
               return (
-                <button key={c.key} type="button" onClick={() => setChannel(c.key)} style={{ flex: 1, minHeight: 44, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}>
+                <button key={c.key} type="button" onClick={() => setChannel(c.key)} style={{ flex: 1, minHeight: 44, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}>
                   {c.label}
                 </button>
               );
@@ -123,8 +123,8 @@ export default function MobileCouponFormScreen() {
       </section>
 
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Combo promocional</div>
-        <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>Selecione itens do cardápio para transformar este cupom em um combo com preço fechado.</div>
+        <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Combo promocional</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Selecione itens do cardápio para transformar este cupom em um combo com preço fechado.</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 7, maxHeight: 220, overflowY: "auto" }}>
           {items.map((i) => {
             const on = comboSel.includes(i.id);
@@ -136,8 +136,8 @@ export default function MobileCouponFormScreen() {
                 style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", minHeight: 48, background: "var(--surface2)", border: `1px solid ${on ? "var(--brand)" : "var(--line)"}`, borderRadius: 11, padding: "0 12px", cursor: "pointer", font: "inherit", color: "var(--ink)" }}
               >
                 <i className={`fa-solid ${on ? "fa-square-check" : "fa-square"}`} style={{ fontSize: 15, color: on ? "var(--brandText)" : "var(--ink3)" }} />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>{i.name}</span>
-                <span className="mono" style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)" }}>{i.name}</span>
+                <span className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                   {brl(i.price)}
                 </span>
               </button>
@@ -146,8 +146,8 @@ export default function MobileCouponFormScreen() {
         </div>
         {comboSel.length > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 6, borderTop: "1px solid var(--line)" }}>
-            <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>Preço do combo</span>
-            <span className="mono" style={{ fontSize: 18, fontWeight: 600, color: "var(--brandText)" }}>
+            <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Preço do combo</span>
+            <span className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600, color: "var(--brandText)" }}>
               {brl(comboPrice)}
             </span>
           </div>
@@ -155,10 +155,10 @@ export default function MobileCouponFormScreen() {
       </section>
 
       <div style={{ display: "flex", gap: 9 }}>
-        <button type="button" onClick={guard.request} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+        <button type="button" onClick={guard.request} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600 }}>
           Cancelar
         </button>
-        <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+        <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600 }}>
           Criar cupom
         </button>
       </div>

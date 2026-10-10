@@ -233,17 +233,17 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
       <div style={{ padding: big ? "0 22px 22px" : "15px 18px", marginTop: big ? -34 : 0, position: "relative", display: "flex", flexDirection: "column", gap: big ? 16 : 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11, ...(big ? {} : { background: brandColor, color: onBrandColor, margin: "-15px -18px 0", padding: "15px 18px" }) }}>
           {big ? (
-            <div style={{ width: 68, height: 68, borderRadius: 22, background: brandColor, color: onBrandColor, border: "3px solid #FFFDF1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, fontWeight: 600, overflow: "hidden" }}>
+            <div style={{ width: 68, height: 68, borderRadius: 22, background: brandColor, color: onBrandColor, border: "3px solid #FFFDF1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--text-title3)", fontWeight: 600, overflow: "hidden" }}>
               {logoSrc ? <img src={logoSrc} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initialsOf(restaurantName)}
             </div>
           ) : (
             <>
-              <div style={{ width: 28, height: 28, borderRadius: 999, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, overflow: "hidden" }}>
+              <div style={{ width: 28, height: 28, borderRadius: 999, background: "rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--text-caption)", fontWeight: 600, overflow: "hidden" }}>
                 {logoSrc ? <img src={logoSrc} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initialsOf(restaurantName)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "-.01em" }}>{restaurantName}</div>
-                <div style={{ fontSize: 11, opacity: 0.82 }}>Aberto até 23h</div>
+                <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, letterSpacing: "-.01em" }}>{restaurantName}</div>
+                <div style={{ fontSize: "var(--text-caption)", opacity: 0.82 }}>Aberto até 23h</div>
               </div>
               <i className="fa-solid fa-bag-shopping" style={{ fontSize: 16, lineHeight: 1 }} />
             </>
@@ -251,26 +251,26 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
         </div>
         {big && (
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            <div style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-.02em" }}>{restaurantName}</div>
-            <div style={{ fontSize: 13, color: "#55524A" }}>Cozinha do dia a dia · Centro Histórico</div>
+            <div style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.02em" }}>{restaurantName}</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "#55524A" }}>Cozinha do dia a dia · Centro Histórico</div>
           </div>
         )}
         <div style={{ display: "flex", gap: big ? 8 : 7, flexWrap: "wrap" }}>
-          <span style={{ fontSize: big ? 12 : 11, fontWeight: 600, borderRadius: 999, padding: big ? "7px 15px" : "5px 12px", background: brandColor, color: onBrandColor }}>Destaques</span>
-          <span style={{ fontSize: big ? 12 : 11, fontWeight: 500, borderRadius: 999, padding: big ? "7px 15px" : "5px 12px", background: "#F2EEDD", color: "#55524A" }}>Entradas</span>
-          {big && <span style={{ fontSize: 12, fontWeight: 500, borderRadius: 999, padding: "7px 15px", background: "#F2EEDD", color: "#55524A" }}>Principais</span>}
+          <span style={{ fontSize: big ? "var(--text-footnote)" : "var(--text-caption)", fontWeight: 600, borderRadius: 999, padding: big ? "7px 15px" : "5px 12px", background: brandColor, color: onBrandColor }}>Destaques</span>
+          <span style={{ fontSize: big ? "var(--text-footnote)" : "var(--text-caption)", fontWeight: 500, borderRadius: 999, padding: big ? "7px 15px" : "5px 12px", background: "#F2EEDD", color: "#55524A" }}>Entradas</span>
+          {big && <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500, borderRadius: 999, padding: "7px 15px", background: "#F2EEDD", color: "#55524A" }}>Principais</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: big ? 14 : 12, border: "1px solid #E0D9BF", borderRadius: big ? 18 : 14, padding: big ? 14 : 12, background: "#FFFDF1" }}>
           <div style={{ width: big ? 56 : 44, height: big ? 56 : 44, borderRadius: big ? 15 : 12, background: soft(16), color: brandColor, display: "flex", alignItems: "center", justifyContent: "center", flex: `0 0 ${big ? 56 : 44}px` }}>
             <i className="fa-solid fa-fish" style={{ fontSize: big ? 21 : 18, lineHeight: 1 }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: big ? 13.5 : 12.5, fontWeight: 600 }}>Prato em destaque</div>
-            <div style={{ fontSize: 12, color: "#67645D" }}>Descrição curta do item</div>
+            <div style={{ fontSize: big ? "var(--text-body)" : "var(--text-subheadline)", fontWeight: 600 }}>Prato em destaque</div>
+            <div style={{ fontSize: "var(--text-footnote)", color: "#67645D" }}>Descrição curta do item</div>
           </div>
-          <span className="mono" style={{ fontSize: 12.5, fontWeight: 600 }}>R$ 48,00</span>
+          <span className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>R$ 48,00</span>
         </div>
-        <button type="button" style={{ width: "100%", border: 0, borderRadius: big ? 16 : 13, padding: big ? 15 : 13, cursor: "default", font: "inherit", fontSize: big ? 13.5 : 12.5, fontWeight: 600, background: brandColor, color: onBrandColor }}>
+        <button type="button" style={{ width: "100%", border: 0, borderRadius: big ? 16 : 13, padding: big ? 15 : 13, cursor: "default", font: "inherit", fontSize: big ? "var(--text-body)" : "var(--text-subheadline)", fontWeight: 600, background: brandColor, color: onBrandColor }}>
           {big ? "Abrir cardápio completo" : "Adicionar ao pedido"}
         </button>
       </div>
@@ -285,8 +285,8 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
             <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: 13, lineHeight: 1 }} />
             {published ? "Publicado" : "Rascunho"}
           </span>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Página pública do restaurante</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Página pública do restaurante</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
             {live.publishedAt ? `Página pública atualizada em ${fmtDateTime(live.publishedAt)}.` : "Ainda não publicada — os clientes veem o template padrão."}
             {!published && live.publishedAt ? " Há alterações não publicadas." : ""}
           </div>
@@ -305,8 +305,8 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
 
       <section className="card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 18 }}>
         <div>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Template da página</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>Seis layouts prontos. O conteúdo do cardápio é o mesmo em todos — muda só a apresentação.</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Template da página</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Seis layouts prontos. O conteúdo do cardápio é o mesmo em todos — muda só a apresentação.</div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
           {TEMPLATES.map((t) => {
@@ -343,10 +343,10 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: sel ? "var(--brandText)" : "var(--ink)" }}>{t.name}</span>
+                    <span style={{ fontSize: "var(--text-body)", fontWeight: 600, color: sel ? "var(--brandText)" : "var(--ink)" }}>{t.name}</span>
                     {sel && <i className="fa-solid fa-circle-check" style={{ fontSize: 14, lineHeight: 1, color: "var(--brandText)" }} />}
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--ink3)" }}>{t.desc}</div>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{t.desc}</div>
                 </div>
               </button>
             );
@@ -357,8 +357,8 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
       <section className="card" style={{ padding: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Cor de marca</div>
-            <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>Usada em botões, destaques e cabeçalho da página do cliente.</div>
+            <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Cor de marca</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Usada em botões, destaques e cabeçalho da página do cliente.</div>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {SWATCHES.map((s) => {
@@ -385,7 +385,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                   onChange={(e) => patchDraft({ brandColor: e.target.value })}
                   style={{ width: 44, height: 44, padding: 0, border: "1px solid var(--line2)", borderRadius: 10, background: "transparent", cursor: "pointer" }}
                 />
-                <span className="mono" style={{ fontSize: 13.5, fontWeight: 500 }}>{brandColor.toUpperCase()}</span>
+                <span className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{brandColor.toUpperCase()}</span>
               </div>
             </label>
             {isCustomColor && (
@@ -402,12 +402,12 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
 
       <section className="card" style={{ padding: 24, display: "grid", gridTemplateColumns: "minmax(0,210px) minmax(0,1fr)", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 13, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Logo</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Logo</div>
           <input ref={logoInput} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: "none" }} onChange={(e) => e.target.files?.[0] && onLogoFile(e.target.files[0])} />
           {!logoUpload && !logoError && !draft.logoUrl && (
             <button type="button" onClick={() => logoInput.current?.click()} className="tap" style={{ width: 124, height: 124, borderRadius: 26, border: "1.5px dashed var(--line2)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <i className="fa-solid fa-arrow-up-from-bracket" style={{ fontSize: 21, lineHeight: 1 }} />
-              <span style={{ fontSize: 12, fontWeight: 500 }}>Enviar logo</span>
+              <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500 }}>Enviar logo</span>
             </button>
           )}
           {logoUpload && (
@@ -418,7 +418,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
                   <i className="fa-solid fa-spinner" style={{ fontSize: 23, lineHeight: 1, animation: "sk 1.1s ease-in-out infinite" }} />
                 </div>
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>Enviando {logoUpload.fileName}…</div>
+              <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Enviando {logoUpload.fileName}…</div>
             </div>
           )}
           {!logoUpload && logoError && (
@@ -426,8 +426,8 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               <div style={{ width: 124, height: 124, borderRadius: 26, border: "1.5px solid var(--alert)", background: "color-mix(in srgb, var(--alert) 10%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--alert)" }}>
                 <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: 22, lineHeight: 1 }} />
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--alert)", fontWeight: 500 }}>{logoError}</div>
-              <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start", padding: "8px 14px", fontSize: 11.5 }} onClick={() => setLogoError(null)}>
+              <div style={{ fontSize: "var(--text-footnote)", color: "var(--alert)", fontWeight: 500 }}>{logoError}</div>
+              <button type="button" className="btn btn-outline" style={{ alignSelf: "flex-start", padding: "8px 14px", fontSize: "var(--text-footnote)" }} onClick={() => setLogoError(null)}>
                 Escolher outro
               </button>
             </div>
@@ -442,17 +442,17 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               </div>
             </div>
           )}
-          <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>PNG, JPEG ou WebP quadrado, até 2 MB. PNG com fundo transparente fica melhor.</div>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>PNG, JPEG ou WebP quadrado, até 2 MB. PNG com fundo transparente fica melhor.</div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 13, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Fotos de capa</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Fotos de capa</div>
           <input ref={coverInput} type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: "none" }} onChange={(e) => e.target.files && onCoverFiles(e.target.files)} />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))", gap: 14 }}>
             {draft.coverPhotos.map((url, i) => (
               <div key={url} style={{ position: "relative", aspectRatio: "16/10", borderRadius: 16, border: "1px solid var(--line2)", overflow: "hidden" }}>
                 <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                {i === 0 && <span style={{ position: "absolute", left: 8, top: 8, fontSize: 10, fontWeight: 600, borderRadius: 999, padding: "3px 9px", background: "var(--brand)", color: "var(--brandInk)" }}>Capa principal</span>}
+                {i === 0 && <span style={{ position: "absolute", left: 8, top: 8, fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 999, padding: "3px 9px", background: "var(--brand)", color: "var(--brandInk)" }}>Capa principal</span>}
                 <button type="button" onClick={() => removeCover(url)} title="Remover" aria-label="Remover foto de capa" className="icon-btn" style={{ position: "absolute", top: -7, right: -7, width: 24, height: 24, background: "var(--surface)", boxShadow: "var(--shadow2)" }}>
                   <i className="fa-solid fa-xmark" style={{ fontSize: 13 }} />
                 </button>
@@ -466,11 +466,11 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
             {draft.coverPhotos.length < 6 && !coverUpload && (
               <button type="button" onClick={() => coverInput.current?.click()} className="tap" style={{ aspectRatio: "16/10", borderRadius: 16, border: "1.5px dashed var(--line2)", background: "transparent", color: "var(--ink3)", cursor: "pointer", font: "inherit", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 7 }}>
                 <i className="fa-solid fa-plus" style={{ fontSize: 19, lineHeight: 1 }} />
-                <span style={{ fontSize: 11.5, fontWeight: 500 }}>Adicionar</span>
+                <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500 }}>Adicionar</span>
               </button>
             )}
           </div>
-          <div style={{ fontSize: 11.5, color: coverError ? "var(--alert)" : "var(--ink3)" }}>
+          <div style={{ fontSize: "var(--text-footnote)", color: coverError ? "var(--alert)" : "var(--ink3)" }}>
             {coverError || (draft.coverPhotos.length === 0 ? "Nenhuma foto adicionada ainda." : `${draft.coverPhotos.length} de 6 fotos. A primeira é a capa principal.`)}
           </div>
         </div>
@@ -481,8 +481,8 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
           <div className="modal-panel" style={{ maxWidth: 560 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 22px", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderBottom: "1px solid var(--glassBd)" }}>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.015em" }}>Como o cliente vai ver</div>
-                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>Template {TEMPLATES.find((t) => t.id === draft.template)?.name} · cor {brandColor.toUpperCase()}</div>
+                <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>Como o cliente vai ver</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Template {TEMPLATES.find((t) => t.id === draft.template)?.name} · cor {brandColor.toUpperCase()}</div>
               </div>
               <span className="pill" style={{ background: published ? "color-mix(in srgb, var(--ok) 16%, transparent)" : "color-mix(in srgb, var(--warn) 18%, transparent)", color: published ? "var(--ok)" : "var(--warn)" }}>
                 <i className={`fa-solid ${published ? "fa-circle-check" : "fa-pen-ruler"}`} style={{ fontSize: 13, lineHeight: 1 }} />
@@ -496,7 +496,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
               <PagePreview big />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 22px", background: "var(--glassBg)", backdropFilter: "var(--blur)", WebkitBackdropFilter: "var(--blur)", borderTop: "1px solid var(--glassBd)", flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 160, fontSize: 12, color: "var(--ink2)" }}>
+              <div style={{ flex: 1, minWidth: 160, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
                 {published ? "Já publicado — clientes veem esta versão." : "Rascunho visível só para a sua equipe."}
               </div>
               <button type="button" className="btn btn-outline" onClick={() => setPreviewOpen(false)}>Continuar editando</button>

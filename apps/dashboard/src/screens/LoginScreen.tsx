@@ -60,10 +60,10 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
           <Logo size={32} />
           <span style={{ fontWeight: 600, letterSpacing: "-.01em", color: "var(--ink)" }}>{PLATFORM_NAME}</span>
         </div>
-        <h1 style={{ margin: "0 0 4px", fontSize: 20, color: "var(--ink)" }}>Entrar</h1>
-        <p style={{ margin: "0 0 20px", fontSize: 13, color: "var(--ink3)" }}>Acesse com seu e-mail cadastrado no restaurante.</p>
+        <h1 style={{ margin: "0 0 4px", fontSize: "var(--text-title2)", color: "var(--ink)" }}>Entrar</h1>
+        <p style={{ margin: "0 0 20px", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Acesse com seu e-mail cadastrado no restaurante.</p>
 
-        <label htmlFor="login-email" style={{ display: "block", fontSize: 13, color: "var(--ink2)", marginBottom: 6 }}>E-mail</label>
+        <label htmlFor="login-email" style={{ display: "block", fontSize: "var(--text-subheadline)", color: "var(--ink2)", marginBottom: 6 }}>E-mail</label>
         <input
           id="login-email"
           type="email"
@@ -75,7 +75,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
           style={inputStyle}
         />
 
-        <label htmlFor="login-password" style={{ display: "block", fontSize: 13, color: "var(--ink2)", margin: "14px 0 6px" }}>Senha</label>
+        <label htmlFor="login-password" style={{ display: "block", fontSize: "var(--text-subheadline)", color: "var(--ink2)", margin: "14px 0 6px" }}>Senha</label>
         <input
           id="login-password"
           type="password"
@@ -87,7 +87,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
         />
 
         {error && (
-          <p style={{ color: "var(--alert)", fontSize: 13, margin: "12px 0 0" }} role="alert">
+          <p style={{ color: "var(--alert)", fontSize: "var(--text-subheadline)", margin: "12px 0 0" }} role="alert">
             {error}
           </p>
         )}
@@ -103,7 +103,7 @@ export default function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) 
             border: "none",
             background: "var(--brand)",
             color: "var(--brandInk)",
-            fontSize: 15,
+            fontSize: "var(--text-headline)",
             fontWeight: 600,
             cursor: loading ? "default" : "pointer",
             opacity: loading ? 0.7 : 1
@@ -124,7 +124,7 @@ const inputStyle: React.CSSProperties = {
   border: "1px solid var(--line)",
   background: "var(--surface2)",
   color: "var(--ink)",
-  fontSize: 15
+  fontSize: "var(--text-headline)"
 };
 
 /** First login with a provisional password (super admin sign-up or reset): replace it before anything else. */
@@ -159,8 +159,8 @@ export function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", fontFamily: "var(--font)" }}>
       <form onSubmit={handleSubmit} className="card" style={{ width: 340, maxWidth: "calc(100vw - 32px)", padding: 28, display: "flex", flexDirection: "column", gap: 12 }}>
-        <h1 style={{ margin: 0, fontSize: 20, color: "var(--ink)" }}>Crie sua senha</h1>
-        <p style={{ margin: 0, fontSize: 13, color: "var(--ink3)" }}>Você entrou com uma senha provisória. Troque por uma senha sua para continuar.</p>
+        <h1 style={{ margin: 0, fontSize: "var(--text-title2)", color: "var(--ink)" }}>Crie sua senha</h1>
+        <p style={{ margin: 0, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Você entrou com uma senha provisória. Troque por uma senha sua para continuar.</p>
         <Field label="Senha provisória">
           <input className="field" type="password" autoComplete="current-password" required autoFocus value={current} onChange={(e) => setCurrent(e.target.value)} />
         </Field>
@@ -171,7 +171,7 @@ export function ChangePasswordScreen({ onDone }: { onDone: () => void }) {
           <input className="field" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
         </Field>
         {error && (
-          <p style={{ color: "var(--alert)", fontSize: 13, margin: 0 }} role="alert">
+          <p style={{ color: "var(--alert)", fontSize: "var(--text-subheadline)", margin: 0 }} role="alert">
             {error}
           </p>
         )}

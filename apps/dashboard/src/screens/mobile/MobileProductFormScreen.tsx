@@ -128,25 +128,25 @@ export default function MobileProductFormScreen() {
           {!item.imageUrl && (
             <>
               <i className="fa-solid fa-image" style={{ fontSize: 22 }} />
-              <div className="mono" style={{ fontSize: 11 }}>
+              <div className="mono" style={{ fontSize: "var(--text-caption)" }}>
                 foto do prato · 1200×900
               </div>
             </>
           )}
-          <button type="button" onClick={() => fileInput.current?.click()} style={{ minHeight: 38, background: "var(--surface)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 14px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500 }}>
+          <button type="button" onClick={() => fileInput.current?.click()} style={{ minHeight: 38, background: "var(--surface)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 14px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500 }}>
             {item.imageUrl ? "Trocar foto" : "Enviar foto"}
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 12px", borderRadius: 12, background: "var(--surface2)", border: "1px solid var(--line)" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
-            <div className="mono" style={{ fontSize: 12.5, fontWeight: 600 }}>
+            <div style={{ fontSize: "var(--text-body)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
+            <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
               {brl(item.price)}
             </div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)", marginTop: 2 }}>Nome, preço, composição e tributação são editados no Catálogo.</div>
+            <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", marginTop: 2 }}>Nome, preço, composição e tributação são editados no Catálogo.</div>
           </div>
           {item.productId && (
-            <button type="button" onClick={() => navigate("/produtos", { state: { edit: item.productId } })} style={{ minHeight: 40, background: "transparent", border: "1px solid var(--line2)", color: "var(--brandText)", borderRadius: 10, padding: "0 13px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600 }}>
+            <button type="button" onClick={() => navigate("/produtos", { state: { edit: item.productId } })} style={{ minHeight: 40, background: "transparent", border: "1px solid var(--line2)", color: "var(--brandText)", borderRadius: 10, padding: "0 13px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
               Abrir
             </button>
           )}
@@ -170,11 +170,11 @@ export default function MobileProductFormScreen() {
 
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>Variações e adicionais</div>
+          <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, flex: 1 }}>Variações e adicionais</div>
           <button
             type="button"
             onClick={() => setExtras((prev) => [...prev, { name: "Nova variação", price: "0,00" }])}
-            style={{ minHeight: 38, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500, display: "flex", alignItems: "center", gap: 7 }}
+            style={{ minHeight: 38, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500, display: "flex", alignItems: "center", gap: 7 }}
           >
             <i className="fa-solid fa-plus" style={{ fontSize: 12 }} />
             Adicionar
@@ -186,14 +186,14 @@ export default function MobileProductFormScreen() {
               aria-label="Nome da variação"
               value={v.name}
               onChange={(e) => setExtras((prev) => prev.map((x, j) => (i === j ? { ...x, name: e.target.value } : x)))}
-              style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", font: "inherit", fontSize: 13, color: "var(--ink)", outline: "none" }}
+              style={{ flex: 1, minWidth: 0, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", outline: "none" }}
             />
             <input inputMode="decimal"
               aria-label={`Preço de ${v.name}`}
               value={v.price}
               onChange={(e) => setExtras((prev) => prev.map((x, j) => (i === j ? { ...x, price: e.target.value } : x)))}
               className="mono"
-              style={{ width: 92, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", fontSize: 13, color: "var(--ink)", outline: "none" }}
+              style={{ width: 92, minHeight: 44, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 10, padding: "0 11px", fontSize: "var(--text-subheadline)", color: "var(--ink)", outline: "none" }}
             />
             <button type="button" aria-label={`Remover ${v.name}`} onClick={() => setExtras((prev) => prev.filter((_, j) => j !== i))} style={{ width: 44, height: 44, borderRadius: 10, border: "1px solid var(--line)", background: "var(--surface2)", color: "var(--ink3)", cursor: "pointer" }}>
               <i className="fa-solid fa-trash" style={{ fontSize: 13 }} />
@@ -203,7 +203,7 @@ export default function MobileProductFormScreen() {
       </section>
 
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Disponibilidade agendada</div>
+        <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Disponibilidade agendada</div>
         <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
           {SCHEDULES.map((s) => {
             const active = schedule === s.key;
@@ -212,21 +212,21 @@ export default function MobileProductFormScreen() {
                 key={s.key}
                 type="button"
                 onClick={() => setSchedule(s.key)}
-                style={{ minHeight: 40, borderRadius: 20, padding: "0 14px", cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}
+                style={{ minHeight: 40, borderRadius: 20, padding: "0 14px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}
               >
                 {s.label}
               </button>
             );
           })}
         </div>
-        <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{SCHEDULES.find((s) => s.key === schedule)!.hint}</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{SCHEDULES.find((s) => s.key === schedule)!.hint}</div>
       </section>
 
       <div style={{ display: "flex", gap: 9 }}>
-        <button type="button" onClick={guard.request} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+        <button type="button" onClick={guard.request} style={{ flex: "0 0 36%", minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600 }}>
           Cancelar
         </button>
-        <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+        <button type="button" onClick={save} style={{ flex: 1, minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600 }}>
           Salvar prato
         </button>
       </div>

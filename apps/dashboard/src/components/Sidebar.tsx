@@ -16,14 +16,14 @@ const rowStyle: CSSProperties = {
   border: 0,
   borderRadius: 12,
   cursor: "pointer",
-  fontSize: 13.5,
+  fontSize: "var(--text-body)",
   fontWeight: 600,
   letterSpacing: "-.008em",
   textDecoration: "none",
   color: "var(--ink2)",
   transition: "background .12s var(--ease-spring), color .12s var(--ease-spring)"
 };
-const childStyle: CSSProperties = { ...rowStyle, gap: 9, padding: "9px 12px", borderRadius: 10, fontSize: 13, fontWeight: 500, letterSpacing: 0 };
+const childStyle: CSSProperties = { ...rowStyle, gap: 9, padding: "9px 12px", borderRadius: 10, fontSize: "var(--text-subheadline)", fontWeight: 500, letterSpacing: 0 };
 const activeStyle: CSSProperties = { background: "var(--brandSoft)", color: "var(--brandText)" };
 const iconStyle: CSSProperties = { fontSize: 18, lineHeight: 1, width: 21, textAlign: "center" };
 const labelStyle: CSSProperties = { flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
@@ -31,7 +31,7 @@ const labelStyle: CSSProperties = { flex: 1, minWidth: 0, whiteSpace: "nowrap", 
 function Badge({ n }: { n?: number }) {
   if (!n) return null;
   return (
-    <span className="mono" style={{ fontSize: 11, fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 999, padding: "1px 8px" }}>
+    <span className="mono" style={{ fontSize: "var(--text-caption)", fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 999, padding: "1px 8px" }}>
       {n}
     </span>
   );
@@ -64,7 +64,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
         <Logo size={34} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 600, letterSpacing: "-.01em" }}>{PLATFORM_NAME}</div>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
             Gestão
           </div>
         </div>
@@ -99,7 +99,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
                 <i className={`fa-solid ${g.icon}`} style={iconStyle} />
                 <span style={{ whiteSpace: "nowrap" }}>{g.label}</span>
                 {/* Doubles as the spacer; when collapsed it names the current page and gives way before the section name does. */}
-                <span style={{ ...labelStyle, textAlign: "right", fontSize: 11, fontWeight: 500, color: "var(--brandText)" }}>{!isOpen && active ? active.label : ""}</span>
+                <span style={{ ...labelStyle, textAlign: "right", fontSize: "var(--text-caption)", fontWeight: 500, color: "var(--brandText)" }}>{!isOpen && active ? active.label : ""}</span>
                 {!isOpen && <Badge n={badgeSum} />}
                 <i className={`fa-solid ${isOpen ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, lineHeight: 1, color: "var(--ink3)", width: 11, textAlign: "center" }} />
               </button>
@@ -125,7 +125,7 @@ export function Sidebar({ badges, current }: { badges: Record<string, number>; c
       </nav>
 
       <div style={{ padding: "12px 14px", borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ fontSize: 12, color: "var(--ink3)" }}>{theme === "dark" ? "Modo escuro" : "Modo claro"}</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{theme === "dark" ? "Modo escuro" : "Modo claro"}</div>
         <button
           type="button"
           onClick={toggleTheme}

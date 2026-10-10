@@ -30,10 +30,10 @@ function DiscardDialog({ name, onKeep, onDiscard }: { name?: string; onKeep: () 
   return (
     <div className="modal-overlay" style={{ zIndex: 36 }}>
       <div className="modal-panel" role="alertdialog" aria-modal="true" aria-labelledby={id} aria-describedby={`${id}-body`} style={{ maxWidth: 440 }}>
-        <div id={id} style={{ padding: "22px 24px 4px", fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>
+        <div id={id} style={{ padding: "22px 24px 4px", fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>
           Descartar alterações?
         </div>
-        <div id={`${id}-body`} style={{ padding: "6px 24px 22px", fontSize: 13.5, color: "var(--ink2)", lineHeight: 1.5 }}>
+        <div id={`${id}-body`} style={{ padding: "6px 24px 22px", fontSize: "var(--text-body)", color: "var(--ink2)", lineHeight: 1.5 }}>
           {name ? `As alterações em “${name}” não serão salvas.` : "As alterações não serão salvas."}
         </div>
         <div className="dialog-actions">

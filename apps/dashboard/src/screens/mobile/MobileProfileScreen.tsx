@@ -34,14 +34,14 @@ export default function MobileProfileScreen() {
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
         <div style={{ display: "flex", gap: 11, alignItems: "center" }}>
-          <div style={{ width: 64, height: 64, flex: "0 0 64px", borderRadius: 16, background: "var(--brand)", color: "var(--brandInk)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: 20, fontWeight: 600 }}>
+          <div style={{ width: 64, height: 64, flex: "0 0 64px", borderRadius: 16, background: "var(--brand)", color: "var(--brandInk)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace", fontSize: "var(--text-title2)", fontWeight: 600 }}>
             {initialsOf(profile.name)}
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 7 }}>
-            <button type="button" style={{ minHeight: 40, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500 }}>
+            <button type="button" style={{ minHeight: 40, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500 }}>
               Trocar logo
             </button>
-            <button type="button" style={{ minHeight: 40, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 500 }}>
+            <button type="button" style={{ minHeight: 40, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 10, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500 }}>
               Fotos de capa
             </button>
           </div>
@@ -59,7 +59,7 @@ export default function MobileProfileScreen() {
           <textarea rows={3} value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} maxLength={500} className="field-mobile" />
         </label>
       </section>
-      <button type="button" onClick={save} style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+      <button type="button" onClick={save} style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600 }}>
         Salvar alterações
       </button>
     </div>

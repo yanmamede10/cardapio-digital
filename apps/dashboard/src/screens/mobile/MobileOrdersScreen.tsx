@@ -112,7 +112,7 @@ export default function MobileOrdersScreen() {
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
         {offline && (
-          <div role="alert" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--alert)" }}>
+          <div role="alert" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)" }}>
             Sem conexão com o servidor — tentando de novo
           </div>
         )}
@@ -146,7 +146,7 @@ export default function MobileOrdersScreen() {
                   borderRadius: 9,
                   cursor: "pointer",
                   font: "inherit",
-                  fontSize: 11.5,
+                  fontSize: "var(--text-footnote)",
                   fontWeight: 600,
                   background: active ? "var(--surface)" : "transparent",
                   color: active ? "var(--ink)" : "var(--ink3)",
@@ -159,7 +159,7 @@ export default function MobileOrdersScreen() {
                 }}
               >
                 <span>{t.label}</span>
-                <span className="mono" style={{ fontSize: 10.5, color: active ? "var(--brandText)" : "var(--ink3)" }}>
+                <span className="mono" style={{ fontSize: "var(--text-caption)", color: active ? "var(--brandText)" : "var(--ink3)" }}>
                   {count}
                 </span>
               </button>
@@ -178,10 +178,10 @@ export default function MobileOrdersScreen() {
             >
               <i className="fa-solid fa-hand" style={{ fontSize: 16, color: "var(--alert)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--alert)" }}>
+                <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)" }}>
                   {openCalls.length} {openCalls.length === 1 ? "mesa chamando garçom" : "mesas chamando garçom"}
                 </div>
-                <div style={{ fontSize: 11.5, color: "var(--ink2)" }}>A mais antiga espera há {Math.max(...openCalls.map((c) => minutesSince(c.createdAt)))} min</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>A mais antiga espera há {Math.max(...openCalls.map((c) => minutesSince(c.createdAt)))} min</div>
               </div>
               <i className={`fa-solid ${callsOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ fontSize: 13, color: "var(--ink3)" }} />
             </button>
@@ -191,11 +191,11 @@ export default function MobileOrdersScreen() {
                   const min = minutesSince(c.createdAt);
                   return (
                     <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 13px", borderBottom: "1px solid color-mix(in srgb, var(--alert) 22%, transparent)" }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, flex: 1 }}>Mesa {c.tableNumber}</div>
-                      <div className="mono" style={{ fontSize: 12, fontWeight: 600, color: min >= 5 ? "var(--alert)" : "var(--warn)" }}>
+                      <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, flex: 1 }}>Mesa {c.tableNumber}</div>
+                      <div className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: min >= 5 ? "var(--alert)" : "var(--warn)" }}>
                         {min} min
                       </div>
-                      <button type="button" onClick={() => resolveCall(c)} style={{ minHeight: 34, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 9, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 600 }}>
+                      <button type="button" onClick={() => resolveCall(c)} style={{ minHeight: 34, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 9, padding: "0 12px", cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 600 }}>
                         Atender
                       </button>
                     </div>
@@ -222,16 +222,16 @@ export default function MobileOrdersScreen() {
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-.015em" }}>{orderRef(o)}</span>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
+                    <span style={{ fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: "-.015em" }}>{orderRef(o)}</span>
+                    <span className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
                       {o.code}
                     </span>
                   </div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{orderSubtitle(o)}</div>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{orderSubtitle(o)}</div>
                   <InHouseTag order={o} />
                   <TakeawayTag order={o} />
                 </div>
-                <div className="mono" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "4px 9px", background: tone.bg, color: tone.fg }}>
+                <div className="mono" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 20, padding: "4px 9px", background: tone.bg, color: tone.fg }}>
                   <i className="fa-solid fa-stopwatch" style={{ fontSize: 11 }} />
                   {min} min
                 </div>
@@ -240,21 +240,21 @@ export default function MobileOrdersScreen() {
               <div style={{ background: "var(--surface2)", borderRadius: 10, padding: "9px 11px", display: "flex", flexDirection: "column", gap: 3 }}>
                 {o.lines.map((l) => (
                   <div key={l.id}>
-                    <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+                    <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                       {l.quantity}× {l.name}
                     </div>
                     <LineExtras line={l} />
                   </div>
                 ))}
-                {o.lines.length === 0 && <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Sem itens</div>}
+                {o.lines.length === 0 && <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Sem itens</div>}
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+                  <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
                     Total
                   </div>
-                  <div className="mono" style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.02em" }}>
+                  <div className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em" }}>
                     {brl(o.total)}
                   </div>
                 </div>
@@ -262,10 +262,10 @@ export default function MobileOrdersScreen() {
 
               {isNew && (
                 <div style={{ display: "flex", gap: 9 }}>
-                  <button type="button" onClick={() => reject(o)} style={{ flex: "0 0 38%", minHeight: 46, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600 }}>
+                  <button type="button" onClick={() => reject(o)} style={{ flex: "0 0 38%", minHeight: 46, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
                     Recusar
                   </button>
-                  <button type="button" onClick={() => accept(o)} style={{ flex: 1, minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                  <button type="button" onClick={() => accept(o)} style={{ flex: 1, minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                     <i className="fa-solid fa-circle-check" style={{ fontSize: 14 }} />
                     Aceitar pedido
                   </button>
@@ -275,14 +275,14 @@ export default function MobileOrdersScreen() {
                 <button
                   type="button"
                   onClick={() => advance(o)}
-                  style={{ minHeight: 46, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+                  style={{ minHeight: 46, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
                 >
                   <i className="fa-solid fa-arrow-right" style={{ fontSize: 13 }} />
                   {nextLabel}
                 </button>
               )}
               {isDone && (
-                <div style={{ minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, border: "1px dashed var(--line2)", borderRadius: 11, color: "var(--ok)", fontSize: 12.5, fontWeight: 600 }}>
+                <div style={{ minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 7, border: "1px dashed var(--line2)", borderRadius: 11, color: "var(--ok)", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
                   <i className="fa-solid fa-circle-check" style={{ fontSize: 13 }} />
                   Pedido concluído há {min} min
                 </div>

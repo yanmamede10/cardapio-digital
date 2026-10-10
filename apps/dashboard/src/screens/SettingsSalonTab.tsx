@@ -58,8 +58,8 @@ export default function SettingsSalonTab() {
             style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)" }}
           >
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontWeight: 600, fontSize: 14 }}>{s.title}</span>
-              <span style={{ display: "block", fontSize: 12.5, color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>{salon[s.key] ? s.on : s.off}</span>
+              <span style={{ display: "block", fontWeight: 600, fontSize: "var(--text-body)" }}>{s.title}</span>
+              <span style={{ display: "block", fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.6, marginTop: 4 }}>{salon[s.key] ? s.on : s.off}</span>
             </span>
             <span className="toggle-track" style={{ background: salon[s.key] ? "var(--ok)" : "var(--line2)" }}>
               <span className="toggle-knob" style={{ left: salon[s.key] ? 16 : 2 }} />

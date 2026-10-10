@@ -156,8 +156,8 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
             </button>
           )}
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{screen}</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
+            <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{screen}</div>
+            <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
           </div>
           <button
             type="button"
@@ -179,7 +179,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                   borderRadius: 20,
                   background: "var(--brand)",
                   color: "var(--brandInk)",
-                  fontSize: 10,
+                  fontSize: "var(--text-caption)",
                   fontWeight: 600,
                   display: "flex",
                   alignItems: "center",
@@ -197,7 +197,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
             onClick={() => navigate("/config/perfil")}
             title={staffRole}
             aria-label={`Minha conta: ${staffName}, ${staffRole}`}
-            style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             {initialsOf(staffName)}
           </button>
@@ -219,12 +219,12 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
               }}
             >
               <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>Notificações</div>
-                <button type="button" aria-label="Fechar notificações" onClick={() => setNotifOpen(false)} style={{ background: "transparent", border: 0, color: "var(--ink3)", cursor: "pointer", fontSize: 14 }}>
+                <div style={{ fontWeight: 600, fontSize: "var(--text-subheadline)", flex: 1 }}>Notificações</div>
+                <button type="button" aria-label="Fechar notificações" onClick={() => setNotifOpen(false)} style={{ background: "transparent", border: 0, color: "var(--ink3)", cursor: "pointer", fontSize: "var(--text-body)" }}>
                   <i className="fa-solid fa-xmark" aria-hidden="true" />
                 </button>
               </div>
-              {notifs.length === 0 && <div style={{ padding: "16px 14px", fontSize: 12.5, color: "var(--ink3)" }}>Nenhuma notificação agora.</div>}
+              {notifs.length === 0 && <div style={{ padding: "16px 14px", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhuma notificação agora.</div>}
               {notifs.map((n, i) => (
                 <button
                   key={i}
@@ -234,10 +234,10 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                 >
                   <i className={`fa-solid ${n.icon}`} style={{ fontSize: 15, color: n.color, marginTop: 2 }} />
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>{n.title}</div>
-                    <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{n.sub}</div>
+                    <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>{n.title}</div>
+                    <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{n.sub}</div>
                   </div>
-                  <div className="mono" style={{ fontSize: 10.5, color: "var(--ink3)" }}>
+                  <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
                     {n.time}
                   </div>
                 </button>
@@ -316,7 +316,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                 }}
               >
                 <i className={`fa-solid ${t.icon}`} style={{ fontSize: 19 }} />
-                <span style={{ fontSize: 10.5, fontWeight: 600 }}>{t.label}</span>
+                <span style={{ fontSize: "var(--text-caption)", fontWeight: 600 }}>{t.label}</span>
                 {badge && (
                   <span
                     className="mono"
@@ -329,7 +329,7 @@ export function MobileLayout({ notFound }: { notFound: boolean }) {
                       borderRadius: 20,
                       background: "var(--alert)",
                       color: "var(--alertInk)",
-                      fontSize: 9.5,
+                      fontSize: "var(--text-caption)",
                       fontWeight: 600,
                       display: "flex",
                       alignItems: "center",

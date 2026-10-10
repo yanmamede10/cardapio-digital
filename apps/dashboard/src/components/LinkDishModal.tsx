@@ -41,12 +41,12 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
       {(close) => (
       <>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "20px 24px 4px" }}>
-          <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>Adicionar prato ao cardápio</div>
+          <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>Adicionar prato ao cardápio</div>
           <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
             <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
           </button>
         </div>
-        <div style={{ padding: "2px 24px 0", fontSize: 12.5, color: "var(--ink3)" }}>Escolha pratos já cadastrados no Catálogo. Nome, preço e tributação vêm de lá.</div>
+        <div style={{ padding: "2px 24px 0", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Escolha pratos já cadastrados no Catálogo. Nome, preço e tributação vêm de lá.</div>
         <div style={{ padding: "18px 24px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }} className="field">
             <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
@@ -66,21 +66,21 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
             {!products ? (
               <div className="skeleton" style={{ height: 120, border: 0, borderRadius: 0 }} />
             ) : rows.length === 0 ? (
-              <div style={{ padding: "28px 16px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>{query ? "Nenhum prato do Catálogo com esse nome." : "Nenhum prato cadastrado no Catálogo ainda."}</div>
+              <div style={{ padding: "28px 16px", textAlign: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{query ? "Nenhum prato do Catálogo com esse nome." : "Nenhum prato cadastrado no Catálogo ainda."}</div>
             ) : (
               rows.map((p) => (
                 <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderBottom: "1px solid var(--line)" }}>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-                  <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: "var(--text-body)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                  <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
                     {brl(p.price)}
                   </div>
                   {items.some((m) => m.productId === p.id) ? (
-                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600, color: "var(--ok)", padding: "6px 12px" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--ok)", padding: "6px 12px" }}>
                       <i className="fa-solid fa-check" style={{ fontSize: 11 }} />
                       No cardápio
                     </span>
                   ) : (
-                    <button type="button" className="btn btn-primary" style={{ padding: "6px 12px", fontSize: 12.5, minHeight: 36 }} disabled={!categoryId} onClick={() => link(p)}>
+                    <button type="button" className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "var(--text-subheadline)", minHeight: 36 }} disabled={!categoryId} onClick={() => link(p)}>
                       <i className="fa-solid fa-plus" style={{ fontSize: 11 }} />
                       Adicionar
                     </button>
@@ -91,7 +91,7 @@ export function LinkDishModal({ categories, items, onClose, onLinked }: { catego
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center", padding: "16px 24px 20px", borderTop: "1px solid var(--line)", flexWrap: "wrap" }}>
-          <button type="button" onClick={() => navigate("/produtos")} style={{ border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: 12.5, fontWeight: 500, color: "var(--brandText)", flex: 1, textAlign: "left" }}>
+          <button type="button" onClick={() => navigate("/produtos")} style={{ border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, color: "var(--brandText)", flex: 1, textAlign: "left" }}>
             Não encontrou? Cadastre em Produtos → Catálogo
           </button>
           <button type="button" className="btn btn-primary" onClick={close}>

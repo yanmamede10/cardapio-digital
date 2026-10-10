@@ -79,11 +79,11 @@ export default function AdminBillingScreen({ call }: { call: AdminCall }) {
           Gerar cobranças do mês
         </button>
       </div>
-      <div style={{ fontSize: 12, color: "var(--ink3)" }}>
+      <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
         Gera a mensalidade de cada restaurante ativo com valor definido no detalhe dele, vencendo no dia escolhido. Gerar de novo só acrescenta quem ainda não tem o mês.
       </div>
       {overdue.length > 0 && (
-        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--alert)" }}>
+        <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)" }}>
           {overdue.length} {overdue.length === 1 ? "mensalidade atrasada" : "mensalidades atrasadas"} · {brl(overdue.reduce((t, c) => t + c.value, 0))} em aberto
         </div>
       )}
@@ -97,7 +97,7 @@ export default function AdminBillingScreen({ call }: { call: AdminCall }) {
               </div>
             ))}
           </div>
-          {shown.length === 0 && <div style={{ padding: "20px 16px", fontSize: 13, color: "var(--ink3)" }}>Nenhuma mensalidade aqui.</div>}
+          {shown.length === 0 && <div style={{ padding: "20px 16px", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhuma mensalidade aqui.</div>}
           {shown.map((c) => {
             const late = c.status === "overdue";
             return (
@@ -116,16 +116,16 @@ export default function AdminBillingScreen({ call }: { call: AdminCall }) {
                   boxShadow: late ? "inset 3px 0 0 var(--alert)" : undefined
                 }}
               >
-                <Link to={`/admin/restaurantes/${encodeURIComponent(c.restaurantId)}`} style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", minWidth: 0 }}>
+                <Link to={`/admin/restaurantes/${encodeURIComponent(c.restaurantId)}`} style={{ fontSize: "var(--text-body)", fontWeight: 500, color: "var(--ink)", minWidth: 0 }}>
                   {c.restaurantName}
                 </Link>
-                <div className="mono" style={{ fontSize: 12.5 }}>
+                <div className="mono" style={{ fontSize: "var(--text-subheadline)" }}>
                   {monthLabel(c.month)}
                 </div>
-                <div className="mono" style={{ fontSize: 12.5, color: late ? "var(--alert)" : "var(--ink2)" }}>
+                <div className="mono" style={{ fontSize: "var(--text-subheadline)", color: late ? "var(--alert)" : "var(--ink2)" }}>
                   {fmtDate(c.date)}
                 </div>
-                <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+                <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
                   {brl(c.value)}
                 </div>
                 <span className="pill" style={{ justifySelf: "start", background: "var(--surface2)", color: STATUS[c.status].color, fontWeight: late ? 700 : undefined }}>
@@ -133,7 +133,7 @@ export default function AdminBillingScreen({ call }: { call: AdminCall }) {
                   {STATUS[c.status].label}
                 </span>
                 {c.status === "paid" ? (
-                  <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+                  <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                     Pago em {c.paidOn ? brDate(c.paidOn) : "—"}
                     {c.paymentMethod && ` · ${c.paymentMethod}`}
                   </div>
@@ -145,15 +145,15 @@ export default function AdminBillingScreen({ call }: { call: AdminCall }) {
                         <option key={m}>{m}</option>
                       ))}
                     </select>
-                    <button type="button" className="btn btn-primary" style={{ padding: "6px 11px", fontSize: 12.5 }} disabled={!paying.paidOn} onClick={pay}>
+                    <button type="button" className="btn btn-primary" style={{ padding: "6px 11px", fontSize: "var(--text-subheadline)" }} disabled={!paying.paidOn} onClick={pay}>
                       Confirmar
                     </button>
-                    <button type="button" className="btn btn-outline" style={{ padding: "6px 11px", fontSize: 12.5 }} onClick={() => setPaying(null)}>
+                    <button type="button" className="btn btn-outline" style={{ padding: "6px 11px", fontSize: "var(--text-subheadline)" }} onClick={() => setPaying(null)}>
                       Cancelar
                     </button>
                   </div>
                 ) : (
-                  <button type="button" className="btn btn-outline" style={{ justifySelf: "start", padding: "6px 13px", fontSize: 12.5 }} onClick={() => setPaying({ id: c.id, paidOn: todayIso(), paymentMethod: "PIX" })}>
+                  <button type="button" className="btn btn-outline" style={{ justifySelf: "start", padding: "6px 13px", fontSize: "var(--text-subheadline)" }} onClick={() => setPaying({ id: c.id, paidOn: todayIso(), paymentMethod: "PIX" })}>
                     Marcar como pago
                   </button>
                 )}

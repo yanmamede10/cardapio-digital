@@ -20,7 +20,7 @@ const ACTION_BTN: CSSProperties = {
   borderRadius: 12,
   cursor: "pointer",
   font: "inherit",
-  fontSize: 12.5,
+  fontSize: "var(--text-subheadline)",
   fontWeight: 600,
   display: "flex",
   alignItems: "center",
@@ -113,20 +113,20 @@ export default function MobileTableDetailScreen() {
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 14, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 52, height: 52, flex: "0 0 52px", borderRadius: 14, background: free ? "var(--surface2)" : st.bg, border: `1px solid ${free ? "var(--line)" : "transparent"}`, color: free ? "var(--ink3)" : st.fg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1 }}>
-          <span style={{ fontSize: 9, letterSpacing: ".06em" }}>MESA</span>
-          <span style={{ fontSize: 20, fontWeight: 600 }}>{number}</span>
+          <span style={{ fontSize: "var(--text-caption)", letterSpacing: ".06em" }}>MESA</span>
+          <span style={{ fontSize: "var(--text-title2)", fontWeight: 600 }}>{number}</span>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: st.bg, color: st.fg }}>{st.label}</span>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)", marginTop: 4 }}>
+          <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: st.bg, color: st.fg }}>{st.label}</span>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)", marginTop: 4 }}>
             {free ? "Sem comanda aberta" : `${table?.seats ?? 0} lugares${table?.openedAt ? ` · aberta há ${Math.max(0, Math.floor((Date.now() - new Date(table.openedAt).getTime()) / 60000))} min` : ""}`}
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
             Comanda
           </div>
-          <div className="mono" style={{ fontSize: 20, fontWeight: 600, letterSpacing: "-.02em" }}>
+          <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.02em" }}>
             {free ? "—" : brl(total)}
           </div>
         </div>
@@ -135,36 +135,36 @@ export default function MobileTableDetailScreen() {
       {!free && (comanda?.lines.length ?? 0) > 0 && (
         <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>Itens da comanda</div>
-            <div className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
+            <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, flex: 1 }}>Itens da comanda</div>
+            <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
               tempo real
             </div>
           </div>
           {comanda!.lines.map((l, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 14px", borderBottom: "1px solid var(--line)" }}>
-              <div className="mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--ink3)", width: 22 }}>
+              <div className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--ink3)", width: 22 }}>
                 {l.quantity}×
               </div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: 13 }}>{l.name}</div>
-              <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: "var(--text-subheadline)" }}>{l.name}</div>
+              <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
                 {brl(l.subtotal)}
               </div>
             </div>
           ))}
           <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 5 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--ink2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
               <span>Subtotal</span>
               <span className="mono">{brl(subtotal)}</span>
             </div>
             {!!comanda?.servicePct && (
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--ink2)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                 <span>Serviço {comanda.servicePct}%</span>
                 <span className="mono">{brl(service)}</span>
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontWeight: 600, paddingTop: 6, borderTop: "1px solid var(--line)" }}>
-              <span style={{ fontSize: 13 }}>Total</span>
-              <span className="mono" style={{ fontSize: 18, letterSpacing: "-.02em" }}>
+              <span style={{ fontSize: "var(--text-subheadline)" }}>Total</span>
+              <span className="mono" style={{ fontSize: "var(--text-title3)", letterSpacing: "-.02em" }}>
                 {brl(total)}
               </span>
             </div>
@@ -177,15 +177,15 @@ export default function MobileTableDetailScreen() {
           <div style={{ width: 58, height: 58, borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
             <i className="fa-solid fa-chair" style={{ fontSize: 22 }} />
           </div>
-          <div style={{ fontSize: 14.5, fontWeight: 600 }}>Mesa livre</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)", textWrap: "pretty" }}>{qrOrdering ? "Nenhuma comanda aberta. Lance o pedido aqui ou peça para o cliente escanear o QR code da mesa." : "Nenhuma comanda aberta. Lance o pedido aqui."}</div>
+          <div style={{ fontSize: "var(--text-headline)", fontWeight: 600 }}>Mesa livre</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)", textWrap: "pretty" }}>{qrOrdering ? "Nenhuma comanda aberta. Lance o pedido aqui ou peça para o cliente escanear o QR code da mesa." : "Nenhuma comanda aberta. Lance o pedido aqui."}</div>
           <div style={{ display: "flex", gap: 9, flexWrap: "wrap", justifyContent: "center" }}>
-            <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, padding: "0 18px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+            <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ minHeight: 46, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, padding: "0 18px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
               <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
               Lançar pedido
             </button>
             {qrOrdering && (
-              <button type="button" onClick={showQr} style={{ minHeight: 46, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 11, padding: "0 16px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              <button type="button" onClick={showQr} style={{ minHeight: 46, background: "var(--surface2)", border: "1px solid var(--line2)", color: "var(--ink)", borderRadius: 11, padding: "0 16px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
                 <i className="fa-solid fa-qrcode" style={{ fontSize: 13 }} />
                 QR da mesa
               </button>
@@ -196,7 +196,7 @@ export default function MobileTableDetailScreen() {
 
       {splitOpen && !free && (
         <section style={{ background: "var(--surface)", border: "1px solid var(--sec)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 600 }}>Dividir conta</div>
+          <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Dividir conta</div>
           <div style={{ display: "flex", gap: 7 }}>
             {(["pessoa", "item"] as const).map((m) => {
               const active = splitMode === m;
@@ -205,7 +205,7 @@ export default function MobileTableDetailScreen() {
                   key={m}
                   type="button"
                   onClick={() => setSplitMode(m)}
-                  style={{ flex: 1, minHeight: 42, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}
+                  style={{ flex: 1, minHeight: 42, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, background: active ? "var(--brandSoft)" : "var(--surface2)", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}
                 >
                   {m === "pessoa" ? "Por pessoa" : "Por item"}
                 </button>
@@ -215,20 +215,20 @@ export default function MobileTableDetailScreen() {
           {splitMode === "pessoa" ? (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 11, background: "var(--surface2)", borderRadius: 11, padding: "10px 12px" }}>
-                <div style={{ flex: 1, fontSize: 12.5, color: "var(--ink2)" }}>Pessoas na mesa</div>
-                <button type="button" aria-label="Uma pessoa a menos" onClick={() => setPeople((p) => Math.max(2, p - 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: 14 }}>
+                <div style={{ flex: 1, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Pessoas na mesa</div>
+                <button type="button" aria-label="Uma pessoa a menos" onClick={() => setPeople((p) => Math.max(2, p - 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: "var(--text-body)" }}>
                   <i className="fa-solid fa-minus" />
                 </button>
-                <div className="mono" style={{ fontSize: 16, fontWeight: 600, minWidth: 22, textAlign: "center" }}>
+                <div className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, minWidth: 22, textAlign: "center" }}>
                   {people}
                 </div>
-                <button type="button" aria-label="Uma pessoa a mais" onClick={() => setPeople((p) => Math.min(12, p + 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: 14 }}>
+                <button type="button" aria-label="Uma pessoa a mais" onClick={() => setPeople((p) => Math.min(12, p + 1))} style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid var(--line2)", background: "var(--surface)", color: "var(--ink)", cursor: "pointer", fontSize: "var(--text-body)" }}>
                   <i className="fa-solid fa-plus" />
                 </button>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>Valor por pessoa</span>
-                <span className="mono" style={{ fontSize: 18, fontWeight: 600, color: "var(--brandText)" }}>
+                <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Valor por pessoa</span>
+                <span className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600, color: "var(--brandText)" }}>
                   {brl(total / people)}
                 </span>
               </div>
@@ -236,7 +236,7 @@ export default function MobileTableDetailScreen() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {(comanda?.lines || []).map((l, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, background: "var(--surface2)", borderRadius: 9, padding: "8px 11px" }}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--text-subheadline)", background: "var(--surface2)", borderRadius: 9, padding: "8px 11px" }}>
                   <span style={{ color: "var(--ink2)" }}>
                     {l.name} · {l.quantity}
                   </span>
@@ -272,7 +272,7 @@ export default function MobileTableDetailScreen() {
               Impressão em breve
             </button>
           </div>
-          <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ ...ACTION_BTN, minHeight: 52, fontSize: 14 }}>
+          <button type="button" onClick={() => navigate(`/mesas/${num}/pedido`)} style={{ ...ACTION_BTN, minHeight: 52, fontSize: "var(--text-body)" }}>
             <i className="fa-solid fa-plus" style={{ fontSize: 14 }} />
             Lançar pedido
           </button>
@@ -281,7 +281,7 @@ export default function MobileTableDetailScreen() {
             <button
               type="button"
               onClick={() => setPayOpen(true)}
-              style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
+              style={{ minHeight: 52, width: "100%", background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 13, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 9 }}
             >
               <i className="fa-solid fa-receipt" style={{ fontSize: 15 }} />
               Fechar conta · {brl(total)}

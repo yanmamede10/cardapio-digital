@@ -46,7 +46,7 @@ export default function MobileTeamScreen() {
 
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
-      <p style={{ margin: 0, fontSize: 12, color: "var(--ink3)" }}>{LEVELS_HINT}</p>
+      <p style={{ margin: 0, fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{LEVELS_HINT}</p>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
         {staff.map((p) => {
           const initials = p.name.split(" ").map((w) => w[0]).slice(0, 2).join("");
@@ -58,12 +58,12 @@ export default function MobileTeamScreen() {
               onClick={() => open({ id: p.id, name: p.name, email: p.email, role: p.role, password: "" })}
               style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", cursor: "pointer", font: "inherit", color: "var(--ink)", padding: "11px 13px", minHeight: 62 }}
             >
-              <div style={{ width: 40, height: 40, flex: "0 0 40px", borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12.5, fontWeight: 600 }}>{initials}</div>
+              <div style={{ width: 40, height: 40, flex: "0 0 40px", borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>{initials}</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{p.name}</div>
-                <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.email}</div>
+                <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{p.name}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.email}</div>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "3px 9px", background: p.role === "owner" ? "var(--brandSoft)" : "var(--surface2)", color: p.role === "owner" ? "var(--brandText)" : "var(--ink2)" }}>{ROLE_LABEL[p.role] ?? p.role}</span>
+              <span style={{ fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 20, padding: "3px 9px", background: p.role === "owner" ? "var(--brandSoft)" : "var(--surface2)", color: p.role === "owner" ? "var(--brandText)" : "var(--ink2)" }}>{ROLE_LABEL[p.role] ?? p.role}</span>
             </button>
           );
         })}
@@ -71,7 +71,7 @@ export default function MobileTeamScreen() {
 
       {formOpen && (
         <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 10 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>{member.id ? "Editar membro" : "Adicionar membro"}</div>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>{member.id ? "Editar membro" : "Adicionar membro"}</div>
           <input value={member.name} onChange={(e) => setMember({ ...member, name: e.target.value })} placeholder="Nome" maxLength={120} className="field-mobile" />
           <input value={member.email} onChange={(e) => setMember({ ...member, email: e.target.value })} placeholder="E-mail" type="email" maxLength={254} className="field-mobile" />
           <select value={member.role} disabled={member.id === getSession()?.staffId} onChange={(e) => setMember({ ...member, role: e.target.value as StaffRole })} className="field-mobile" aria-label="Papel">
@@ -82,7 +82,7 @@ export default function MobileTeamScreen() {
             ))}
           </select>
           <input value={member.password} onChange={(e) => setMember({ ...member, password: e.target.value })} placeholder={member.id ? `Nova senha (opcional, mín. ${MIN_PASSWORD_LENGTH})` : `Senha inicial (mín. ${MIN_PASSWORD_LENGTH})`} type="password" autoComplete="new-password" className="field-mobile" />
-          <button type="button" onClick={save} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600 }}>
+          <button type="button" onClick={save} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 11, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
             {member.id ? "Salvar alterações" : "Adicionar"}
           </button>
         </section>
@@ -91,7 +91,7 @@ export default function MobileTeamScreen() {
       <button
         type="button"
         onClick={() => (formOpen && !member.id ? setFormOpen(false) : open(EMPTY_MEMBER))}
-        style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+        style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
       >
         <i className="fa-solid fa-user-plus" style={{ fontSize: 14 }} />
         Adicionar membro

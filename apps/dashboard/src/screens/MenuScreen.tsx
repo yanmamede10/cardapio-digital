@@ -250,7 +250,7 @@ export default function MenuScreen() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", width: 250 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {catPills.map((c) => {
@@ -261,7 +261,7 @@ export default function MenuScreen() {
                 type="button"
                 onClick={() => setActiveCat(c)}
                 className="tap"
-                style={{ borderRadius: 20, padding: "6px 13px", cursor: "pointer", fontSize: 12.5, fontWeight: 500, background: active ? "var(--brandSoft)" : "transparent", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}
+                style={{ borderRadius: 20, padding: "6px 13px", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, background: active ? "var(--brandSoft)" : "transparent", color: active ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${active ? "var(--brand)" : "var(--line)"}` }}
               >
                 {c}
               </button>
@@ -269,7 +269,7 @@ export default function MenuScreen() {
           })}
         </div>
         <div style={{ flex: 1 }} />
-        <div className="mono" style={{ fontSize: 12, color: "var(--ink3)" }}>
+        <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
           {filtered.length} de {items.length} pratos
         </div>
         {canEdit && (
@@ -396,7 +396,7 @@ export default function MenuScreen() {
                 {!drawer.imageUrl && (
                   <>
                     <i className="fa-solid fa-image" style={{ fontSize: 24, lineHeight: 1 }} />
-                    <span className="mono" style={{ fontSize: 10.5, letterSpacing: ".06em", textAlign: "center", padding: "0 12px" }}>
+                    <span className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".06em", textAlign: "center", padding: "0 12px" }}>
                       ARRASTE A FOTO DO PRATO · 1200×900
                     </span>
                   </>
@@ -413,14 +413,14 @@ export default function MenuScreen() {
                   ))}
                 </select>
               </label>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: 12.5, color: "var(--ink2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                 <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: "var(--ink3)" }} />
                 <span style={{ flex: 1 }}>Nome, preço, composição e tributação são editados no cadastro do Catálogo.</span>
                 {drawer.productId && (
                   <button
                     type="button"
                     onClick={() => navigate("/produtos", { state: { edit: drawer.productId } })}
-                    style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer", fontSize: 12.5, fontWeight: 600, color: "var(--brandText)", whiteSpace: "nowrap" }}
+                    style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--brandText)", whiteSpace: "nowrap" }}
                   >
                     Abrir
                   </button>
@@ -437,7 +437,7 @@ export default function MenuScreen() {
                   <button
                     type="button"
                     onClick={() => setDrawer({ ...drawer, extras: [...drawer.extras, { name: "Novo adicional", price: "0,00", productId: "", qty: "" }] })}
-                    style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: 0, color: "var(--brandText)", font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: 0 }}
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: 0, color: "var(--brandText)", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, cursor: "pointer", padding: 0 }}
                   >
                     <i className="fa-solid fa-plus" style={{ fontSize: 16, lineHeight: 1 }} />
                     Adicionar
@@ -465,7 +465,7 @@ export default function MenuScreen() {
                     <select
                       className="field"
                       aria-label={`Baixa no estoque de ${x.name}`}
-                      style={{ gridColumn: x.productId ? "1" : "1 / -1", padding: "7px 10px", fontSize: 12.5 }}
+                      style={{ gridColumn: x.productId ? "1" : "1 / -1", padding: "7px 10px", fontSize: "var(--text-subheadline)" }}
                       value={x.productId}
                       onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, productId: e.target.value } : y)) })}
                     >
@@ -482,7 +482,7 @@ export default function MenuScreen() {
                         inputMode="decimal"
                         placeholder="Qtd."
                         aria-label={`Quantidade de ${x.name} no estoque`}
-                        style={{ gridColumn: "2 / -1", padding: "7px 10px", fontSize: 12.5 }}
+                        style={{ gridColumn: "2 / -1", padding: "7px 10px", fontSize: "var(--text-subheadline)" }}
                         value={x.qty}
                         onChange={(e) => setDrawer({ ...drawer, extras: drawer.extras.map((y, j) => (i === j ? { ...y, qty: e.target.value.replace(/[^0-9.,]/g, "") } : y)) })}
                       />
@@ -493,13 +493,13 @@ export default function MenuScreen() {
               <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 13, border: "1px solid var(--line)", borderRadius: 13, background: "var(--surface2)" }}>
                 <div className="field-label">Agendamento de disponibilidade</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12, color: "var(--ink2)" }}>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
                     Almoço
-                    <input className="field mono" style={{ padding: "8px 10px", fontSize: 12.5 }} value={drawer.lunch} onChange={(e) => setDrawer({ ...drawer, lunch: e.target.value })} />
+                    <input className="field mono" style={{ padding: "8px 10px", fontSize: "var(--text-subheadline)" }} value={drawer.lunch} onChange={(e) => setDrawer({ ...drawer, lunch: e.target.value })} />
                   </label>
-                  <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12, color: "var(--ink2)" }}>
+                  <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
                     Jantar
-                    <input className="field mono" style={{ padding: "8px 10px", fontSize: 12.5 }} value={drawer.dinner} onChange={(e) => setDrawer({ ...drawer, dinner: e.target.value })} />
+                    <input className="field mono" style={{ padding: "8px 10px", fontSize: "var(--text-subheadline)" }} value={drawer.dinner} onChange={(e) => setDrawer({ ...drawer, dinner: e.target.value })} />
                   </label>
                 </div>
               </div>
@@ -528,7 +528,7 @@ export function DragHandle({ ariaLabel, ...rest }: { ariaLabel: string } & Butto
 
 export function CategoryDragPreview({ name }: { name: string }) {
   return (
-    <div className="card" style={{ padding: "13px 18px", boxShadow: "var(--shadow2)", transform: "scale(1.02)", display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 13.5 }}>
+    <div className="card" style={{ padding: "13px 18px", boxShadow: "var(--shadow2)", transform: "scale(1.02)", display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: "var(--text-body)" }}>
       <i className="fa-solid fa-grip-vertical" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
       {name}
     </div>
@@ -539,8 +539,8 @@ function ItemDragPreview({ name, price }: { name: string; price: string }) {
   return (
     <div className="card" style={{ padding: "13px 18px", boxShadow: "var(--shadow2)", transform: "scale(1.02)", display: "flex", alignItems: "center", gap: 12, minWidth: 280 }}>
       <i className="fa-solid fa-grip-vertical" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
-      <div style={{ flex: 1, fontWeight: 600, fontSize: 13.5 }}>{name}</div>
-      <div className="mono" style={{ fontWeight: 600, fontSize: 14 }}>{price}</div>
+      <div style={{ flex: 1, fontWeight: 600, fontSize: "var(--text-body)" }}>{name}</div>
+      <div className="mono" style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>{price}</div>
     </div>
   );
 }
@@ -577,8 +577,8 @@ export function CategorySection({
   const style: CSSProperties = { overflowX: "auto", transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
   const title = (
     <>
-      <span style={{ fontWeight: 600, fontSize: 13.5 }}>{cat.name}</span>
-      <span className="mono" style={{ fontSize: 11, color: "var(--ink3)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
+      <span style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>{cat.name}</span>
+      <span className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", background: "var(--surface3)", borderRadius: 20, padding: "1px 8px" }}>
         {count}
       </span>
     </>
@@ -599,7 +599,7 @@ export function CategorySection({
         ) : (
           title
         )}
-        {note && <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink2)" }}>{note}</span>}
+        {note && <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>{note}</span>}
         <div style={{ flex: 1 }} />
         {canEdit && !fixed && (
           <>
@@ -612,7 +612,7 @@ export function CategorySection({
           </>
         )}
       </div>
-      {open && count === 0 && <div style={{ padding: "14px 18px", fontSize: 12.5, color: "var(--ink3)", minWidth }}>{empty}</div>}
+      {open && count === 0 && <div style={{ padding: "14px 18px", fontSize: "var(--text-subheadline)", color: "var(--ink3)", minWidth }}>{empty}</div>}
       {open && children}
     </section>
   );
@@ -652,19 +652,19 @@ function ItemRow({ item: m, canEdit, onToggleAvailable, onUnlink, onEdit }: { it
         }}
       >
         {!m.imageUrl && (
-          <span className="mono" style={{ fontSize: 8, color: "var(--ink3)", letterSpacing: ".04em" }}>
+          <span className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", letterSpacing: ".04em" }}>
             FOTO
           </span>
         )}
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: "-.01em" }}>{m.name}</div>
-        <div style={{ fontSize: 12, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.shortDescription}</div>
+        <div style={{ fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: "-.01em" }}>{m.name}</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.shortDescription}</div>
       </div>
-      <div className="mono" style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-.02em" }}>
+      <div className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: "-.02em" }}>
         {brl(m.price)}
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink2)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
         <i className="fa-solid fa-clock" style={{ fontSize: 15, lineHeight: 1, color: "var(--ink3)" }} />
         {m.scheduleLabel}
       </div>
@@ -672,7 +672,7 @@ function ItemRow({ item: m, canEdit, onToggleAvailable, onUnlink, onEdit }: { it
         <span className="toggle-track" style={{ background: m.soldOut ? "var(--line2)" : "var(--ok)" }}>
           <span className="toggle-knob" style={{ left: m.soldOut ? 2 : 16 }} />
         </span>
-        <span style={{ fontSize: 12, fontWeight: 600, color: m.soldOut ? "var(--ink3)" : "var(--ok)" }}>{m.soldOut ? "Esgotado" : "Disponível"}</span>
+        <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: m.soldOut ? "var(--ink3)" : "var(--ok)" }}>{m.soldOut ? "Esgotado" : "Disponível"}</span>
       </button>
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", visibility: canEdit ? undefined : "hidden" }}>
         <button type="button" title="Remover do cardápio" aria-label={`Remover ${m.name} do cardápio`} className="icon-btn" onClick={onUnlink}>

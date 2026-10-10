@@ -6,8 +6,8 @@ export function MobileEmptyState({ icon, title, sub, action }: { icon: string; t
       <div style={{ width: 62, height: 62, borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)" }}>
         <i className={`fa-solid ${icon}`} style={{ fontSize: 24 }} />
       </div>
-      <div style={{ fontSize: 15, fontWeight: 600 }}>{title}</div>
-      <div style={{ fontSize: 12.5, color: "var(--ink3)", textWrap: "pretty" }}>{sub}</div>
+      <div style={{ fontSize: "var(--text-headline)", fontWeight: 600 }}>{title}</div>
+      <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)", textWrap: "pretty" }}>{sub}</div>
       {action}
     </div>
   );

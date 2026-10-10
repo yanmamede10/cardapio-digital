@@ -5,7 +5,7 @@ import { useDashboardState } from "../state/DashboardStateContext";
 import { useMobileScreen } from "../components/mobile/MobileLayout";
 import { WhatsAppBadge, useWhatsAppStatus } from "../components/WhatsApp";
 
-const p = { margin: 0, fontSize: 13, lineHeight: 1.55, color: "var(--ink2)" } as const;
+const p = { margin: 0, fontSize: "var(--text-subheadline)", lineHeight: 1.55, color: "var(--ink2)" } as const;
 
 /** Configurações → WhatsApp (Dono): risk notice → QR → live status → disconnect. */
 export default function SettingsWhatsAppTab() {
@@ -66,7 +66,7 @@ export default function SettingsWhatsAppTab() {
   if (!status.termsAcceptedAt) {
     return (
       <section className="card" style={{ padding: 18, maxWidth: 560, display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 600, fontSize: 15 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, fontWeight: 600, fontSize: "var(--text-headline)" }}>
           <i className="fa-solid fa-triangle-exclamation" style={{ color: "var(--warn)" }} />
           Antes de conectar o WhatsApp
         </div>
@@ -77,7 +77,7 @@ export default function SettingsWhatsAppTab() {
           A Meta, dona do WhatsApp, não permite esse tipo de conexão e <b>pode bloquear o número</b> — por um tempo ou de vez. Se isso acontecer, o restaurante perde o WhatsApp nesse número, inclusive no celular.
         </p>
         <p style={p}>O sistema nunca manda mensagem sozinho: só o que alguém da equipe escrever no Atendimento. Mesmo assim, o risco existe.</p>
-        <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: "var(--text-subheadline)", fontWeight: 500, cursor: "pointer" }}>
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ marginTop: 3 }} />
           Entendi que a conexão não é oficial e que o número pode ser bloqueado pela Meta.
         </label>
@@ -91,7 +91,7 @@ export default function SettingsWhatsAppTab() {
   return (
     <section className="card" style={{ padding: 18, maxWidth: 560, display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <div style={{ fontWeight: 600, fontSize: 15, flex: 1 }}>Conexão do WhatsApp</div>
+        <div style={{ fontWeight: 600, fontSize: "var(--text-headline)", flex: 1 }}>Conexão do WhatsApp</div>
         <WhatsAppBadge state={status.state} />
       </div>
 
@@ -123,7 +123,7 @@ export default function SettingsWhatsAppTab() {
         </>
       )}
 
-      <p style={{ ...p, fontSize: 11.5, color: "var(--ink3)" }}>
+      <p style={{ ...p, fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
         Aviso de conexão não oficial aceito por {status.termsAcceptedBy ?? "—"} em {fmtDateTime(status.termsAcceptedAt)}.
       </p>
     </section>

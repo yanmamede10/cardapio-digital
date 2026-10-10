@@ -18,7 +18,7 @@ export function Calendar({ from, to, onPick }: { from: string | null; to?: strin
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, userSelect: "none" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 2px 6px" }}>
-        <div style={{ flex: 1, fontSize: 14, fontWeight: 600, letterSpacing: "-.01em" }}>
+        <div style={{ flex: 1, fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: "-.01em" }}>
           {MONTHS[m - 1]} de {y}
         </div>
         <button type="button" title="Mês anterior" aria-label="Mês anterior" style={navBtn} onClick={() => shift(-1)}>
@@ -30,7 +30,7 @@ export function Calendar({ from, to, onPick }: { from: string | null; to?: strin
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7,minmax(0,1fr))" }}>
         {WEEKDAYS.map((w, i) => (
-          <div key={i} style={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: "var(--ink3)", padding: "2px 0 6px" }}>
+          <div key={i} style={{ textAlign: "center", fontSize: "var(--text-caption)", fontWeight: 600, color: "var(--ink3)", padding: "2px 0 6px" }}>
             {w}
           </div>
         ))}
@@ -58,7 +58,7 @@ export function Calendar({ from, to, onPick }: { from: string | null; to?: strin
                   border: 0,
                   cursor: "pointer",
                   font: "inherit",
-                  fontSize: 13.5,
+                  fontSize: "var(--text-body)",
                   fontVariantNumeric: "tabular-nums",
                   fontWeight: end || iso === today ? 600 : 400,
                   background: end ? "var(--brand)" : "transparent",

@@ -37,7 +37,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
     >
       <div style={{ minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <h1 style={{ margin: 0, fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {restaurantName}
           </h1>
           <span className="pill" style={{ color: "var(--ok)", background: "var(--surface2)", border: "1px solid var(--line)" }}>
@@ -45,7 +45,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
             Aberto
           </span>
         </div>
-        <div style={{ fontSize: 12, color: "var(--ink3)" }}>{tagline}</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{tagline}</div>
       </div>
       <div style={{ flex: 1 }} />
       <div style={{ position: "relative" }}>
@@ -69,7 +69,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
                 borderRadius: 20,
                 background: "var(--brand)",
                 color: "var(--brandInk)",
-                fontSize: 10,
+                fontSize: "var(--text-caption)",
                 fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
@@ -100,16 +100,16 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
               animation: "dcScaleIn .36s var(--ease-spring) both"
             }}
           >
-            <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", fontWeight: 600, fontSize: 13 }}>Notificações</div>
-            {notifs.length === 0 && <div style={{ padding: "16px 14px", fontSize: 12.5, color: "var(--ink3)" }}>Nenhuma notificação agora.</div>}
+            <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--line)", fontWeight: 600, fontSize: "var(--text-subheadline)" }}>Notificações</div>
+            {notifs.length === 0 && <div style={{ padding: "16px 14px", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhuma notificação agora.</div>}
             {notifs.map((n, i) => (
               <div key={i} style={{ display: "flex", gap: 11, padding: "11px 14px", borderBottom: "1px solid var(--line)", alignItems: "flex-start" }}>
                 <i className={`fa-solid ${n.icon}`} style={{ fontSize: 19, lineHeight: 1, color: n.color }} />
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{n.title}</div>
-                  <div style={{ fontSize: 12, color: "var(--ink3)" }}>{n.sub}</div>
+                  <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{n.title}</div>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{n.sub}</div>
                 </div>
-                <div className="mono" style={{ fontSize: 11, color: "var(--ink3)", whiteSpace: "nowrap" }}>
+                <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", whiteSpace: "nowrap" }}>
                   {n.time}
                 </div>
               </div>
@@ -119,8 +119,8 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 12, borderLeft: "1px solid var(--line)" }}>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap" }}>{staffName}</div>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--secText)" }}>
+          <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, whiteSpace: "nowrap" }}>{staffName}</div>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".08em", textTransform: "uppercase", color: "var(--secText)" }}>
             {staffRole}
           </div>
         </div>
@@ -136,7 +136,7 @@ export function Header({ screen, tagline, notifs }: { screen: string; tagline: s
             alignItems: "center",
             justifyContent: "center",
             fontWeight: 600,
-            fontSize: 13
+            fontSize: "var(--text-subheadline)"
           }}
         >
           {initialsOf(staffName)}

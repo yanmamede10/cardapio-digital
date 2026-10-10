@@ -107,26 +107,26 @@ export default function FinanceOverviewScreen() {
               borderColor: k.alert ? "color-mix(in srgb, var(--alert) 45%, transparent)" : undefined
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, fontWeight: 500, color: k.alert ? "var(--alert)" : "var(--ink2)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-subheadline)", fontWeight: 500, color: k.alert ? "var(--alert)" : "var(--ink2)" }}>
               <i className={`fa-solid ${k.icon}`} style={{ fontSize: 13 }} />
               {k.label}
             </div>
-            <div className="mono" style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-.04em", lineHeight: 1.15, color: k.fg }}>
+            <div className="mono" style={{ fontSize: "var(--text-title1)", fontWeight: 600, letterSpacing: "-.04em", lineHeight: 1.15, color: k.fg }}>
               {k.value}
             </div>
-            <div style={{ fontSize: 12, color: "var(--ink3)" }}>{k.note}</div>
+            <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{k.note}</div>
           </section>
         ))}
       </div>
 
       <section className="card" style={{ padding: 22 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", marginBottom: 20 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Entradas vs. saídas · últimos 30 dias</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>Entradas vs. saídas · últimos 30 dias</div>
           {[
             { label: "Entradas", color: "var(--ok)", value: sumIn },
             { label: "Saídas", color: "var(--brandText)", value: sumOut }
           ].map((s) => (
-            <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, color: "var(--ink2)" }}>
+            <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
               <span style={{ width: 9, height: 9, borderRadius: 3, background: s.color }} />
               {s.label}
               <span className="mono" style={{ fontWeight: 600, color: "var(--ink)" }}>
@@ -136,7 +136,7 @@ export default function FinanceOverviewScreen() {
           ))}
         </div>
         {sumIn + sumOut === 0 ? (
-          <div style={{ height: 190, display: "grid", placeItems: "center", fontSize: 13, color: "var(--ink3)", borderBottom: "1px solid var(--line)" }}>Nenhuma conta quitada nos últimos 30 dias.</div>
+          <div style={{ height: 190, display: "grid", placeItems: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)", borderBottom: "1px solid var(--line)" }}>Nenhuma conta quitada nos últimos 30 dias.</div>
         ) : (
           <div role="img" aria-label={`Entradas ${brl(sumIn)} e saídas ${brl(sumOut)} nos últimos 30 dias`} style={{ height: 190, display: "flex", alignItems: "flex-end", gap: 5, borderBottom: "1px solid var(--line)" }}>
             {days.map((d) => (
@@ -148,7 +148,7 @@ export default function FinanceOverviewScreen() {
             ))}
           </div>
         )}
-        <div className="mono" style={{ display: "flex", justifyContent: "space-between", marginTop: 9, fontSize: 11, color: "var(--ink3)" }}>
+        <div className="mono" style={{ display: "flex", justifyContent: "space-between", marginTop: 9, fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
           {[0, 10, 20, 29].map((i) => (
             <span key={i}>{shortDate(days[i].iso)}</span>
           ))}
@@ -157,20 +157,20 @@ export default function FinanceOverviewScreen() {
 
       <section className="card" style={{ padding: 22 }}>
         <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Maiores despesas do mês</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>{new Date().toLocaleDateString("pt-BR", { month: "long" })}</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>Maiores despesas do mês</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{new Date().toLocaleDateString("pt-BR", { month: "long" })}</div>
         </div>
-        {topCats.length === 0 && <div style={{ padding: "20px 0", fontSize: 13, color: "var(--ink3)" }}>Nenhuma despesa com vencimento neste mês.</div>}
+        {topCats.length === 0 && <div style={{ padding: "20px 0", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhuma despesa com vencimento neste mês.</div>}
         {topCats.map(([name, value]) => (
           <div key={name} style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) auto 38px", gap: 12, alignItems: "center", padding: "11px 0", borderBottom: "1px solid var(--line)" }}>
-            <div style={{ fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
+            <div style={{ fontSize: "var(--text-body)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
             <div style={{ height: 8, borderRadius: 8, background: "var(--surface2)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${(value / topCats[0][1]) * 100}%`, background: "var(--sec)", borderRadius: 8 }} />
             </div>
-            <div className="mono" style={{ fontSize: 13, fontWeight: 600, textAlign: "right" }}>
+            <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, textAlign: "right" }}>
               {brl(value)}
             </div>
-            <div className="mono" style={{ fontSize: 12, color: "var(--ink3)", textAlign: "right" }}>
+            <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", textAlign: "right" }}>
               {Math.round((value / monthTotal) * 100)}%
             </div>
           </div>

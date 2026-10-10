@@ -40,8 +40,8 @@ export default function MobileHoursScreen() {
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
         {hours.map((row) => (
           <div key={row.weekday} style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 13px", borderBottom: "1px solid var(--line)", minHeight: 58 }}>
-            <div style={{ width: 42, fontSize: 12.5, fontWeight: 600 }}>{WEEKDAY_LABEL[row.weekday]}</div>
-            <div className="mono" style={{ flex: 1, fontSize: 12.5, color: row.isOpen ? "var(--ink2)" : "var(--ink3)" }}>
+            <div style={{ width: 42, fontSize: "var(--text-subheadline)", fontWeight: 600 }}>{WEEKDAY_LABEL[row.weekday]}</div>
+            <div className="mono" style={{ flex: 1, fontSize: "var(--text-subheadline)", color: row.isOpen ? "var(--ink2)" : "var(--ink3)" }}>
               {row.isOpen ? `${row.lunch} · ${row.dinner}` : "Fechado"}
             </div>
             <MobileToggle on={row.isOpen} onClick={() => toggle(row)} label={`Aberto ${WEEKDAY_LABEL[row.weekday]}`} />

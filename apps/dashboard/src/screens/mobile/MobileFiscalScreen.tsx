@@ -34,7 +34,7 @@ export default function MobileFiscalScreen() {
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 10, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 12, padding: 12 }}>
         <i className="fa-solid fa-circle-info" style={{ fontSize: 14, color: "var(--ink3)", marginTop: 2 }} />
-        <div style={{ fontSize: 12, color: "var(--ink2)", textWrap: "pretty" }}>Estes dados serão usados pelo módulo de emissão de nota fiscal, ainda em desenvolvimento.</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", textWrap: "pretty" }}>Estes dados serão usados pelo módulo de emissão de nota fiscal, ainda em desenvolvimento.</div>
       </div>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", flexDirection: "column", gap: 11 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -64,7 +64,7 @@ export default function MobileFiscalScreen() {
           <input value={fiscal.fiscalAddress} onChange={(e) => setFiscal({ ...fiscal, fiscalAddress: e.target.value })} className="field-mobile" />
         </label>
       </section>
-      <button type="button" onClick={save} style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600 }}>
+      <button type="button" onClick={save} style={{ minHeight: 50, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600 }}>
         Salvar dados fiscais
       </button>
     </div>

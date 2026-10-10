@@ -38,7 +38,7 @@ export default function MobileSettingsScreen() {
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       {groups.map((g) => (
         <section key={g.label} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
-          <div className="mono" style={{ padding: "10px 13px", borderBottom: "1px solid var(--line)", fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+          <div className="mono" style={{ padding: "10px 13px", borderBottom: "1px solid var(--line)", fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
             {g.label}
           </div>
           {g.items.map((i) => (
@@ -47,8 +47,8 @@ export default function MobileSettingsScreen() {
                 <i className={`fa-solid ${i.icon}`} style={{ fontSize: 14 }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{i.label}</div>
-                <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{i.sub}</div>
+                <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{i.label}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{i.sub}</div>
               </div>
               <i className="fa-solid fa-chevron-right" style={{ fontSize: 13, color: "var(--ink3)" }} />
             </button>

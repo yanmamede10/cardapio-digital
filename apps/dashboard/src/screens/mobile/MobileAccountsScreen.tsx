@@ -40,7 +40,7 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 9 }}>
-        <div className="mono" style={{ flex: 1, fontSize: 12, color: "var(--ink3)" }}>
+        <div className="mono" style={{ flex: 1, fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
           {rows.length === 1 ? "1 lançamento" : `${rows.length} lançamentos`}
         </div>
         <FilterPopover sheet groups={accountFilters(kind)} value={filter} onChange={setFilter} resultCount={rows.length} />
@@ -50,8 +50,8 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
         <section style={card}>
           {entrySums(entries, kind).map((k) => (
             <div key={k.label} style={{ display: "flex", alignItems: "center", padding: "11px 14px", borderBottom: "1px solid var(--line)" }}>
-              <span style={{ flex: 1, fontSize: 12.5, color: "var(--ink2)" }}>{k.label}</span>
-              <span className="mono" style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.02em", color: k.fg }}>
+              <span style={{ flex: 1, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{k.label}</span>
+              <span className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.02em", color: k.fg }}>
                 {k.value}
               </span>
             </div>
@@ -70,13 +70,13 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
               <div key={e.id} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 13px", borderBottom: "1px solid var(--line)" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.description}</div>
-                    <div style={{ fontSize: 11.5, color: entryStatus(e) === "Atrasado" ? "var(--alert)" : "var(--ink3)" }}>
+                    <div style={{ fontSize: "var(--text-body)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.description}</div>
+                    <div style={{ fontSize: "var(--text-footnote)", color: entryStatus(e) === "Atrasado" ? "var(--alert)" : "var(--ink3)" }}>
                       Vence {dayMonth(e.dueDate)} · {e.category || "Sem categoria"}
                       {e.costCenter ? ` · ${e.costCenter}` : ""}
                     </div>
                   </div>
-                  <span className="mono" style={{ fontSize: 14, fontWeight: 600 }}>
+                  <span className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>
                     {brl(e.amount)}
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export default function MobileAccountsScreen({ kind }: { kind: FinanceEntryKind 
                     <EntryStatus entry={e} />
                   </div>
                   {e.status !== "paid" && (
-                    <button type="button" className="btn btn-ghost" style={{ minHeight: 40, padding: "0 16px", fontSize: 12.5, color: "var(--brandText)" }} onClick={() => setPaying(e)}>
+                    <button type="button" className="btn btn-ghost" style={{ minHeight: 40, padding: "0 16px", fontSize: "var(--text-subheadline)", color: "var(--brandText)" }} onClick={() => setPaying(e)}>
                       Quitar
                     </button>
                   )}

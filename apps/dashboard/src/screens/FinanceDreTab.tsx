@@ -36,13 +36,13 @@ export default function FinanceDreTab({ entries }: { entries: FinanceEntry[] }) 
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <input type="month" aria-label="Mês" className="field" style={{ width: "auto" }} value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} />
         <div style={{ flex: 1 }} />
-        <button type="button" className="btn btn-ghost" style={{ fontSize: 12.5, color: "var(--brandText)" }} onClick={() => setAccounting((v) => !v)}>
+        <button type="button" className="btn btn-ghost" style={{ fontSize: "var(--text-subheadline)", color: "var(--brandText)" }} onClick={() => setAccounting((v) => !v)}>
           {accounting ? "Ver resumo simples" : "Ver demonstrativo contábil"}
         </button>
       </div>
 
       {inMonth.length === 0 ? (
-        <section className="card" style={{ padding: 22, fontSize: 13, color: "var(--ink3)" }}>
+        <section className="card" style={{ padding: 22, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>
           Nenhum lançamento com vencimento em {monthName}.
         </section>
       ) : accounting ? (
@@ -56,11 +56,11 @@ export default function FinanceDreTab({ entries }: { entries: FinanceEntry[] }) 
               { label: "Sobrou", value: left, note: came > 0 ? `${pct(left)} de cada real que entrou` : "Nada entrou neste mês", fg: left >= 0 ? "var(--ok)" : "var(--alert)" }
             ].map((k) => (
               <section key={k.label} className="card" style={{ padding: "20px 22px 22px", display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--ink2)" }}>{k.label}</div>
-                <div className="mono" style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-.04em", lineHeight: 1.15, color: k.fg }}>
+                <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500, color: "var(--ink2)" }}>{k.label}</div>
+                <div className="mono" style={{ fontSize: "var(--text-title1)", fontWeight: 600, letterSpacing: "-.04em", lineHeight: 1.15, color: k.fg }}>
                   {brl(k.value)}
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink3)" }}>{k.note}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{k.note}</div>
               </section>
             ))}
           </div>
@@ -75,18 +75,18 @@ export default function FinanceDreTab({ entries }: { entries: FinanceEntry[] }) 
 function Bars({ title, rows, color, scale, pct }: { title: string; rows: [string, number][]; color: string; scale: number; pct: (v: number) => string }) {
   return (
     <section className="card" style={{ padding: 22 }}>
-      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10 }}>{title}</div>
-      {rows.length === 0 && <div style={{ padding: "12px 0", fontSize: 13, color: "var(--ink3)" }}>Nada neste mês.</div>}
+      <div style={{ fontWeight: 600, fontSize: "var(--text-body)", marginBottom: 10 }}>{title}</div>
+      {rows.length === 0 && <div style={{ padding: "12px 0", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nada neste mês.</div>}
       {rows.map(([name, value]) => (
         <div key={name} style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr) auto 38px", gap: 12, alignItems: "center", padding: "11px 0", borderBottom: "1px solid var(--line)" }}>
-          <div style={{ fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
+          <div style={{ fontSize: "var(--text-body)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
           <div style={{ height: 8, borderRadius: 8, background: "var(--surface2)", overflow: "hidden" }}>
             <div style={{ height: "100%", width: `${(value / scale) * 100}%`, background: color, borderRadius: 8 }} />
           </div>
-          <div className="mono" style={{ fontSize: 13, fontWeight: 600, textAlign: "right" }}>
+          <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, textAlign: "right" }}>
             {brl(value)}
           </div>
-          <div className="mono" style={{ fontSize: 12, color: "var(--ink3)", textAlign: "right" }}>
+          <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", textAlign: "right" }}>
             {pct(value)}
           </div>
         </div>
@@ -122,7 +122,7 @@ function Statement({ revenue, expenses, pct }: { revenue: [string, number][]; ex
   const cell: CSSProperties = { padding: "9px 0", borderBottom: "1px solid var(--line)" };
   return (
     <section className="card" tabIndex={0} aria-label="Demonstrativo do resultado" style={{ padding: "12px 22px 18px", overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--text-subheadline)" }}>
         <thead>
           <tr className="field-label">
             <th style={{ ...cell, textAlign: "left", fontWeight: 500 }}>Conta</th>

@@ -13,7 +13,7 @@ const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
 function Delta({ pct }: { pct: number }) {
   const good = pct >= 0;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11.5, fontWeight: 600, color: good ? "var(--ok)" : "var(--alert)" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "var(--text-footnote)", fontWeight: 600, color: good ? "var(--ok)" : "var(--alert)" }}>
       <i className={`fa-solid ${good ? "fa-arrow-up" : "fa-arrow-down"}`} style={{ fontSize: 10 }} />
       {Math.abs(pct)}%
     </span>
@@ -28,7 +28,7 @@ function StatTile({ icon, label, value, deltaPct }: { icon: string; label: strin
         <span className="field-label">{label}</span>
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-        <div className="mono" style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-.02em" }}>
+        <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.02em" }}>
           {value}
         </div>
         {deltaPct !== undefined && <Delta pct={deltaPct} />}
@@ -73,7 +73,7 @@ export default function ReportsScreen() {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Segmented value={period} onChange={setPeriod} options={PERIOD_OPTIONS} />
         <div style={{ flex: 1 }} />
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--ink2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
           <i className="fa-solid fa-star" style={{ color: "var(--sec)", fontSize: 14 }} />
           <span className="mono" style={{ fontWeight: 600 }}>
             {reviewAverage.toFixed(1)}
@@ -93,8 +93,8 @@ export default function ReportsScreen() {
 
       <section className="card" style={{ padding: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Faturamento por {period === "today" ? "hora" : "dia"}</div>
-          <div style={{ display: "flex", gap: 14, fontSize: 12, color: "var(--ink2)" }}>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>Faturamento por {period === "today" ? "hora" : "dia"}</div>
+          <div style={{ display: "flex", gap: 14, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 9, height: 9, borderRadius: 3, background: "var(--brand)" }} />
               Mesa
@@ -115,7 +115,7 @@ export default function ReportsScreen() {
                   <div style={{ height: `${total ? (p.tableRevenue / total) * 100 : 0}%`, background: "var(--brand)" }} />
                   <div style={{ height: `${total ? (p.deliveryRevenue / total) * 100 : 0}%`, background: "var(--sec)" }} />
                 </div>
-                <div className="mono" style={{ fontSize: 10, color: "var(--ink3)", whiteSpace: "nowrap" }}>
+                <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", whiteSpace: "nowrap" }}>
                   {p.label}
                 </div>
               </div>
@@ -126,12 +126,12 @@ export default function ReportsScreen() {
 
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
         <section className="card" style={{ flex: 1, minWidth: 280, padding: 14 }}>
-          <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 10 }}>Mais vendidos</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", marginBottom: 10 }}>Mais vendidos</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {topSellers.length === 0 && <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Sem vendas no período.</div>}
+            {topSellers.length === 0 && <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Sem vendas no período.</div>}
             {topSellers.map((it) => (
               <div key={it.itemId} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--text-subheadline)" }}>
                   <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{it.name}</span>
                   <span className="mono" style={{ color: "var(--ink2)", marginLeft: 8 }}>
                     {it.quantity}× · {brl(it.revenue)}
@@ -146,12 +146,12 @@ export default function ReportsScreen() {
         </section>
 
         <section className="card" style={{ flex: 1, minWidth: 280, padding: 14 }}>
-          <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 10 }}>Menos vendidos</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", marginBottom: 10 }}>Menos vendidos</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {bottomSellers.length === 0 && <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Sem vendas no período.</div>}
+            {bottomSellers.length === 0 && <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Sem vendas no período.</div>}
             {bottomSellers.map((it) => (
               <div key={it.itemId} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--text-subheadline)" }}>
                   <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{it.name}</span>
                   <span className="mono" style={{ color: "var(--ink2)", marginLeft: 8 }}>
                     {it.quantity}× · {brl(it.revenue)}
@@ -167,17 +167,17 @@ export default function ReportsScreen() {
       </div>
 
       <section className="card" tabIndex={0} aria-label="Mapa de calor dos pedidos por dia e hora" style={{ padding: 16, overflowX: "auto" }}>
-        <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 12 }}>Horários de pico</div>
+        <div style={{ fontWeight: 600, fontSize: "var(--text-body)", marginBottom: 12 }}>Horários de pico</div>
         <div style={{ display: "grid", gridTemplateColumns: "44px repeat(5, 1fr)", gap: 5, minWidth: 460 }}>
           <div />
           {heatmap[0]?.cells.map((c) => (
-            <div key={c.hourLabel} className="mono" style={{ fontSize: 10, color: "var(--ink3)", textAlign: "center" }}>
+            <div key={c.hourLabel} className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", textAlign: "center" }}>
               {c.hourLabel}
             </div>
           ))}
           {heatmap.map((row) => (
             <Fragment key={row.dayLabel}>
-              <div className="mono" style={{ fontSize: 11, color: "var(--ink2)", display: "flex", alignItems: "center" }}>
+              <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink2)", display: "flex", alignItems: "center" }}>
                 {row.dayLabel}
               </div>
               {row.cells.map((c, i) => (
@@ -191,7 +191,7 @@ export default function ReportsScreen() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 10,
+                    fontSize: "var(--text-caption)",
                     color: c.intensity > 0.5 ? "var(--brandInk)" : "var(--ink3)"
                   }}
                   className="mono"

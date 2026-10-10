@@ -241,10 +241,10 @@ export default function TablesScreen() {
     <div style={{ display: "flex", gap: 18, alignItems: "flex-start", flexWrap: "wrap" }}>
       <section className="card" style={{ flex: 1, minWidth: 320, padding: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>Mapa do salão</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Mapa do salão</div>
           {editing && (
             <>
-              <select aria-label="Tamanho da grade do salão" value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: 12.5 }}>
+              <select aria-label="Tamanho da grade do salão" value={gridSize} onChange={(e) => changeGridSize(Number(e.target.value))} className="field" style={{ width: "auto", padding: "7px 11px", fontSize: "var(--text-subheadline)" }}>
                 {GRID_SIZE_OPTIONS.map((n) => (
                   <option key={n} value={n}>
                     {n}×{n}
@@ -260,7 +260,7 @@ export default function TablesScreen() {
           <div style={{ flex: 1 }} />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {legend.map((k) => (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink2)" }}>
+              <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
                 <span style={{ width: 10, height: 10, borderRadius: 3, background: STATUS_MAP[k].fg }} />
                 {STATUS_MAP[k].label}
               </div>
@@ -330,21 +330,21 @@ export default function TablesScreen() {
       <aside className="card" style={{ width: 330, flex: "0 0 330px", overflow: "hidden" }}>
         <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>{selT ? `Mesa ${String(selT.number).padStart(2, "0")}` : "Selecione uma mesa"}</div>
+            <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em", flex: 1 }}>{selT ? `Mesa ${String(selT.number).padStart(2, "0")}` : "Selecione uma mesa"}</div>
             {selT && (
               <span className="pill" style={{ background: STATUS_MAP[selT.status].bg, color: STATUS_MAP[selT.status].fg }}>
                 {STATUS_MAP[selT.status].label}
               </span>
             )}
           </div>
-          {selT && <div style={{ fontSize: 12, color: "var(--ink3)" }}>{selT.seats} lugares{selT.openedAt ? ` · aberta às ${new Date(selT.openedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : ""}</div>}
+          {selT && <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{selT.seats} lugares{selT.openedAt ? ` · aberta às ${new Date(selT.openedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}` : ""}</div>}
         </div>
         <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 7 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)", marginBottom: 2 }}>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)", marginBottom: 2 }}>
             Comanda em tempo real
           </div>
           {(comanda?.lines || []).map((l, i) => (
-            <div key={i} style={{ display: "flex", gap: 9, alignItems: "baseline", fontSize: 13 }}>
+            <div key={i} style={{ display: "flex", gap: 9, alignItems: "baseline", fontSize: "var(--text-subheadline)" }}>
               <span className="mono" style={{ color: "var(--ink2)" }}>
                 {l.quantity}×
               </span>
@@ -354,22 +354,22 @@ export default function TablesScreen() {
               </span>
             </div>
           ))}
-          {(!comanda || comanda.lines.length === 0) && <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Nenhum pedido em aberto nesta mesa.</div>}
+          {(!comanda || comanda.lines.length === 0) && <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhum pedido em aberto nesta mesa.</div>}
         </div>
         <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 5 }}>
-          <div style={{ display: "flex", fontSize: 12.5, color: "var(--ink2)" }}>
+          <div style={{ display: "flex", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
             <span style={{ flex: 1 }}>Subtotal</span>
             <span className="mono">{brl(subtotal)}</span>
           </div>
           {!!comanda?.servicePct && (
-            <div style={{ display: "flex", fontSize: 12.5, color: "var(--ink2)" }}>
+            <div style={{ display: "flex", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
               <span style={{ flex: 1 }}>Serviço {comanda.servicePct}%</span>
               <span className="mono">{brl(service)}</span>
             </div>
           )}
           <div style={{ display: "flex", alignItems: "baseline", marginTop: 4 }}>
-            <span style={{ flex: 1, fontWeight: 600, fontSize: 13.5 }}>Total</span>
-            <span className="mono" style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-.03em" }}>
+            <span style={{ flex: 1, fontWeight: 600, fontSize: "var(--text-body)" }}>Total</span>
+            <span className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.03em" }}>
               {brl(total)}
             </span>
           </div>
@@ -402,7 +402,7 @@ export default function TablesScreen() {
               type="button"
               onClick={() => setSplitMode(splitMode === "pessoa" ? null : "pessoa")}
               className="tap"
-              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 12, padding: 9, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: splitMode === "pessoa" ? "var(--brand)" : "var(--surface2)", color: splitMode === "pessoa" ? "var(--brandInk)" : "var(--ink2)" }}
+              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 12, padding: 9, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, background: splitMode === "pessoa" ? "var(--brand)" : "var(--surface2)", color: splitMode === "pessoa" ? "var(--brandInk)" : "var(--ink2)" }}
             >
               Por pessoa
             </button>
@@ -410,7 +410,7 @@ export default function TablesScreen() {
               type="button"
               onClick={() => setSplitMode(splitMode === "item" ? null : "item")}
               className="tap"
-              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 12, padding: 9, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, background: splitMode === "item" ? "var(--brand)" : "var(--surface2)", color: splitMode === "item" ? "var(--brandInk)" : "var(--ink2)" }}
+              style={{ flex: 1, border: "1px solid var(--line2)", borderRadius: 12, padding: 9, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, background: splitMode === "item" ? "var(--brand)" : "var(--surface2)", color: splitMode === "item" ? "var(--brandInk)" : "var(--ink2)" }}
             >
               Por item
             </button>
@@ -418,19 +418,19 @@ export default function TablesScreen() {
           {splitMode && (
             <div style={{ background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 13, padding: 11, display: "flex", flexDirection: "column", gap: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink2)", flex: 1 }}>{splitMode === "pessoa" ? "Dividir por pessoa" : "Dividir por item"}</div>
+                <div style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--ink2)", flex: 1 }}>{splitMode === "pessoa" ? "Dividir por pessoa" : "Dividir por item"}</div>
                 {splitMode === "pessoa" && (
                   <input
                     type="number"
                     min={1}
                     value={people}
                     onChange={(e) => setPeople(Math.max(1, Number(e.target.value) || 1))}
-                    style={{ width: 48, border: "1px solid var(--line)", borderRadius: 8, padding: "3px 6px", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: 12 }}
+                    style={{ width: 48, border: "1px solid var(--line)", borderRadius: 8, padding: "3px 6px", background: "var(--surface)", color: "var(--ink)", fontFamily: "inherit", fontSize: "var(--text-footnote)" }}
                   />
                 )}
               </div>
               {splitRows.map((r, i) => (
-                <div key={i} style={{ display: "flex", fontSize: 12.5 }}>
+                <div key={i} style={{ display: "flex", fontSize: "var(--text-subheadline)" }}>
                   <span style={{ flex: 1, minWidth: 0, color: "var(--ink2)" }}>{r.k}</span>
                   <span className="mono" style={{ fontWeight: 500 }}>
                     {r.v}
@@ -446,7 +446,7 @@ export default function TablesScreen() {
                 QR code
               </button>
             )}
-            <select aria-label="Transferir os itens para a mesa" value={transferTo} onChange={(e) => setTransferTo(e.target.value ? Number(e.target.value) : "")} className="field" style={{ flex: 1, padding: "9px 10px", fontSize: 12.5 }}>
+            <select aria-label="Transferir os itens para a mesa" value={transferTo} onChange={(e) => setTransferTo(e.target.value ? Number(e.target.value) : "")} className="field" style={{ flex: 1, padding: "9px 10px", fontSize: "var(--text-subheadline)" }}>
               <option value="">Transferir p/…</option>
               {freeTables.map((t) => (
                 <option key={t.id} value={t.number}>
@@ -479,11 +479,11 @@ export default function TablesScreen() {
           <div className="modal-overlay">
             <div className="modal-panel" style={{ maxWidth: 400 }}>
               <div style={{ padding: "18px 22px", borderBottom: "1px solid var(--glassBd)" }}>
-                <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-.015em" }}>Fechar {pixTarget.title}</div>
-                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{pixTarget.itemsLabel}</div>
+                <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>Fechar {pixTarget.title}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{pixTarget.itemsLabel}</div>
               </div>
               <div style={{ padding: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
-                <div className="mono" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-.03em" }}>{brl(pixTarget.amount)}</div>
+                <div className="mono" style={{ fontSize: "var(--text-largeTitle)", fontWeight: 600, letterSpacing: "-.03em" }}>{brl(pixTarget.amount)}</div>
                 <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div className="field-label">Forma de pagamento na maquininha</div>
                   <Segmented
@@ -537,7 +537,7 @@ export default function TablesScreen() {
               type="button"
               onClick={() => renameTable(menu.table)}
               className="tap"
-              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, background: "transparent", cursor: "pointer", font: "inherit", fontSize: 12.5, color: "var(--ink)", textAlign: "left" }}
+              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, background: "transparent", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", textAlign: "left" }}
             >
               <i className="fa-solid fa-pen" style={{ fontSize: 14, width: 14 }} />
               Editar número
@@ -546,7 +546,7 @@ export default function TablesScreen() {
               type="button"
               onClick={() => deleteTable(menu.table)}
               className="tap"
-              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, borderTop: "1px solid var(--line)", background: "transparent", cursor: "pointer", font: "inherit", fontSize: 12.5, color: "var(--alert)", textAlign: "left" }}
+              style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", border: 0, borderTop: "1px solid var(--line)", background: "transparent", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--alert)", textAlign: "left" }}
             >
               <i className="fa-solid fa-trash" style={{ fontSize: 14, width: 14 }} />
               Excluir mesa
@@ -626,7 +626,7 @@ function TableChip({
         color: st.fg,
         fontFamily: "var(--mono)",
         fontWeight: 600,
-        fontSize: 13
+        fontSize: "var(--text-subheadline)"
       }}
     >
       {String(table.number).padStart(2, "0")}

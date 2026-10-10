@@ -33,7 +33,7 @@ const LOOK: Record<WhatsAppState, { label: string; color: string }> = {
 export function WhatsAppBadge({ state }: { state: WhatsAppState }) {
   const { label, color } = LOOK[state];
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color, border: `1px solid ${color}`, borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 600, color, border: `1px solid ${color}`, borderRadius: 999, padding: "4px 11px", whiteSpace: "nowrap" }}>
       <i className="fa-brands fa-whatsapp" style={{ fontSize: 13 }} />
       {label}
     </span>
@@ -45,7 +45,7 @@ export function WhatsAppIndicator({ status }: { status: WhatsAppStatus | null })
   if (!status) return null;
   if (!status.termsAcceptedAt) {
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink3)", whiteSpace: "nowrap" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap" }}>
         <i className="fa-brands fa-whatsapp" style={{ fontSize: 13 }} />
         WhatsApp não configurado
       </span>
@@ -54,7 +54,7 @@ export function WhatsAppIndicator({ status }: { status: WhatsAppStatus | null })
   if (status.state !== "disconnected") return <WhatsAppBadge state={status.state} />;
   const who = getSession()?.role === "owner" ? "Reconecte em Configurações → WhatsApp." : "Avise o Dono para reconectar em Configurações → WhatsApp.";
   return (
-    <div role="alert" style={{ flexBasis: "100%", display: "flex", alignItems: "center", gap: 10, fontSize: 13, fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 12%, transparent)", border: "1px solid var(--alert)", borderRadius: 12, padding: "10px 14px" }}>
+    <div role="alert" style={{ flexBasis: "100%", display: "flex", alignItems: "center", gap: 10, fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 12%, transparent)", border: "1px solid var(--alert)", borderRadius: 12, padding: "10px 14px" }}>
       <i className="fa-solid fa-triangle-exclamation" style={{ fontSize: 16 }} />
       <span>
         WhatsApp desconectado — mensagens novas não estão chegando no sistema. <span style={{ fontWeight: 500 }}>{who}</span>
@@ -133,7 +133,7 @@ export function MediaButtons({ onSend, onError }: { onSend: (file: Blob, name: s
         <button type="button" aria-label="Descartar gravação" onClick={() => stop(false)} style={btn}>
           <i className="fa-solid fa-trash" style={{ fontSize: 15 }} />
         </button>
-        <button type="button" aria-label="Enviar gravação" onClick={() => stop(true)} style={{ ...btn, background: "var(--alert)", borderColor: "var(--alert)", color: "var(--alertInk)", width: "auto", flex: "0 0 auto", padding: "0 12px", display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600 }}>
+        <button type="button" aria-label="Enviar gravação" onClick={() => stop(true)} style={{ ...btn, background: "var(--alert)", borderColor: "var(--alert)", color: "var(--alertInk)", width: "auto", flex: "0 0 auto", padding: "0 12px", display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
           <i className="fa-solid fa-circle" style={{ fontSize: 9 }} />
           Gravando · enviar
         </button>

@@ -18,7 +18,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font);
-  font-size: 14px;
+  font-size: var(--text-body);
   line-height: 1.55;
   letter-spacing: -.002em;
   -webkit-font-smoothing: antialiased;
@@ -33,7 +33,9 @@ button, input, textarea, select {
 }
 button { -webkit-tap-highlight-color: transparent; }
 
-.mono { font-family: var(--mono); }
+/* Money, quantities, times, table numbers: the system font with tabular figures (HIG), so columns of numbers line up.
+   The name is historical — var(--mono) is still there for codes. */
+.mono { font-variant-numeric: tabular-nums; }
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -58,7 +60,7 @@ button { -webkit-tap-highlight-color: transparent; }
   gap: 6px;
   border-radius: 20px;
   padding: 2px 9px;
-  font-size: 11.5px;
+  font-size: var(--text-footnote);
   font-weight: 600;
 }
 
@@ -72,7 +74,7 @@ button { -webkit-tap-highlight-color: transparent; }
   padding: 10px 16px;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-subheadline);
   font-weight: 600;
   white-space: nowrap;
   transition: transform .12s var(--ease-spring), background .12s var(--ease-spring), border-color .12s var(--ease-spring), color .12s var(--ease-spring);
@@ -116,7 +118,7 @@ button { -webkit-tap-highlight-color: transparent; }
   border-radius: 13px;
   padding: 11px 14px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--text-body);
   color: var(--ink);
   outline: none;
   width: 100%;
@@ -127,7 +129,7 @@ textarea.field { resize: vertical; }
 
 .field-label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: var(--text-caption);
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--ink3);
@@ -141,7 +143,7 @@ textarea.field { resize: vertical; }
   border-radius: 11px;
   padding: 0 12px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--text-body);
   color: var(--ink);
   outline: none;
   width: 100%;
@@ -229,7 +231,7 @@ textarea.field-mobile {
   color: var(--bg);
   border-radius: 14px;
   padding: 14px 20px;
-  font-size: 13px;
+  font-size: var(--text-subheadline);
   font-weight: 500;
   box-shadow: var(--shadow2);
   animation: dcToast .36s var(--ease-spring) both;
@@ -263,7 +265,7 @@ textarea.field-mobile {
   .drawer-panel { padding-top: env(safe-area-inset-top, 0px); }
   .drawer-panel.sheet { height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
   .dialog-actions { flex-direction: column-reverse; padding: 12px 16px 16px; }
-  .dialog-actions > .btn { min-height: 50px; font-size: 15px; }
+  .dialog-actions > .btn { min-height: 50px; font-size: var(--text-headline); }
 }
 
 /* Ficha técnica rows (cadastro de produto): one line on desktop; on a phone the item search takes its own line. */
@@ -289,9 +291,9 @@ textarea.field-mobile {
 .qr-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
 .qr-print { display: none; }
 .qr-card { background: #fff; color: #1a1a1a; border: 1px solid #d0d0d0; border-radius: 18px; padding: 22px 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
-.qr-card-restaurant { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #3a3a3a; }
-.qr-card-table { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-.qr-card-hint { font-size: 15px; font-weight: 500; }
+.qr-card-restaurant { font-size: var(--text-subheadline); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #3a3a3a; }
+.qr-card-table { font-size: var(--text-title1); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.qr-card-hint { font-size: var(--text-headline); font-weight: 500; }
 .qr-svg { width: 100%; max-width: 220px; height: auto; display: block; }
 @media print {
   @page { size: A4; margin: 12mm; }

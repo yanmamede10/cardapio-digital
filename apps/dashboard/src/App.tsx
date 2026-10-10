@@ -55,10 +55,10 @@ export default function App() {
             <i className="fa-solid fa-link-slash" style={{ fontSize: 28, lineHeight: 1 }} />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: "-.015em", color: "var(--ink)" }}>Esta página não existe</h1>
-            <p style={{ margin: "6px 0 0", fontSize: 13.5, color: "var(--ink2)" }}>O endereço pode ter sido digitado errado. Entre com sua conta para abrir o painel.</p>
+            <h1 style={{ margin: 0, fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.015em", color: "var(--ink)" }}>Esta página não existe</h1>
+            <p style={{ margin: "6px 0 0", fontSize: "var(--text-body)", color: "var(--ink2)" }}>O endereço pode ter sido digitado errado. Entre com sua conta para abrir o painel.</p>
           </div>
-          <Link to="/" className="btn btn-primary" style={{ width: "100%", marginTop: 6, borderRadius: 10, padding: "11px 0", fontSize: 15 }}>
+          <Link to="/" className="btn btn-primary" style={{ width: "100%", marginTop: 6, borderRadius: 10, padding: "11px 0", fontSize: "var(--text-headline)" }}>
             Entrar
           </Link>
         </main>

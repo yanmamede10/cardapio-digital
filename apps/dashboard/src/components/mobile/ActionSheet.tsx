@@ -13,7 +13,7 @@ export function ActionSheet({ open, onClose, title, actions }: { open: boolean; 
       <div onClick={onClose} style={{ flex: 1 }} />
       <div style={{ background: "var(--surface)", borderRadius: "20px 20px 0 0", padding: "10px 12px calc(18px + env(safe-area-inset-bottom, 0px))" }}>
         <div style={{ width: 40, height: 4, borderRadius: 3, background: "var(--line2)", margin: "4px auto 10px" }} />
-        <div style={{ fontSize: 13.5, fontWeight: 600, padding: "6px 8px 10px" }}>{title}</div>
+        <div style={{ fontSize: "var(--text-body)", fontWeight: 600, padding: "6px 8px 10px" }}>{title}</div>
         {actions.map((a, i) => (
           <button
             key={i}

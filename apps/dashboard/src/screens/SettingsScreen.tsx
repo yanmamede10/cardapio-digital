@@ -148,10 +148,10 @@ export default function SettingsScreen() {
         <section className="card" style={{ padding: 18, maxWidth: 620, display: "flex", flexDirection: "column", gap: 12 }}>
           {hours.map((row, i) => (
             <div key={row.weekday} style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr 70px", gap: 10, alignItems: "center" }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>{WEEKDAY_LABEL[row.weekday]}</div>
+              <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{WEEKDAY_LABEL[row.weekday]}</div>
               <input
                 className="field mono"
-                style={{ fontSize: 12.5, padding: "8px 10px" }}
+                style={{ fontSize: "var(--text-subheadline)", padding: "8px 10px" }}
                 value={row.lunch}
                 disabled={!row.isOpen}
                 placeholder="Fechado"
@@ -159,7 +159,7 @@ export default function SettingsScreen() {
               />
               <input
                 className="field mono"
-                style={{ fontSize: 12.5, padding: "8px 10px" }}
+                style={{ fontSize: "var(--text-subheadline)", padding: "8px 10px" }}
                 value={row.dinner}
                 disabled={!row.isOpen}
                 placeholder="Fechado"
@@ -184,7 +184,7 @@ export default function SettingsScreen() {
 
       {tab === "staff" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink3)" }}>{LEVELS_HINT}</p>
+          <p style={{ margin: 0, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{LEVELS_HINT}</p>
           <section className="card" style={{ overflow: "hidden" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px 90px 70px", gap: 12, padding: "9px 16px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" }}>
               {["Nome", "E-mail", "Papel", "Desde", ""].map((h) => (
@@ -195,15 +195,15 @@ export default function SettingsScreen() {
             </div>
             {staff.map((s) => (
               <div key={s.id} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px 90px 70px", gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{s.name}</div>
-                <a href={`mailto:${s.email}`} style={{ display: "block", fontSize: 12.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "44px" }}>{s.email}</a>
+                <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{s.name}</div>
+                <a href={`mailto:${s.email}`} style={{ display: "block", fontSize: "var(--text-subheadline)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: "44px" }}>{s.email}</a>
                 <span className="pill" style={{ alignSelf: "start", background: "var(--surface2)", color: "var(--brandText)" }}>
                   {ROLE_LABEL[s.role] ?? s.role}
                 </span>
-                <div className="mono" style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+                <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
                   {fmtDate(s.invitedAt)}
                 </div>
-                <button type="button" className="btn btn-ghost" style={{ padding: "6px 13px", fontSize: 12.5, color: "var(--brandText)" }} onClick={() => setMember({ id: s.id, name: s.name, email: s.email, role: s.role, password: "" })}>
+                <button type="button" className="btn btn-ghost" style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)", color: "var(--brandText)" }} onClick={() => setMember({ id: s.id, name: s.name, email: s.email, role: s.role, password: "" })}>
                   Editar
                 </button>
               </div>

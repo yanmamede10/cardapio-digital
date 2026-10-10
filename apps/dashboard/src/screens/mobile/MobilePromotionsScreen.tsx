@@ -80,20 +80,20 @@ export default function MobilePromotionsScreen() {
                 <i className={`fa-solid ${KIND_ICON[c.kind]}`} style={{ fontSize: 15 }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="mono" style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: ".04em" }}>
+                <div className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: ".04em" }}>
                   {c.code}
                 </div>
-                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{valueLabel(c)}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{valueLabel(c)}</div>
               </div>
-              <span style={{ fontSize: 11, fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: stBg, color: stFg }}>{status}</span>
+              <span style={{ fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: stBg, color: stFg }}>{status}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11.5, color: "var(--ink2)", background: "var(--surface2)", borderRadius: 20, padding: "3px 10px" }}>
+              <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", background: "var(--surface2)", borderRadius: 20, padding: "3px 10px" }}>
                 <i className="fa-solid fa-calendar-days" style={{ fontSize: 11, marginRight: 6 }} />
                 {expired ? `expirou ${fmtDate(c.validUntil)}` : `até ${fmtDate(c.validUntil)}`}
               </span>
-              <span style={{ fontSize: 11.5, color: "var(--ink2)", background: "var(--surface2)", borderRadius: 20, padding: "3px 10px" }}>{CHANNEL_LABEL[c.channel]}</span>
-              <span className="mono" style={{ fontSize: 11.5, fontWeight: 600, color: "var(--brandText)", background: "var(--brandSoft)", borderRadius: 20, padding: "3px 10px" }}>
+              <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", background: "var(--surface2)", borderRadius: 20, padding: "3px 10px" }}>{CHANNEL_LABEL[c.channel]}</span>
+              <span className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--brandText)", background: "var(--brandSoft)", borderRadius: 20, padding: "3px 10px" }}>
                 {c.usedCount}/{c.usageLimit} usos
               </span>
               {!expired && (

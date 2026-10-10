@@ -33,13 +33,13 @@ export default function FiscalScreen() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div className="card" style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, fontSize: 12.5, color: "var(--ink2)" }}>
+      <div className="card" style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
         <i className="fa-solid fa-circle-info" style={{ fontSize: 15, color: "var(--ink3)" }} />
         A emissão de NFC-e ainda não está integrada. A lista já mostra os pedidos e comandas fechados que vão precisar de nota.
       </div>
       <section className="card">
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
-          <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Pedidos e comandas</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>Pedidos e comandas</div>
           <FilterPopover
             groups={FISCAL_FILTERS}
             value={filter}
@@ -57,34 +57,34 @@ export default function FiscalScreen() {
               ))}
             </div>
             {rows.map((o) => (
-              <div key={o.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "13px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: 13 }}>
+              <div key={o.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "13px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: "var(--text-subheadline)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                   <i className={`fa-solid ${o.mode === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 13, color: "var(--ink3)", width: 15, textAlign: "center" }} />
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {orderRef(o)}
                   </span>
                 </div>
-                <div className="mono" style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+                <div className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                   {dayMonth(localIso(new Date(o.createdAt)))}
                 </div>
-                <div className="mono" style={{ fontSize: 12.5, color: "var(--ink3)" }}>
+                <div className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>
                   —
                 </div>
                 <div className="mono" style={{ fontWeight: 600 }}>
                   {brl(o.total)}
                 </div>
                 <div>
-                  <span style={{ fontSize: 11.5, fontWeight: 600, borderRadius: 999, padding: "2px 11px", background: "var(--surface2)", color: "var(--ink2)", whiteSpace: "nowrap" }}>Sem nota</span>
+                  <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 999, padding: "2px 11px", background: "var(--surface2)", color: "var(--ink2)", whiteSpace: "nowrap" }}>Sem nota</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                  <button type="button" className="btn btn-primary" style={{ padding: "6px 13px", fontSize: 12.5 }} disabled title="Integração fiscal em breve">
+                  <button type="button" className="btn btn-primary" style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)" }} disabled title="Integração fiscal em breve">
                     Emitir
                   </button>
                 </div>
               </div>
             ))}
             {rows.length === 0 && (
-              <div style={{ padding: "36px 20px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>
+              <div style={{ padding: "36px 20px", textAlign: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>
                 {orders.length ? "Nenhum resultado com esses filtros." : "Nenhum pedido fechado ainda."}
               </div>
             )}

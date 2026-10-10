@@ -151,9 +151,9 @@ export default function PromotionsScreen() {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "9px 14px", width: 250 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 18, lineHeight: 1, color: "var(--ink3)" }} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cupom" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cupom" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
-        <div style={{ display: "flex", gap: 8, fontSize: 12.5, color: "var(--ink2)" }}>
+        <div style={{ display: "flex", gap: 8, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
           <span className="pill" style={{ background: "var(--surface2)", border: "1px solid var(--line)" }}>
             <span className="dot" style={{ background: "var(--ok)" }} />
             {stats.active} ativos
@@ -195,18 +195,18 @@ export default function PromotionsScreen() {
             const expired = new Date(c.validUntil).getTime() < Date.now();
             return (
               <div key={c.id} style={{ display: "grid", gridTemplateColumns: "120px 1fr 130px 130px 90px 90px 92px", gap: 12, alignItems: "center", padding: "11px 14px", borderBottom: "1px solid var(--line)", minWidth: 800 }}>
-                <div className="mono" style={{ fontWeight: 600, fontSize: 13 }}>
+                <div className="mono" style={{ fontWeight: 600, fontSize: "var(--text-subheadline)" }}>
                   {c.code}
                 </div>
-                <div style={{ fontSize: 13, color: "var(--ink2)" }}>
+                <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                   {valueLabel(c)}
                   <span style={{ color: "var(--ink3)" }}> · {KIND_LABEL[c.kind]}</span>
                 </div>
-                <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>{CHANNEL_LABEL[c.channel]}</div>
-                <div className="mono" style={{ fontSize: 12, color: expired ? "var(--alert)" : "var(--ink3)" }}>
+                <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{CHANNEL_LABEL[c.channel]}</div>
+                <div className="mono" style={{ fontSize: "var(--text-footnote)", color: expired ? "var(--alert)" : "var(--ink3)" }}>
                   {expired ? "Expirado" : `até ${fmtDate(c.validUntil)}`}
                 </div>
-                <div className="mono" style={{ fontSize: 12.5 }}>
+                <div className="mono" style={{ fontSize: "var(--text-subheadline)" }}>
                   {c.usedCount}/{c.usageLimit}
                 </div>
                 <button type="button" onClick={() => toggleActive(c)} aria-label={c.active ? `Desativar cupom ${c.code}` : `Ativar cupom ${c.code}`} style={{ display: "flex", alignItems: "center", gap: 7, background: "transparent", border: 0, cursor: "pointer", font: "inherit", padding: 0 }}>
@@ -278,7 +278,7 @@ export default function PromotionsScreen() {
               <Field label="Itens do combo">
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 180, overflowY: "auto", border: "1px solid var(--line)", borderRadius: 9, padding: 8 }}>
                   {items.map((it) => (
-                    <label key={it.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
+                    <label key={it.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-subheadline)" }}>
                       <input type="checkbox" checked={drawer.comboItemIds.includes(it.id)} onChange={() => toggleComboItem(it.id)} />
                       {it.name}
                     </label>

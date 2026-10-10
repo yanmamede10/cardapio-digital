@@ -37,7 +37,7 @@ export const EMPTY_DRAFT: Draft = { id: null, name: "", type: "produto", unit: "
 const num = (s: string) => Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s) || 0;
 const decimal = (n: number) => (n ? String(n).replace(".", ",") : "");
 export const qty = (n: number) => n.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
-export const pill = (tone: string) => ({ fontSize: 11.5, fontWeight: 600, borderRadius: 999, padding: "2px 11px", whiteSpace: "nowrap" as const, background: `color-mix(in srgb, var(--${tone}) 16%, transparent)`, color: `var(--${tone}Text, var(--${tone}))` });
+export const pill = (tone: string) => ({ fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 999, padding: "2px 11px", whiteSpace: "nowrap" as const, background: `color-mix(in srgb, var(--${tone}) 16%, transparent)`, color: `var(--${tone}Text, var(--${tone}))` });
 const headRow = { display: "grid", gap: 16, padding: "12px 20px", background: "var(--surface2)", borderBottom: "1px solid var(--line)" } as const;
 export const TYPE_LABEL: Record<ProductType, string> = { produto: "Produto", insumo: "Insumo" };
 
@@ -248,7 +248,7 @@ export default function ProductsScreen() {
               <>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: "0 4px 0 14px", width: 260 }}>
                   <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: 14, color: "var(--ink3)" }} />
-                  <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+                  <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-subheadline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
                   {filter.q && (
                     <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
                       <i className="fa-solid fa-circle-xmark" style={{ fontSize: 14 }} />
@@ -259,7 +259,7 @@ export default function ProductsScreen() {
               </>
             )}
             <div style={{ flex: 1 }} />
-            <div className="mono" style={{ fontSize: 12, color: "var(--ink2)" }}>
+            <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>
               {filtered ? `${shown.length} de ${countLabel(products.length)}` : countLabel(products.length)}
             </div>
             <button type="button" className="btn btn-outline" onClick={cats.create}>
@@ -377,7 +377,7 @@ export default function ProductsScreen() {
         <section className="card">
           {xmlInput}
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
-            <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Histórico de entradas e saídas</div>
+            <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>Histórico de entradas e saídas</div>
             {movements.length > 0 && (
               <FilterPopover
                 groups={MOVEMENT_FILTERS}
@@ -406,7 +406,7 @@ export default function ProductsScreen() {
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: "var(--brandSoft)", color: "var(--brandText)", display: "grid", placeItems: "center" }}>
                   <i className="fa-solid fa-file-import" style={{ fontSize: 22 }} />
                 </div>
-                <div style={{ fontSize: 13, color: "var(--ink2)", textWrap: "pretty" } as React.CSSProperties}>
+                <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", textWrap: "pretty" } as React.CSSProperties}>
                   Arraste o arquivo da nota do fornecedor. Os itens entram no estoque automaticamente.
                 </div>
                 <button type="button" className="btn btn-primary" disabled={importing} onClick={() => fileInput.current?.click()}>
@@ -427,8 +427,8 @@ export default function ProductsScreen() {
                 {shownMovements.map((m) => {
                   const xml = m.source.toLowerCase().endsWith(".xml");
                   return (
-                    <div key={m.id} style={{ display: "grid", gridTemplateColumns: "90px 100px minmax(160px,1fr) 110px minmax(180px,1.2fr)", gap: 16, padding: "14px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: 13 }}>
-                      <div className="mono" style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+                    <div key={m.id} style={{ display: "grid", gridTemplateColumns: "90px 100px minmax(160px,1fr) 110px minmax(180px,1.2fr)", gap: 16, padding: "14px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: "var(--text-subheadline)" }}>
+                      <div className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                         {dayMonth(localIso(new Date(m.createdAt)))}
                       </div>
                       <div>
@@ -440,14 +440,14 @@ export default function ProductsScreen() {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, color: "var(--ink2)" }}>
                         <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: 12, color: "var(--ink3)" }} />
-                        <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: xml ? 12 : undefined }}>
+                        <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: xml ? "var(--text-footnote)" : undefined }}>
                           {movementSource(m)}
                         </span>
                       </div>
                     </div>
                   );
                 })}
-                {shownMovements.length === 0 && <div style={{ padding: "36px 20px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>Nenhum resultado com esses filtros.</div>}
+                {shownMovements.length === 0 && <div style={{ padding: "36px 20px", textAlign: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhum resultado com esses filtros.</div>}
               </div>
             </div>
           )}
@@ -482,15 +482,15 @@ export default function ProductsScreen() {
 function CatalogRow({ p, onOpen }: { p: Product; onOpen: () => void }) {
   return (
     <button type="button" onClick={onOpen} style={{ display: "grid", gridTemplateColumns: COLS, gap: 16, alignItems: "center", width: "100%", textAlign: "left", padding: "7px 18px 7px 26px", minHeight: 58, border: 0, borderTop: "1px solid var(--line)", background: "transparent", color: "var(--ink)", font: "inherit", cursor: "pointer", minWidth: ROW_MIN }}>
-      <div style={{ minWidth: 0, fontSize: 13.5, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-      <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>{TYPE_LABEL[p.type]}</div>
-      <div className="mono" style={{ fontSize: 13, fontWeight: 600, color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
+      <div style={{ minWidth: 0, fontSize: "var(--text-body)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+      <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{TYPE_LABEL[p.type]}</div>
+      <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
         {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
       </div>
-      <div className="mono" style={{ fontSize: 13 }}>
+      <div className="mono" style={{ fontSize: "var(--text-subheadline)" }}>
         {brl(p.cost)}
       </div>
-      <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+      <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
         {p.type === "produto" ? brl(p.price) : "—"}
       </div>
       <div>
@@ -504,11 +504,11 @@ function CatalogRow({ p, onOpen }: { p: Product; onOpen: () => void }) {
 }
 
 const ADJUST_HINT = { in: "Chegou mercadoria sem nota", out: "Perda, quebra ou consumo interno", count: "Contei o estoque: fica exatamente esta quantidade" } as const;
-const label = { fontSize: 12, fontWeight: 500, color: "var(--ink2)" } as const;
-const help = { fontSize: 12, color: "var(--ink2)", lineHeight: 1.45 } as const;
+const label = { fontSize: "var(--text-footnote)", fontWeight: 500, color: "var(--ink2)" } as const;
+const help = { fontSize: "var(--text-footnote)", color: "var(--ink2)", lineHeight: 1.45 } as const;
 const fieldError = (message: string | null) =>
   message && (
-    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: "var(--alert)" }}>
+    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", fontWeight: 500, color: "var(--alert)" }}>
       <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: 11 }} />
       {message}
     </span>
@@ -517,7 +517,7 @@ const fieldError = (message: string | null) =>
 function Section({ title, first, children }: { title: string; first?: boolean; children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, ...(first ? {} : { paddingTop: 22, borderTop: "1px solid var(--line)" }) }}>
-      <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-.01em" }}>{title}</div>
+      <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.01em" }}>{title}</div>
       {children}
     </div>
   );
@@ -668,7 +668,7 @@ export function ProductForm({
       sheet={{ saveLabel: draft.id ? "Salvar" : "Criar item", onSave: save, saving, dirty, status: draft.id ? (dirty ? "Alterações não salvas" : "Sem alterações") : "Item novo" }}
     >
       {problems > 0 && (
-        <div role="alert" style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 14px", borderRadius: 12, background: "color-mix(in srgb, var(--alert) 14%, var(--surface))", color: "var(--alert)", fontSize: 13, fontWeight: 500 }}>
+        <div role="alert" style={{ display: "flex", gap: 10, alignItems: "center", padding: "12px 14px", borderRadius: 12, background: "color-mix(in srgb, var(--alert) 14%, var(--surface))", color: "var(--alert)", fontSize: "var(--text-subheadline)", fontWeight: 500 }}>
           <i className="fa-solid fa-circle-exclamation" aria-hidden="true" style={{ fontSize: 14 }} />
           Corrija {problems === 1 ? "1 campo" : `${problems} campos`} para salvar.
         </div>
@@ -725,7 +725,7 @@ export function ProductForm({
                 ))}
               </select>
             </label>
-            <button type="button" onClick={newCategory.create} style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 5, border: 0, background: "transparent", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12.5, fontWeight: 600, color: "var(--brandText)" }}>
+            <button type="button" onClick={newCategory.create} style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 5, border: 0, background: "transparent", padding: 0, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--brandText)" }}>
               <i className="fa-solid fa-plus" style={{ fontSize: 10 }} />
               Nova categoria
             </button>
@@ -759,7 +759,7 @@ export function ProductForm({
           {isProduto && (
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <span style={label}>Margem</span>
-              <div className="mono" style={{ minHeight: 44, display: "flex", alignItems: "center", fontSize: 15, fontWeight: 600, color: margin !== "—" && cost > num(draft.price) ? "var(--alert)" : "var(--ok)" }}>
+              <div className="mono" style={{ minHeight: 44, display: "flex", alignItems: "center", fontSize: "var(--text-headline)", fontWeight: 600, color: margin !== "—" && cost > num(draft.price) ? "var(--alert)" : "var(--ok)" }}>
                 {margin}
               </div>
             </div>
@@ -778,7 +778,7 @@ export function ProductForm({
 
       <Section title="Estoque">
         {composed ? (
-          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: 13, color: "var(--ink2)" }}>
+          <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "13px 15px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
             <i className="fa-solid fa-diagram-project" aria-hidden="true" style={{ fontSize: 14 }} />
             <span style={{ flex: 1 }}>Sem saldo próprio. Cada venda baixa os componentes da ficha técnica.</span>
           </div>
@@ -791,7 +791,7 @@ export function ProductForm({
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span style={label}>Saldo atual</span>
-              <span className="mono" style={{ fontSize: 15, fontWeight: 600, color: current.stock < 0 ? "var(--alert)" : "var(--ink)" }}>
+              <span className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, color: current.stock < 0 ? "var(--alert)" : "var(--ink)" }}>
                 {qty(current.stock)} {current.unit}
               </span>
               <StatusPill p={current} />
@@ -846,7 +846,7 @@ export function ProductForm({
             style={{ display: "flex", alignItems: "center", gap: 14, border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)", font: "inherit" }}
           >
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontSize: 14, fontWeight: 500 }}>Produto composto</span>
+              <span style={{ display: "block", fontSize: "var(--text-body)", fontWeight: 500 }}>Produto composto</span>
               <span style={{ display: "block", ...help }}>Montado com insumos. Custo e baixa de estoque passam a vir da ficha técnica.</span>
             </span>
             <span className="toggle-track" style={{ width: 44, height: 26, flex: "0 0 44px", background: composed ? "var(--ok)" : "var(--line2)" }}>
@@ -872,7 +872,7 @@ export function ProductForm({
                     aria-label="Produto ou insumo"
                     value={l.name}
                     onChange={(e) => setLine(i, { name: e.target.value })}
-                    style={{ padding: "9px 10px", fontSize: 13, background: "var(--surface)", borderColor: l.name && !l.match ? "var(--warn)" : undefined }}
+                    style={{ padding: "9px 10px", fontSize: "var(--text-subheadline)", background: "var(--surface)", borderColor: l.name && !l.match ? "var(--warn)" : undefined }}
                   />
                   <input
                     className="field mono"
@@ -881,10 +881,10 @@ export function ProductForm({
                     aria-label="Quantidade"
                     value={l.qty}
                     onChange={(e) => setLine(i, { qty: e.target.value.replace(/[^0-9.,]/g, "") })}
-                    style={{ padding: "9px 10px", fontSize: 13, background: "var(--surface)" }}
+                    style={{ padding: "9px 10px", fontSize: "var(--text-subheadline)", background: "var(--surface)" }}
                   />
-                  <div style={{ fontSize: 12, color: "var(--ink2)" }}>{l.match?.unit}</div>
-                  <div className="mono" style={{ fontSize: 12.5, fontWeight: 600, textAlign: "right" }}>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)" }}>{l.match?.unit}</div>
+                  <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, textAlign: "right" }}>
                     {l.match && num(l.qty) ? brl(l.cost) : "—"}
                   </div>
                   <button
@@ -909,14 +909,14 @@ export function ProductForm({
                 <button
                   type="button"
                   onClick={() => set({ lines: [...draft.lines, { name: "", qty: "" }] })}
-                  style={{ display: "flex", alignItems: "center", gap: 7, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--brandText)" }}
+                  style={{ display: "flex", alignItems: "center", gap: 7, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--brandText)" }}
                 >
                   <i className="fa-solid fa-plus" style={{ fontSize: 12 }} />
                   Adicionar componente
                 </button>
                 <div style={{ flex: 1 }} />
                 <div style={help}>Custo da ficha</div>
-                <div className="mono" style={{ fontSize: 14, fontWeight: 600 }}>
+                <div className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>
                   {brl(autoCost)}
                 </div>
               </div>
@@ -928,10 +928,10 @@ export function ProductForm({
       <div style={{ display: "flex", flexDirection: "column", gap: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
         <button type="button" aria-expanded={taxOpen} onClick={() => setTaxOpen(!taxOpen)} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 52, border: 0, background: "transparent", padding: 0, cursor: "pointer", font: "inherit", color: "var(--ink)", textAlign: "left" }}>
           <span style={{ flex: 1 }}>
-            <span style={{ display: "block", fontSize: 15, fontWeight: 600, letterSpacing: "-.01em" }}>Tributação</span>
+            <span style={{ display: "block", fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.01em" }}>Tributação</span>
             <span style={{ display: "block", ...help }}>NCM, CST/CSOSN e alíquota · usada só na emissão de nota fiscal</span>
           </span>
-          <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>{taxFilled ? "Preenchida" : "Não preenchida"}</span>
+          <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{taxFilled ? "Preenchida" : "Não preenchida"}</span>
           <i className={`fa-solid ${taxOpen ? "fa-chevron-up" : "fa-chevron-down"}`} aria-hidden="true" style={{ fontSize: 11, color: "var(--ink2)" }} />
         </button>
         {taxOpen && (

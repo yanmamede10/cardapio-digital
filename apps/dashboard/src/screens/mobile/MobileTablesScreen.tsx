@@ -61,12 +61,12 @@ export default function MobileTablesScreen() {
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 9 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar mesa" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13.5, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar mesa" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
           {FILTERS.map((f) => (
             <MobileChip key={f.key} active={filter === f.key} onClick={() => setFilter(f.key)} dot={f.dot}>
-              {f.label} <span className="mono" style={{ fontSize: 11 }}>{countFor(f.key)}</span>
+              {f.label} <span className="mono" style={{ fontSize: "var(--text-caption)" }}>{countFor(f.key)}</span>
             </MobileChip>
           ))}
         </div>
@@ -84,15 +84,15 @@ export default function MobileTablesScreen() {
               style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", textAlign: "left", background: "var(--surface)", border: "1px solid var(--line)", borderLeft: `3px solid ${st.accent}`, borderRadius: 13, padding: "11px 12px", minHeight: 66, cursor: "pointer", font: "inherit", color: "var(--ink)" }}
             >
               <div style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: 12, background: t.status === "free" ? "var(--surface2)" : st.bg, border: `1px solid ${t.status === "free" ? "var(--line)" : "transparent"}`, color: t.status === "free" ? "var(--ink3)" : st.fg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1 }}>
-                <span style={{ fontSize: 9, letterSpacing: ".06em" }}>MESA</span>
-                <span style={{ fontSize: 16, fontWeight: 600 }}>{String(t.number).padStart(2, "0")}</span>
+                <span style={{ fontSize: "var(--text-caption)", letterSpacing: ".06em" }}>MESA</span>
+                <span style={{ fontSize: "var(--text-headline)", fontWeight: 600 }}>{String(t.number).padStart(2, "0")}</span>
               </div>
               <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: 11.5, fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: st.bg, color: st.fg, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{st.label}</span>
-                  <span style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap" }}>{meta}</span>
+                  <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 20, padding: "2px 9px", background: st.bg, color: st.fg, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{st.label}</span>
+                  <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap" }}>{meta}</span>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink3)" }}>{t.seats} lugares</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{t.seats} lugares</div>
               </div>
               <i className="fa-solid fa-chevron-right" style={{ fontSize: 13, color: "var(--ink3)" }} />
             </button>

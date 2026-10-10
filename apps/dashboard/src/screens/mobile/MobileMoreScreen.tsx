@@ -42,12 +42,12 @@ export default function MobileMoreScreen() {
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 13, display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 46, height: 46, flex: "0 0 46px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 600 }}>
+        <div style={{ width: 46, height: 46, flex: "0 0 46px", borderRadius: "50%", background: "var(--brandSoft)", border: "1px solid var(--line2)", color: "var(--brandText)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--text-body)", fontWeight: 600 }}>
           {initialsOf(staffName)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600 }}>{staffName}</div>
-          <div style={{ fontSize: 12, color: "var(--ink3)" }}>
+          <div style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>{staffName}</div>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
             {staffRole} · {restaurantName}
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function MobileMoreScreen() {
       {cards.map((g) => (
         <section key={g.label} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
           {g.label && (
-            <div className="mono" style={{ padding: "10px 14px", borderBottom: "1px solid var(--line)", fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+            <div className="mono" style={{ padding: "10px 14px", borderBottom: "1px solid var(--line)", fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
               {g.label}
             </div>
           )}
@@ -71,11 +71,11 @@ export default function MobileMoreScreen() {
                   <i className={`fa-solid ${m.icon}`} style={{ fontSize: 15 }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 500 }}>{m.label}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.sub}</div>
+                  <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{m.label}</div>
+                  <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.sub}</div>
                 </div>
                 {badge && (
-                  <span className="mono" style={{ fontSize: 11, fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 20, padding: "2px 8px" }}>
+                  <span className="mono" style={{ fontSize: "var(--text-caption)", fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 20, padding: "2px 8px" }}>
                     {badge}
                   </span>
                 )}
@@ -89,7 +89,7 @@ export default function MobileMoreScreen() {
       <button
         type="button"
         onClick={logout}
-        style={{ minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+        style={{ minHeight: 50, background: "transparent", border: "1px solid var(--line2)", color: "var(--ink2)", borderRadius: 12, cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
       >
         <i className="fa-solid fa-power-off" style={{ fontSize: 13 }} />
         Sair da conta

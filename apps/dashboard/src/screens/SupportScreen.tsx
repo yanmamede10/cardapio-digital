@@ -144,7 +144,7 @@ export default function SupportScreen() {
           ]}
         />
         {tab === "reviews" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--ink2)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
             <span style={{ color: "var(--secText)" }}>{stars(reviewStats.avg)}</span>
             <span className="mono">{reviewStats.avg.toFixed(1)}</span>
             <span style={{ color: "var(--ink3)" }}>· {reviewStats.count} avaliações</span>
@@ -153,7 +153,7 @@ export default function SupportScreen() {
         <div style={{ flex: 1 }} />
         {tab === "tickets" && <WhatsAppIndicator status={whatsapp} />}
         {tab === "tickets" && late > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 14%, transparent)", border: "1px solid var(--alert)", borderRadius: 999, padding: "7px 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--alert)", background: "color-mix(in srgb, var(--alert) 14%, transparent)", border: "1px solid var(--alert)", borderRadius: 999, padding: "7px 16px" }}>
             <i className="fa-solid fa-stopwatch" style={{ fontSize: 15 }} />
             {late === 1 ? "1 ticket sem resposta há mais de 1 hora" : `${late} tickets sem resposta há mais de 1 hora`}
           </div>
@@ -168,8 +168,8 @@ export default function SupportScreen() {
             <div style={{ width: 330, flex: "0 0 330px", display: "flex", flexDirection: "column", gap: 10 }}>
               <section className="card">
                 <div style={{ padding: "12px 14px 12px 18px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>Conversas</div>
-                  <div className="mono" style={{ fontSize: 11, color: "var(--ink3)", flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>Conversas</div>
+                  <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", flex: 1 }}>
                     {tickets.length}
                   </div>
                   <FilterPopover
@@ -210,21 +210,21 @@ export default function SupportScreen() {
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: 15, color: "var(--ink3)" }} />
-                        <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.customerName}</span>
+                        <span style={{ fontWeight: 600, fontSize: "var(--text-subheadline)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.customerName}</span>
                         {t.unreadCount > 0 && (
-                          <span className="mono" style={{ fontSize: 10, fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 20, padding: "1px 6px" }}>
+                          <span className="mono" style={{ fontSize: "var(--text-caption)", fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 20, padding: "1px 6px" }}>
                             {t.unreadCount}
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{t.refLabel}</div>
+                      <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{t.refLabel}</div>
                       <div className="pill" style={{ alignSelf: "flex-start", background: "var(--surface2)", color: STATUS_COLOR[t.status] }}>
                         {STATUS_LABEL[t.status]}
                       </div>
                     </button>
                   );
                 })}
-                {tickets.length === 0 && <div style={{ padding: "28px 16px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>Nenhum resultado com esses filtros.</div>}
+                {tickets.length === 0 && <div style={{ padding: "28px 16px", textAlign: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhum resultado com esses filtros.</div>}
                 </div>
               </section>
             </div>
@@ -236,8 +236,8 @@ export default function SupportScreen() {
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 16px", borderBottom: "1px solid var(--line)" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{selected.customerName}</div>
-                      <div style={{ fontSize: 12, color: "var(--ink3)" }}>{selected.refLabel}</div>
+                      <div style={{ fontWeight: 600, fontSize: "var(--text-body)" }}>{selected.customerName}</div>
+                      <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{selected.refLabel}</div>
                     </div>
                     {!selected.assignee && (
                       <button type="button" className="btn btn-outline" onClick={() => assignToMe(selected)}>
@@ -267,7 +267,7 @@ export default function SupportScreen() {
                             maxWidth: "72%",
                             borderRadius: 15,
                             padding: "10px 14px",
-                            fontSize: 13,
+                            fontSize: "var(--text-subheadline)",
                             lineHeight: 1.4,
                             background: m.from === "staff" ? "var(--brand)" : "var(--surface2)",
                             color: m.from === "staff" ? "var(--brandInk)" : "var(--ink)"
@@ -275,7 +275,7 @@ export default function SupportScreen() {
                         >
                           <MessageBody m={m} />
                         </div>
-                        <div style={{ fontSize: 10.5, color: "var(--ink3)", marginTop: 3 }}>
+                        <div style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", marginTop: 3 }}>
                           {m.authorName ? `${m.authorName} · ` : ""}
                           {fmtDateTime(m.createdAt)}
                         </div>
@@ -298,7 +298,7 @@ export default function SupportScreen() {
                   </div>
                 </>
               ) : (
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)", fontSize: 13 }}>Selecione uma conversa</div>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink3)", fontSize: "var(--text-subheadline)" }}>Selecione uma conversa</div>
               )}
             </section>
           </div>
@@ -311,15 +311,15 @@ export default function SupportScreen() {
             <section key={r.id} className="card" style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <i className={`fa-solid ${r.channel === "table" ? "fa-chair" : "fa-motorcycle"}`} style={{ fontSize: 15, color: "var(--ink3)" }} />
-                <div style={{ fontWeight: 600, fontSize: 13.5, flex: 1 }}>{r.customerName}</div>
-                <span style={{ color: "var(--secText)", fontSize: 14 }}>{stars(r.rating)}</span>
-                <span className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
+                <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>{r.customerName}</div>
+                <span style={{ color: "var(--secText)", fontSize: "var(--text-body)" }}>{stars(r.rating)}</span>
+                <span className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
                   {fmtDateTime(r.createdAt)}
                 </span>
               </div>
-              <div style={{ fontSize: 13, color: "var(--ink2)", lineHeight: 1.5 }}>{r.text}</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", lineHeight: 1.5 }}>{r.text}</div>
               {r.reply ? (
-                <div style={{ marginLeft: 20, padding: "10px 14px", borderRadius: 13, background: "var(--surface2)", fontSize: 12.5, color: "var(--ink2)" }}>
+                <div style={{ marginLeft: 20, padding: "10px 14px", borderRadius: 13, background: "var(--surface2)", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                   <div className="field-label" style={{ marginBottom: 3 }}>
                     Resposta do restaurante
                   </div>
@@ -329,7 +329,7 @@ export default function SupportScreen() {
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
                     className="field"
-                    style={{ fontSize: 12.5 }}
+                    style={{ fontSize: "var(--text-subheadline)" }}
                     value={reviewDrafts[r.id] || ""}
                     onChange={(e) => setReviewDrafts((prev) => ({ ...prev, [r.id]: e.target.value }))}
                     placeholder="Responder publicamente"

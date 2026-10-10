@@ -119,8 +119,8 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
             <i className="fa-solid fa-qrcode" style={{ fontSize: 18, lineHeight: 1 }} />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-.015em" }}>Pagamento PIX</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{title}{itemsLabel ? ` · ${itemsLabel}` : ""}</div>
+            <div style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: "-.015em" }}>Pagamento PIX</div>
+            <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{title}{itemsLabel ? ` · ${itemsLabel}` : ""}</div>
           </div>
           <button type="button" className="icon-btn" onClick={onClose} title="Fechar" aria-label="Fechar">
             <i className="fa-solid fa-xmark" style={{ fontSize: 18 }} />
@@ -130,22 +130,22 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
         {status === "waiting" && (
           <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-              <div className="mono" style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-.03em" }}>{brl(amount)}</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Mostre esta tela ao cliente</div>
+              <div className="mono" style={{ fontSize: "var(--text-largeTitle)", fontWeight: 600, letterSpacing: "-.03em" }}>{brl(amount)}</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Mostre esta tela ao cliente</div>
             </div>
             <div style={{ padding: 16, borderRadius: 22, background: "#fff", border: "1px solid var(--line2)", boxShadow: "var(--shadow1)" }}>
               <img src={qr} width={196} height={196} alt="QR code PIX" style={{ display: "block", imageRendering: "pixelated" }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 9, border: `1px solid ${urgent ? "var(--alert)" : "var(--line2)"}`, borderRadius: 999, padding: "8px 16px" }}>
               <i className="fa-solid fa-clock" style={{ fontSize: 15, lineHeight: 1, color: urgent ? "var(--alert)" : "var(--ink)" }} />
-              <span className="mono" style={{ fontSize: 15, fontWeight: 600, letterSpacing: ".02em", color: urgent ? "var(--alert)" : "var(--ink)" }}>{timer}</span>
-              <span style={{ fontSize: 12, color: "var(--ink3)" }}>para expirar</span>
+              <span className="mono" style={{ fontSize: "var(--text-headline)", fontWeight: 600, letterSpacing: ".02em", color: urgent ? "var(--alert)" : "var(--ink)" }}>{timer}</span>
+              <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>para expirar</span>
             </div>
             <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
               <div className="field-label">PIX copia e cola</div>
               <div style={{ display: "flex", alignItems: "center", gap: 11, border: "1px solid var(--line)", background: "var(--surface2)", borderRadius: 14, padding: "12px 14px" }}>
-                <span className="mono" style={{ flex: 1, minWidth: 0, fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{code}</span>
-                <button type="button" className="btn btn-outline" style={{ padding: "8px 13px", fontSize: 12 }} onClick={copy}>
+                <span className="mono" style={{ flex: 1, minWidth: 0, fontSize: "var(--text-footnote)", color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{code}</span>
+                <button type="button" className="btn btn-outline" style={{ padding: "8px 13px", fontSize: "var(--text-footnote)" }} onClick={copy}>
                   <i className="fa-regular fa-copy" style={{ fontSize: 14, lineHeight: 1 }} />
                   Copiar
                 </button>
@@ -156,7 +156,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
                 <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--warn)" }} />
                 <span style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "var(--warn)", animation: "pulse 1.8s ease-out infinite" }} />
               </span>
-              <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>Aguardando confirmação do banco…</span>
+              <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Aguardando confirmação do banco…</span>
             </div>
             <button type="button" className="btn btn-outline" style={{ width: "100%" }} onClick={onClose}>
               Cancelar cobrança
@@ -170,15 +170,15 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
               <i className="fa-solid fa-check" style={{ fontSize: 38, lineHeight: 1 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-              <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-.02em", color: "var(--ok)" }}>Pagamento confirmado</div>
-              <div className="mono" style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-.03em" }}>{brl(amount)}</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink3)", textAlign: "center" }}>{title} liberada · valor a caminho da conta do restaurante</div>
+              <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em", color: "var(--ok)" }}>Pagamento confirmado</div>
+              <div className="mono" style={{ fontSize: "var(--text-title1)", fontWeight: 600, letterSpacing: "-.03em" }}>{brl(amount)}</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)", textAlign: "center" }}>{title} liberada · valor a caminho da conta do restaurante</div>
             </div>
             <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
               {[["Recebido em", "agora mesmo"], ["Forma", "PIX"], ["Liquidação", "D+1 na subconta"]].map(([k, v]) => (
                 <div key={k} style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "11px 0", borderBottom: "1px solid var(--line)" }}>
-                  <span style={{ flex: 1, fontSize: 12.5, color: "var(--ink3)" }}>{k}</span>
-                  <span style={{ fontSize: 12.5, fontWeight: 500 }}>{v}</span>
+                  <span style={{ flex: 1, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{k}</span>
+                  <span style={{ fontSize: "var(--text-subheadline)", fontWeight: 500 }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -200,12 +200,12 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
               <i className="fa-solid fa-clock-rotate-left" style={{ fontSize: 34, lineHeight: 1 }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
-              <div style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-.02em" }}>QR code expirado</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink2)", textAlign: "center", maxWidth: 280 }}>O código ficou 5 minutos disponível e não foi pago. Gere um novo para continuar o fechamento de {title}.</div>
+              <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em" }}>QR code expirado</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", textAlign: "center", maxWidth: 280 }}>O código ficou 5 minutos disponível e não foi pago. Gere um novo para continuar o fechamento de {title}.</div>
             </div>
             <div style={{ width: "100%", padding: "14px 16px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)", display: "flex", alignItems: "baseline", gap: 12 }}>
-              <span style={{ flex: 1, fontSize: 12.5, color: "var(--ink3)" }}>Valor da comanda</span>
-              <span className="mono" style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.02em" }}>{brl(amount)}</span>
+              <span style={{ flex: 1, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Valor da comanda</span>
+              <span className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.02em" }}>{brl(amount)}</span>
             </div>
             <button type="button" className="btn btn-primary" style={{ width: "100%" }} onClick={regenerate}>
               <i className="fa-solid fa-rotate-right" style={{ fontSize: 17, lineHeight: 1 }} />
@@ -231,7 +231,7 @@ export function PixPaymentModal({ open, title, amount, itemsLabel, onClose, onCo
             />
             <div style={{ flex: 1 }} />
             {status === "waiting" && (
-              <button type="button" onClick={markPaid} style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer", font: "inherit", fontSize: 11.5, fontWeight: 500, color: "var(--brandText)" }}>
+              <button type="button" onClick={markPaid} style={{ background: "transparent", border: 0, padding: 0, cursor: "pointer", font: "inherit", fontSize: "var(--text-footnote)", fontWeight: 500, color: "var(--brandText)" }}>
                 Simular pagamento
               </button>
             )}

@@ -82,7 +82,7 @@ export default function MobileApp() {
                 title="Esta página não existe"
                 sub="O endereço pode ter sido digitado errado ou a página mudou de lugar."
                 action={
-                  <Link to={homePath()} className="btn btn-primary" style={{ marginTop: 6, padding: "11px 20px", fontSize: 14 }}>
+                  <Link to={homePath()} className="btn btn-primary" style={{ marginTop: 6, padding: "11px 20px", fontSize: "var(--text-body)" }}>
                     Voltar ao início
                   </Link>
                 }

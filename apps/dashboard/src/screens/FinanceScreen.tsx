@@ -43,24 +43,24 @@ export default function FinanceScreen() {
         <section className="card" style={{ flex: 1, minWidth: 280, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
           <div className="field-label">Taxas de entrega no mês</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <div className="mono" style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-.02em" }}>
+            <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.02em" }}>
               {brl(data.deliveryFeeMonthToDate)}
             </div>
-            <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>de {brl(data.deliveryFeeCap)} no plano</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>de {brl(data.deliveryFeeCap)} no plano</div>
           </div>
           <div style={{ height: 8, borderRadius: 5, background: "var(--surface2)", overflow: "hidden" }}>
             <div style={{ height: "100%", width: `${feePct}%`, background: feePct >= 90 ? "var(--alert)" : "var(--brand)" }} />
           </div>
-          <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{feePct}% do limite mensal utilizado</div>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{feePct}% do limite mensal utilizado</div>
         </section>
 
         <section className="card" style={{ flex: 1, minWidth: 280, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
           <div className="field-label">Plano de gestão</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <div className="mono" style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-.02em" }}>
+            <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.02em" }}>
               {brl(data.planPrice)}
             </div>
-            <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>/mês · vence {fmtDate(data.planDueDate)}</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>/mês · vence {fmtDate(data.planDueDate)}</div>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {data.planModules.map((m) => (
@@ -73,7 +73,7 @@ export default function FinanceScreen() {
       </div>
 
       <section className="card" style={{ overflowX: "auto" }}>
-        <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--line)", fontWeight: 600, fontSize: 13.5 }}>Extrato</div>
+        <div style={{ padding: "13px 16px", borderBottom: "1px solid var(--line)", fontWeight: 600, fontSize: "var(--text-body)" }}>Extrato</div>
         <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 130px 100px", gap: 12, padding: "9px 16px", background: "var(--surface2)", borderBottom: "1px solid var(--line)", minWidth: 520 }}>
           {["Data", "Descrição", "Valor", "Status"].map((h) => (
             <div key={h} className="field-label">
@@ -83,19 +83,19 @@ export default function FinanceScreen() {
         </div>
         {data.charges.map((c) => (
           <div key={c.id} style={{ display: "grid", gridTemplateColumns: "110px 1fr 130px 100px", gap: 12, alignItems: "center", padding: "11px 16px", borderBottom: "1px solid var(--line)", minWidth: 520 }}>
-            <div className="mono" style={{ fontSize: 12, color: "var(--ink3)" }}>
+            <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
               {fmtDate(c.date)}
             </div>
-            <div style={{ fontSize: 13 }}>
+            <div style={{ fontSize: "var(--text-subheadline)" }}>
               {c.description}
               {c.paidOn && (
-                <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
                   Pago em {brDate(c.paidOn)}
                   {c.paymentMethod && ` · ${c.paymentMethod}`}
                 </div>
               )}
             </div>
-            <div className="mono" style={{ fontSize: 13, fontWeight: 600 }}>
+            <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600 }}>
               {brl(c.value)}
             </div>
             <span className="pill" style={{ alignSelf: "start", background: "var(--surface2)", color: CHARGE_STATUS[c.status].color }}>
@@ -103,7 +103,7 @@ export default function FinanceScreen() {
             </span>
           </div>
         ))}
-        {data.charges.length === 0 && <div style={{ padding: 24, textAlign: "center", color: "var(--ink3)", fontSize: 12.5 }}>Nenhum lançamento ainda.</div>}
+        {data.charges.length === 0 && <div style={{ padding: 24, textAlign: "center", color: "var(--ink3)", fontSize: "var(--text-subheadline)" }}>Nenhum lançamento ainda.</div>}
       </section>
     </div>
   );

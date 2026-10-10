@@ -37,21 +37,21 @@ export default function MobileFinanceScreen() {
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 14, display: "flex", flexDirection: "column", gap: 11 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)", flex: 1 }}>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)", flex: 1 }}>
             Taxa sobre delivery · {monthLabel}
           </div>
-          <span style={{ fontSize: 11, fontWeight: 600, color: capTone.fg, background: "color-mix(in srgb, currentColor 15%, transparent)", borderRadius: 20, padding: "2px 9px" }}>{capTone.label}</span>
+          <span style={{ fontSize: "var(--text-caption)", fontWeight: 600, color: capTone.fg, background: "color-mix(in srgb, currentColor 15%, transparent)", borderRadius: 20, padding: "2px 9px" }}>{capTone.label}</span>
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <div className="mono" style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-.03em" }}>
+          <div className="mono" style={{ fontSize: "var(--text-title1)", fontWeight: 600, letterSpacing: "-.03em" }}>
             {brl(data.deliveryFeeMonthToDate)}
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>de {brl(data.deliveryFeeCap)}</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>de {brl(data.deliveryFeeCap)}</div>
         </div>
         <div style={{ height: 10, borderRadius: 6, background: "var(--surface3)", overflow: "hidden" }}>
           <div style={{ height: 10, borderRadius: 6, background: pct >= 90 ? "var(--alert)" : "var(--brand)", width: `${pct}%` }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--ink3)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
           <span>{pct}% do teto mensal</span>
           <span>Restam {brl(Math.max(0, data.deliveryFeeCap - data.deliveryFeeMonthToDate))}</span>
         </div>
@@ -59,45 +59,45 @@ export default function MobileFinanceScreen() {
 
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, padding: 14, display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+          <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
             Mensalidade dos módulos
           </div>
-          <div className="mono" style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-.03em" }}>
+          <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.03em" }}>
             {brl(data.planPrice)}
           </div>
-          <div style={{ fontSize: 12, color: "var(--ink3)" }}>{data.planModules.map(moduleLabel).join(" + ")}</div>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{data.planModules.map(moduleLabel).join(" + ")}</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>Vence em</div>
-          <div className="mono" style={{ fontSize: 14, fontWeight: 600, color: "var(--warn)" }}>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Vence em</div>
+          <div className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600, color: "var(--warn)" }}>
             {fmtDate(data.planDueDate)}
           </div>
         </div>
       </section>
 
       <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
-        <div style={{ padding: "11px 13px", borderBottom: "1px solid var(--line)", fontSize: 13, fontWeight: 600 }}>Extrato de cobranças</div>
+        <div style={{ padding: "11px 13px", borderBottom: "1px solid var(--line)", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>Extrato de cobranças</div>
         {data.charges.map((c) => {
           const st = CHARGE_STATUS[c.status];
           return (
             <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 13px", borderBottom: "1px solid var(--line)", minHeight: 58 }}>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.description}</div>
-                <div className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
+                <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.description}</div>
+                <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
                   {fmtDate(c.date)}
                   {c.paidOn && ` · pago em ${brDate(c.paidOn)}${c.paymentMethod ? ` · ${c.paymentMethod}` : ""}`}
                 </div>
               </div>
               <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                <div className="mono" style={{ fontSize: 13.5, fontWeight: 600 }}>
+                <div className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>
                   {brl(c.value)}
                 </div>
-                <span style={{ fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "1px 8px", background: st.bg, color: st.fg }}>{st.label}</span>
+                <span style={{ fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 20, padding: "1px 8px", background: st.bg, color: st.fg }}>{st.label}</span>
               </div>
             </div>
           );
         })}
-        {data.charges.length === 0 && <div style={{ padding: 24, textAlign: "center", color: "var(--ink3)", fontSize: 12.5 }}>Nenhum lançamento ainda.</div>}
+        {data.charges.length === 0 && <div style={{ padding: 24, textAlign: "center", color: "var(--ink3)", fontSize: "var(--text-subheadline)" }}>Nenhum lançamento ainda.</div>}
       </section>
     </div>
   );

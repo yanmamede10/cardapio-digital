@@ -91,8 +91,8 @@ export default function AdminScreen() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <Logo size={34} />
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: 19, fontWeight: 600, letterSpacing: "-.015em" }}>{notFound ? "Página não encontrada" : billing ? "Mensalidades" : "Restaurantes"}</h1>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
+            <h1 style={{ margin: 0, fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>{notFound ? "Página não encontrada" : billing ? "Mensalidades" : "Restaurantes"}</h1>
+            <div className="mono" style={{ fontSize: "var(--text-caption)", letterSpacing: ".09em", textTransform: "uppercase", color: "var(--ink3)" }}>
               {PLATFORM_NAME} · Plataforma
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function AdminScreen() {
             <Field label="Chave de administrador">
               <input className="field" type="password" autoComplete="current-password" value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} autoFocus />
             </Field>
-            {error && <div style={{ fontSize: 12.5, color: "var(--alert)" }}>{error}</div>}
+            {error && <div style={{ fontSize: "var(--text-subheadline)", color: "var(--alert)" }}>{error}</div>}
             <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
               Entrar
             </button>
@@ -255,10 +255,10 @@ function RestaurantList({ call }: { call: AdminCall }) {
 
       {ownerAccess && (
         <section className="card" role="status" style={{ padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", borderColor: "var(--ok)" }}>
-          <div style={{ flex: 1, minWidth: 240, fontSize: 13, lineHeight: 1.5 }}>
+          <div style={{ flex: 1, minWidth: 240, fontSize: "var(--text-subheadline)", lineHeight: 1.5 }}>
             Acesso do Dono de <b>{ownerAccess.restaurant}</b> (entra depois de ativar): <a className="mono" href={`mailto:${ownerAccess.email}`}>{ownerAccess.email}</a> · senha provisória{" "}
             <span className="mono" style={{ fontWeight: 600 }}>{ownerAccess.password}</span>
-            <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No primeiro login o Dono troca por uma senha dele.</div>
+            <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No primeiro login o Dono troca por uma senha dele.</div>
           </div>
           <button type="button" className="btn btn-outline" onClick={() => setOwnerAccess(null)}>
             Anotei
@@ -275,29 +275,29 @@ function RestaurantList({ call }: { call: AdminCall }) {
               </div>
             ))}
           </div>
-          {shown.length === 0 && <div style={{ padding: "20px 16px", fontSize: 13, color: "var(--ink3)" }}>Nenhum restaurante encontrado.</div>}
+          {shown.length === 0 && <div style={{ padding: "20px 16px", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhum restaurante encontrado.</div>}
           {shown.map((r) => (
             <div key={r.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 12, alignItems: "center", padding: "10px 16px", borderBottom: "1px solid var(--line)" }}>
               <div style={{ minWidth: 0 }}>
-                <Link to={`/admin/restaurantes/${encodeURIComponent(r.id)}`} style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>
+                <Link to={`/admin/restaurantes/${encodeURIComponent(r.id)}`} style={{ fontSize: "var(--text-body)", fontWeight: 500, color: "var(--ink)" }}>
                   {r.name}
                 </Link>
-                <div className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
+                <div className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
                   {r.id}
                 </div>
               </div>
-              <div className="mono" style={{ fontSize: 12.5, color: "var(--ink2)" }}>
+              <div className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
                 {r.cnpj || "—"}
               </div>
-              <div style={{ fontSize: 12.5, color: "var(--ink2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.contact || "—"}</div>
+              <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.contact || "—"}</div>
               <StatusPill status={r.status} />
-              <div className="mono" style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+              <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
                 {fmtDate(r.createdAt)}
               </div>
               <button
                 type="button"
                 className={r.status === "ativo" ? "btn btn-outline" : "btn btn-primary"}
-                style={{ padding: "6px 13px", fontSize: 12.5 }}
+                style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)" }}
                 onClick={() => setStatus(r, r.status === "ativo" ? "inativo" : "ativo")}
               >
                 {r.status === "ativo" ? "Desativar" : "Ativar"}

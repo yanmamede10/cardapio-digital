@@ -96,7 +96,7 @@ export function FilterPopover({
           padding: "8px 14px",
           minHeight: sheet ? 44 : undefined,
           cursor: "pointer",
-          fontSize: 13,
+          fontSize: "var(--text-subheadline)",
           fontWeight: 500,
           whiteSpace: "nowrap",
           background: active ? "var(--brandSoft)" : "var(--surface)",
@@ -106,7 +106,7 @@ export function FilterPopover({
         <i className="fa-solid fa-filter" style={{ fontSize: 12 }} />
         Filtros
         {active > 0 && (
-          <span className="mono" style={{ fontSize: 11, fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 999, padding: "1px 8px" }}>
+          <span className="mono" style={{ fontSize: "var(--text-caption)", fontWeight: 600, background: "var(--brand)", color: "var(--brandInk)", borderRadius: 999, padding: "1px 8px" }}>
             {active}
           </span>
         )}
@@ -132,8 +132,8 @@ export function FilterPopover({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", padding: "16px 18px 12px" }}>
-              <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>Filtros</div>
-              <button type="button" onClick={() => onChange({})} style={{ border: 0, background: "transparent", color: "var(--brandText)", fontSize: 12.5, fontWeight: 500, cursor: "pointer", padding: "4px 2px" }}>
+              <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>Filtros</div>
+              <button type="button" onClick={() => onChange({})} style={{ border: 0, background: "transparent", color: "var(--brandText)", fontSize: "var(--text-subheadline)", fontWeight: 500, cursor: "pointer", padding: "4px 2px" }}>
                 Limpar
               </button>
             </div>
@@ -148,7 +148,7 @@ export function FilterPopover({
                       role="tab"
                       aria-selected={on}
                       onClick={() => setTab(g.id)}
-                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, border: 0, borderRadius: 10, padding: "7px 12px", cursor: "pointer", fontSize: 12.5, fontWeight: 500, whiteSpace: "nowrap", background: on ? "var(--surface)" : "transparent", color: on ? "var(--brandText)" : "var(--ink2)", boxShadow: on ? "var(--shadow1)" : "none" }}
+                      style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, border: 0, borderRadius: 10, padding: "7px 12px", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, whiteSpace: "nowrap", background: on ? "var(--surface)" : "transparent", color: on ? "var(--brandText)" : "var(--ink2)", boxShadow: on ? "var(--shadow1)" : "none" }}
                     >
                       {g.label}
                       {value[g.id] && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)" }} />}
@@ -169,7 +169,7 @@ export function FilterPopover({
                         type="button"
                         aria-pressed={on}
                         onClick={() => toggle(group.id, o)}
-                        style={{ display: "flex", alignItems: "center", gap: 6, border: `1px solid ${on ? "var(--brand)" : "var(--line)"}`, borderRadius: 999, padding: "7px 13px", cursor: "pointer", fontSize: 12.5, fontWeight: 500, background: on ? "var(--brandSoft)" : "var(--surface)", color: on ? "var(--brandText)" : "var(--ink2)" }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, border: `1px solid ${on ? "var(--brand)" : "var(--line)"}`, borderRadius: 999, padding: "7px 13px", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, background: on ? "var(--brandSoft)" : "var(--surface)", color: on ? "var(--brandText)" : "var(--ink2)" }}
                       >
                         {on && <i className="fa-solid fa-check" style={{ fontSize: 10 }} />}
                         {o}
@@ -189,11 +189,11 @@ export function FilterPopover({
                           type="button"
                           aria-pressed={on}
                           onClick={() => toggle("per", p)}
-                          style={{ display: "flex", alignItems: "center", gap: 10, border: 0, borderRadius: 10, padding: "10px 12px", cursor: "pointer", fontSize: 13.5, textAlign: "left", background: on ? "var(--brandSoft)" : "transparent", color: "var(--ink)" }}
+                          style={{ display: "flex", alignItems: "center", gap: 10, border: 0, borderRadius: 10, padding: "10px 12px", cursor: "pointer", fontSize: "var(--text-body)", textAlign: "left", background: on ? "var(--brandSoft)" : "transparent", color: "var(--ink)" }}
                         >
                           <i className="fa-solid fa-check" style={{ fontSize: 11, width: 12, color: "var(--brandText)", opacity: on ? 1 : 0 }} />
                           <span style={{ flex: 1, fontWeight: on ? 600 : 400 }}>{p}</span>
-                          <span style={{ fontSize: 12, color: "var(--ink3)", fontVariantNumeric: "tabular-nums" }}>{hint}</span>
+                          <span style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", fontVariantNumeric: "tabular-nums" }}>{hint}</span>
                           {p === "Personalizado" && <i className="fa-solid fa-chevron-right" style={{ fontSize: 10, color: "var(--ink3)" }} />}
                         </button>
                       );
@@ -207,8 +207,8 @@ export function FilterPopover({
                           const next = (i === 0) === !(value.from && !value.to);
                           return (
                             <div key={label} style={{ display: "flex", flexDirection: "column", gap: 2, border: `1px solid ${next ? "var(--brand)" : "var(--line)"}`, borderRadius: 12, padding: "8px 12px", boxShadow: next ? "0 0 0 3px var(--brandSoft)" : "none" }}>
-                              <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink3)" }}>{label}</span>
-                              <span style={{ fontSize: 13.5, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: v ? "var(--ink)" : "var(--ink3)" }}>{v ? `${shortDate(v)} ${v.slice(0, 4)}` : "Selecione"}</span>
+                              <span style={{ fontSize: "var(--text-caption)", fontWeight: 500, color: "var(--ink3)" }}>{label}</span>
+                              <span style={{ fontSize: "var(--text-body)", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: v ? "var(--ink)" : "var(--ink3)" }}>{v ? `${shortDate(v)} ${v.slice(0, 4)}` : "Selecione"}</span>
                             </div>
                           );
                         })}
@@ -216,7 +216,7 @@ export function FilterPopover({
                       <div style={{ border: "1px solid var(--line)", borderRadius: 16, padding: "10px 10px 8px" }}>
                         <Calendar from={value.from ?? null} to={value.to ?? null} onPick={pickDay} />
                       </div>
-                      <div style={{ fontSize: 11.5, color: "var(--ink3)", textAlign: "center" }}>Clique no dia de início e depois no dia de fim</div>
+                      <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", textAlign: "center" }}>Clique no dia de início e depois no dia de fim</div>
                     </div>
                   )}
                 </div>

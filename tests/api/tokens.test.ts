@@ -58,3 +58,28 @@ test("L-12 · todo texto a 4,5:1 ou mais em toda superfície, claro e escuro; o 
   );
   assert.deepEqual(asText, [], "--sec como cor de texto");
 });
+
+// L-13 (UI-01): text sizes come from the scale — no px left in the dashboard's CSS or inline styles (icons are L-16's) —
+// and numbers (.mono: money, quantities, times) are the system font with tabular figures.
+test("L-13 · todo tamanho de texto do painel vem da escala (--text-*), e números em algarismos tabulares", () => {
+  const src = new URL("apps/dashboard/src/", ROOT);
+  const files = readdirSync(src, { recursive: true, encoding: "utf8" }).map((f) => f.replaceAll("\\", "/"));
+  const TOKEN = /^"var\(--text-\w+\)"$|^undefined$/;
+  const wrong: string[] = [];
+  for (const f of files.filter((f) => f.endsWith(".tsx"))) {
+    const code = readFileSync(new URL(f, src), "utf8").replace(/<i\b[^>]*?\/>/gs, "").replace(/const iconStyle[^=]*= \{[^}]*?\}/g, "");
+    for (const [, value] of code.matchAll(/fontSize: ([^,}\n]+)/g)) {
+      const v = value.trim();
+      const parts = /^[\w.]+ \? (.+?) : (.+)$/.exec(v)?.slice(1) ?? [v];
+      if (!parts.every((p) => TOKEN.test(p.trim()))) wrong.push(`${f}: fontSize: ${v}`);
+    }
+  }
+  for (const f of files.filter((f) => f.endsWith(".css"))) {
+    // Points only for paper (the printed QR cards).
+    for (const [, v] of readFileSync(new URL(f, src), "utf8").matchAll(/font-size:\s*([^;]+);/g)) if (!/^var\(--text-\w+\)$|^\d+pt$/.test(v.trim())) wrong.push(`${f}: font-size: ${v}`);
+  }
+  assert.deepEqual(wrong, []);
+  const mono = /\.mono \{([^}]*)\}/.exec(readFileSync(new URL("styles/base.css", src), "utf8"))?.[1] ?? "";
+  assert.match(mono, /font-variant-numeric: tabular-nums/);
+  assert.doesNotMatch(mono, /font-family/, "números na fonte do sistema");
+});

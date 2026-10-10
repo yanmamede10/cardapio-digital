@@ -45,7 +45,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
   }, [id]);
 
   const back = (
-    <Link to="/admin" style={{ fontSize: 13, color: "var(--ink2)" }}>
+    <Link to="/admin" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
       ← Restaurantes
     </Link>
   );
@@ -115,9 +115,9 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
     <>
       {back}
       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>{r.name}</h2>
+        <h2 style={{ margin: 0, fontSize: "var(--text-title3)", fontWeight: 600 }}>{r.name}</h2>
         <StatusPill status={r.status} />
-        <span className="mono" style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+        <span className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
           {r.id} · desde {fmtDate(r.createdAt)}
         </span>
       </div>
@@ -153,7 +153,7 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
           <button type="button" className="btn btn-primary" onClick={savePlan}>
             Salvar mensalidade
           </button>
-          <Link to="/admin/mensalidades" style={{ fontSize: 12.5, color: "var(--ink2)", alignSelf: "center" }}>
+          <Link to="/admin/mensalidades" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)", alignSelf: "center" }}>
             Ver cobranças →
           </Link>
         </div>
@@ -162,21 +162,21 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
       <Card title="Módulos contratados">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 8 }}>
           {PLAN_MODULES.map((m) => (
-            <label key={m} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, cursor: "pointer" }}>
+            <label key={m} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-subheadline)", cursor: "pointer" }}>
               <input type="checkbox" checked={r.modules.includes(m)} onChange={(e) => toggleModule(m, e.target.checked)} />
               {moduleLabel(m)}
             </label>
           ))}
         </div>
-        <div style={{ fontSize: 12, color: "var(--ink3)" }}>Desligado some do menu do restaurante e a API recusa; sem Delivery, o restaurante sai da lista do app do cliente (mesa e tablet seguem). Minha Fatura e Configurações ficam sempre ligados.</div>
+        <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Desligado some do menu do restaurante e a API recusa; sem Delivery, o restaurante sai da lista do app do cliente (mesa e tablet seguem). Minha Fatura e Configurações ficam sempre ligados.</div>
       </Card>
 
       <Card title="Configurações atuais · só leitura">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 10 }}>
           {settings.map(([label, value]) => (
             <div key={label}>
-              <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{label}</div>
-              <div style={{ fontSize: 13.5 }}>{value}</div>
+              <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{label}</div>
+              <div style={{ fontSize: "var(--text-body)" }}>{value}</div>
             </div>
           ))}
         </div>
@@ -184,11 +184,11 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
 
       <Card title={`Equipe · ${r.staff.length}`}>
         {reset && (
-          <div role="status" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: 12, border: "1px solid var(--ok)", borderRadius: 10, fontSize: 13, lineHeight: 1.5 }}>
+          <div role="status" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: 12, border: "1px solid var(--ok)", borderRadius: 10, fontSize: "var(--text-subheadline)", lineHeight: 1.5 }}>
             <div style={{ flex: 1, minWidth: 240 }}>
               Nova senha provisória de <b>{reset.name}</b> (<a className="mono" href={`mailto:${reset.email}`}>{reset.email}</a>):{" "}
               <span className="mono" style={{ fontWeight: 600 }}>{reset.password}</span>
-              <div style={{ fontSize: 12, color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No próximo login a pessoa troca por uma senha dela; até lá, as sessões abertas param.</div>
+              <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Anote agora: ela não aparece de novo. No próximo login a pessoa troca por uma senha dela; até lá, as sessões abertas param.</div>
             </div>
             <button type="button" className="btn btn-outline" onClick={() => setReset(null)}>
               Anotei
@@ -199,25 +199,25 @@ export default function AdminRestaurantScreen({ id, call }: { id: string; call: 
           {r.staff.map((s) => (
             <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderTop: "1px solid var(--line)", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{s.name}</div>
-                <a className="mono" href={`mailto:${s.email}`} style={{ fontSize: 11.5 }}>
+                <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{s.name}</div>
+                <a className="mono" href={`mailto:${s.email}`} style={{ fontSize: "var(--text-footnote)" }}>
                   {s.email}
                 </a>
               </div>
               <span className="pill" style={{ background: "var(--surface2)", color: "var(--ink2)" }}>
                 {ROLE_LABEL[s.role] ?? s.role}
               </span>
-              <button type="button" className="btn btn-outline" style={{ padding: "6px 13px", fontSize: 12.5 }} aria-label={`Resetar senha de ${s.name}`} onClick={() => resetPassword(s)}>
+              <button type="button" className="btn btn-outline" style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)" }} aria-label={`Resetar senha de ${s.name}`} onClick={() => resetPassword(s)}>
                 Resetar senha
               </button>
             </div>
           ))}
-          {r.staff.length === 0 && <div style={{ fontSize: 13, color: "var(--ink3)" }}>Ninguém na equipe.</div>}
+          {r.staff.length === 0 && <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Ninguém na equipe.</div>}
         </div>
       </Card>
 
       <Card title="WhatsApp · só leitura">
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: 13 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: "var(--text-subheadline)" }}>
           <WhatsAppBadge state={r.whatsapp.state} />
           <span style={{ color: "var(--ink2)" }}>
             {r.whatsapp.termsAcceptedAt

@@ -25,7 +25,7 @@ export function MobileChip({
         padding: "0 13px",
         cursor: "pointer",
         font: "inherit",
-        fontSize: 12,
+        fontSize: "var(--text-footnote)",
         fontWeight: 500,
         background: active ? "var(--brandSoft)" : "var(--surface)",
         color: active ? "var(--brandText)" : "var(--ink2)",

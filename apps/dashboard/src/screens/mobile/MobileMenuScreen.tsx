@@ -105,7 +105,7 @@ export default function MobileMenuScreen() {
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 9 }}>
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 12px", minHeight: 44 }}>
           <i className="fa-solid fa-magnifying-glass" style={{ fontSize: 14, color: "var(--ink3)" }} />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 13.5, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prato" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-body)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
         </div>
         {canEdit && <button
           type="button"
@@ -128,8 +128,8 @@ export default function MobileMenuScreen() {
               <section key={g.cat.id} style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden" }}>
                 <button type="button" onClick={() => toggleCat(g.cat.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", font: "inherit", color: "var(--ink)", padding: 13, minHeight: 54 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-.015em" }}>{g.cat.name}</div>
-                    <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>
+                    <div style={{ fontSize: "var(--text-body)", fontWeight: 600, letterSpacing: "-.015em" }}>{g.cat.name}</div>
+                    <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
                       {g.items.length} {g.items.length === 1 ? "item" : "itens"} · {available} disponíveis
                     </div>
                   </div>
@@ -142,11 +142,11 @@ export default function MobileMenuScreen() {
                         <div style={{ width: 42, height: 42, flex: "0 0 42px", borderRadius: 10, background: "repeating-linear-gradient(135deg,var(--surface2),var(--surface2) 5px,var(--surface3) 5px,var(--surface3) 10px)", border: "1px solid var(--line)" }} />
                         {/* K-1: the name in up to 2 lines, the price on one, the schedule on its own line — sharing the price's, it pushed past the column into the switch */}
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3, color: p.soldOut ? "var(--ink3)" : "var(--ink)", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden", overflowWrap: "anywhere" }}>{p.name}</div>
-                          <div className="mono" style={{ fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" }}>
+                          <div style={{ fontSize: "var(--text-subheadline)", fontWeight: 500, lineHeight: 1.3, color: p.soldOut ? "var(--ink3)" : "var(--ink)", display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2, overflow: "hidden", overflowWrap: "anywhere" }}>{p.name}</div>
+                          <div className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, whiteSpace: "nowrap" }}>
                             {brl(p.price)}
                           </div>
-                          <div style={{ fontSize: 11, color: "var(--ink3)", overflowWrap: "anywhere" }}>{p.scheduleLabel}</div>
+                          <div style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", overflowWrap: "anywhere" }}>{p.scheduleLabel}</div>
                         </div>
                         <MobileToggle on={!p.soldOut} onClick={() => toggleAvailable(p)} title={p.soldOut ? "Disponível" : "Esgotado"} label={`${p.name} disponível`} />
                         {canEdit && (
@@ -171,7 +171,7 @@ export default function MobileMenuScreen() {
             title="Seu cardápio está vazio"
             sub={categories.length ? "Vincule o primeiro prato do Catálogo para começar a receber pedidos." : "Crie as categorias (ex.: Hambúrgueres, Bebidas) e depois vincule os pratos do Catálogo."}
             action={
-              canEdit && <button type="button" onClick={() => (categories.length ? setLinking(true) : cats.create())} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+              canEdit && <button type="button" onClick={() => (categories.length ? setLinking(true) : cats.create())} style={{ minHeight: 48, background: "var(--brand)", color: "var(--brandInk)", border: 0, borderRadius: 12, padding: "0 20px", cursor: "pointer", font: "inherit", fontSize: "var(--text-body)", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
                 <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
                 {categories.length ? "Adicionar primeiro prato" : "Criar primeira categoria"}
               </button>

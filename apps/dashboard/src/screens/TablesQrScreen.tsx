@@ -100,10 +100,10 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
           </button>
         )}
         <div style={{ flex: 1, minWidth: 180 }}>
-          <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>{only != null ? `QR da Mesa ${pad(only)}` : "QR de todas as mesas"}</h1>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>Folha A4, duas mesas por linha. Cada QR abre o cardápio daquela mesa.</div>
+          <h1 style={{ margin: 0, fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>{only != null ? `QR da Mesa ${pad(only)}` : "QR de todas as mesas"}</h1>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Folha A4, duas mesas por linha. Cada QR abre o cardápio daquela mesa.</div>
         </div>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-subheadline)" }}>
           <span className="field-label" style={{ margin: 0 }}>Mesas</span>
           <select className="field" style={{ width: "auto" }} value={only ?? ""} onChange={(e) => setParams(e.target.value ? { mesa: e.target.value } : {})}>
             <option value="">Todas</option>
@@ -133,13 +133,13 @@ export default function TablesQrScreen({ mobile = false }: { mobile?: boolean })
       </section>
 
       {!qrOrdering && (
-        <div role="status" className="card" style={{ padding: 14, fontSize: 13, color: "var(--ink2)" }}>
+        <div role="status" className="card" style={{ padding: 14, fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>
           O pedido pelo QR está desligado em Configurações → Salão: quem ler estes QR vê o aviso para chamar o garçom.
         </div>
       )}
-      {tables && !shown.length && <div className="card" style={{ padding: 22, fontSize: 13, color: "var(--ink3)" }}>{only != null ? `A Mesa ${pad(only)} não existe.` : "Nenhuma mesa cadastrada."}</div>}
+      {tables && !shown.length && <div className="card" style={{ padding: 22, fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{only != null ? `A Mesa ${pad(only)} não existe.` : "Nenhuma mesa cadastrada."}</div>}
       {only != null && codes[only] && (
-        <div className="mono" style={{ fontSize: 12, color: "var(--ink3)", wordBreak: "break-all" }}>
+        <div className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)", wordBreak: "break-all" }}>
           {tableLink(codes[only])}
         </div>
       )}

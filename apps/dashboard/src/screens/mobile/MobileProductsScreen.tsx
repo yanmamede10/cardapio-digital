@@ -152,7 +152,7 @@ export default function MobileProductsScreen() {
             <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 9, background: "var(--surface2)", border: "1px solid var(--line)", borderRadius: 11, padding: "0 4px 0 12px", minHeight: 44 }}>
                 <i className="fa-solid fa-magnifying-glass" aria-hidden="true" style={{ fontSize: 14, color: "var(--ink3)" }} />
-                <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: 15, color: "var(--ink)", width: "100%", minWidth: 0 }} />
+                <input value={filter.q} onChange={(e) => set({ q: e.target.value })} placeholder="Buscar por nome" aria-label="Buscar por nome" style={{ border: 0, background: "transparent", outline: "none", font: "inherit", fontSize: "var(--text-headline)", color: "var(--ink)", width: "100%", minWidth: 0 }} />
                 {filter.q && (
                   <button type="button" aria-label="Limpar busca" onClick={() => set({ q: "" })} style={{ border: 0, background: "transparent", color: "var(--ink3)", cursor: "pointer" }}>
                     <i className="fa-solid fa-circle-xmark" style={{ fontSize: 15 }} />
@@ -179,7 +179,7 @@ export default function MobileProductsScreen() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Segmented value={filter.tipo} onChange={(tipo) => set({ tipo })} options={TYPE_OPTIONS} />
                   </div>
-                  <span className="mono" style={{ fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap" }}>
+                  <span className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", whiteSpace: "nowrap" }}>
                     {filtered ? `${shown.length} de ${countLabel(products.length)}` : countLabel(products.length)}
                   </span>
                 </div>
@@ -231,8 +231,8 @@ export default function MobileProductsScreen() {
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <button type="button" aria-expanded={open} onClick={() => setClosed(open ? [...closed, g.cat.id] : closed.filter((x) => x !== g.cat.id))} style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8, border: 0, background: "transparent", padding: "0 4px", cursor: "pointer", font: "inherit", color: "var(--ink)", textAlign: "left" }}>
                       <i className={`fa-solid ${open ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 12, color: "var(--ink3)" }} />
-                      <span style={{ fontSize: 15, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.cat.name}</span>
-                      <span className="mono" style={{ fontSize: 11.5, color: "var(--ink2)", background: "var(--surface3)", borderRadius: 999, padding: "1px 9px" }}>
+                      <span style={{ fontSize: "var(--text-headline)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.cat.name}</span>
+                      <span className="mono" style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", background: "var(--surface3)", borderRadius: 999, padding: "1px 9px" }}>
                         {g.items.length}
                       </span>
                     </button>
@@ -242,10 +242,10 @@ export default function MobileProductsScreen() {
                       </button>
                     )}
                   </div>
-                  {note && <div style={{ fontSize: 12, color: "var(--ink2)", padding: "0 4px 4px" }}>{note}</div>}
+                  {note && <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", padding: "0 4px 4px" }}>{note}</div>}
                   {open && (
                     <section style={card}>
-                      {g.items.length === 0 && <div style={{ padding: "14px 16px", fontSize: 13, color: "var(--ink2)" }}>Nenhum item nesta categoria ainda.</div>}
+                      {g.items.length === 0 && <div style={{ padding: "14px 16px", fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Nenhum item nesta categoria ainda.</div>}
                       {g.items.map((p) => (
                         <button
                           key={p.id}
@@ -254,13 +254,13 @@ export default function MobileProductsScreen() {
                           style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "transparent", border: 0, borderBottom: "1px solid var(--line)", cursor: "pointer", font: "inherit", color: "var(--ink)", padding: "10px 14px 10px 16px", minHeight: 66 }}
                         >
                           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
-                            <div style={{ fontSize: 15, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
+                            <div style={{ fontSize: "var(--text-headline)", fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                               <StatusPill p={p} />
-                              <span style={{ fontSize: 12.5, color: "var(--ink2)" }}>{p.type === "produto" ? brl(p.price) : TYPE_LABEL[p.type]}</span>
+                              <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{p.type === "produto" ? brl(p.price) : TYPE_LABEL[p.type]}</span>
                             </div>
                           </div>
-                          <span className="mono" style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
+                          <span className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600, whiteSpace: "nowrap", color: p.composed ? "var(--ink2)" : p.stock > 0 ? "var(--ink)" : "var(--alert)" }}>
                             {p.composed ? "Composto" : `${qty(p.stock)} ${p.unit}`}
                           </span>
                           <i className="fa-solid fa-chevron-right" aria-hidden="true" style={{ fontSize: 11, color: "var(--ink3)" }} />
@@ -285,7 +285,7 @@ export default function MobileProductsScreen() {
             <div style={{ width: 54, height: 54, borderRadius: 16, background: "var(--brandSoft)", color: "var(--brandText)", display: "grid", placeItems: "center" }}>
               <i className="fa-solid fa-file-import" style={{ fontSize: 21 }} />
             </div>
-            <div style={{ fontSize: 13, color: "var(--ink2)" }}>Arraste o arquivo da nota do fornecedor. Os itens entram no estoque automaticamente.</div>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>Arraste o arquivo da nota do fornecedor. Os itens entram no estoque automaticamente.</div>
             <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} disabled={importing} onClick={pickXml}>
               Selecionar
             </button>
@@ -300,10 +300,10 @@ export default function MobileProductsScreen() {
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderBottom: "1px solid var(--line)", minHeight: 62 }}>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <span style={{ ...pill(movementTag(m).tone), fontSize: 10.5, padding: "1px 8px" }}>{movementTag(m).label}</span>
-                      <span style={{ fontSize: 13.5, fontWeight: 500, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.productName}</span>
+                      <span style={{ ...pill(movementTag(m).tone), fontSize: "var(--text-caption)", padding: "1px 8px" }}>{movementTag(m).label}</span>
+                      <span style={{ fontSize: "var(--text-body)", fontWeight: 500, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.productName}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--ink3)", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "var(--text-footnote)", color: "var(--ink3)", minWidth: 0 }}>
                       <i className={`fa-solid ${xml ? "fa-file-code" : "fa-receipt"}`} style={{ fontSize: 11 }} />
                       <span className={xml ? "mono" : undefined} style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {movementSource(m)}
@@ -311,10 +311,10 @@ export default function MobileProductsScreen() {
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-                    <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: m.kind === "in" ? "var(--ok)" : "var(--ink)", whiteSpace: "nowrap" }}>
+                    <span className="mono" style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: m.kind === "in" ? "var(--ok)" : "var(--ink)", whiteSpace: "nowrap" }}>
                       {movementQty(m)}
                     </span>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--ink3)" }}>
+                    <span className="mono" style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
                       {dayMonth(localIso(new Date(m.createdAt)))}
                     </span>
                   </div>

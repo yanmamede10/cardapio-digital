@@ -76,8 +76,8 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14 }}>
         {entrySums(entries, kind).map((k) => (
           <section key={k.label} className="card" style={{ padding: "18px 22px" }}>
-            <div style={{ fontSize: 12.5, color: "var(--ink2)" }}>{k.label}</div>
-            <div className="mono" style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-.03em", marginTop: 6, color: k.fg }}>
+            <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>{k.label}</div>
+            <div className="mono" style={{ fontSize: "var(--text-title2)", fontWeight: 600, letterSpacing: "-.03em", marginTop: 6, color: k.fg }}>
               {k.value}
             </div>
           </section>
@@ -86,7 +86,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
 
       <section className="card">
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 20px", borderBottom: "1px solid var(--line)", flexWrap: "wrap" }}>
-          <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{payable ? "Contas a pagar" : "Contas a receber"}</div>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-body)", flex: 1 }}>{payable ? "Contas a pagar" : "Contas a receber"}</div>
           <FilterPopover groups={accountFilters(kind)} value={filter} onChange={setFilter} resultCount={rows.length} />
           <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
             <i className="fa-solid fa-plus" style={{ fontSize: 13 }} />
@@ -105,13 +105,13 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
             {rows.map((e) => {
               const st = entryStatus(e);
               return (
-                <div key={e.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "13px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: 13 }}>
-                  <div className="mono" style={{ fontSize: 12.5, color: st === "Atrasado" ? "var(--alert)" : "var(--ink2)" }}>
+                <div key={e.id} style={{ display: "grid", gridTemplateColumns: cols, gap: 16, padding: "13px 20px", borderBottom: "1px solid var(--line)", alignItems: "center", fontSize: "var(--text-subheadline)" }}>
+                  <div className="mono" style={{ fontSize: "var(--text-subheadline)", color: st === "Atrasado" ? "var(--alert)" : "var(--ink2)" }}>
                     {dayMonth(e.dueDate)}
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.description}</div>
-                    {e.costCenter && <div style={{ fontSize: 11.5, color: "var(--ink3)" }}>{e.costCenter}</div>}
+                    {e.costCenter && <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{e.costCenter}</div>}
                   </div>
                   <div style={{ color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.category || "Sem categoria"}</div>
                   <div className="mono" style={{ fontWeight: 600 }}>
@@ -120,7 +120,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
                   <EntryStatus entry={e} />
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 4 }}>
                     {e.status !== "paid" && (
-                      <button type="button" className="btn btn-ghost" style={{ padding: "6px 13px", fontSize: 12.5, color: "var(--brandText)" }} onClick={() => setPaying(e)}>
+                      <button type="button" className="btn btn-ghost" style={{ padding: "6px 13px", fontSize: "var(--text-subheadline)", color: "var(--brandText)" }} onClick={() => setPaying(e)}>
                         Quitar
                       </button>
                     )}
@@ -132,7 +132,7 @@ export default function AccountsScreen({ kind }: { kind: FinanceEntryKind }) {
               );
             })}
             {rows.length === 0 && (
-              <div style={{ padding: "36px 20px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>
+              <div style={{ padding: "36px 20px", textAlign: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>
                 {entries.length ? "Nenhum resultado com esses filtros." : "Nenhum lançamento ainda."}
               </div>
             )}
@@ -181,9 +181,9 @@ export function EntryStatus({ entry: e }: { entry: FinanceEntry }) {
   const st = entryStatus(e);
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
-      <span style={{ fontSize: 11.5, fontWeight: 600, borderRadius: 999, padding: "2px 11px", background: `color-mix(in srgb, var(--${STATUS_TONE[st]}) 16%, transparent)`, color: `var(--${STATUS_TONE[st]})` }}>{st}</span>
+      <span style={{ fontSize: "var(--text-footnote)", fontWeight: 600, borderRadius: 999, padding: "2px 11px", background: `color-mix(in srgb, var(--${STATUS_TONE[st]}) 16%, transparent)`, color: `var(--${STATUS_TONE[st]})` }}>{st}</span>
       {e.paidOn && (
-        <span style={{ fontSize: 11, color: "var(--ink3)" }}>
+        <span style={{ fontSize: "var(--text-caption)", color: "var(--ink3)" }}>
           em {dayMonth(e.paidOn)}
           {e.paymentMethod ? ` · ${e.paymentMethod}` : ""}
         </span>
@@ -216,8 +216,8 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
       {(close) => (
       <>
         <div style={{ padding: "20px 24px 4px" }}>
-          <div style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Novo lançamento</div>
-          <div style={{ fontSize: 12.5, color: "var(--ink3)" }}>{payable ? "Contas a pagar" : "Contas a receber"}</div>
+          <div style={{ fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Novo lançamento</div>
+          <div style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>{payable ? "Contas a pagar" : "Contas a receber"}</div>
         </div>
         <div style={{ padding: "20px 24px 22px", display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -226,7 +226,7 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
               <span className="mono" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink3)" }}>
                 R$
               </span>
-              <input autoFocus className="field mono" inputMode="decimal" placeholder="0,00" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ paddingLeft: 44, fontSize: 18, fontWeight: 600 }} />
+              <input autoFocus className="field mono" inputMode="decimal" placeholder="0,00" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value.replace(/[^0-9.,]/g, "") })} style={{ paddingLeft: 44, fontSize: "var(--text-title3)", fontWeight: 600 }} />
             </div>
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -254,7 +254,7 @@ export function EntryFormModal({ kind, onClose, onSaved }: { kind: FinanceEntryK
             type="button"
             aria-expanded={form.more}
             onClick={() => setForm({ ...form, more: !form.more })}
-            style={{ display: "flex", alignItems: "center", gap: 8, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: 13, fontWeight: 500, color: "var(--brandText)", alignSelf: "flex-start" }}
+            style={{ display: "flex", alignItems: "center", gap: 8, border: 0, background: "transparent", padding: "4px 0", cursor: "pointer", fontSize: "var(--text-subheadline)", fontWeight: 500, color: "var(--brandText)", alignSelf: "flex-start" }}
           >
             <i className={`fa-solid ${form.more ? "fa-chevron-down" : "fa-chevron-right"}`} style={{ fontSize: 11, width: 11 }} />
             Mais opções<span style={{ fontWeight: 400, color: "var(--ink3)" }}>· categoria e centro de custo</span>
@@ -321,14 +321,14 @@ export function PayModal({ entry, onClose, onPaid }: { entry: FinanceEntry; onCl
     <Modal label="Quitar conta" dirty={dirty} name={entry.description} onClose={onClose} style={{ maxWidth: 420 }}>
       {(close) => (
       <>
-        <div style={{ padding: "20px 24px 4px", fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>Quitar conta</div>
+        <div style={{ padding: "20px 24px 4px", fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>Quitar conta</div>
         <div style={{ padding: "18px 24px 22px", display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, background: "var(--surface2)", border: "1px solid var(--line)" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 500 }}>{entry.description}</div>
-              <div style={{ fontSize: 12, color: "var(--ink3)" }}>Vencimento {dayMonth(entry.dueDate)}</div>
+              <div style={{ fontSize: "var(--text-body)", fontWeight: 500 }}>{entry.description}</div>
+              <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Vencimento {dayMonth(entry.dueDate)}</div>
             </div>
-            <div className="mono" style={{ fontSize: 17, fontWeight: 600 }}>
+            <div className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600 }}>
               {brl(entry.amount)}
             </div>
           </div>
@@ -337,7 +337,7 @@ export function PayModal({ entry, onClose, onPaid }: { entry: FinanceEntry; onCl
               <span className="field-label" style={{ flex: 1 }}>
                 Data do pagamento
               </span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--brandText)" }}>{paidOn === todayIso() ? `Hoje, ${shortDate(paidOn)}` : `${shortDate(paidOn)} ${paidOn.slice(0, 4)}`}</span>
+              <span style={{ fontSize: "var(--text-subheadline)", fontWeight: 600, color: "var(--brandText)" }}>{paidOn === todayIso() ? `Hoje, ${shortDate(paidOn)}` : `${shortDate(paidOn)} ${paidOn.slice(0, 4)}`}</span>
             </div>
             <div style={{ border: "1px solid var(--line)", borderRadius: 16, padding: "10px 10px 8px" }}>
               <Calendar from={paidOn} onPick={setPaidOn} />

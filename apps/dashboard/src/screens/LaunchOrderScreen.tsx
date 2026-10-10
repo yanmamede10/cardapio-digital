@@ -102,7 +102,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
       key={id}
       type="button"
       onClick={() => setCat(id)}
-      style={{ flex: "none", minHeight: 40, borderRadius: 999, padding: "0 15px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", background: cat === id ? "var(--brandSoft)" : "var(--surface)", color: cat === id ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${cat === id ? "var(--brand)" : "var(--line)"}` }}
+      style={{ flex: "none", minHeight: 40, borderRadius: 999, padding: "0 15px", cursor: "pointer", font: "inherit", fontSize: "var(--text-subheadline)", fontWeight: 600, whiteSpace: "nowrap", background: cat === id ? "var(--brandSoft)" : "var(--surface)", color: cat === id ? "var(--brandText)" : "var(--ink2)", border: `1px solid ${cat === id ? "var(--brand)" : "var(--line)"}` }}
     >
       {label}
     </button>
@@ -131,25 +131,25 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
               style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 60, textAlign: "left", padding: "10px 12px", borderRadius: 13, cursor: item.soldOut ? "not-allowed" : "pointer", font: "inherit", color: "var(--ink)", background: n ? "var(--brandSoft)" : "var(--surface)", border: `1px solid ${n ? "var(--brand)" : "var(--line)"}`, opacity: item.soldOut ? 0.5 : 1 }}
             >
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
-                <span style={{ display: "block", fontSize: 12, color: "var(--ink3)" }}>{item.soldOut ? "Esgotado" : item.optionGroups.length ? "Com opções" : item.categoryName}</span>
+                <span style={{ display: "block", fontSize: "var(--text-body)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
+                <span style={{ display: "block", fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{item.soldOut ? "Esgotado" : item.optionGroups.length ? "Com opções" : item.categoryName}</span>
               </span>
-              <span className="mono" style={{ fontSize: 13.5, fontWeight: 600 }}>{brl(item.price)}</span>
+              <span className="mono" style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>{brl(item.price)}</span>
               {n > 0 && (
-                <span className="mono" aria-label={`${n} no pedido`} style={{ minWidth: 26, height: 26, borderRadius: 999, background: "var(--brand)", color: "var(--brandInk)", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700 }}>
+                <span className="mono" aria-label={`${n} no pedido`} style={{ minWidth: 26, height: 26, borderRadius: 999, background: "var(--brand)", color: "var(--brandInk)", display: "grid", placeItems: "center", fontSize: "var(--text-footnote)", fontWeight: 700 }}>
                   {n}
                 </span>
               )}
             </button>
           );
         })}
-        {shown.length === 0 && <div style={{ padding: "28px 8px", textAlign: "center", fontSize: 13, color: "var(--ink3)" }}>Nenhum prato encontrado.</div>}
+        {shown.length === 0 && <div style={{ padding: "28px 8px", textAlign: "center", fontSize: "var(--text-subheadline)", color: "var(--ink3)" }}>Nenhum prato encontrado.</div>}
       </div>
 
       <div style={{ position: "sticky", bottom: 0, padding: "10px 12px calc(10px + env(safe-area-inset-bottom, 0px))", background: "var(--surface)", borderTop: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, color: "var(--ink3)" }}>Mesa {String(table).padStart(2, "0")} · {count} {count === 1 ? "item" : "itens"}</div>
-          <div className="mono" style={{ fontSize: 17, fontWeight: 600 }}>{brl(total)}</div>
+          <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>Mesa {String(table).padStart(2, "0")} · {count} {count === 1 ? "item" : "itens"}</div>
+          <div className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600 }}>{brl(total)}</div>
         </div>
         <button type="button" className="btn btn-primary" style={{ minHeight: 48 }} disabled={!count} onClick={() => setReviewing(true)}>
           Revisar e enviar
@@ -162,7 +162,7 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
           {(close) => (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 12px 2px 20px" }}>
-              <div style={{ flex: 1, fontSize: 16, fontWeight: 600 }}>{choosing.item.name}</div>
+              <div style={{ flex: 1, fontSize: "var(--text-headline)", fontWeight: 600 }}>{choosing.item.name}</div>
               <button type="button" className="icon-btn" title="Fechar" aria-label="Fechar" onClick={close}>
                 <i className="fa-solid fa-xmark" style={{ fontSize: 16 }} />
               </button>
@@ -178,8 +178,8 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
                     return (
                       <label key={o.id} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 44, padding: "0 12px", borderRadius: 11, border: `1px solid ${on ? "var(--brand)" : "var(--line)"}`, background: on ? "var(--brandSoft)" : "transparent", cursor: "pointer" }}>
                         <input type={g.type === "single" ? "radio" : "checkbox"} name={g.id} checked={!!on} onChange={pick} />
-                        <span style={{ flex: 1, fontSize: 14 }}>{o.label}</span>
-                        {o.priceDelta !== 0 && <span className="mono" style={{ fontSize: 12.5, color: "var(--ink2)" }}>+{brl(o.priceDelta)}</span>}
+                        <span style={{ flex: 1, fontSize: "var(--text-body)" }}>{o.label}</span>
+                        {o.priceDelta !== 0 && <span className="mono" style={{ fontSize: "var(--text-subheadline)", color: "var(--ink2)" }}>+{brl(o.priceDelta)}</span>}
                       </label>
                     );
                   })}
@@ -218,14 +218,14 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
       {reviewing && (
         <div className="modal-overlay">
           <div className="modal-panel" role="dialog" aria-label="Revisar pedido" style={{ maxWidth: 520 }}>
-            <div style={{ padding: "18px 20px 8px", fontSize: 16, fontWeight: 600 }}>Pedido da Mesa {String(table).padStart(2, "0")}</div>
+            <div style={{ padding: "18px 20px 8px", fontSize: "var(--text-headline)", fontWeight: 600 }}>Pedido da Mesa {String(table).padStart(2, "0")}</div>
             <div style={{ padding: "0 20px 12px", display: "flex", flexDirection: "column", overflowY: "auto" }}>
               {lines.map((l) => (
                 <div key={l.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "12px 0", borderBottom: "1px solid var(--line)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>{l.item.name}</div>
-                      {choices(l) && <div style={{ fontSize: 12, color: "var(--ink3)" }}>{choices(l)}</div>}
+                      <div style={{ fontSize: "var(--text-body)", fontWeight: 600 }}>{l.item.name}</div>
+                      {choices(l) && <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>{choices(l)}</div>}
                     </div>
                     <button type="button" className="icon-btn" aria-label={`Menos ${l.item.name}`} onClick={() => setQty(l.key, l.quantity - 1)}>
                       <i className={`fa-solid ${l.quantity === 1 ? "fa-trash" : "fa-minus"}`} />
@@ -243,17 +243,17 @@ export function LaunchOrder({ table, onSent }: { table: number; onSent: () => vo
                     aria-label={`Observação de ${l.item.name}`}
                     value={l.notes}
                     onChange={(e) => setLines((prev) => prev.map((x) => (x.key === l.key ? { ...x, notes: e.target.value } : x)))}
-                    style={{ padding: "8px 11px", fontSize: 13 }}
+                    style={{ padding: "8px 11px", fontSize: "var(--text-subheadline)" }}
                   />
                 </div>
               ))}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "14px 20px 18px", borderTop: "1px solid var(--line)" }}>
               <div style={{ flexBasis: "100%", display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontSize: 12.5, color: "var(--ink3)", flex: 1 }}>
+                <span style={{ fontSize: "var(--text-subheadline)", color: "var(--ink3)", flex: 1 }}>
                   {count} {count === 1 ? "item" : "itens"}
                 </span>
-                <span className="mono" style={{ fontSize: 18, fontWeight: 600 }}>{brl(total)}</span>
+                <span className="mono" style={{ fontSize: "var(--text-title3)", fontWeight: 600 }}>{brl(total)}</span>
               </div>
               <button type="button" className="btn btn-outline" style={{ minHeight: 48 }} onClick={() => setReviewing(false)}>
                 Continuar
@@ -280,7 +280,7 @@ export default function LaunchOrderScreen() {
           <i className="fa-solid fa-arrow-left" style={{ fontSize: 13 }} />
           Mesas
         </button>
-        <div style={{ fontSize: 16, fontWeight: 600 }}>Lançar pedido · Mesa {String(num).padStart(2, "0")}</div>
+        <div style={{ fontSize: "var(--text-headline)", fontWeight: 600 }}>Lançar pedido · Mesa {String(num).padStart(2, "0")}</div>
       </div>
       <section className="card" style={{ overflow: "visible" }}>
         <LaunchOrder table={num} onSent={() => navigate("/mesas", { state: { select: num } })} />

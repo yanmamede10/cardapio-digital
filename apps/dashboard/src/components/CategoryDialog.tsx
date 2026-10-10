@@ -72,17 +72,17 @@ export function CategoryDialog({
   };
 
   const title = mode.kind === "create" ? "Nova categoria" : mode.kind === "rename" ? "Renomear categoria" : `Excluir “${mode.category.name}”?`;
-  const text = { fontSize: 13.5, color: "var(--ink2)", lineHeight: 1.5 } as const;
+  const text = { fontSize: "var(--text-body)", color: "var(--ink2)", lineHeight: 1.5 } as const;
   return (
     <div className="modal-overlay">
       <form className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} style={{ maxWidth: 440 }} onSubmit={submit}>
-        <div id={titleId} style={{ padding: "22px 24px 4px", fontSize: 17, fontWeight: 600, letterSpacing: "-.015em" }}>
+        <div id={titleId} style={{ padding: "22px 24px 4px", fontSize: "var(--text-title3)", fontWeight: 600, letterSpacing: "-.015em" }}>
           {title}
         </div>
         <div style={{ padding: "6px 24px 22px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
           {mode.kind !== "delete" ? (
             <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ink2)" }}>Nome da categoria</span>
+              <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500, color: "var(--ink2)" }}>Nome da categoria</span>
               <input
                 autoFocus
                 className="field"
@@ -93,7 +93,7 @@ export function CategoryDialog({
                 onChange={(e) => (setName(e.target.value), setError(null))}
                 style={fieldError ? { border: "1.5px solid var(--alert)" } : undefined}
               />
-              <span id={`${titleId}-help`} style={{ fontSize: 12, lineHeight: 1.45, color: fieldError ? "var(--alert)" : "var(--ink2)", fontWeight: fieldError ? 500 : 400 }}>
+              <span id={`${titleId}-help`} style={{ fontSize: "var(--text-footnote)", lineHeight: 1.45, color: fieldError ? "var(--alert)" : "var(--ink2)", fontWeight: fieldError ? 500 : 400 }}>
                 {fieldError ?? (mode.kind === "create" ? mode.help : "O novo nome aparece também no Cardápio e no cardápio do cliente.")}
               </span>
             </label>
@@ -107,14 +107,14 @@ export function CategoryDialog({
                 // Scrolls when long: focusable, so the keyboard can scroll it too (axe scrollable-region-focusable).
                 <ul tabIndex={0} aria-label="Itens da categoria" style={{ margin: 0, padding: 0, listStyle: "none", border: "1px solid var(--line)", borderRadius: 12, background: "var(--surface2)", maxHeight: 200, overflowY: "auto" }}>
                   {inside.names.map((n, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", fontSize: 13, borderTop: i ? "1px solid var(--line)" : 0 }}>
+                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", fontSize: "var(--text-subheadline)", borderTop: i ? "1px solid var(--line)" : 0 }}>
                       <i className="fa-solid fa-box" style={{ fontSize: 11, color: "var(--ink2)" }} />
                       {n}
                     </li>
                   ))}
                   {inside.count > inside.names.length && (
                     // The Cardápio lists its dishes; the insumos and produtos off the menu are in Produtos.
-                    <li style={{ padding: "9px 14px", fontSize: 13, color: "var(--ink2)", borderTop: "1px solid var(--line)" }}>
+                    <li style={{ padding: "9px 14px", fontSize: "var(--text-subheadline)", color: "var(--ink2)", borderTop: "1px solid var(--line)" }}>
                       e mais {plural(inside.count - inside.names.length)} do Catálogo de Produtos
                     </li>
                   )}
@@ -122,7 +122,7 @@ export function CategoryDialog({
               )}
               {!blocked && (
                 <label style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                  <span style={{ fontSize: 12, fontWeight: 500, color: "var(--ink2)" }}>{inside.count === 1 ? "Mover o item para:" : `Mover os ${inside.count} itens para:`}</span>
+                  <span style={{ fontSize: "var(--text-footnote)", fontWeight: 500, color: "var(--ink2)" }}>{inside.count === 1 ? "Mover o item para:" : `Mover os ${inside.count} itens para:`}</span>
                   <select className="field" autoFocus value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
                     <option value="" disabled>
                       Escolha a categoria

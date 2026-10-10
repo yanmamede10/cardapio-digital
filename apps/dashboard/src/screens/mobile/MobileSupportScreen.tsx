@@ -54,7 +54,7 @@ export default function MobileSupportScreen() {
     <div style={{ display: "flex", flexDirection: "column" }}>
       <div style={{ position: "sticky", top: 0, zIndex: 5, background: "var(--bg)", padding: "11px 12px 9px", borderBottom: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 7 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div className="mono" style={{ flex: 1, fontSize: 12, color: "var(--ink3)" }}>
+          <div className="mono" style={{ flex: 1, fontSize: "var(--text-footnote)", color: "var(--ink3)" }}>
             {tickets.length === 1 ? "1 conversa" : `${tickets.length} conversas`}
           </div>
           <FilterPopover sheet groups={FILTER_GROUPS} value={filter} onChange={setFilter} resultCount={tickets.length} />
@@ -63,7 +63,7 @@ export default function MobileSupportScreen() {
           <WhatsAppIndicator status={whatsapp} />
         </div>
         {late > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, color: "var(--alert)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "var(--text-footnote)", fontWeight: 600, color: "var(--alert)" }}>
             <i className="fa-solid fa-stopwatch" style={{ fontSize: 13 }} />
             {late} ticket(s) sem resposta há mais de 1h
           </div>
@@ -83,21 +83,21 @@ export default function MobileSupportScreen() {
               onClick={() => navigate(`/atendimento/${t.id}`)}
               style={{ display: "flex", gap: 11, width: "100%", textAlign: "left", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 13, padding: 12, minHeight: 74, cursor: "pointer", font: "inherit", color: "var(--ink)" }}
             >
-              <div style={{ width: 40, height: 40, flex: "0 0 40px", borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12.5, fontWeight: 600 }}>{initials}</div>
+              <div style={{ width: 40, height: 40, flex: "0 0 40px", borderRadius: "50%", background: "var(--surface2)", border: "1px solid var(--line)", color: "var(--ink2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "var(--text-subheadline)", fontWeight: 600 }}>{initials}</div>
               <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.customerName}</span>
+                  <span style={{ fontSize: "var(--text-body)", fontWeight: 600, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.customerName}</span>
                   <i className={CHANNEL_ICON[t.channel]} style={{ fontSize: 12, color: "var(--ink3)" }} />
-                  <span className="mono" style={{ fontSize: 11.5, fontWeight: 600, color: slaFg(since) }}>
+                  <span className="mono" style={{ fontSize: "var(--text-footnote)", fontWeight: 600, color: slaFg(since) }}>
                     {fmtMinutes(since)}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lastMessagePreview(last)}</div>
+                <div style={{ fontSize: "var(--text-footnote)", color: "var(--ink2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lastMessagePreview(last)}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: 10.5, fontWeight: 600, borderRadius: 20, padding: "1px 8px", background: st.bg, color: st.fg }}>{st.label}</span>
-                  <span style={{ fontSize: 11, color: "var(--ink3)", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.assignee || "Não atribuído"}</span>
+                  <span style={{ fontSize: "var(--text-caption)", fontWeight: 600, borderRadius: 20, padding: "1px 8px", background: st.bg, color: st.fg }}>{st.label}</span>
+                  <span style={{ fontSize: "var(--text-caption)", color: "var(--ink3)", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.assignee || "Não atribuído"}</span>
                   {t.unreadCount > 0 && (
-                    <span className="mono" style={{ minWidth: 17, height: 17, borderRadius: 20, background: "var(--alert)", color: "var(--alertInk)", fontSize: 10, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
+                    <span className="mono" style={{ minWidth: 17, height: 17, borderRadius: 20, background: "var(--alert)", color: "var(--alertInk)", fontSize: "var(--text-caption)", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px" }}>
                       {t.unreadCount}
                     </span>
                   )}

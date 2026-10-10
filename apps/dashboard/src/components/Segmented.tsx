@@ -35,7 +35,7 @@ export function Segmented<T extends string>({
               cursor: "pointer",
               borderRadius: 20,
               padding: "6px 13px",
-              fontSize: 13,
+              fontSize: "var(--text-subheadline)",
               fontWeight: active ? 600 : 500,
               background: active ? "var(--surface)" : "transparent",
               color: active ? "var(--brandText)" : "var(--ink2)"
@@ -43,7 +43,7 @@ export function Segmented<T extends string>({
           >
             {o.label}
             {typeof o.count === "number" && (
-              <span className="mono" style={{ fontSize: 11, color: active ? "var(--brandText)" : "var(--ink3)" }}>
+              <span className="mono" style={{ fontSize: "var(--text-caption)", color: active ? "var(--brandText)" : "var(--ink3)" }}>
                 {o.count}
               </span>
             )}
@@ -65,7 +65,7 @@ export function Chip({ active, onClick, children }: { active: boolean; onClick: 
         cursor: "pointer",
         borderRadius: 20,
         padding: "5px 12px",
-        fontSize: 12.5,
+        fontSize: "var(--text-subheadline)",
         fontWeight: active ? 600 : 500,
         whiteSpace: "nowrap",
         background: active ? "var(--brandSoft)" : "var(--surface)",
