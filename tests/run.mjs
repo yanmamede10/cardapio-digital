@@ -40,7 +40,7 @@ const start = (args, cwd) => spawn("npx", args, { cwd, env, stdio: "inherit", sh
 const kill = (p) => {
   try {
     process.platform === "win32" ? execSync(`taskkill /pid ${p.pid} /T /F`, { stdio: "ignore" }) : process.kill(-p.pid, "SIGTERM");
-  } catch { /* Process already gone or server not ready; retried/handled by the caller. */ } // already gone
+  } catch { /* Process already gone. */ }
 };
 
 // G-7: an API left over from an earlier run (or anything else) on :4200 would answer the health check below in place of this
@@ -87,7 +87,7 @@ try {
   for (let i = 0; ; i++) {
     try {
       if ((await fetch(`${env.API_URL}/api/health`)).ok) break;
-    } catch { /* Process already gone or server not ready; retried/handled by the caller. */ }
+    } catch { /* Server not ready; retry until the deadline below. */ }
     if (api.exitCode !== null) throw new Error(`A API de teste não conseguiu ocupar a porta ${env.PORT} (veja o erro acima).`);
     if (i > 60) throw new Error("API de teste não subiu");
     await sleep(500);

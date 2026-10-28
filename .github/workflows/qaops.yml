@@ -1,0 +1,132 @@
+name: QAOps
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qaops-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Qualidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # alvo < 5 min; margem para instalação/cache frio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Gate 1 — Dependências sem vulnerabilidade crítica
+        id: dependencias
+        run: npm run audit:deps
+      - name: Gate 2 — Lint sem erros e no máximo 1 warning
+        id: lint
+        run: npm run lint
+      - name: Gate 3 — Typecheck dos três apps
+        id: typecheck
+        run: npm run typecheck
+      - name: Gate 4 — Unitários e cobertura (80% linhas, 70% branches)
+        id: cobertura
+        run: npm run test:unit
+      - name: Gate 5 — Build dos três apps
+        id: build
+        run: npm run build
+      - name: Relatório JSON do ESLint
+        if: always()
+        run: npm run lint:report
+      - name: Resumo dos gates e cobertura
+        if: always()
+        env:
+          QAOPS_JOB: qualidade
+          QAOPS_STEPS: ${{ toJSON(steps) }}
+        run: node scripts/qaops-summary.mjs
+      - name: Preservar evidências de qualidade
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qaops-qualidade
+          path: |
+            reports/
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  testes-api:
+    name: Testes de API
+    needs: qualidade
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Gate 6 — Todos os testes de API passam
+        id: api
+        run: npm run test:api
+      - name: Resumo do gate de API
+        if: always()
+        env:
+          QAOPS_JOB: testes-api
+          QAOPS_STEPS: ${{ toJSON(steps) }}
+        run: node scripts/qaops-summary.mjs
+      - name: Preservar evidências de API
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qaops-api
+          path: |
+            reports/
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  testes-e2e:
+    name: Testes E2E
+    needs: qualidade
+    runs-on: ubuntu-latest # Docker e Google Chrome (canal chrome do Playwright)
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Gate 7 — Todos os testes E2E passam
+        id: e2e
+        run: npm run test:e2e
+      - name: Resumo do gate E2E
+        if: always()
+        env:
+          QAOPS_JOB: testes-e2e
+          QAOPS_STEPS: ${{ toJSON(steps) }}
+        run: node scripts/qaops-summary.mjs
+      - name: Preservar evidências E2E
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qaops-e2e
+          path: |
+            reports/
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 30

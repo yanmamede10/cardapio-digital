@@ -159,7 +159,6 @@ export default function TablesScreen() {
     loadTables();
     const id = setInterval(loadTables, 10000);
     return () => clearInterval(id);
-     
   }, []);
 
   useEffect(() => {

@@ -45,7 +45,6 @@ export default function MobileMenuScreen() {
 
   useEffect(() => {
     reload();
-     
   }, []);
 
   const filtered = useMemo(() => {
