@@ -354,7 +354,7 @@ function KanbanCardBody({
   onReject?: () => void;
   onAdvance?: () => void;
 }) {
-  const { notify } = useDashboardState();
+  useDashboardState();
   const min = minutesSince(o.createdAt);
   const late = min >= ALERT_MINUTES;
   const mid = min >= ALERT_MINUTES * 0.55;

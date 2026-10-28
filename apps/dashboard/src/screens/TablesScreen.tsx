@@ -159,7 +159,7 @@ export default function TablesScreen() {
     loadTables();
     const id = setInterval(loadTables, 10000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   useEffect(() => {

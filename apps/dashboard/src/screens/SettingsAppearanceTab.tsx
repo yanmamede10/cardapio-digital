@@ -218,7 +218,7 @@ export default function AppearanceTab({ restaurantName }: { restaurantName: stri
   const brandColor = draft.brandColor;
   const onBrandColor = onColor(brandColor);
   const soft = (pct: number) => `color-mix(in srgb, ${brandColor} ${pct}%, transparent)`;
-  const layout = templateLayout(draft.template, brandColor);
+  templateLayout(draft.template, brandColor);
   const isCustomColor = !SWATCHES.some((s) => s.hex.toLowerCase() === brandColor.toLowerCase());
   const logoSrc = logoUpload?.localUrl ?? draft.logoUrl;
   const coverSrc = coverUpload?.localUrl ?? draft.coverPhotos[0];

@@ -21,3 +21,7 @@ deploy/backups/
 
 # Firebase config of the dashboard APK (kept local)
 apps/dashboard/android/app/google-services.json
+
+# QAOps reports and local MCP configuration
+reports/
+.mcp.json
