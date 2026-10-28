@@ -3,11 +3,13 @@
 // Everything points at the container through DATABASE_URL; the real (Supabase) database is never touched — except by
 // `npm run carga -- supabase`, which runs the load test against apps/api/.env's database (the Supabase test project).
 import { execSync, spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
 import { connect } from "node:net";
 import { fileURLToPath } from "node:url";
 import C from "./load/cenario.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
+mkdirSync(new URL("../reports/", import.meta.url), { recursive: true });
 const API_DIR = `${ROOT}apps/api`;
 const DB_URL = "postgresql://postgres:test@localhost:54329/cardapio_test";
 const CONTAINER = "cardapio-test-db";
@@ -106,7 +108,7 @@ try {
     const panel = await run("npx", ["playwright", "test", "-c", "tests/load/playwright.config.ts"]);
     failed = [lighthouse, panel, await load].some((code) => code !== 0);
   } else {
-    if (only !== "e2e") failed = (await run("node", ["--import", "tsx", "--test", "--test-reporter=spec", "--test-concurrency=1", '"tests/api/*.test.ts"'])) !== 0 || failed;
+    if (only !== "e2e") failed = (await run("node", ["--import", "tsx", "--test", "--test-reporter=spec", "--test-reporter-destination=stdout", "--test-reporter=junit", "--test-reporter-destination=reports/api-junit.xml", "--test-concurrency=1", '"tests/api/*.test.ts"'])) !== 0 || failed;
     if (only !== "api") failed = (await run("npx", ["playwright", "test"])) !== 0 || failed;
   }
 } catch (err) {

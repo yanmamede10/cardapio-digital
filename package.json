@@ -16,7 +16,11 @@
     "carga": "node tests/run.mjs carga",
     "typecheck": "tsc --noEmit -p apps/api/tsconfig.json && tsc --noEmit -p apps/dashboard/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json",
     "lint": "eslint . --max-warnings=1",
-    "lint:report": "eslint . --max-warnings=1 -f json -o reports/eslint.json"
+    "lint:report": "eslint . --max-warnings=1 -f json -o reports/eslint.json",
+    "pretest:unit": "node -e \"require('node:fs').mkdirSync('reports', { recursive: true })\"",
+    "test:unit": "node --import tsx --test --experimental-test-coverage --test-coverage-include=packages/shared/src/money.ts --test-coverage-include=packages/shared/src/color.ts --test-coverage-include=apps/api/src/lib/pricing.ts --test-coverage-include=apps/web/src/lib/hours.ts --test-coverage-include=packages/shared/src/errors.ts --test-coverage-lines=80 --test-coverage-branches=70 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=reports/coverage.lcov \"tests/unit/*.test.ts\"",
+    "audit:deps": "npm audit --omit=dev --audit-level=critical",
+    "preaudit:deps": "node scripts/qaops-audit-report.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

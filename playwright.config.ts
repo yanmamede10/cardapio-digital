@@ -7,7 +7,7 @@ const touch = { hasTouch: true, isMobile: true };
 export default defineConfig({
   testDir: "tests/e2e",
   workers: 1, // one shared seeded database
-  reporter: "list",
+  reporter: [["list"], ["html", { open: "never", outputFolder: "playwright-report" }], ["junit", { outputFile: "reports/e2e-junit.xml" }]],
   // timezoneId: same "today" as the API (São Paulo) whatever the machine's zone — CI runs in UTC.
   use: { baseURL: "http://localhost:5274", channel: "chrome", timezoneId: "America/Sao_Paulo", screenshot: "only-on-failure", trace: "retain-on-failure" },
   projects: [

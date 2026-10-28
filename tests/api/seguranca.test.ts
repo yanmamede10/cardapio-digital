@@ -161,7 +161,7 @@ test("pedido malformado responde 400 sem detalhe interno (nada de caminho de arq
   for (const itemId of [123, { not: "x" }, null]) {
     const res = await call("POST", "/api/orders", { session, body: { mode: "delivery", restaurantId: R, lines: [{ itemId, quantity: 1, notes: "", selectedOptions: [] }] } });
     assert.equal(res.status, 400, JSON.stringify(itemId));
-    assert.doesNotMatch(JSON.stringify(res.body), /prisma|invocation|\.ts|apps[\/]|Argument/i, JSON.stringify(res.body));
+    assert.doesNotMatch(JSON.stringify(res.body), /prisma|invocation|\.ts|apps[/]|Argument/i, JSON.stringify(res.body));
   }
 });
 
