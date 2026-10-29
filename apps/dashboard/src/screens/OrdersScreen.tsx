@@ -197,7 +197,7 @@ export default function OrdersScreen() {
         </div>
 
         <DndContext sensors={sensors} onDragStart={({ active }) => setActiveId(String(active.id))} onDragEnd={handleDragEnd} onDragCancel={() => setActiveId(null)}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(232px, 1fr))", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
+          <div tabIndex={0} role="group" aria-label="Quadro de pedidos (role para os lados)" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(232px, 1fr))", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
             {BUCKET_DEFS.map((col) => {
               const list = visible.filter((o) => bucketOf(o.status) === col.key);
               return (
