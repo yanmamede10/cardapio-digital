@@ -8,5 +8,5 @@ export function brl(n: number): string {
  *  subtotal. The server freezes it on the order; the checkout uses the same function to show it beforehand. */
 export function couponDiscount(c: { kind: string; value: number }, subtotal: number): number {
   const off = c.kind === "percent" ? subtotal * (c.value / 100) : c.kind === "fixed" ? c.value : 0;
-  return Math.floor(Math.min(Math.max(off, 0), subtotal) * 100) / 100;
+  return Math.round(Math.min(Math.max(off, 0), subtotal) * 100) / 100;
 }
