@@ -18,7 +18,7 @@ const STAGES: { status: OrderStatus; label: string; note: string; icon: string }
 export default function OrderStatusScreen() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
-  const { mode, tableNumber, restaurantId, tableSession, setWaiterCalled, registerTableOrder } = useApp();
+  const { tableNumber, restaurantId, tableSession, setWaiterCalled, registerTableOrder } = useApp();
   const { showToast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   usePageTitle(order ? `Pedido ${order.code}` : "", order?.restaurantId);

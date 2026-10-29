@@ -121,6 +121,50 @@ cd apps/dashboard/android && ./gradlew assembleDebug    # app/build/outputs/apk/
 
 O CORS da API na VM já libera `https://localhost` (fixado no Compose). O certificado do IP é do Let's Encrypt (raiz ISRG Root X1): Android 7.1.1 ou mais novo. Trocou o `PUBLIC_URL` (IP novo, domínio)? Gere o APK de novo com o valor novo ([ADR 0011](docs/adr/0011-fronts-no-caddy.md)). Depois, `npm run build:android` sem a variável volta o projeto Android para o modo de dev.
 
+## Pipeline de qualidade (QAOps)
+
+O workflow [QAOps](.github/workflows/qaops.yml) roda em push na `master`, PR para `master` e acionamento manual em **Actions → QAOps → Run workflow** (disponível após o workflow chegar à branch padrão). Execuções antigas da mesma ref são canceladas. Não há deploy automático neste pipeline.
+
+```mermaid
+flowchart TD
+  A[Push master / PR para master / manual] --> B[npm ci + Prisma generate]
+  B --> C[Gate 1: dependências sem críticas]
+  C --> D[Gate 2: lint - zero erros, até 1 warning]
+  D --> E[Gate 3: typecheck API + web + dashboard]
+  E --> F[Gate 4: unitários + cobertura 80% linhas / 70% branches]
+  F --> G[Gate 5: build dos três apps]
+  G --> H[Gate 6: integração API com Postgres Docker]
+  G --> I[Gate 7: E2E Playwright com Docker e Chrome]
+  G -. always .-> J[Resumo e artefatos por job - 30 dias]
+  H -. always .-> J
+  I -. always .-> J
+```
+
+O upload e o resumo de cada job são tentados mesmo quando um gate anterior falha; jobs dependentes de qualidade reprovada são pulados. Para bloquear também o merge, configure os checks **Qualidade**, **Testes de API** e **Testes E2E** como obrigatórios na proteção da `master`.
+
+**Pré-requisitos:** Node **22** (use a versão 22.x atual), npm e acesso ao registro npm. Para integração e telas: Docker em execução, Compose e Google Chrome instalado (canal `chrome`; o runner Ubuntu já fornece). Deixe livres as portas 4200, 4299, 54329, 5273 e 5274; os E2E de Caddy também usam 80/443. Os testes unitários não exigem Docker, banco, servidor ou credenciais.
+
+Na raiz, após clonar:
+
+```sh
+npm ci
+npm run db:generate --workspace apps/api  # necessário após instalação limpa, antes do typecheck
+npm run audit:deps                       # gate: nenhuma crítica; também salva JSON
+npm run lint                             # gate: 0 erros, no máximo 1 warning
+npm run lint:report                      # mesmo gate, com saída em reports/eslint.json
+npm run typecheck                        # API + dashboard + web
+npm run test:unit                        # unitários + limites de cobertura + reports/coverage.lcov
+npm run build                           # API + web + dashboard
+npm run test:api                         # integração, Postgres descartável em Docker
+npm run test:e2e                         # telas, Docker + Google Chrome
+```
+
+`npm test` continua executando API e telas juntas. Os detalhes de cada gate, dívida de lint, alertas da auditoria e escopo da cobertura estão em [Quality gates](docs/qaops/quality-gates.md). A cobertura refere-se aos módulos selecionados, não a toda a API; o processo da API não é instrumentado pelos unitários.
+
+Em **Actions → execução → Artifacts**, baixe `qaops-qualidade`, `qaops-api` e `qaops-e2e`. Os artefatos guardam JSON do ESLint e da auditoria, LCOV, JUnit da API/E2E, HTML Playwright e screenshots/traces de falhas, conforme o que foi executado, além dos resumos dos gates. Todos têm retenção de **30 dias**; relatórios locais ficam fora do Git. Para abrir o HTML local: `npx playwright show-report playwright-report`.
+
+O [modelo do experimento](docs/qaops/experimento.md) deve ser preenchido depois, em branch separada, com execuções reais dos cenários aprovado, reprovado e corrigido.
+
 ## Testes
 
 ```sh

@@ -120,7 +120,7 @@ test("L-17 · movimento: durações e curva dos tokens, as onze transições, e 
   assert.deepEqual(wrong, []);
   // number-pop-in, notification-badge, menu-dropdown, modal-open-close, page-side-by-side, icon-swap, success-check,
   // error-state-shake, input-clear-with-dissolve (tabs-sliding is .seg-thumb's transition; the tooltip's is L-18's).
-  for (const name of ["numPop", "badgePop", "menuIn", "modalIn", "modalOut", "pageFwd", "pageBack", "iconSwap", "checkIn", "shake", "dissolve"]) assert.match(base, new RegExp(`@keyframes ${name} \{`), name);
+  for (const name of ["numPop", "badgePop", "menuIn", "modalIn", "modalOut", "pageFwd", "pageBack", "iconSwap", "checkIn", "shake", "dissolve"]) assert.match(base, new RegExp(`@keyframes ${name} {`), name);
   assert.match(base, /\.seg-thumb \{ transition: transform var\(--dur\) var\(--ease\), width var\(--dur\) var\(--ease\); \}/);
   const reduce = base.slice(base.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
   for (const cls of [".num-pop", ".badge-pop", ".menu-pop", ".page-fwd", ".page-back", ".icon-swap", ".success-check", ".modal-panel", ".drawer-panel", ".toast-bubble"]) assert.ok(reduce.includes(cls), `${cls} com reduzir movimento`);
