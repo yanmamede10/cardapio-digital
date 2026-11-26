@@ -1,0 +1,34 @@
+meta {
+  name: Pratos
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/restaurants/{{restaurante}}/items
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.responseTime: lt 1500
+}
+
+script:post-response {
+  // O prato do pedido (pasta 03): o primeiro disponível que tenha um grupo de opção única.
+  const prato = res.body.find((p) => !p.soldOut && p.optionGroups.some((g) => g.type === "single")) || res.body.find((p) => !p.soldOut);
+  bru.setVar("itemId", prato.id);
+  bru.setVar("itemPreco", prato.price);
+  const grupo = prato.optionGroups.find((g) => g.type === "single");
+  bru.setVar("opcoes", JSON.stringify(grupo ? [{ groupId: grupo.id, groupLabel: grupo.label, optionId: grupo.options[0].id, label: grupo.options[0].label, priceDelta: grupo.options[0].priceDelta }] : []));
+  bru.setVar("precoUnitario", Math.round((prato.price + (grupo ? grupo.options[0].priceDelta : 0)) * 100) / 100);
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema pratos", function () {
+    expect(validar("pratos", res.getBody())).to.equal("");
+  });
+}

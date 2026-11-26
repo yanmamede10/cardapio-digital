@@ -1,0 +1,36 @@
+meta {
+  name: Login do dono
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{senha}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.staff.role: eq owner
+  res.body.mustChangePassword: eq false
+}
+
+script:post-response {
+  bru.setVar("token", res.body.token);
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema login", function () {
+    expect(validar("login", res.getBody())).to.equal("");
+  });
+}

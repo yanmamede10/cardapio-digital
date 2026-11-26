@@ -1,0 +1,24 @@
+meta {
+  name: Um prato com opções
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/restaurants/{{restaurante}}/items/{{itemId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{itemId}}
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema prato", function () {
+    expect(validar("prato", res.getBody())).to.equal("");
+  });
+}

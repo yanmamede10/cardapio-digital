@@ -1,0 +1,31 @@
+meta {
+  name: Pedido de outro aparelho
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/orders/{{pedidoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-Session-Id: 00000000-0000-4000-8000-000000000000
+}
+
+assert {
+  res.status: eq 404
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}
+
+docs {
+  404, não 403: quem não fez o pedido nem descobre que o id existe.
+}

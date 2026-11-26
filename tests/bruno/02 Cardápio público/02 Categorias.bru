@@ -1,0 +1,28 @@
+meta {
+  name: Categorias
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/restaurants/{{restaurante}}/categories
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema categorias", function () {
+    expect(validar("categorias", res.getBody())).to.equal("");
+  });
+
+  test("categorias em ordem de cardápio", function () {
+    const ordem = res.getBody().map((c) => c.sortOrder);
+    expect(ordem).to.deep.equal([...ordem].sort((a, b) => a - b));
+  });
+}

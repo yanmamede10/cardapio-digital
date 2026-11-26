@@ -1,0 +1,24 @@
+meta {
+  name: Sessão sem token
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/auth/me
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 401
+  res.body.error: eq authentication required
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}

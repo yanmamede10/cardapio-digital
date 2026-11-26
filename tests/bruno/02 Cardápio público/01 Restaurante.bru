@@ -1,0 +1,25 @@
+meta {
+  name: Restaurante
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/restaurants/{{restaurante}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{restaurante}}
+  res.body.delivery: eq false
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema restaurante", function () {
+    expect(validar("restaurante", res.getBody())).to.equal("");
+  });
+}

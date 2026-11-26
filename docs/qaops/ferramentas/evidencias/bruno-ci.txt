@@ -1,0 +1,159 @@
+# Bruno no CI (QA Ferramentas)
+# Execução: https://github.com/yanmamede10/cardapio-digital/actions/runs/45881157465 (job 140120537764), 26/11/2026
+
+01 Saúde e autenticação/01 Saúde da API (200 OK) - 21 ms
+Tests
+   ✓ corpo da resposta segue o schema saude
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.responseTime: lt 500
+01 Saúde e autenticação/02 Login com senha errada (401 Unauthorized) - 83 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 401
+   ✓ res.body.error: eq invalid credentials
+01 Saúde e autenticação/03 Login do dono (200 OK) - 44 ms
+Tests
+   ✓ corpo da resposta segue o schema login
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.staff.role: eq owner
+   ✓ res.body.mustChangePassword: eq false
+01 Saúde e autenticação/04 Sessão sem token (401 Unauthorized) - 3 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 401
+   ✓ res.body.error: eq authentication required
+01 Saúde e autenticação/05 Sessão do dono (200 OK) - 7 ms
+Tests
+   ✓ corpo da resposta segue o schema sessao
+   ✓ o plano do Chapa 27 tem Pedidos e Mesas e não tem Delivery nem Fiscal
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.staff.restaurantId: eq {{restaurante}}
+02 Cardápio público/01 Restaurante (200 OK) - 7 ms
+Tests
+   ✓ corpo da resposta segue o schema restaurante
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.id: eq {{restaurante}}
+   ✓ res.body.delivery: eq false
+02 Cardápio público/02 Categorias (200 OK) - 10 ms
+Tests
+   ✓ corpo da resposta segue o schema categorias
+   ✓ categorias em ordem de cardápio
+Assertions
+   ✓ res.status: eq 200
+02 Cardápio público/03 Pratos (200 OK) - 10 ms
+Tests
+   ✓ corpo da resposta segue o schema pratos
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.responseTime: lt 1500
+02 Cardápio público/04 Um prato com opções (200 OK) - 9 ms
+Tests
+   ✓ corpo da resposta segue o schema prato
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.id: eq {{itemId}}
+02 Cardápio público/05 Prato inexistente (404 Not Found) - 4 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 404
+   ✓ res.body.error: eq item not found
+02 Cardápio público/06 Formas de pagamento (200 OK) - 4 ms
+Tests
+   ✓ corpo da resposta segue o schema formasDePagamento
+Assertions
+   ✓ res.status: eq 200
+03 Pedido pela mesa/01 Criar mesa (201 Created) - 8 ms
+Tests
+   ✓ corpo da resposta segue o schema mesaCriada
+Assertions
+   ✓ res.status: eq 201
+   ✓ res.body.number: gt 0
+03 Pedido pela mesa/02 QR da mesa (200 OK) - 5 ms
+Tests
+   ✓ corpo da resposta segue o schema qr
+Assertions
+   ✓ res.status: eq 200
+03 Pedido pela mesa/03 Mesa pelo QR (200 OK) - 4 ms
+Tests
+   ✓ corpo da resposta segue o schema mesaDoQr
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.restaurantId: eq {{restaurante}}
+   ✓ res.body.tableNumber: eq {{mesa}}
+03 Pedido pela mesa/04 Fazer pedido (201 Created) - 18 ms
+Tests
+   ✓ corpo da resposta segue o schema pedido
+   ✓ a API recalcula o preço: 2 × preço do prato com a opção escolhida
+Assertions
+   ✓ res.status: eq 201
+   ✓ res.body.mode: eq table
+   ✓ res.body.status: eq awaiting
+   ✓ res.body.tableNumber: eq {{mesa}}
+03 Pedido pela mesa/05 Acompanhar o pedido (200 OK) - 4 ms
+Tests
+   ✓ corpo da resposta segue o schema pedido
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.id: eq {{pedidoId}}
+03 Pedido pela mesa/06 Aceitar na Central (200 OK) - 15 ms
+Tests
+   ✓ corpo da resposta segue o schema pedido
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.status: eq pending
+03 Pedido pela mesa/07 Pedidos do turno na Central (200 OK) - 7 ms
+Tests
+   ✓ corpo da resposta segue o schema pedidos
+   ✓ o pedido do cliente está na Central
+Assertions
+   ✓ res.status: eq 200
+03 Pedido pela mesa/08 Mandar para o preparo (200 OK) - 10 ms
+Tests
+   ✓ corpo da resposta segue o schema pedido
+Assertions
+   ✓ res.status: eq 200
+   ✓ res.body.status: eq preparing
+04 Segurança/01 Pedido de outro aparelho (404 Not Found) - 4 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 404
+04 Segurança/02 Pedido sem sessão (400 Bad Request) - 4 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 400
+04 Segurança/03 Prato de outro restaurante ou inexistente (400 Bad Request) - 5 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 400
+   ✓ res.body.error: eq unknown item nao-existe
+04 Segurança/04 Super Admin sem chave (401 Unauthorized) - 2 ms
+Tests
+   ✓ corpo da resposta segue o schema erro
+Assertions
+   ✓ res.status: eq 401
+
+📊 Execution Summary
+┌───────────────┬────────────────┐
+│ Metric        │     Result     │
+├───────────────┼────────────────┤
+│ Status        │     ✓ PASS     │
+├───────────────┼────────────────┤
+│ Requests      │ 23 (23 Passed) │
+├───────────────┼────────────────┤
+│ Tests         │     27/27      │
+├───────────────┼────────────────┤
+│ Assertions    │     44/44      │
+├───────────────┼────────────────┤
+│ Duration (ms) │      5169      │
+└───────────────┴────────────────┘
+Wrote html results to ../../reports/bruno.html

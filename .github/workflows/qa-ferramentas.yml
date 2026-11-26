@@ -1,0 +1,129 @@
+name: QA Ferramentas
+
+# Atividade "Avaliação de Ferramentas de QA" (Qualidade de Software, UFSM): Vitest, Bruno, k6 e Cypress sobre o projeto.
+# Separado do QAOps (os 3 checks obrigatórios da master): roda em PR que mexe nos testes das ferramentas e sob demanda.
+# Relatório e análise: docs/qaops/ferramentas/relatorio.md.
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "tests/vitest/**"
+      - "tests/bruno/**"
+      - "tests/k6/**"
+      - "tests/cypress/**"
+      - "tests/run.mjs"
+      - "vitest.config.mts"
+      - ".github/workflows/qa-ferramentas.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-ferramentas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vitest:
+    name: Vitest (unitários e integração)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Vitest com cobertura
+        run: npm run test:vitest
+      - name: Resumo
+        if: always()
+        run: |
+          {
+            echo "### Vitest"
+            echo
+            node -e "const t=require('./reports/vitest-coverage/coverage-summary.json').total;console.log('| Linhas | Branches | Funções |\n|---|---|---|\n| '+t.lines.pct+'% | '+t.branches.pct+'% | '+t.functions.pct+'% |')"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-vitest
+          path: |
+            reports/vitest-junit.xml
+            reports/vitest-coverage/
+          retention-days: 30
+
+  bruno:
+    name: Bruno (API)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Coleção Bruno contra a API de teste
+        run: npm run test:bruno
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-bruno
+          path: |
+            reports/bruno.html
+            reports/bruno-junit.xml
+          retention-days: 30
+
+  k6:
+    name: Grafana k6 (carga)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: grafana/setup-k6-action@v1
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Casa cheia no cardápio da mesa
+        run: npm run test:k6
+      - name: Resumo
+        if: always()
+        run: cat reports/k6-resumo.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-k6
+          path: reports/k6-resumo.*
+          retention-days: 30
+
+  cypress:
+    name: Cypress (E2E)
+    runs-on: ubuntu-latest # Docker e Google Chrome
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate --workspace apps/api
+      - name: Instalar o Cypress (só neste job)
+        run: npx --yes cypress@16.4.0 install
+      - name: Jornada do pedido pela mesa
+        run: npm run test:cypress
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-cypress
+          path: |
+            reports/cypress/
+            reports/cypress-junit.xml
+          retention-days: 30

@@ -1,5 +1,7 @@
-// npm test [api|e2e] · npm run carga [-- supabase]
+// npm test [api|e2e] · npm run carga [-- supabase] · npm run test:bruno | test:k6 | test:cypress
 // Throwaway Postgres in Docker → migrate + seed → API on :4200 → API tests and/or Playwright UI tests → teardown.
+// bruno, k6 and cypress (atividade "Ferramentas de QA", docs/qaops/ferramentas/relatorio.md): the same stack, then the
+// Bruno collection (tests/bruno), the k6 load script (tests/k6, needs the k6 binary) or the Cypress journey (tests/cypress).
 // Everything points at the container through DATABASE_URL; the real (Supabase) database is never touched — except by
 // `npm run carga -- supabase`, which runs the load test against apps/api/.env's database (the Supabase test project).
 import { execSync, spawn } from "node:child_process";
@@ -13,7 +15,7 @@ mkdirSync(new URL("../reports/", import.meta.url), { recursive: true });
 const API_DIR = `${ROOT}apps/api`;
 const DB_URL = "postgresql://postgres:test@localhost:54329/cardapio_test";
 const CONTAINER = "cardapio-test-db";
-const only = process.argv[2]; // "api" | "e2e" | "carga" (casa cheia) | undefined (api + e2e)
+const only = process.argv[2]; // "api" | "e2e" | "carga" (casa cheia) | "bruno" | "k6" | "cypress" | undefined (api + e2e)
 const supabase = only === "carga" && process.argv[3] === "supabase";
 // TZ: the API pins São Paulo time; tests must agree on "today" even on a UTC CI runner.
 const env = { ...process.env, PORT: "4200", API_URL: "http://localhost:4200", TZ: "America/Sao_Paulo", SEED_DEMO_PASSWORD: "senha123" };
@@ -93,7 +95,28 @@ try {
     await sleep(500);
   }
 
-  if (only === "carga") {
+  if (only === "bruno") {
+    // Bruno runs from inside its collection; the reports land in the repo's reports/ like every other suite's.
+    failed = (await run("npx", ["--yes", "@usebruno/cli@4.4.0", "run", "-r", "--env", "local", "--reporter-html", "../../reports/bruno.html", "--reporter-junit", "../../reports/bruno-junit.xml"], `${ROOT}tests/bruno`)) !== 0;
+  } else if (only === "k6") {
+    failed = (await run("k6", ["run", "-e", `API_URL=${env.API_URL}`, "tests/k6/cardapio-casa-cheia.js"])) !== 0;
+  } else if (only === "cypress") {
+    // The two apps on Vite's dev server, pointed at the test API — the same as playwright.config.ts's webServer.
+    for (const [app, port] of [["web", "5273"], ["dashboard", "5274"]]) {
+      const appEnv = { ...env, VITE_API_URL: env.API_URL, VITE_PUBLIC_URL: "http://localhost:5273" };
+      servers.push(spawn("npx", ["vite", "--port", port, "--strictPort"], { cwd: `${ROOT}apps/${app}`, env: appEnv, stdio: "inherit", shell: true, detached: process.platform !== "win32" }));
+    }
+    for (const port of ["5273", "5274"]) {
+      for (let i = 0; ; i++) {
+        try {
+          if ((await fetch(`http://localhost:${port}`)).ok) break;
+        } catch { /* Vite not ready yet. */ }
+        if (i > 120) throw new Error(`O app em :${port} não subiu`);
+        await sleep(500);
+      }
+    }
+    failed = (await run("npx", ["--yes", "cypress@16.4.0", "run", "--project", "tests/cypress", "--browser", "chrome"])) !== 0;
+  } else if (only === "carga") {
     // The two apps as a phone gets them (vite build + preview, not the dev server's loose modules): Lighthouse measures that.
     // At the root (--base /): the painel's /painel/ is Caddy's.
     console.log("▸ cardápio (:5273) e painel (:5274) construídos");

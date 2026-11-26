@@ -1,0 +1,23 @@
+meta {
+  name: Formas de pagamento
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/payment-methods
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema formasDePagamento", function () {
+    expect(validar("formasDePagamento", res.getBody())).to.equal("");
+  });
+}

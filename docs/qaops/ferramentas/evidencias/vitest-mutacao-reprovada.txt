@@ -1,0 +1,37 @@
+
+ RUN  v3.2.7 /home/claude/cardapio-digital
+
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > o rascunho padrão começa na primeira opção de cada grupo single e sem adicionais 1ms
+ × tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > as 96 combinações do prato têm o mesmo preço nos dois lados 5ms
+   → [{"groupId":"ponto","groupLabel":"Ponto da carne","optionId":"ao-ponto","label":"Ao ponto","priceDelta":0},{"groupId":"tamanho","groupLabel":"Tamanho","optionId":"simples","label":"Simples","priceDelta":0},{"groupId":"adicionais","groupLabel":"Adicionais","optionId":"cebola","label":"Cebola caramelizada","priceDelta":0.15}]: expected 30.05 to be 30.04 // Object.is equality
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > o pior caso de centavos (Duplo + todos os adicionais) fecha em R$ 49,90 0ms
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > o grupo de opção única e sem custo não é enviado, mas o insumo do bacon vai para o estoque 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > as 96 combinações do prato têm o mesmo preço nos dois lados
+AssertionError: [{"groupId":"ponto","groupLabel":"Ponto da carne","optionId":"ao-ponto","label":"Ao ponto","priceDelta":0},{"groupId":"tamanho","groupLabel":"Tamanho","optionId":"simples","label":"Simples","priceDelta":0},{"groupId":"adicionais","groupLabel":"Adicionais","optionId":"cebola","label":"Cebola caramelizada","priceDelta":0.15}]: expected 30.05 to be 30.04 // Object.is equality
+
+- Expected
++ Received
+
+- 30.04
++ 30.05
+
+ ❯ tests/vitest/preco-cliente-servidor.test.ts:60:62
+     58|       // O app envia só {groupId, optionId}; a API recalcula preço e r…
+     59|       const servidor = priceLine(doBanco, escolhidas.map(({ groupId, o…
+     60|       expect(servidor.unitPrice, JSON.stringify(escolhidas)).toBe(comp…
+       |                                                              ^
+     61|       combinacoes++;
+     62|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  15:52:50
+   Duration  231ms (transform 49ms, setup 0ms, collect 45ms, tests 8ms, environment 0ms, prepare 51ms)
+
+JUNIT report written to /home/claude/cardapio-digital/reports/vitest-junit.xml

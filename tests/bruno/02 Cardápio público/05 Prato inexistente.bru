@@ -1,0 +1,24 @@
+meta {
+  name: Prato inexistente
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/restaurants/{{restaurante}}/items/nao-existe
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 404
+  res.body.error: eq item not found
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}
