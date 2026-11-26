@@ -1,0 +1,67 @@
+# Cypress no CI (QA Ferramentas)
+# Execução: https://github.com/yanmamede10/cardapio-digital/actions/runs/45881157465 (job 140120538021), 26/11/2026
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        16.4.0                                                                         │
+  │ Browser:        Chrome 158 (headless)                                                          │
+  │ Node Version:   v22.23.5 (/opt/hostedtoolcache/node/22.23.5/x64/bin/node)                      │
+  │ Specs:          1 found (jornada-mesa.cy.js)                                                   │
+  │ Searched:       e2e/**/*.cy.js                                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  jornada-mesa.cy.js                                                              (1 of 1)
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  5                                                                                │
+  │ Video:        true                                                                             │
+  │ Duration:     8 seconds                                                                        │
+  │ Spec Ran:     jornada-mesa.cy.js                                                               │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  /home/runner/work/cardapio-digital/cardapio-digital/reports/cypress/screenshots/     (1280x834)
+     jornada-mesa.cy.js/01-central-depois-do-login.png                                              
+  -  /home/runner/work/cardapio-digital/cardapio-digital/reports/cypress/screenshots/      (390x633)
+     jornada-mesa.cy.js/02-carrinho-do-cliente.png                                                  
+  -  /home/runner/work/cardapio-digital/cardapio-digital/reports/cypress/screenshots/      (390x633)
+     jornada-mesa.cy.js/03-cliente-aguardando-confirmacao.png                                       
+  -  /home/runner/work/cardapio-digital/cardapio-digital/reports/cypress/screenshots/     (1280x889)
+     jornada-mesa.cy.js/04-central-pedido-aguardando-aceite.png                                     
+  -  /home/runner/work/cardapio-digital/cardapio-digital/reports/cypress/screenshots/     (1280x834)
+     jornada-mesa.cy.js/05-central-pedido-aceito.png                                                
+
+
+  (Video)
+
+  -  Video output: /home/runner/work/cardapio-digital/cardapio-digital/reports/cypress/videos/jornada-mesa.cy.js.mp4
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✔  jornada-mesa.cy.js                       00:08        3        3        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✔  All specs passed!                        00:08        3        3        -        -        -  
+
+Testes (relatório JUnit do Cypress):
+  ✓ 1. login: senha errada mostra o erro; a certa abre a Central de Pedidos (2.755 s)
+  ✓ 2. o cliente lê o QR, monta o lanche com opções e observação e envia o pedido (1.998 s)
+  ✓ 3. a cozinha vê o pedido na Central, aceita e a mesa abre; o cliente passa a ver Recebido (1.933 s)
