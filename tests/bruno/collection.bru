@@ -1,0 +1,11 @@
+docs {
+  # cardapio-digital — coleção Bruno
+
+  Cobre as rotas da jornada principal da API contra o banco descartável de `npm run test:bruno`
+  (tests/run.mjs: Postgres de teste, migrações, seeds e API em :4200). Restaurante do seed de demonstração: Chapa 27.
+
+  Cada requisição tem asserções de status (bloco `assert`) e, quando devolve JSON, validação do schema da resposta
+  com Ajv (bloco `tests`, schemas em `lib/schemas.js`, espelhando `packages/shared/src/types.ts`).
+
+  Ordem: 01 login → 02 cardápio → 03 pedido pela mesa (cria mesa, lê o QR, pede, aceita, avança etapa) → 04 negativos.
+}

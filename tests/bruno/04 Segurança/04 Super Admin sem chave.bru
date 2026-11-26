@@ -1,0 +1,23 @@
+meta {
+  name: Super Admin sem chave
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/admin/restaurants
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 401
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}

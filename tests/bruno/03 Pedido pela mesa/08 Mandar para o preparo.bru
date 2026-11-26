@@ -1,0 +1,34 @@
+meta {
+  name: Mandar para o preparo
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/orders/{{pedidoId}}/stage
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "stage": "preparing"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq preparing
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema pedido", function () {
+    expect(validar("pedido", res.getBody())).to.equal("");
+  });
+}

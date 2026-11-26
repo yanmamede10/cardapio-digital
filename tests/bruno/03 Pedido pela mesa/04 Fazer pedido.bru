@@ -1,0 +1,59 @@
+meta {
+  name: Fazer pedido
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  X-Session-Id: {{sessionId}}
+}
+
+body:json {
+  {
+    "mode": "table",
+    "restaurantId": "{{restaurante}}",
+    "tableCode": "{{tableCode}}",
+    "guestName": "Bruno",
+    "lines": [
+      { "itemId": "{{itemId}}", "quantity": 2, "notes": "sem cebola", "selectedOptions": {{opcoes}} }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.mode: eq table
+  res.body.status: eq awaiting
+  res.body.tableNumber: eq {{mesa}}
+}
+
+script:pre-request {
+  // O aparelho do cliente: um UUID por execução (apps/web/src/lib/session.ts faz o mesmo com crypto.randomUUID).
+  const { v4 } = require("uuid");
+  bru.setVar("sessionId", v4());
+}
+
+script:post-response {
+  bru.setVar("pedidoId", res.body.id);
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema pedido", function () {
+    expect(validar("pedido", res.getBody())).to.equal("");
+  });
+
+  test("a API recalcula o preço: 2 × preço do prato com a opção escolhida", function () {
+    const unit = Number(bru.getVar("precoUnitario"));
+    const linha = res.getBody().lines[0];
+    expect(linha.unitPrice).to.equal(unit);
+    expect(res.getBody().total).to.equal(Math.round(unit * 2 * 100) / 100);
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Mesa pelo QR
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/tables/{{tableCode}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.restaurantId: eq {{restaurante}}
+  res.body.tableNumber: eq {{mesa}}
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema mesaDoQr", function () {
+    expect(validar("mesaDoQr", res.getBody())).to.equal("");
+  });
+}

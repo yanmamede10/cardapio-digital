@@ -1,0 +1,35 @@
+meta {
+  name: Login com senha errada
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "senha-errada"
+  }
+}
+
+assert {
+  res.status: eq 401
+  res.body.error: eq invalid credentials
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}
+
+docs {
+  Uma tentativa só: 5 erradas bloqueiam a conta por 15 minutos (lib/rateLimit.ts).
+}

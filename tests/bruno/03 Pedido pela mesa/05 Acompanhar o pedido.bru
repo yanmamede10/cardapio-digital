@@ -1,0 +1,28 @@
+meta {
+  name: Acompanhar o pedido
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/orders/{{pedidoId}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-Session-Id: {{sessionId}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{pedidoId}}
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema pedido", function () {
+    expect(validar("pedido", res.getBody())).to.equal("");
+  });
+}

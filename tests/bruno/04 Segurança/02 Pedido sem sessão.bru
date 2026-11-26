@@ -1,0 +1,32 @@
+meta {
+  name: Pedido sem sessão
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "mode": "table",
+    "restaurantId": "{{restaurante}}",
+    "tableCode": "{{tableCode}}",
+    "lines": []
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}

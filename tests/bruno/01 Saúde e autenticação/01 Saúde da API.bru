@@ -1,0 +1,24 @@
+meta {
+  name: Saúde da API
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/health
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.responseTime: lt 500
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema saude", function () {
+    expect(validar("saude", res.getBody())).to.equal("");
+  });
+}

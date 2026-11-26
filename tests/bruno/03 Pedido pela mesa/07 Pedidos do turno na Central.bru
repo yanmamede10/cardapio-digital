@@ -1,0 +1,31 @@
+meta {
+  name: Pedidos do turno na Central
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/restaurants/{{restaurante}}/orders
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema pedidos", function () {
+    expect(validar("pedidos", res.getBody())).to.equal("");
+  });
+
+  test("o pedido do cliente está na Central", function () {
+    expect(res.getBody().map((p) => p.id)).to.include(bru.getVar("pedidoId"));
+  });
+}

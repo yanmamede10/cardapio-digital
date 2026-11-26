@@ -1,0 +1,45 @@
+
+ RUN  v3.2.7 /home/claude/cardapio-digital
+      Coverage enabled with v8
+
+ ✓ tests/vitest/limites-de-requisicao.test.ts > IP do cliente > só acredita no CF-Connecting-IP quando a conexão vem do proxy confiável 3ms
+ ✓ tests/vitest/limites-de-requisicao.test.ts > limites por funcionário e por mesa > um funcionário passa 600 vezes no minuto; a seguinte recebe 429 até a janela virar 22ms
+ ✓ tests/vitest/limites-de-requisicao.test.ts > limites por funcionário e por mesa > uma mesa envia até 40 pedidos em 5 minutos; o 41º espera e a mesa ao lado não 2ms
+ ✓ tests/vitest/limites-de-requisicao.test.ts > tentativas de senha > depois de 5 senhas erradas a conta espera 15 minutos, de qualquer IP 0ms
+ ✓ tests/vitest/limites-de-requisicao.test.ts > tentativas de senha > um IP tem 50 tentativas de login em 15 minutos, mesmo trocando de conta 1ms
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > o rascunho padrão começa na primeira opção de cada grupo single e sem adicionais 2ms
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > as 96 combinações do prato têm o mesmo preço nos dois lados 6ms
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > o pior caso de centavos (Duplo + todos os adicionais) fecha em R$ 49,90 0ms
+ ✓ tests/vitest/preco-cliente-servidor.test.ts > preço do cardápio × preço cobrado pela API > o grupo de opção única e sem custo não é enviado, mas o insumo do bacon vai para o estoque 1ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > normaliza o código digitado (espaços e minúsculas) antes de buscar no restaurante 4ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > código vazio ou restaurante inválido nem chegam ao banco 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > recusa o cupom que não existe 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > recusa o cupom que está pausado 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > recusa o cupom que venceu um segundo atrás 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > recusa o cupom que chegou ao limite de usos 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > recusa o cupom que vale só na mesa 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > recusa o cupom que é de combo 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > um cupom pausado E vencido mostra o motivo mais acionável primeiro (pausado) 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > aceita cupom percentual no delivery 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > aceita cupom valor fixo em Ambos os canais 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > aceita cupom que vence exatamente agora 0ms
+ ✓ tests/vitest/cupom-checkout.test.ts > cupom no checkout do delivery > aceita cupom com o último uso disponível 0ms
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  15:52:49
+   Duration  1.05s (transform 92ms, setup 0ms, collect 124ms, tests 46ms, environment 1ms, prepare 198ms)
+
+JUNIT report written to /home/claude/cardapio-digital/reports/vitest-junit.xml
+ % Coverage report from v8
+---------------|---------|----------|---------|---------|-------------------
+File           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+---------------|---------|----------|---------|---------|-------------------
+All files      |    94.8 |    89.79 |    92.3 |    94.8 |                   
+ api/src/lib   |   92.85 |    89.74 |      90 |   92.85 |                   
+  coupons.ts   |     100 |      100 |     100 |     100 |                   
+  pricing.ts   |   83.33 |       80 |      50 |   83.33 | 24-25,30-31,49-50 
+  rateLimit.ts |   96.77 |     87.5 |     100 |   96.77 | 35-36             
+ web/src/lib   |     100 |       90 |     100 |     100 |                   
+  itemDraft.ts |     100 |       90 |     100 |     100 | 24,39             
+---------------|---------|----------|---------|---------|-------------------

@@ -1,0 +1,37 @@
+meta {
+  name: Prato de outro restaurante ou inexistente
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/orders
+  body: json
+  auth: none
+}
+
+headers {
+  X-Session-Id: {{sessionId}}
+}
+
+body:json {
+  {
+    "mode": "table",
+    "restaurantId": "{{restaurante}}",
+    "tableCode": "{{tableCode}}",
+    "lines": [{ "itemId": "nao-existe", "quantity": 1, "notes": "", "selectedOptions": [] }]
+  }
+}
+
+assert {
+  res.status: eq 400
+  res.body.error: eq unknown item nao-existe
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema erro", function () {
+    expect(validar("erro", res.getBody())).to.equal("");
+  });
+}

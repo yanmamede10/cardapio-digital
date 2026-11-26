@@ -1,0 +1,35 @@
+meta {
+  name: Sessão do dono
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.staff.restaurantId: eq {{restaurante}}
+}
+
+tests {
+  const { validar } = require("./lib/schemas.js");
+
+  test("corpo da resposta segue o schema sessao", function () {
+    expect(validar("sessao", res.getBody())).to.equal("");
+  });
+
+  test("o plano do Chapa 27 tem Pedidos e Mesas e não tem Delivery nem Fiscal", function () {
+    const m = res.getBody().modules;
+    expect(m).to.include.members(["pedidos", "mesas"]);
+    expect(m).to.not.include("delivery");
+    expect(m).to.not.include("fiscal");
+  });
+}
