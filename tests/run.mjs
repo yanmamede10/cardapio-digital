@@ -115,7 +115,7 @@ try {
         await sleep(500);
       }
     }
-    failed = (await run("npx", ["--yes", "cypress@16.4.0", "run", "--config-file", "tests/cypress/cypress.config.cjs", "--browser", "chrome"])) !== 0;
+    failed = (await run("npx", ["--yes", "cypress@16.4.0", "run", "--project", "tests/cypress", "--browser", "chrome"])) !== 0;
   } else if (only === "carga") {
     // The two apps as a phone gets them (vite build + preview, not the dev server's loose modules): Lighthouse measures that.
     // At the root (--base /): the painel's /painel/ is Caddy's.

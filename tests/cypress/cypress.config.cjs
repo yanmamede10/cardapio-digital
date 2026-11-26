@@ -1,6 +1,6 @@
 // Cypress (atividade "Ferramentas de QA"). Rodar com `npm run test:cypress`: tests/run.mjs sobe o Postgres de teste, as
 // seeds, a API (:4200), o app do cliente (:5273) e o painel (:5274) e chama
-// `npx cypress run --config-file tests/cypress/cypress.config.cjs`.
+// `npx cypress run --project tests/cypress` (os caminhos abaixo são relativos a esta pasta).
 // Sem `require("cypress")`: o Cypress não é dependência do projeto, entra só neste job (npx), e o objeto puro basta.
 module.exports = {
   e2e: {
