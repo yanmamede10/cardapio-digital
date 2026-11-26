@@ -11,8 +11,8 @@ subtitle: "Vitest, Grafana k6, Bruno, Cypress e Google Search Console aplicados 
 | **Curso** | Sistemas de Informação |
 | **Disciplina** | Qualidade de Software |
 | **Professor** | Dr. Joel da Silva |
-| **Trabalho** | Atividade prática em grupo: avaliação de ferramentas de QA, performance, automação e diagnóstico em produção |
-| **Equipe** | Yan Gonçalves Mamede e Yuri Boeira |
+| **Trabalho** | Atividade prática individual: avaliação de ferramentas de QA, performance, automação e diagnóstico em produção |
+| **Aluno** | Yan Gonçalves Mamede |
 | **Projeto** | [yanmamede10/cardapio-digital](https://github.com/yanmamede10/cardapio-digital): Pyro, SaaS de gestão para restaurantes (API Express + Prisma/PostgreSQL, app do cliente e painel em React + Vite) |
 | **Entrega** | Pull request [#18](https://github.com/yanmamede10/cardapio-digital/pull/18) e este relatório (`docs/qaops/ferramentas/relatorio.md`, também em PDF) |
 | **Data** | 26/11/2026 |
@@ -282,8 +282,8 @@ Os três testes passaram na primeira tentativa: a configuração permite uma ret
 
 - **Lint.** O gate de lint do QAOps (`eslint .` com no máximo 1 warning) teria reprovado com 66 erros, por causa dos globais do Cypress (`cy`, `Cypress`) e do k6 (`__ENV`, `__VU`). O `eslint.config.js` passou a declarar esses globais só nos arquivos de cada ferramenta.
 - **Pipeline QAOps.** No próprio PR, os checks obrigatórios **Qualidade** (dependências, lint, typecheck, unitários com cobertura e build) e **Testes de API** continuaram verdes com todas as mudanças.
-- **Teste intermitente encontrado.** No job **Testes E2E** do QAOps, 223 testes do Playwright passaram e 1 falhou: `tests/e2e/mobile.spec.ts:28`, sem relação com este PR, que não altera código dos apps. O teste espera encontrar exatamente 2 movimentações de estoque "Fechamento de comanda #2040" e achou 3. A causa está em `apps/api/src/lib/codes.ts`: os códigos de pedido são **4 dígitos aleatórios**, e outro pedido criado antes, na mesma execução, recebeu o mesmo `#2040`. O próprio teste já trata essa colisão na busca da conta a receber (desambigua pela mesa), mas não na contagem das movimentações. É um teste **intermitente (flaky)**, pré-existente. A correção sugerida é filtrar as movimentações pela mesa ou pelo id do pedido, ou tornar o código do pedido único por restaurante. Fica registrada como achado para o grupo.
-- **Ambiente local.** O ambiente de desenvolvimento usado neste trabalho tinha a rede restrita: não alcançava os binários do Prisma (`binaries.prisma.sh`), o download do Cypress nem o do k6. Só o Vitest, que não precisa de banco nem de binário externo, rodou localmente. Bruno, k6 e Cypress rodaram no GitHub Actions. Na prática, isso reforça o papel do CI como ambiente reprodutível: o mesmo `npm run test:*` roda igual no computador de qualquer integrante, com Docker.
+- **Teste intermitente encontrado.** No job **Testes E2E** do QAOps, 223 testes do Playwright passaram e 1 falhou: `tests/e2e/mobile.spec.ts:28`, sem relação com este PR, que não altera código dos apps. O teste espera encontrar exatamente 2 movimentações de estoque "Fechamento de comanda #2040" e achou 3. A causa está em `apps/api/src/lib/codes.ts`: os códigos de pedido são **4 dígitos aleatórios**, e outro pedido criado antes, na mesma execução, recebeu o mesmo `#2040`. O próprio teste já trata essa colisão na busca da conta a receber (desambigua pela mesa), mas não na contagem das movimentações. É um teste **intermitente (flaky)**, pré-existente. A correção sugerida é filtrar as movimentações pela mesa ou pelo id do pedido, ou tornar o código do pedido único por restaurante. Fica registrada como achado para correção no projeto.
+- **Ambiente local.** O ambiente de desenvolvimento usado neste trabalho tinha a rede restrita: não alcançava os binários do Prisma (`binaries.prisma.sh`), o download do Cypress nem o do k6. Só o Vitest, que não precisa de banco nem de binário externo, rodou localmente. Bruno, k6 e Cypress rodaram no GitHub Actions. Na prática, isso reforça o papel do CI como ambiente reprodutível: o mesmo `npm run test:*` roda igual em qualquer computador com Docker.
 
 # 5. Análise de impacto e conclusão
 
