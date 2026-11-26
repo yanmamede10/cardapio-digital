@@ -2,7 +2,7 @@
 // cliente, celular) e a cozinha aceita o pedido na Central. As três etapas rodam em ordem, no mesmo banco descartável.
 // Equivale ao E2E-01 do plano de testes (tests/e2e/fluxo-critico.spec.ts, no Playwright), aqui reescrito no Cypress.
 
-const R = Cypress.env("RESTAURANTE");
+const R = Cypress.expose("RESTAURANTE");
 const MESA = 27; // livre no seed de demonstração: o primeiro pedido fica "Aguardando aceite"
 const CLIENTE = "6f1c2b9e-27aa-4c3e-9d4b-cafe00000027"; // o id do aparelho do cliente (cardapio.sessionId)
 
@@ -13,7 +13,7 @@ describe("Pedido pela mesa — do QR à cozinha", () => {
     cy.get("#login-password").type("senha-errada");
     cy.contains("button", "Entrar").click();
     cy.get("[role=alert]").should("be.visible");
-    cy.get("#login-password").clear().type(Cypress.env("SENHA"), { log: false });
+    cy.get("#login-password").clear().type(Cypress.expose("SENHA"), { log: false });
     cy.contains("button", "Entrar").click();
     cy.get("#login-email").should("not.exist");
     cy.title().should("contain", "Central de Pedidos"); // a aba diz a tela, o restaurante e a plataforma
@@ -27,7 +27,7 @@ describe("Pedido pela mesa — do QR à cozinha", () => {
     });
     cy.viewport(390, 844); // celular
     cy.get("@qr").then((qr) => {
-      cy.visit(`${Cypress.env("WEB")}/t/${qr}`, { onBeforeLoad: (win) => win.localStorage.setItem("cardapio.sessionId", CLIENTE) });
+      cy.visit(`${Cypress.expose("WEB")}/t/${qr}`, { onBeforeLoad: (win) => win.localStorage.setItem("cardapio.sessionId", CLIENTE) });
     });
     cy.location("pathname").should("eq", `/r/${R}/menu`);
 
@@ -61,7 +61,7 @@ describe("Pedido pela mesa — do QR à cozinha", () => {
     cy.screenshot("05-central-pedido-aceito");
 
     // O que o celular do cliente lê a cada 3 s: o pedido dele, agora Recebido ("pending").
-    cy.request({ url: `${Cypress.env("API")}/api/orders`, headers: { "X-Session-Id": CLIENTE } }).then(({ body }) => {
+    cy.request({ url: `${Cypress.expose("API")}/api/orders`, headers: { "X-Session-Id": CLIENTE } }).then(({ body }) => {
       expect(body).to.have.length(1);
       expect(body[0]).to.include({ mode: "table", tableNumber: MESA, status: "pending", total: 96.8 });
     });

@@ -9,9 +9,11 @@ module.exports = {
     baseUrl: "http://localhost:5274", // o painel; o app do cliente é visitado pelo endereço completo
     viewportWidth: 1280,
     viewportHeight: 800,
-    defaultCommandTimeout: 8000,
-    env: { API: "http://localhost:4200", WEB: "http://localhost:5273", RESTAURANTE: "chapa27", SENHA: "senha123" }
+    defaultCommandTimeout: 8000
   },
+  // Cypress 16: valores públicos de configuração ficam em `expose` (lidos com Cypress.expose); `env` é só para segredos
+  // (cy.env). A senha é a do seed de teste (SEED_DEMO_PASSWORD de tests/run.mjs), não um segredo real.
+  expose: { API: "http://localhost:4200", WEB: "http://localhost:5273", RESTAURANTE: "chapa27", SENHA: "senha123" },
   video: true,
   screenshotOnRunFailure: true,
   videosFolder: "../../reports/cypress/videos",
